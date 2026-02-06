@@ -182,7 +182,7 @@ namespace NtfsAudit.App.Services
         private string BuildEntryKey(ExportRecord record)
         {
             var principalKey = string.IsNullOrWhiteSpace(record.PrincipalSid) ? record.PrincipalName : record.PrincipalSid;
-            return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}",
+            return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}",
                 principalKey ?? string.Empty,
                 record.PrincipalType ?? string.Empty,
                 record.AllowDeny ?? string.Empty,
@@ -192,9 +192,7 @@ namespace NtfsAudit.App.Services
                 record.PropagationFlags ?? string.Empty,
                 record.Source ?? string.Empty,
                 record.Depth,
-                record.IsDisabled,
-                record.IncludeInherited,
-                record.ResolveIdentities);
+                record.IsDisabled);
         }
 
         private Dictionary<string, List<string>> BuildTreeFromExport(string dataPath)

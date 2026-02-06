@@ -56,6 +56,10 @@ namespace NtfsAudit.App.Services
             {
                 var dataLock = new object();
                 var errorLock = new object();
+                lock (dataLock)
+                {
+                    WriteExportRecord(dataWriter, BuildScanOptionsRecord(options), options);
+                }
                 var workerCount = Math.Max(2, Environment.ProcessorCount);
                 var workers = new Task[workerCount];
                 for (var i = 0; i < workerCount; i++)
@@ -159,8 +163,18 @@ namespace NtfsAudit.App.Services
                                             Sid = sid,
                                             Name = sid,
                                             IsGroup = false,
-                                            IsDisabled = false
+                                            IsDisabled = false,
+                                            IsServiceAccount = false,
+                                            IsAdminAccount = false
                                         };
+                                    }
+                                    if (options.ResolveIdentities && options.ExcludeServiceAccounts && resolved.IsServiceAccount)
+                                    {
+                                        continue;
+                                    }
+                                    if (options.ResolveIdentities && options.ExcludeAdminAccounts && resolved.IsAdminAccount)
+                                    {
+                                        continue;
                                     }
                                     var rightsSummary = RightsNormalizer.Normalize(rule.FileSystemRights);
                                     var entry = new AceEntry
@@ -176,7 +190,9 @@ namespace NtfsAudit.App.Services
                                         PropagationFlags = rule.PropagationFlags.ToString(),
                                         Source = "Diretto",
                                         Depth = depth,
-                                        IsDisabled = resolved.IsDisabled
+                                        IsDisabled = resolved.IsDisabled,
+                                        IsServiceAccount = resolved.IsServiceAccount,
+                                        IsAdminAccount = resolved.IsAdminAccount
                                     };
 
                                     lock (currentDetail)
@@ -207,6 +223,14 @@ namespace NtfsAudit.App.Services
                                         foreach (var member in members)
                                         {
                                             var source = string.Format("Gruppo:{0}", resolved.Name);
+                                            if (options.ResolveIdentities && options.ExcludeServiceAccounts && member.IsServiceAccount)
+                                            {
+                                                continue;
+                                            }
+                                            if (options.ResolveIdentities && options.ExcludeAdminAccounts && member.IsAdminAccount)
+                                            {
+                                                continue;
+                                            }
                                             var memberEntry = new AceEntry
                                             {
                                                 FolderPath = current,
@@ -220,7 +244,9 @@ namespace NtfsAudit.App.Services
                                                 PropagationFlags = rule.PropagationFlags.ToString(),
                                                 Source = source,
                                                 Depth = depth,
-                                                IsDisabled = member.IsDisabled
+                                                IsDisabled = member.IsDisabled,
+                                                IsServiceAccount = member.IsServiceAccount,
+                                                IsAdminAccount = member.IsAdminAccount
                                             };
                                             lock (currentDetail)
                                             {
@@ -312,7 +338,9 @@ namespace NtfsAudit.App.Services
                 Depth = entry.Depth,
                 IsDisabled = entry.IsDisabled,
                 IncludeInherited = options.IncludeInherited,
-                ResolveIdentities = options.ResolveIdentities
+                ResolveIdentities = options.ResolveIdentities,
+                ExcludeServiceAccounts = options.ExcludeServiceAccounts,
+                ExcludeAdminAccounts = options.ExcludeAdminAccounts
             };
             writer.WriteLine(JsonConvert.SerializeObject(record));
         }
@@ -326,6 +354,25 @@ namespace NtfsAudit.App.Services
                 Message = ex.Message
             };
             writer.WriteLine(JsonConvert.SerializeObject(error));
+        }
+
+        private AceEntry BuildScanOptionsRecord(ScanOptions options)
+        {
+            return new AceEntry
+            {
+                FolderPath = options.RootPath,
+                PrincipalName = "SCAN_OPTIONS",
+                PrincipalSid = string.Empty,
+                PrincipalType = "Meta",
+                AllowDeny = string.Empty,
+                RightsSummary = string.Empty,
+                IsInherited = false,
+                InheritanceFlags = string.Empty,
+                PropagationFlags = string.Empty,
+                Source = "Meta",
+                Depth = 0,
+                IsDisabled = false
+            };
         }
 
         private class WorkItem

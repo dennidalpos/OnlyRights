@@ -33,12 +33,14 @@ namespace NtfsAudit.App.Services
                             Sid = sid,
                             Name = refreshedName ?? sid,
                             IsGroup = refreshed.IsGroup,
-                            IsDisabled = refreshed.IsDisabled
+                            IsDisabled = refreshed.IsDisabled,
+                            IsServiceAccount = refreshed.IsServiceAccount,
+                            IsAdminAccount = refreshed.IsAdminAccount
                         };
                     }
                 }
 
-                return new ResolvedPrincipal { Sid = sid, Name = cached.Name, IsGroup = cached.IsGroup, IsDisabled = cached.IsDisabled };
+                return BuildResolvedPrincipal(sid, cached.Name, cached.IsGroup, cached.IsDisabled);
             }
 
             string name = null;
@@ -64,19 +66,45 @@ namespace NtfsAudit.App.Services
                 }
 
                 _sidNameCache.Set(sid, name ?? sid, adPrincipal.IsGroup, adPrincipal.IsDisabled);
-                return new ResolvedPrincipal { Sid = sid, Name = name ?? sid, IsGroup = adPrincipal.IsGroup, IsDisabled = adPrincipal.IsDisabled };
+                return BuildResolvedPrincipal(sid, name ?? sid, adPrincipal.IsGroup, adPrincipal.IsDisabled);
             }
 
-            var resolved = new ResolvedPrincipal
-            {
-                Sid = sid,
-                Name = string.IsNullOrWhiteSpace(name) ? sid : name,
-                IsGroup = false,
-                IsDisabled = false
-            };
+            var resolved = BuildResolvedPrincipal(sid, string.IsNullOrWhiteSpace(name) ? sid : name, false, false);
 
             _sidNameCache.Set(sid, resolved.Name, resolved.IsGroup, resolved.IsDisabled);
             return resolved;
+        }
+
+        private ResolvedPrincipal BuildResolvedPrincipal(string sid, string name, bool isGroup, bool isDisabled)
+        {
+            var resolvedName = string.IsNullOrWhiteSpace(name) ? sid : name;
+            return new ResolvedPrincipal
+            {
+                Sid = sid,
+                Name = resolvedName,
+                IsGroup = isGroup,
+                IsDisabled = isDisabled,
+                IsServiceAccount = IsServiceAccountName(resolvedName),
+                IsAdminAccount = IsAdminAccountName(resolvedName)
+            };
+        }
+
+        private bool IsServiceAccountName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return false;
+            var normalized = name.ToLowerInvariant();
+            if (normalized.Contains("svc") || normalized.Contains("service"))
+            {
+                return true;
+            }
+            return normalized.EndsWith("$", StringComparison.Ordinal);
+        }
+
+        private bool IsAdminAccountName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return false;
+            var normalized = name.ToLowerInvariant();
+            return normalized.Contains("admin");
         }
     }
 }

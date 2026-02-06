@@ -16,5 +16,7 @@ namespace NtfsAudit.App.Export
         public bool IsDisabled { get; set; }
         public bool IncludeInherited { get; set; }
         public bool ResolveIdentities { get; set; }
+        public bool ExcludeServiceAccounts { get; set; }
+        public bool ExcludeAdminAccounts { get; set; }
     }
 }

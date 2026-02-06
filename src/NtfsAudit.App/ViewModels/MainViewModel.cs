@@ -30,6 +30,8 @@ namespace NtfsAudit.App.ViewModels
         private bool _scanAllDepths = true;
         private bool _includeInherited = true;
         private bool _resolveIdentities = true;
+        private bool _excludeServiceAccounts;
+        private bool _excludeAdminAccounts;
         private bool _expandGroups = true;
         private bool _usePowerShell = true;
         private bool _exportOnComplete;
@@ -144,6 +146,26 @@ namespace NtfsAudit.App.ViewModels
         public bool IsExpandGroupsEnabled
         {
             get { return _resolveIdentities; }
+        }
+
+        public bool ExcludeServiceAccounts
+        {
+            get { return _excludeServiceAccounts; }
+            set
+            {
+                _excludeServiceAccounts = value;
+                OnPropertyChanged("ExcludeServiceAccounts");
+            }
+        }
+
+        public bool ExcludeAdminAccounts
+        {
+            get { return _excludeAdminAccounts; }
+            set
+            {
+                _excludeAdminAccounts = value;
+                OnPropertyChanged("ExcludeAdminAccounts");
+            }
         }
 
         public bool ExpandGroups
@@ -341,6 +363,8 @@ namespace NtfsAudit.App.ViewModels
                 ScanAllDepths = ScanAllDepths,
                 IncludeInherited = IncludeInherited,
                 ResolveIdentities = ResolveIdentities,
+                ExcludeServiceAccounts = ExcludeServiceAccounts,
+                ExcludeAdminAccounts = ExcludeAdminAccounts,
                 ExpandGroups = ResolveIdentities && ExpandGroups,
                 UsePowerShell = UsePowerShell,
                 ExportOnComplete = ExportOnComplete

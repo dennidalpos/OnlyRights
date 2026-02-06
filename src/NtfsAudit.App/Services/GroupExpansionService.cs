@@ -69,7 +69,9 @@ namespace NtfsAudit.App.Services
                         Sid = member.Sid,
                         Name = member.Name,
                         IsGroup = member.IsGroup,
-                        IsDisabled = member.IsDisabled
+                        IsDisabled = member.IsDisabled,
+                        IsServiceAccount = member.IsServiceAccount,
+                        IsAdminAccount = member.IsAdminAccount
                     })
                     .ToList();
                 if (!cachedMembers.Any(member => member.IsGroup && string.IsNullOrWhiteSpace(member.Sid)))
@@ -83,12 +85,18 @@ namespace NtfsAudit.App.Services
             foreach (var member in members)
             {
                 EnsureSid(member, member.Sid);
+                var isServiceAccount = IsServiceAccountName(member.Name);
+                var isAdminAccount = IsAdminAccountName(member.Name);
+                member.IsServiceAccount = isServiceAccount;
+                member.IsAdminAccount = isAdminAccount;
                 membersToCache.Add(new ResolvedPrincipal
                 {
                     Sid = member.Sid,
                     Name = member.Name,
                     IsGroup = member.IsGroup,
-                    IsDisabled = member.IsDisabled
+                    IsDisabled = member.IsDisabled,
+                    IsServiceAccount = isServiceAccount,
+                    IsAdminAccount = isAdminAccount
                 });
             }
             _cache.Set(groupSid, membersToCache);
@@ -107,6 +115,23 @@ namespace NtfsAudit.App.Services
             }
 
             return principal;
+        }
+
+        private bool IsServiceAccountName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return false;
+            var normalized = name.ToLowerInvariant();
+            if (normalized.Contains("svc") || normalized.Contains("service"))
+            {
+                return true;
+            }
+            return normalized.EndsWith("$");
+        }
+
+        private bool IsAdminAccountName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return false;
+            return name.ToLowerInvariant().Contains("admin");
         }
     }
 }

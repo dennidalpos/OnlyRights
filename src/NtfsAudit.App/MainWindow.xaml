@@ -107,6 +107,8 @@
               <CheckBox Margin="0,0,12,0" Content="Risolvi identità (più lento)" IsChecked="{Binding ResolveIdentities}" />
               <CheckBox Margin="0,0,12,0" Content="Espandi gruppi annidati" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
               <CheckBox Content="Usa PowerShell per AD" IsChecked="{Binding UsePowerShell}" />
+              <CheckBox Margin="12,0,0,0" Content="Escludi utenti di servizio" IsChecked="{Binding ExcludeServiceAccounts}" />
+              <CheckBox Margin="12,0,0,0" Content="Escludi utenti admin" IsChecked="{Binding ExcludeAdminAccounts}" />
             </StackPanel>
           </Border>
         </UniformGrid>
@@ -144,6 +146,15 @@
             <Style TargetType="TreeViewItem">
               <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
               <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+              <Setter Property="Background" Value="Transparent" />
+              <Setter Property="Foreground" Value="#FF212121" />
+              <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                  <Setter Property="Background" Value="#FFBBDEFB" />
+                  <Setter Property="Foreground" Value="#FF0D47A1" />
+                  <Setter Property="FontWeight" Value="SemiBold" />
+                </Trigger>
+              </Style.Triggers>
             </Style>
           </TreeView.ItemContainerStyle>
           <TreeView.ItemTemplate>

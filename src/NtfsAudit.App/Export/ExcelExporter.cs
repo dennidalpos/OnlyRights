@@ -21,7 +21,6 @@ namespace NtfsAudit.App.Export
                 Directory.CreateDirectory(outputDir);
             }
 
-            var summaries = new Dictionary<string, SummaryEntry>();
             var folderHeaders = new[]
             {
                 "FolderPath",
@@ -37,20 +36,13 @@ namespace NtfsAudit.App.Export
                 "Depth",
                 "Disabilitato",
                 "IncludeInherited",
-                "ResolveIdentities"
+                "ResolveIdentities",
+                "ExcludeServiceAccounts",
+                "ExcludeAdminAccounts"
             };
             var folderColumnWidths = InitializeColumnWidths(folderHeaders);
-            var folderRecords = LoadFolderPermissions(tempDataPath, summaries, folderColumnWidths);
+            var folderRecords = LoadFolderPermissions(tempDataPath, folderColumnWidths);
             var folderRowCount = folderRecords.Count + 1;
-
-            var summaryHeaders = new[] { "PrincipalName", "PrincipalSid", "FoldersCount", "HighestRightsSummary", "Notes" };
-            var summaryColumnWidths = InitializeColumnWidths(summaryHeaders);
-            var summaryRowCount = AnalyzeSummary(summaries, summaryColumnWidths);
-
-            var errorHeaders = new[] { "Path", "ErrorType", "Message" };
-            var errorColumnWidths = InitializeColumnWidths(errorHeaders);
-            var errors = AnalyzeErrors(errorPath, errorColumnWidths);
-            var errorRowCount = errors.Count + 1;
 
             using (var document = SpreadsheetDocument.Create(outputPath, SpreadsheetDocumentType.Workbook))
             {
@@ -62,19 +54,11 @@ namespace NtfsAudit.App.Export
                 WriteFolderPermissionsSheet(folderSheet, folderRecords, folderHeaders, folderColumnWidths, folderRowCount);
                 sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(folderSheet), SheetId = 1, Name = "FolderPermissions" });
 
-                var summarySheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteSummarySheet(summarySheet, summaries, summaryHeaders, summaryColumnWidths, summaryRowCount);
-                sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(summarySheet), SheetId = 2, Name = "SummaryByPrincipal" });
-
-                var errorSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteErrorSheet(errorSheet, errors, errorHeaders, errorColumnWidths, errorRowCount);
-                sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(errorSheet), SheetId = 3, Name = "Errors" });
-
                 workbookPart.Workbook.Save();
             }
         }
 
-        private List<ExportRecord> LoadFolderPermissions(string tempDataPath, Dictionary<string, SummaryEntry> summaries, int[] columnWidths)
+        private List<ExportRecord> LoadFolderPermissions(string tempDataPath, int[] columnWidths)
         {
             var records = new List<ExportRecord>();
             if (!File.Exists(tempDataPath))
@@ -99,69 +83,11 @@ namespace NtfsAudit.App.Export
                 UpdateColumnWidths(columnWidths, record.FolderPath, record.PrincipalName, record.PrincipalSid, record.PrincipalType,
                     record.AllowDeny, record.RightsSummary, record.IsInherited.ToString(), record.InheritanceFlags,
                     record.PropagationFlags, record.Source, record.Depth.ToString(CultureInfo.InvariantCulture),
-                    record.IsDisabled.ToString(), record.IncludeInherited.ToString(), record.ResolveIdentities.ToString());
-
-                SummaryEntry summary;
-                if (!summaries.TryGetValue(record.PrincipalSid ?? record.PrincipalName, out summary))
-                {
-                    summary = new SummaryEntry
-                    {
-                        PrincipalName = record.PrincipalName,
-                        PrincipalSid = record.PrincipalSid
-                    };
-                    summaries[record.PrincipalSid ?? record.PrincipalName] = summary;
-                }
-
-                summary.Folders.Add(record.FolderPath);
-                var rank = RightsNormalizer.Rank(record.RightsSummary ?? string.Empty);
-                if (rank > summary.HighestRank)
-                {
-                    summary.HighestRank = rank;
-                    summary.HighestRights = record.RightsSummary;
-                }
+                    record.IsDisabled.ToString(), record.IncludeInherited.ToString(), record.ResolveIdentities.ToString(),
+                    record.ExcludeServiceAccounts.ToString(), record.ExcludeAdminAccounts.ToString());
             }
 
             return records;
-        }
-
-        private int AnalyzeSummary(Dictionary<string, SummaryEntry> summaries, int[] columnWidths)
-        {
-            var rowCount = 1;
-            foreach (var summary in summaries.Values)
-            {
-                UpdateColumnWidths(columnWidths, summary.PrincipalName, summary.PrincipalSid,
-                    summary.Folders.Count.ToString(CultureInfo.InvariantCulture), summary.HighestRights, string.Empty);
-                rowCount++;
-            }
-            return rowCount;
-        }
-
-        private List<ErrorEntry> AnalyzeErrors(string errorPath, int[] columnWidths)
-        {
-            var errors = new List<ErrorEntry>();
-            if (!File.Exists(errorPath))
-            {
-                return errors;
-            }
-
-            foreach (var line in File.ReadLines(errorPath))
-            {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                ErrorEntry error;
-                try
-                {
-                    error = JsonConvert.DeserializeObject<ErrorEntry>(line);
-                }
-                catch
-                {
-                    continue;
-                }
-                if (error == null) continue;
-                UpdateColumnWidths(columnWidths, error.Path, error.ErrorType, error.Message);
-                errors.Add(error);
-            }
-
-            return errors;
         }
 
         private void WriteFolderPermissionsSheet(WorksheetPart sheetPart, List<ExportRecord> records, string[] headers, int[] columnWidths, int rowCount)
@@ -189,7 +115,9 @@ namespace NtfsAudit.App.Export
                         record.Depth.ToString(CultureInfo.InvariantCulture),
                         record.IsDisabled.ToString(),
                         record.IncludeInherited.ToString(),
-                        record.ResolveIdentities.ToString());
+                        record.ResolveIdentities.ToString(),
+                        record.ExcludeServiceAccounts.ToString(),
+                        record.ExcludeAdminAccounts.ToString());
                 }
 
                 writer.WriteEndElement();
@@ -198,49 +126,6 @@ namespace NtfsAudit.App.Export
             }
         }
 
-        private void WriteSummarySheet(WorksheetPart sheetPart, Dictionary<string, SummaryEntry> summaries, string[] headers, int[] columnWidths, int rowCount)
-        {
-            using (var writer = OpenXmlWriter.Create(sheetPart))
-            {
-                writer.WriteStartElement(new Worksheet());
-                WriteColumns(writer, columnWidths);
-                writer.WriteStartElement(new SheetData());
-                WriteRow(writer, headers);
-
-                foreach (var summary in summaries.Values)
-                {
-                    WriteRow(writer,
-                        summary.PrincipalName,
-                        summary.PrincipalSid,
-                        summary.Folders.Count.ToString(CultureInfo.InvariantCulture),
-                        summary.HighestRights,
-                        string.Empty);
-                }
-
-                writer.WriteEndElement();
-                WriteTableParts(writer, sheetPart, "SummaryByPrincipalTable", 2, headers, rowCount);
-                writer.WriteEndElement();
-            }
-        }
-
-        private void WriteErrorSheet(WorksheetPart sheetPart, List<ErrorEntry> errors, string[] headers, int[] columnWidths, int rowCount)
-        {
-            using (var writer = OpenXmlWriter.Create(sheetPart))
-            {
-                writer.WriteStartElement(new Worksheet());
-                WriteColumns(writer, columnWidths);
-                writer.WriteStartElement(new SheetData());
-                WriteRow(writer, headers);
-                foreach (var error in errors)
-                {
-                    WriteRow(writer, error.Path, error.ErrorType, error.Message);
-                }
-
-                writer.WriteEndElement();
-                WriteTableParts(writer, sheetPart, "ErrorsTable", 3, headers, rowCount);
-                writer.WriteEndElement();
-            }
-        }
 
         private int[] InitializeColumnWidths(string[] headers)
         {
@@ -357,18 +242,5 @@ namespace NtfsAudit.App.Export
             writer.WriteEndElement();
         }
 
-        private class SummaryEntry
-        {
-            public string PrincipalName { get; set; }
-            public string PrincipalSid { get; set; }
-            public HashSet<string> Folders { get; private set; }
-            public int HighestRank { get; set; }
-            public string HighestRights { get; set; }
-
-            public SummaryEntry()
-            {
-                Folders = new HashSet<string>();
-            }
-        }
     }
 }

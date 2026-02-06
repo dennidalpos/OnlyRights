@@ -37,17 +37,19 @@ NTFS Audit è un’applicazione WPF per l’analisi dei permessi NTFS su percors
 - **Risolvi identità (più lento)**: se disattivato, evita risoluzione SID→nome e riduce l’accesso ad AD.
 - **Espandi gruppi annidati**: disponibile solo quando la risoluzione identità è attiva.
 - **Usa PowerShell per AD**: abilita la risoluzione AD via PowerShell (se RSAT presente).
+- **Escludi utenti di servizio**: filtra account con naming tipico da servizio (es. `svc`, `service`, computer `$`).
+- **Escludi utenti admin**: filtra account con naming che include `admin`.
 
 ## Export Excel
-L’export genera un file Excel con tre fogli:
+L’export genera un file Excel con il foglio:
 - `FolderPermissions` (tutte le ACE, inclusi membri dei gruppi espansi)
-- `SummaryByPrincipal` (conteggio cartelle e diritto massimo)
-- `Errors` (path, tipo, messaggio)
 
 Nel foglio `FolderPermissions` sono presenti anche:
 - **Disabilitato** (true/false)
 - **IncludeInherited** (true/false)
 - **ResolveIdentities** (true/false)
+- **ExcludeServiceAccounts** (true/false)
+- **ExcludeAdminAccounts** (true/false)
 
 Formato nome file:
 ```
