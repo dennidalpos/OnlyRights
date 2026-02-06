@@ -118,8 +118,26 @@ namespace NtfsAudit.App.Services
                                 foreach (FileSystemAccessRule rule in rules)
                                 {
                                     token.ThrowIfCancellationRequested();
+                                    if (!options.IncludeInherited && rule.IsInherited)
+                                    {
+                                        continue;
+                                    }
                                     var sid = rule.IdentityReference.Value;
-                                    var resolved = _identityResolver.Resolve(sid);
+                                    ResolvedPrincipal resolved;
+                                    if (options.ResolveIdentities)
+                                    {
+                                        resolved = _identityResolver.Resolve(sid);
+                                    }
+                                    else
+                                    {
+                                        resolved = new ResolvedPrincipal
+                                        {
+                                            Sid = sid,
+                                            Name = sid,
+                                            IsGroup = false,
+                                            IsDisabled = false
+                                        };
+                                    }
                                     var rightsSummary = RightsNormalizer.Normalize(rule.FileSystemRights);
                                     var entry = new AceEntry
                                     {
@@ -152,10 +170,10 @@ namespace NtfsAudit.App.Services
 
                                     lock (dataLock)
                                     {
-                                        WriteExportRecord(dataWriter, entry);
+                                        WriteExportRecord(dataWriter, entry, options);
                                     }
 
-                                    if (resolved.IsGroup && options.ExpandGroups)
+                                    if (resolved.IsGroup && options.ExpandGroups && options.ResolveIdentities)
                                     {
                                         var members = _groupExpansion.ExpandGroup(sid, token);
                                         entry.MemberNames = members.Select(m =>
@@ -187,7 +205,7 @@ namespace NtfsAudit.App.Services
                                             }
                                             lock (dataLock)
                                             {
-                                                WriteExportRecord(dataWriter, memberEntry);
+                                                WriteExportRecord(dataWriter, memberEntry, options);
                                             }
                                         }
                                     }
@@ -251,7 +269,7 @@ namespace NtfsAudit.App.Services
             };
         }
 
-        private void WriteExportRecord(StreamWriter writer, AceEntry entry)
+        private void WriteExportRecord(StreamWriter writer, AceEntry entry, ScanOptions options)
         {
             var record = new ExportRecord
             {
@@ -266,7 +284,9 @@ namespace NtfsAudit.App.Services
                 PropagationFlags = entry.PropagationFlags,
                 Source = entry.Source,
                 Depth = entry.Depth,
-                IsDisabled = entry.IsDisabled
+                IsDisabled = entry.IsDisabled,
+                IncludeInherited = options.IncludeInherited,
+                ResolveIdentities = options.ResolveIdentities
             };
             writer.WriteLine(JsonConvert.SerializeObject(record));
         }

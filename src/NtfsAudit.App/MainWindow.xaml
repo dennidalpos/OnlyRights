@@ -103,7 +103,9 @@
           </Border>
           <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-              <CheckBox Margin="0,0,12,0" Content="Espandi gruppi annidati" IsChecked="{Binding ExpandGroups}" />
+              <CheckBox Margin="0,0,12,0" Content="Includi permessi ereditati" IsChecked="{Binding IncludeInherited}" />
+              <CheckBox Margin="0,0,12,0" Content="Risolvi identità (più lento)" IsChecked="{Binding ResolveIdentities}" />
+              <CheckBox Margin="0,0,12,0" Content="Espandi gruppi annidati" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
               <CheckBox Content="Usa PowerShell per AD" IsChecked="{Binding UsePowerShell}" />
             </StackPanel>
           </Border>

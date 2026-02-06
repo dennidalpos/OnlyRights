@@ -28,6 +28,8 @@ namespace NtfsAudit.App.ViewModels
         private string _rootPath;
         private int _maxDepth = 5;
         private bool _scanAllDepths;
+        private bool _includeInherited = true;
+        private bool _resolveIdentities = true;
         private bool _expandGroups = true;
         private bool _usePowerShell = true;
         private bool _exportOnComplete;
@@ -116,6 +118,32 @@ namespace NtfsAudit.App.ViewModels
         public bool IsMaxDepthEnabled
         {
             get { return !_scanAllDepths; }
+        }
+
+        public bool IncludeInherited
+        {
+            get { return _includeInherited; }
+            set
+            {
+                _includeInherited = value;
+                OnPropertyChanged("IncludeInherited");
+            }
+        }
+
+        public bool ResolveIdentities
+        {
+            get { return _resolveIdentities; }
+            set
+            {
+                _resolveIdentities = value;
+                OnPropertyChanged("ResolveIdentities");
+                OnPropertyChanged("IsExpandGroupsEnabled");
+            }
+        }
+
+        public bool IsExpandGroupsEnabled
+        {
+            get { return _resolveIdentities; }
         }
 
         public bool ExpandGroups
@@ -311,7 +339,9 @@ namespace NtfsAudit.App.ViewModels
                 RootPath = RootPath,
                 MaxDepth = ScanAllDepths ? int.MaxValue : MaxDepth,
                 ScanAllDepths = ScanAllDepths,
-                ExpandGroups = ExpandGroups,
+                IncludeInherited = IncludeInherited,
+                ResolveIdentities = ResolveIdentities,
+                ExpandGroups = ResolveIdentities && ExpandGroups,
                 UsePowerShell = UsePowerShell,
                 ExportOnComplete = ExportOnComplete
             };
