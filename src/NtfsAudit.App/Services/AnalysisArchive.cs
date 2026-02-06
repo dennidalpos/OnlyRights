@@ -115,6 +115,7 @@ namespace NtfsAudit.App.Services
             var details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase);
             if (!File.Exists(dataPath)) return details;
 
+            var dedupe = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
             foreach (var line in File.ReadLines(dataPath))
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
@@ -134,6 +135,18 @@ namespace NtfsAudit.App.Services
                 {
                     detail = new FolderDetail();
                     details[record.FolderPath] = detail;
+                }
+
+                var entryKey = BuildEntryKey(record);
+                HashSet<string> folderKeys;
+                if (!dedupe.TryGetValue(record.FolderPath, out folderKeys))
+                {
+                    folderKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    dedupe[record.FolderPath] = folderKeys;
+                }
+                if (!folderKeys.Add(entryKey))
+                {
+                    continue;
                 }
 
                 var entry = new AceEntry
@@ -163,6 +176,21 @@ namespace NtfsAudit.App.Services
             }
 
             return details;
+        }
+
+        private string BuildEntryKey(ExportRecord record)
+        {
+            var principalKey = string.IsNullOrWhiteSpace(record.PrincipalSid) ? record.PrincipalName : record.PrincipalSid;
+            return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}",
+                principalKey ?? string.Empty,
+                record.PrincipalType ?? string.Empty,
+                record.AllowDeny ?? string.Empty,
+                record.RightsSummary ?? string.Empty,
+                record.IsInherited,
+                record.InheritanceFlags ?? string.Empty,
+                record.PropagationFlags ?? string.Empty,
+                record.Source ?? string.Empty,
+                record.Depth);
         }
 
         private Dictionary<string, List<string>> BuildTreeFromExport(string dataPath)
