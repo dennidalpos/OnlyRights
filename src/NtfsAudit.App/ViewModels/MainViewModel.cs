@@ -37,10 +37,8 @@ namespace NtfsAudit.App.ViewModels
         private bool _exportOnComplete;
         private string _progressText = "Pronto";
         private string _currentPathText;
-        private bool _isIndeterminate;
-        private double _progressValue;
         private int _processedCount;
-        private int _remainingCount;
+        private string _elapsedText = "00:00:00";
         private string _selectedFolderPath;
         private string _errorFilter;
         private bool _colorizeRights = true;
@@ -219,26 +217,6 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        public bool IsIndeterminate
-        {
-            get { return _isIndeterminate; }
-            set
-            {
-                _isIndeterminate = value;
-                OnPropertyChanged("IsIndeterminate");
-            }
-        }
-
-        public double ProgressValue
-        {
-            get { return _progressValue; }
-            set
-            {
-                _progressValue = value;
-                OnPropertyChanged("ProgressValue");
-            }
-        }
-
         public int ProcessedCount
         {
             get { return _processedCount; }
@@ -249,13 +227,13 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        public int RemainingCount
+        public string ElapsedText
         {
-            get { return _remainingCount; }
+            get { return _elapsedText; }
             set
             {
-                _remainingCount = value;
-                OnPropertyChanged("RemainingCount");
+                _elapsedText = value;
+                OnPropertyChanged("ElapsedText");
             }
         }
 
@@ -289,6 +267,9 @@ namespace NtfsAudit.App.ViewModels
                 OnPropertyChanged("ColorizeRights");
             }
         }
+
+        public bool IsScanning { get { return _isScanning; } }
+        public bool IsNotScanning { get { return !_isScanning; } }
 
         public bool CanStart { get { return !_isScanning && !string.IsNullOrWhiteSpace(RootPath); } }
         public bool CanStop { get { return _isScanning; } }
@@ -354,16 +335,16 @@ namespace NtfsAudit.App.ViewModels
                 RootPath = normalizedRoot;
             }
 
-            if (!Directory.Exists(RootPath))
+            var ioRootPath = PathResolver.ToExtendedPath(RootPath);
+            if (!Directory.Exists(ioRootPath))
             {
                 ProgressText = "Percorso non valido";
                 return;
             }
 
             _isScanning = true;
-            IsIndeterminate = false;
-            ProgressValue = 0;
             CurrentPathText = string.Empty;
+            ElapsedText = "00:00:00";
             UpdateCommands();
             ClearResults();
 
@@ -499,7 +480,6 @@ namespace NtfsAudit.App.ViewModels
                 RunOnUi(() =>
                 {
                     _isScanning = false;
-                    IsIndeterminate = false;
                     UpdateCommands();
                 });
             }
@@ -531,18 +511,7 @@ namespace NtfsAudit.App.ViewModels
         {
             CurrentPathText = string.IsNullOrWhiteSpace(progress.CurrentPath) ? string.Empty : progress.CurrentPath;
             ProcessedCount = progress.Processed;
-            RemainingCount = progress.QueueCount;
-            var total = progress.Processed + progress.QueueCount;
-            if (total > 0)
-            {
-                ProgressValue = (progress.Processed * 100.0) / total;
-                IsIndeterminate = false;
-            }
-            else
-            {
-                IsIndeterminate = false;
-                ProgressValue = 0;
-            }
+            ElapsedText = FormatElapsed(progress.Elapsed);
         }
 
         private void LoadTree(ScanResult result)
@@ -610,12 +579,14 @@ namespace NtfsAudit.App.ViewModels
             Errors.Clear();
             SelectedFolderPath = string.Empty;
             ProcessedCount = 0;
-            RemainingCount = 0;
+            ElapsedText = "00:00:00";
             CurrentPathText = string.Empty;
         }
 
         private void UpdateCommands()
         {
+            OnPropertyChanged("IsScanning");
+            OnPropertyChanged("IsNotScanning");
             OnPropertyChanged("CanStart");
             OnPropertyChanged("CanStop");
             OnPropertyChanged("CanExport");
@@ -624,6 +595,16 @@ namespace NtfsAudit.App.ViewModels
             ExportCommand.RaiseCanExecuteChanged();
             ExportAnalysisCommand.RaiseCanExecuteChanged();
             ImportAnalysisCommand.RaiseCanExecuteChanged();
+        }
+
+        private string FormatElapsed(TimeSpan elapsed)
+        {
+            if (elapsed.TotalDays >= 1)
+            {
+                return elapsed.ToString(@"d\.hh\:mm\:ss");
+            }
+
+            return elapsed.ToString(@"hh\:mm\:ss");
         }
 
         private string BuildExportPath(string folder, string rootPath)

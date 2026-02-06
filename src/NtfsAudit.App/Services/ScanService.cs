@@ -37,7 +37,6 @@ namespace NtfsAudit.App.Services
             var queue = new ConcurrentQueue<WorkItem>();
             var queueSignal = new SemaphoreSlim(0);
             var processed = 0;
-            var errorCount = 0;
             var pendingCount = 0;
             var stopwatch = Stopwatch.StartNew();
 
@@ -86,28 +85,29 @@ namespace NtfsAudit.App.Services
                             var currentDetail = details.GetOrAdd(current, _ => new FolderDetail());
                             var processedCount = Interlocked.Increment(ref processed);
 
+                            if (progress != null)
+                            {
+                                progress.Report(new ScanProgress
+                                {
+                                    Processed = processedCount,
+                                    Elapsed = stopwatch.Elapsed,
+                                    Stage = "Enumerazione cartelle",
+                                    CurrentPath = current
+                                });
+                            }
+
                             List<string> children = null;
                             if (depth < options.MaxDepth)
                             {
                                 try
                                 {
-                                    if (progress != null)
-                                    {
-                                        progress.Report(new ScanProgress
-                                        {
-                                            Processed = processedCount,
-                                            QueueCount = Volatile.Read(ref pendingCount),
-                                            Errors = Volatile.Read(ref errorCount),
-                                            Elapsed = stopwatch.Elapsed,
-                                            Stage = "Enumerazione cartelle",
-                                            CurrentPath = current
-                                        });
-                                    }
-                                    children = Directory.EnumerateDirectories(current, "*", SearchOption.TopDirectoryOnly).ToList();
+                                    var ioPath = PathResolver.ToExtendedPath(current);
+                                    children = Directory.EnumerateDirectories(ioPath, "*", SearchOption.TopDirectoryOnly)
+                                        .Select(PathResolver.FromExtendedPath)
+                                        .ToList();
                                 }
                                 catch (Exception ex)
                                 {
-                                    Interlocked.Increment(ref errorCount);
                                     lock (errorLock)
                                     {
                                         LogError(errorWriter, current, ex);
@@ -126,21 +126,21 @@ namespace NtfsAudit.App.Services
                                 }
                             }
 
+                            if (progress != null)
+                            {
+                                progress.Report(new ScanProgress
+                                {
+                                    Processed = processedCount,
+                                    Elapsed = stopwatch.Elapsed,
+                                    Stage = "Lettura ACL",
+                                    CurrentPath = current
+                                });
+                            }
+
                             try
                             {
-                                if (progress != null)
-                                {
-                                    progress.Report(new ScanProgress
-                                    {
-                                        Processed = processedCount,
-                                        QueueCount = Volatile.Read(ref pendingCount),
-                                        Errors = Volatile.Read(ref errorCount),
-                                        Elapsed = stopwatch.Elapsed,
-                                        Stage = "Lettura ACL",
-                                        CurrentPath = current
-                                    });
-                                }
-                                var security = new DirectoryInfo(current).GetAccessControl(AccessControlSections.Access);
+                                var ioPath = PathResolver.ToExtendedPath(current);
+                                var security = new DirectoryInfo(ioPath).GetAccessControl(AccessControlSections.Access);
                                 var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier));
 
                                 foreach (FileSystemAccessRule rule in rules)
@@ -268,25 +268,11 @@ namespace NtfsAudit.App.Services
                             }
                             catch (Exception ex)
                             {
-                                Interlocked.Increment(ref errorCount);
                                 lock (errorLock)
                                 {
                                     LogError(errorWriter, current, ex);
                                 }
                             }
-
-                                    if (progress != null)
-                                    {
-                                        progress.Report(new ScanProgress
-                                        {
-                                            Processed = processedCount,
-                                            QueueCount = Volatile.Read(ref pendingCount),
-                                            Errors = Volatile.Read(ref errorCount),
-                                            Elapsed = stopwatch.Elapsed,
-                                            Stage = "Analisi ACL",
-                                            CurrentPath = current
-                                        });
-                                    }
                         }
                     }, token);
                 }
@@ -310,8 +296,6 @@ namespace NtfsAudit.App.Services
                     progress.Report(new ScanProgress
                     {
                         Processed = Volatile.Read(ref processed),
-                        QueueCount = Volatile.Read(ref pendingCount),
-                        Errors = Volatile.Read(ref errorCount),
                         Elapsed = stopwatch.Elapsed
                     });
                 }
