@@ -187,51 +187,77 @@ namespace NtfsAudit.App.Services
                 folders.Add(record.FolderPath);
             }
 
+            var parentCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             var toProcess = folders.ToList();
             foreach (var folder in toProcess)
             {
-                var parent = SafeGetParent(folder);
+                var parent = SafeGetParent(folder, parentCache);
                 while (!string.IsNullOrWhiteSpace(parent))
                 {
                     if (!folders.Add(parent))
                     {
                         break;
                     }
-                    parent = SafeGetParent(parent);
+                    parent = SafeGetParent(parent, parentCache);
+                }
+            }
+
+            var treeSets = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var folder in folders)
+            {
+                if (!treeSets.ContainsKey(folder))
+                {
+                    treeSets[folder] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 }
             }
 
             foreach (var folder in folders)
             {
-                if (!treeMap.ContainsKey(folder))
+                var parent = SafeGetParent(folder, parentCache);
+                if (parent != null)
                 {
-                    treeMap[folder] = new List<string>();
+                    HashSet<string> children;
+                    if (!treeSets.TryGetValue(parent, out children))
+                    {
+                        children = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        treeSets[parent] = children;
+                    }
+                    children.Add(folder);
                 }
             }
 
-            foreach (var folder in folders)
+            foreach (var entry in treeSets)
             {
-                var parent = SafeGetParent(folder);
-                if (parent != null && treeMap.ContainsKey(parent))
-                {
-                    treeMap[parent].Add(folder);
-                }
+                treeMap[entry.Key] = entry.Value.ToList();
             }
 
             return treeMap;
         }
 
-        private string SafeGetParent(string path)
+        private string SafeGetParent(string path, Dictionary<string, string> cache)
         {
+            if (cache != null && cache.TryGetValue(path, out var cachedParent))
+            {
+                return cachedParent;
+            }
+
+            string parentValue;
             try
             {
                 var parent = Directory.GetParent(path);
-                return parent == null ? null : parent.FullName;
+                parentValue = parent == null ? null : parent.FullName;
             }
             catch
             {
-                return null;
+                parentValue = null;
             }
+
+            if (cache != null)
+            {
+                cache[path] = parentValue;
+            }
+
+            return parentValue;
         }
 
         private void AddFileEntry(ZipArchive archive, string entryName, string sourcePath)
