@@ -82,7 +82,8 @@
         <Button Grid.Column="1" Margin="0,0,8,0" Padding="12,4" Content="Sfoglia..." Command="{Binding BrowseCommand}" />
         <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,8,0" VerticalAlignment="Center">
           <TextBlock Text="MaxDepth" VerticalAlignment="Center" Margin="0,0,6,0" />
-          <TextBox Width="60" Height="24" Text="{Binding MaxDepth}" />
+          <TextBox Width="60" Height="24" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" />
+          <CheckBox Margin="10,0,0,0" Content="Analizza tutte le sottocartelle" IsChecked="{Binding ScanAllDepths}" />
         </StackPanel>
         <CheckBox Grid.Column="3" Margin="0,0,8,0" VerticalAlignment="Center" Content="Espandi gruppi annidati" IsChecked="{Binding ExpandGroups}" />
         <CheckBox Grid.Column="4" Margin="0,0,8,0" VerticalAlignment="Center" Content="Usa PowerShell per AD" IsChecked="{Binding UsePowerShell}" />

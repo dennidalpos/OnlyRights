@@ -27,6 +27,7 @@ namespace NtfsAudit.App.ViewModels
         private bool _isScanning;
         private string _rootPath;
         private int _maxDepth = 5;
+        private bool _scanAllDepths;
         private bool _expandGroups = true;
         private bool _usePowerShell = true;
         private bool _exportOnComplete;
@@ -99,6 +100,22 @@ namespace NtfsAudit.App.ViewModels
                 _maxDepth = value;
                 OnPropertyChanged("MaxDepth");
             }
+        }
+
+        public bool ScanAllDepths
+        {
+            get { return _scanAllDepths; }
+            set
+            {
+                _scanAllDepths = value;
+                OnPropertyChanged("ScanAllDepths");
+                OnPropertyChanged("IsMaxDepthEnabled");
+            }
+        }
+
+        public bool IsMaxDepthEnabled
+        {
+            get { return !_scanAllDepths; }
         }
 
         public bool ExpandGroups
@@ -292,7 +309,8 @@ namespace NtfsAudit.App.ViewModels
             var options = new ScanOptions
             {
                 RootPath = RootPath,
-                MaxDepth = MaxDepth,
+                MaxDepth = ScanAllDepths ? int.MaxValue : MaxDepth,
+                ScanAllDepths = ScanAllDepths,
                 ExpandGroups = ExpandGroups,
                 UsePowerShell = UsePowerShell,
                 ExportOnComplete = ExportOnComplete
