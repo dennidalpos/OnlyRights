@@ -208,18 +208,23 @@ namespace NtfsAudit.App.Services
                                         }
                                     }
 
+                                    List<ResolvedPrincipal> members = null;
+                                    if (resolved.IsGroup && options.ExpandGroups && options.ResolveIdentities)
+                                    {
+                                        members = _groupExpansion.ExpandGroup(sid, token);
+                                        entry.MemberNames = members.Select(m =>
+                                            string.IsNullOrWhiteSpace(m.Sid)
+                                                ? m.Name
+                                                : string.Format("{0} ({1})", m.Name, m.Sid)).ToList();
+                                    }
+
                                     lock (dataLock)
                                     {
                                         WriteExportRecord(dataWriter, entry, options);
                                     }
 
-                                    if (resolved.IsGroup && options.ExpandGroups && options.ResolveIdentities)
+                                    if (members != null)
                                     {
-                                        var members = _groupExpansion.ExpandGroup(sid, token);
-                                        entry.MemberNames = members.Select(m =>
-                                            string.IsNullOrWhiteSpace(m.Sid)
-                                                ? m.Name
-                                                : string.Format("{0} ({1})", m.Name, m.Sid)).ToList();
                                         foreach (var member in members)
                                         {
                                             var source = string.Format("Gruppo:{0}", resolved.Name);
@@ -349,6 +354,9 @@ namespace NtfsAudit.App.Services
                 Source = entry.Source,
                 Depth = entry.Depth,
                 IsDisabled = entry.IsDisabled,
+                IsServiceAccount = entry.IsServiceAccount,
+                IsAdminAccount = entry.IsAdminAccount,
+                MemberNames = entry.MemberNames == null ? null : new List<string>(entry.MemberNames),
                 IncludeInherited = options.IncludeInherited,
                 ResolveIdentities = options.ResolveIdentities,
                 ExcludeServiceAccounts = options.ExcludeServiceAccounts,
