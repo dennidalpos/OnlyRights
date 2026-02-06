@@ -6,7 +6,7 @@
     <Style x:Key="RightsRowStyle" TargetType="DataGridRow">
       <Style.Triggers>
         <DataTrigger Binding="{Binding IsDisabled}" Value="True">
-          <Setter Property="TextElement.TextDecorations" Value="Strikethrough" />
+          <Setter Property="TextBlock.TextDecorations" Value="Strikethrough" />
           <Setter Property="Foreground" Value="#FF9E9E9E" />
         </DataTrigger>
         <MultiDataTrigger>
