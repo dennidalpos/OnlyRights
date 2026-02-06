@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace NtfsAudit.App.Export
 {
     public class ExportRecord
@@ -14,6 +16,9 @@ namespace NtfsAudit.App.Export
         public string Source { get; set; }
         public int Depth { get; set; }
         public bool IsDisabled { get; set; }
+        public bool IsServiceAccount { get; set; }
+        public bool IsAdminAccount { get; set; }
+        public List<string> MemberNames { get; set; }
         public bool IncludeInherited { get; set; }
         public bool ResolveIdentities { get; set; }
         public bool ExcludeServiceAccounts { get; set; }

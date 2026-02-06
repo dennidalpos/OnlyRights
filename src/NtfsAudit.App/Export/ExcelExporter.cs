@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
@@ -21,7 +22,15 @@ namespace NtfsAudit.App.Export
                 Directory.CreateDirectory(outputDir);
             }
 
-            var folderHeaders = new[]
+            var records = LoadFolderPermissions(tempDataPath);
+            var groupRecords = records
+                .Where(record => string.Equals(record.PrincipalType, "Group", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            var userRecords = records
+                .Where(record => string.Equals(record.PrincipalType, "User", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            var headers = new[]
             {
                 "FolderPath",
                 "PrincipalName",
@@ -35,14 +44,14 @@ namespace NtfsAudit.App.Export
                 "Source",
                 "Depth",
                 "Disabilitato",
+                "IsServiceAccount",
+                "IsAdminAccount",
+                "GroupMembers",
                 "IncludeInherited",
                 "ResolveIdentities",
                 "ExcludeServiceAccounts",
                 "ExcludeAdminAccounts"
             };
-            var folderColumnWidths = InitializeColumnWidths(folderHeaders);
-            var folderRecords = LoadFolderPermissions(tempDataPath, folderColumnWidths);
-            var folderRowCount = folderRecords.Count + 1;
 
             using (var document = SpreadsheetDocument.Create(outputPath, SpreadsheetDocumentType.Workbook))
             {
@@ -50,15 +59,23 @@ namespace NtfsAudit.App.Export
                 workbookPart.Workbook = new Workbook();
                 var sheets = workbookPart.Workbook.AppendChild(new Sheets());
 
-                var folderSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteFolderPermissionsSheet(folderSheet, folderRecords, folderHeaders, folderColumnWidths, folderRowCount);
-                sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(folderSheet), SheetId = 1, Name = "FolderPermissions" });
+                var userSheet = workbookPart.AddNewPart<WorksheetPart>();
+                WriteFolderPermissionsSheet(userSheet, userRecords, headers, "UsersTable", 1);
+                sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(userSheet), SheetId = 1, Name = "Users" });
+
+                var groupSheet = workbookPart.AddNewPart<WorksheetPart>();
+                WriteFolderPermissionsSheet(groupSheet, groupRecords, headers, "GroupsTable", 2);
+                sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(groupSheet), SheetId = 2, Name = "Groups" });
+
+                var aclSheet = workbookPart.AddNewPart<WorksheetPart>();
+                WriteFolderPermissionsSheet(aclSheet, records, headers, "AclTable", 3);
+                sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(aclSheet), SheetId = 3, Name = "Acl" });
 
                 workbookPart.Workbook.Save();
             }
         }
 
-        private List<ExportRecord> LoadFolderPermissions(string tempDataPath, int[] columnWidths)
+        private List<ExportRecord> LoadFolderPermissions(string tempDataPath)
         {
             var records = new List<ExportRecord>();
             if (!File.Exists(tempDataPath))
@@ -80,18 +97,25 @@ namespace NtfsAudit.App.Export
                 }
                 if (record == null) continue;
                 records.Add(record);
-                UpdateColumnWidths(columnWidths, record.FolderPath, record.PrincipalName, record.PrincipalSid, record.PrincipalType,
-                    record.AllowDeny, record.RightsSummary, record.IsInherited.ToString(), record.InheritanceFlags,
-                    record.PropagationFlags, record.Source, record.Depth.ToString(CultureInfo.InvariantCulture),
-                    record.IsDisabled.ToString(), record.IncludeInherited.ToString(), record.ResolveIdentities.ToString(),
-                    record.ExcludeServiceAccounts.ToString(), record.ExcludeAdminAccounts.ToString());
             }
 
             return records;
         }
 
-        private void WriteFolderPermissionsSheet(WorksheetPart sheetPart, List<ExportRecord> records, string[] headers, int[] columnWidths, int rowCount)
+        private void WriteFolderPermissionsSheet(WorksheetPart sheetPart, List<ExportRecord> records, string[] headers, string tableName, uint tableId)
         {
+            var columnWidths = InitializeColumnWidths(headers);
+            foreach (var record in records)
+            {
+                UpdateColumnWidths(columnWidths, record.FolderPath, record.PrincipalName, record.PrincipalSid, record.PrincipalType,
+                    record.AllowDeny, record.RightsSummary, record.IsInherited.ToString(), record.InheritanceFlags,
+                    record.PropagationFlags, record.Source, record.Depth.ToString(CultureInfo.InvariantCulture),
+                    record.IsDisabled.ToString(), record.IsServiceAccount.ToString(), record.IsAdminAccount.ToString(),
+                    BuildMembersSummary(record), record.IncludeInherited.ToString(), record.ResolveIdentities.ToString(),
+                    record.ExcludeServiceAccounts.ToString(), record.ExcludeAdminAccounts.ToString());
+            }
+            var rowCount = records.Count + 1;
+
             using (var writer = OpenXmlWriter.Create(sheetPart))
             {
                 writer.WriteStartElement(new Worksheet());
@@ -114,6 +138,9 @@ namespace NtfsAudit.App.Export
                         record.Source,
                         record.Depth.ToString(CultureInfo.InvariantCulture),
                         record.IsDisabled.ToString(),
+                        record.IsServiceAccount.ToString(),
+                        record.IsAdminAccount.ToString(),
+                        BuildMembersSummary(record),
                         record.IncludeInherited.ToString(),
                         record.ResolveIdentities.ToString(),
                         record.ExcludeServiceAccounts.ToString(),
@@ -121,7 +148,7 @@ namespace NtfsAudit.App.Export
                 }
 
                 writer.WriteEndElement();
-                WriteTableParts(writer, sheetPart, "FolderPermissionsTable", 1, headers, rowCount);
+                WriteTableParts(writer, sheetPart, tableName, tableId, headers, rowCount);
                 writer.WriteEndElement();
             }
         }
@@ -226,6 +253,16 @@ namespace NtfsAudit.App.Export
                 dividend = (dividend - 1) / 26;
             }
             return columnName;
+        }
+
+        private string BuildMembersSummary(ExportRecord record)
+        {
+            if (record.MemberNames == null || record.MemberNames.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            return string.Join(", ", record.MemberNames);
         }
 
         private void WriteRow(OpenXmlWriter writer, params string[] values)

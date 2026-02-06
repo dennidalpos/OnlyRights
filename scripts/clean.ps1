@@ -1,5 +1,6 @@
 param(
     [switch]$KeepDist,
+    [switch]$KeepArtifacts,
     [switch]$KeepTemp,
     [switch]$KeepCache
 )
@@ -10,12 +11,15 @@ $root = Resolve-Path ".."
 $paths = @(
     (Join-Path $root ".vs"),
     (Join-Path $root "src\NtfsAudit.App\bin"),
-    (Join-Path $root "src\NtfsAudit.App\obj"),
-    (Join-Path $root "artifacts")
+    (Join-Path $root "src\NtfsAudit.App\obj")
 )
 
 if (-not $KeepDist) {
     $paths += (Join-Path $root "dist")
+}
+
+if (-not $KeepArtifacts) {
+    $paths += (Join-Path $root "artifacts")
 }
 
 foreach ($path in $paths) {

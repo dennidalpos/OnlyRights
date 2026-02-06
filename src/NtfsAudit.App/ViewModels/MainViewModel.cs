@@ -36,6 +36,7 @@ namespace NtfsAudit.App.ViewModels
         private bool _usePowerShell = true;
         private bool _exportOnComplete;
         private string _progressText = "Pronto";
+        private string _currentPathText;
         private bool _isIndeterminate;
         private double _progressValue;
         private int _processedCount;
@@ -208,6 +209,16 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
+        public string CurrentPathText
+        {
+            get { return _currentPathText; }
+            set
+            {
+                _currentPathText = value;
+                OnPropertyChanged("CurrentPathText");
+            }
+        }
+
         public bool IsIndeterminate
         {
             get { return _isIndeterminate; }
@@ -352,6 +363,7 @@ namespace NtfsAudit.App.ViewModels
             _isScanning = true;
             IsIndeterminate = false;
             ProgressValue = 0;
+            CurrentPathText = string.Empty;
             UpdateCommands();
             ClearResults();
 
@@ -468,13 +480,18 @@ namespace NtfsAudit.App.ViewModels
             }
             catch (OperationCanceledException)
             {
-                RunOnUi(() => { ProgressText = "Scansione annullata"; });
+                RunOnUi(() =>
+                {
+                    ProgressText = "Scansione annullata";
+                    CurrentPathText = string.Empty;
+                });
             }
             catch (Exception ex)
             {
                 RunOnUi(() =>
                 {
                     ProgressText = string.Format("Errore scansione: {0}", ex.Message);
+                    CurrentPathText = string.Empty;
                 });
             }
             finally
@@ -512,15 +529,7 @@ namespace NtfsAudit.App.ViewModels
 
         private void UpdateProgress(ScanProgress progress)
         {
-            var stage = string.IsNullOrWhiteSpace(progress.Stage) ? "Scansione" : progress.Stage;
-            var path = string.IsNullOrWhiteSpace(progress.CurrentPath) ? string.Empty : string.Format(" | {0}", progress.CurrentPath);
-            ProgressText = string.Format("{0}{1} | Cartelle processate: {2} | In coda: {3} | Errori: {4} | Tempo: {5}",
-                stage,
-                path,
-                progress.Processed,
-                progress.QueueCount,
-                progress.Errors,
-                progress.Elapsed.ToString("hh\\:mm\\:ss"));
+            CurrentPathText = string.IsNullOrWhiteSpace(progress.CurrentPath) ? string.Empty : progress.CurrentPath;
             ProcessedCount = progress.Processed;
             RemainingCount = progress.QueueCount;
             var total = progress.Processed + progress.QueueCount;
@@ -602,6 +611,7 @@ namespace NtfsAudit.App.ViewModels
             SelectedFolderPath = string.Empty;
             ProcessedCount = 0;
             RemainingCount = 0;
+            CurrentPathText = string.Empty;
         }
 
         private void UpdateCommands()

@@ -162,7 +162,10 @@ namespace NtfsAudit.App.Services
                     PropagationFlags = record.PropagationFlags,
                     Source = record.Source,
                     Depth = record.Depth,
-                    IsDisabled = record.IsDisabled
+                    IsDisabled = record.IsDisabled,
+                    IsServiceAccount = record.IsServiceAccount,
+                    IsAdminAccount = record.IsAdminAccount,
+                    MemberNames = record.MemberNames == null ? null : new List<string>(record.MemberNames)
                 };
 
                 detail.AllEntries.Add(entry);
@@ -182,7 +185,8 @@ namespace NtfsAudit.App.Services
         private string BuildEntryKey(ExportRecord record)
         {
             var principalKey = string.IsNullOrWhiteSpace(record.PrincipalSid) ? record.PrincipalName : record.PrincipalSid;
-            return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}",
+            var membersKey = record.MemberNames == null ? string.Empty : string.Join(",", record.MemberNames);
+            return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}",
                 principalKey ?? string.Empty,
                 record.PrincipalType ?? string.Empty,
                 record.AllowDeny ?? string.Empty,
@@ -192,7 +196,10 @@ namespace NtfsAudit.App.Services
                 record.PropagationFlags ?? string.Empty,
                 record.Source ?? string.Empty,
                 record.Depth,
-                record.IsDisabled);
+                record.IsDisabled,
+                record.IsServiceAccount,
+                record.IsAdminAccount,
+                membersKey);
         }
 
         private Dictionary<string, List<string>> BuildTreeFromExport(string dataPath)
