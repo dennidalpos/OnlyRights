@@ -38,7 +38,8 @@ namespace NtfsAudit.App.Export
                 "Disabilitato"
             };
             var folderColumnWidths = InitializeColumnWidths(folderHeaders);
-            var folderRowCount = AnalyzeFolderPermissions(tempDataPath, summaries, folderColumnWidths);
+            var folderRecords = LoadFolderPermissions(tempDataPath, summaries, folderColumnWidths);
+            var folderRowCount = folderRecords.Count + 1;
 
             var summaryHeaders = new[] { "PrincipalName", "PrincipalSid", "FoldersCount", "HighestRightsSummary", "Notes" };
             var summaryColumnWidths = InitializeColumnWidths(summaryHeaders);
@@ -56,7 +57,7 @@ namespace NtfsAudit.App.Export
                 var sheets = workbookPart.Workbook.AppendChild(new Sheets());
 
                 var folderSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteFolderPermissionsSheet(folderSheet, tempDataPath, folderHeaders, folderColumnWidths, folderRowCount);
+                WriteFolderPermissionsSheet(folderSheet, folderRecords, folderHeaders, folderColumnWidths, folderRowCount);
                 sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(folderSheet), SheetId = 1, Name = "FolderPermissions" });
 
                 var summarySheet = workbookPart.AddNewPart<WorksheetPart>();
@@ -71,12 +72,12 @@ namespace NtfsAudit.App.Export
             }
         }
 
-        private int AnalyzeFolderPermissions(string tempDataPath, Dictionary<string, SummaryEntry> summaries, int[] columnWidths)
+        private List<ExportRecord> LoadFolderPermissions(string tempDataPath, Dictionary<string, SummaryEntry> summaries, int[] columnWidths)
         {
-            var rowCount = 1;
+            var records = new List<ExportRecord>();
             if (!File.Exists(tempDataPath))
             {
-                return rowCount;
+                return records;
             }
 
             foreach (var line in File.ReadLines(tempDataPath))
@@ -92,11 +93,11 @@ namespace NtfsAudit.App.Export
                     continue;
                 }
                 if (record == null) continue;
+                records.Add(record);
                 UpdateColumnWidths(columnWidths, record.FolderPath, record.PrincipalName, record.PrincipalSid, record.PrincipalType,
                     record.AllowDeny, record.RightsSummary, record.IsInherited.ToString(), record.InheritanceFlags,
                     record.PropagationFlags, record.Source, record.Depth.ToString(CultureInfo.InvariantCulture),
                     record.IsDisabled.ToString());
-                rowCount++;
 
                 SummaryEntry summary;
                 if (!summaries.TryGetValue(record.PrincipalSid ?? record.PrincipalName, out summary))
@@ -118,7 +119,7 @@ namespace NtfsAudit.App.Export
                 }
             }
 
-            return rowCount;
+            return records;
         }
 
         private int AnalyzeSummary(Dictionary<string, SummaryEntry> summaries, int[] columnWidths)
@@ -161,7 +162,7 @@ namespace NtfsAudit.App.Export
             return errors;
         }
 
-        private void WriteFolderPermissionsSheet(WorksheetPart sheetPart, string tempDataPath, string[] headers, int[] columnWidths, int rowCount)
+        private void WriteFolderPermissionsSheet(WorksheetPart sheetPart, List<ExportRecord> records, string[] headers, int[] columnWidths, int rowCount)
         {
             using (var writer = OpenXmlWriter.Create(sheetPart))
             {
@@ -170,35 +171,21 @@ namespace NtfsAudit.App.Export
                 writer.WriteStartElement(new SheetData());
                 WriteRow(writer, headers);
 
-                if (File.Exists(tempDataPath))
+                foreach (var record in records)
                 {
-                    foreach (var line in File.ReadLines(tempDataPath))
-                    {
-                        if (string.IsNullOrWhiteSpace(line)) continue;
-                        ExportRecord record;
-                        try
-                        {
-                            record = JsonConvert.DeserializeObject<ExportRecord>(line);
-                        }
-                        catch
-                        {
-                            continue;
-                        }
-                        if (record == null) continue;
-                        WriteRow(writer,
-                            record.FolderPath,
-                            record.PrincipalName,
-                            record.PrincipalSid,
-                            record.PrincipalType,
-                            record.AllowDeny,
-                            record.RightsSummary,
-                            record.IsInherited.ToString(),
-                            record.InheritanceFlags,
-                            record.PropagationFlags,
-                            record.Source,
-                            record.Depth.ToString(CultureInfo.InvariantCulture),
-                            record.IsDisabled.ToString());
-                    }
+                    WriteRow(writer,
+                        record.FolderPath,
+                        record.PrincipalName,
+                        record.PrincipalSid,
+                        record.PrincipalType,
+                        record.AllowDeny,
+                        record.RightsSummary,
+                        record.IsInherited.ToString(),
+                        record.InheritanceFlags,
+                        record.PropagationFlags,
+                        record.Source,
+                        record.Depth.ToString(CultureInfo.InvariantCulture),
+                        record.IsDisabled.ToString());
                 }
 
                 writer.WriteEndElement();

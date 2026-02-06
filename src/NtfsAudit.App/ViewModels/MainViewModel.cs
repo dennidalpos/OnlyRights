@@ -44,7 +44,7 @@ namespace NtfsAudit.App.ViewModels
         {
             _cacheStore = new LocalCacheStore();
             _sidNameCache = new SidNameCache();
-            _groupMembershipCache = new GroupMembershipCache(TimeSpan.FromMinutes(30));
+            _groupMembershipCache = new GroupMembershipCache(TimeSpan.FromHours(2));
             _excelExporter = new ExcelExporter();
             _analysisArchive = new AnalysisArchive();
 
@@ -368,6 +368,10 @@ namespace NtfsAudit.App.ViewModels
             ClearResults();
             LoadTree(_scanResult);
             LoadErrors(_scanResult.ErrorPath);
+            if (!string.IsNullOrWhiteSpace(RootPath) && _scanResult.TreeMap.Count > 0 && !_scanResult.TreeMap.ContainsKey(RootPath))
+            {
+                RootPath = _scanResult.TreeMap.Keys.First();
+            }
             var root = RootPath;
             if (string.IsNullOrWhiteSpace(root) && _scanResult.TreeMap.Count > 0)
             {

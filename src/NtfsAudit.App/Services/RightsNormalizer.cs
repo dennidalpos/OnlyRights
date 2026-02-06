@@ -25,7 +25,12 @@ namespace NtfsAudit.App.Services
 
             if (set.Count == 0)
             {
-                return "Custom";
+                var flags = rights.ToString();
+                if (string.IsNullOrWhiteSpace(flags))
+                {
+                    return "Custom";
+                }
+                return string.Format("Custom:{0}", flags.Replace(", ", "|"));
             }
 
             return string.Join("|", set.OrderBy(x => x));
