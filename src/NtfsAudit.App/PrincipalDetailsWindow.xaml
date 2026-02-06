@@ -15,6 +15,7 @@
           <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="*" />
           <DataGridTextColumn Header="SID" Binding="{Binding Sid}" Width="2*" />
           <DataGridTextColumn Header="Tipo" Binding="{Binding Type}" Width="120" />
+          <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" Width="120" />
         </DataGrid.Columns>
       </DataGrid>
     </Grid>

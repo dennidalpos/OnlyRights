@@ -14,9 +14,9 @@ namespace NtfsAudit.App.Cache
             return _cache.TryGetValue(sid, out entry);
         }
 
-        public void Set(string sid, string name, bool isGroup)
+        public void Set(string sid, string name, bool isGroup, bool isDisabled = false)
         {
-            _cache[sid] = new SidCacheEntry { Name = name, IsGroup = isGroup };
+            _cache[sid] = new SidCacheEntry { Name = name, IsGroup = isGroup, IsDisabled = isDisabled };
         }
 
         public void Load(string path)
@@ -47,7 +47,7 @@ namespace NtfsAudit.App.Cache
                 foreach (var pair in legacyData)
                 {
                     if (string.IsNullOrWhiteSpace(pair.Value)) continue;
-                    _cache[pair.Key] = new SidCacheEntry { Name = pair.Value, IsGroup = false };
+                    _cache[pair.Key] = new SidCacheEntry { Name = pair.Value, IsGroup = false, IsDisabled = false };
                 }
             }
             catch
@@ -66,5 +66,6 @@ namespace NtfsAudit.App.Cache
     {
         public string Name { get; set; }
         public bool IsGroup { get; set; }
+        public bool IsDisabled { get; set; }
     }
 }

@@ -13,5 +13,10 @@ namespace NtfsAudit.App.Export
         public string PropagationFlags { get; set; }
         public string Source { get; set; }
         public int Depth { get; set; }
+        public bool IsDisabled { get; set; }
+        public bool IncludeInherited { get; set; }
+        public bool ResolveIdentities { get; set; }
+        public bool ExcludeServiceAccounts { get; set; }
+        public bool ExcludeAdminAccounts { get; set; }
     }
 }

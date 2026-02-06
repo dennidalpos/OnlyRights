@@ -104,11 +104,14 @@ namespace NtfsAudit.App.Services
 
         private ResolvedPrincipal MapPrincipal(Principal principal)
         {
+            var authenticable = principal as AuthenticablePrincipal;
+            var isDisabled = authenticable != null && authenticable.Enabled.HasValue && !authenticable.Enabled.Value;
             return new ResolvedPrincipal
             {
                 Sid = principal.Sid == null ? null : principal.Sid.ToString(),
                 Name = principal.SamAccountName ?? principal.Name,
-                IsGroup = principal is GroupPrincipal
+                IsGroup = principal is GroupPrincipal,
+                IsDisabled = isDisabled
             };
         }
     }

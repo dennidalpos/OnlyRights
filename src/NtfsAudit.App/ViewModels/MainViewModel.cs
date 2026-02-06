@@ -27,6 +27,11 @@ namespace NtfsAudit.App.ViewModels
         private bool _isScanning;
         private string _rootPath;
         private int _maxDepth = 5;
+        private bool _scanAllDepths = true;
+        private bool _includeInherited = true;
+        private bool _resolveIdentities = true;
+        private bool _excludeServiceAccounts;
+        private bool _excludeAdminAccounts;
         private bool _expandGroups = true;
         private bool _usePowerShell = true;
         private bool _exportOnComplete;
@@ -43,7 +48,7 @@ namespace NtfsAudit.App.ViewModels
         {
             _cacheStore = new LocalCacheStore();
             _sidNameCache = new SidNameCache();
-            _groupMembershipCache = new GroupMembershipCache(TimeSpan.FromMinutes(30));
+            _groupMembershipCache = new GroupMembershipCache(TimeSpan.FromHours(2));
             _excelExporter = new ExcelExporter();
             _analysisArchive = new AnalysisArchive();
 
@@ -98,6 +103,68 @@ namespace NtfsAudit.App.ViewModels
             {
                 _maxDepth = value;
                 OnPropertyChanged("MaxDepth");
+            }
+        }
+
+        public bool ScanAllDepths
+        {
+            get { return _scanAllDepths; }
+            set
+            {
+                _scanAllDepths = value;
+                OnPropertyChanged("ScanAllDepths");
+                OnPropertyChanged("IsMaxDepthEnabled");
+            }
+        }
+
+        public bool IsMaxDepthEnabled
+        {
+            get { return !_scanAllDepths; }
+        }
+
+        public bool IncludeInherited
+        {
+            get { return _includeInherited; }
+            set
+            {
+                _includeInherited = value;
+                OnPropertyChanged("IncludeInherited");
+            }
+        }
+
+        public bool ResolveIdentities
+        {
+            get { return _resolveIdentities; }
+            set
+            {
+                _resolveIdentities = value;
+                OnPropertyChanged("ResolveIdentities");
+                OnPropertyChanged("IsExpandGroupsEnabled");
+            }
+        }
+
+        public bool IsExpandGroupsEnabled
+        {
+            get { return _resolveIdentities; }
+        }
+
+        public bool ExcludeServiceAccounts
+        {
+            get { return _excludeServiceAccounts; }
+            set
+            {
+                _excludeServiceAccounts = value;
+                OnPropertyChanged("ExcludeServiceAccounts");
+            }
+        }
+
+        public bool ExcludeAdminAccounts
+        {
+            get { return _excludeAdminAccounts; }
+            set
+            {
+                _excludeAdminAccounts = value;
+                OnPropertyChanged("ExcludeAdminAccounts");
             }
         }
 
@@ -292,8 +359,13 @@ namespace NtfsAudit.App.ViewModels
             var options = new ScanOptions
             {
                 RootPath = RootPath,
-                MaxDepth = MaxDepth,
-                ExpandGroups = ExpandGroups,
+                MaxDepth = ScanAllDepths ? int.MaxValue : MaxDepth,
+                ScanAllDepths = ScanAllDepths,
+                IncludeInherited = IncludeInherited,
+                ResolveIdentities = ResolveIdentities,
+                ExcludeServiceAccounts = ExcludeServiceAccounts,
+                ExcludeAdminAccounts = ExcludeAdminAccounts,
+                ExpandGroups = ResolveIdentities && ExpandGroups,
                 UsePowerShell = UsePowerShell,
                 ExportOnComplete = ExportOnComplete
             };
@@ -350,6 +422,10 @@ namespace NtfsAudit.App.ViewModels
             ClearResults();
             LoadTree(_scanResult);
             LoadErrors(_scanResult.ErrorPath);
+            if (!string.IsNullOrWhiteSpace(RootPath) && _scanResult.TreeMap.Count > 0 && !_scanResult.TreeMap.ContainsKey(RootPath))
+            {
+                RootPath = _scanResult.TreeMap.Keys.First();
+            }
             var root = RootPath;
             if (string.IsNullOrWhiteSpace(root) && _scanResult.TreeMap.Count > 0)
             {
@@ -436,7 +512,11 @@ namespace NtfsAudit.App.ViewModels
 
         private void UpdateProgress(ScanProgress progress)
         {
-            ProgressText = string.Format("Cartelle processate: {0} | In coda: {1} | Errori: {2} | Tempo: {3}",
+            var stage = string.IsNullOrWhiteSpace(progress.Stage) ? "Scansione" : progress.Stage;
+            var path = string.IsNullOrWhiteSpace(progress.CurrentPath) ? string.Empty : string.Format(" | {0}", progress.CurrentPath);
+            ProgressText = string.Format("{0}{1} | Cartelle processate: {2} | In coda: {3} | Errori: {4} | Tempo: {5}",
+                stage,
+                path,
                 progress.Processed,
                 progress.QueueCount,
                 progress.Errors,

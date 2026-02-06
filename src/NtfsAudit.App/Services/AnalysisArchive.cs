@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using Newtonsoft.Json;
 using NtfsAudit.App.Export;
 using NtfsAudit.App.Models;
@@ -52,9 +53,8 @@ namespace NtfsAudit.App.Services
             var treePath = Path.Combine(tempDir, TreeEntryName);
             var metaPath = Path.Combine(tempDir, MetaEntryName);
 
-            var treeMap = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(File.ReadAllText(treePath))
-                ?? new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-            var meta = JsonConvert.DeserializeObject<ArchiveMeta>(File.ReadAllText(metaPath)) ?? new ArchiveMeta();
+            var treeMap = LoadTreeMap(treePath, dataPath);
+            var meta = LoadMeta(metaPath);
 
             var details = BuildDetailsFromExport(dataPath);
 
@@ -73,11 +73,49 @@ namespace NtfsAudit.App.Services
             };
         }
 
+        private Dictionary<string, List<string>> LoadTreeMap(string treePath, string dataPath)
+        {
+            if (File.Exists(treePath))
+            {
+                try
+                {
+                    var tree = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(File.ReadAllText(treePath));
+                    if (tree != null && tree.Count > 0)
+                    {
+                        return new Dictionary<string, List<string>>(tree, StringComparer.OrdinalIgnoreCase);
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            return BuildTreeFromExport(dataPath);
+        }
+
+        private ArchiveMeta LoadMeta(string metaPath)
+        {
+            if (!File.Exists(metaPath))
+            {
+                return new ArchiveMeta();
+            }
+
+            try
+            {
+                return JsonConvert.DeserializeObject<ArchiveMeta>(File.ReadAllText(metaPath)) ?? new ArchiveMeta();
+            }
+            catch
+            {
+                return new ArchiveMeta();
+            }
+        }
+
         private Dictionary<string, FolderDetail> BuildDetailsFromExport(string dataPath)
         {
             var details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase);
             if (!File.Exists(dataPath)) return details;
 
+            var dedupe = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
             foreach (var line in File.ReadLines(dataPath))
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
@@ -99,6 +137,18 @@ namespace NtfsAudit.App.Services
                     details[record.FolderPath] = detail;
                 }
 
+                var entryKey = BuildEntryKey(record);
+                HashSet<string> folderKeys;
+                if (!dedupe.TryGetValue(record.FolderPath, out folderKeys))
+                {
+                    folderKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    dedupe[record.FolderPath] = folderKeys;
+                }
+                if (!folderKeys.Add(entryKey))
+                {
+                    continue;
+                }
+
                 var entry = new AceEntry
                 {
                     FolderPath = record.FolderPath,
@@ -111,7 +161,8 @@ namespace NtfsAudit.App.Services
                     InheritanceFlags = record.InheritanceFlags,
                     PropagationFlags = record.PropagationFlags,
                     Source = record.Source,
-                    Depth = record.Depth
+                    Depth = record.Depth,
+                    IsDisabled = record.IsDisabled
                 };
 
                 detail.AllEntries.Add(entry);
@@ -126,6 +177,117 @@ namespace NtfsAudit.App.Services
             }
 
             return details;
+        }
+
+        private string BuildEntryKey(ExportRecord record)
+        {
+            var principalKey = string.IsNullOrWhiteSpace(record.PrincipalSid) ? record.PrincipalName : record.PrincipalSid;
+            return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}",
+                principalKey ?? string.Empty,
+                record.PrincipalType ?? string.Empty,
+                record.AllowDeny ?? string.Empty,
+                record.RightsSummary ?? string.Empty,
+                record.IsInherited,
+                record.InheritanceFlags ?? string.Empty,
+                record.PropagationFlags ?? string.Empty,
+                record.Source ?? string.Empty,
+                record.Depth,
+                record.IsDisabled);
+        }
+
+        private Dictionary<string, List<string>> BuildTreeFromExport(string dataPath)
+        {
+            var treeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            if (!File.Exists(dataPath)) return treeMap;
+
+            var folders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var line in File.ReadLines(dataPath))
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                ExportRecord record;
+                try
+                {
+                    record = JsonConvert.DeserializeObject<ExportRecord>(line);
+                }
+                catch
+                {
+                    continue;
+                }
+                if (record == null || string.IsNullOrWhiteSpace(record.FolderPath)) continue;
+                folders.Add(record.FolderPath);
+            }
+
+            var parentCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var toProcess = folders.ToList();
+            foreach (var folder in toProcess)
+            {
+                var parent = SafeGetParent(folder, parentCache);
+                while (!string.IsNullOrWhiteSpace(parent))
+                {
+                    if (!folders.Add(parent))
+                    {
+                        break;
+                    }
+                    parent = SafeGetParent(parent, parentCache);
+                }
+            }
+
+            var treeSets = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var folder in folders)
+            {
+                if (!treeSets.ContainsKey(folder))
+                {
+                    treeSets[folder] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                }
+            }
+
+            foreach (var folder in folders)
+            {
+                var parent = SafeGetParent(folder, parentCache);
+                if (parent != null)
+                {
+                    HashSet<string> children;
+                    if (!treeSets.TryGetValue(parent, out children))
+                    {
+                        children = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        treeSets[parent] = children;
+                    }
+                    children.Add(folder);
+                }
+            }
+
+            foreach (var entry in treeSets)
+            {
+                treeMap[entry.Key] = entry.Value.ToList();
+            }
+
+            return treeMap;
+        }
+
+        private string SafeGetParent(string path, Dictionary<string, string> cache)
+        {
+            if (cache != null && cache.TryGetValue(path, out var cachedParent))
+            {
+                return cachedParent;
+            }
+
+            string parentValue;
+            try
+            {
+                var parent = Directory.GetParent(path);
+                parentValue = parent == null ? null : parent.FullName;
+            }
+            catch
+            {
+                parentValue = null;
+            }
+
+            if (cache != null)
+            {
+                cache[path] = parentValue;
+            }
+
+            return parentValue;
         }
 
         private void AddFileEntry(ZipArchive archive, string entryName, string sourcePath)
