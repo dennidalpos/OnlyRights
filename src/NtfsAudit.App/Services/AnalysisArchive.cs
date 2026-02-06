@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using Newtonsoft.Json;
 using NtfsAudit.App.Export;
 using NtfsAudit.App.Models;
@@ -52,9 +53,8 @@ namespace NtfsAudit.App.Services
             var treePath = Path.Combine(tempDir, TreeEntryName);
             var metaPath = Path.Combine(tempDir, MetaEntryName);
 
-            var treeMap = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(File.ReadAllText(treePath))
-                ?? new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-            var meta = JsonConvert.DeserializeObject<ArchiveMeta>(File.ReadAllText(metaPath)) ?? new ArchiveMeta();
+            var treeMap = LoadTreeMap(treePath, dataPath);
+            var meta = LoadMeta(metaPath);
 
             var details = BuildDetailsFromExport(dataPath);
 
@@ -71,6 +71,43 @@ namespace NtfsAudit.App.Services
                 ScanResult = result,
                 RootPath = meta.RootPath
             };
+        }
+
+        private Dictionary<string, List<string>> LoadTreeMap(string treePath, string dataPath)
+        {
+            if (File.Exists(treePath))
+            {
+                try
+                {
+                    var tree = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(File.ReadAllText(treePath));
+                    if (tree != null && tree.Count > 0)
+                    {
+                        return new Dictionary<string, List<string>>(tree, StringComparer.OrdinalIgnoreCase);
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            return BuildTreeFromExport(dataPath);
+        }
+
+        private ArchiveMeta LoadMeta(string metaPath)
+        {
+            if (!File.Exists(metaPath))
+            {
+                return new ArchiveMeta();
+            }
+
+            try
+            {
+                return JsonConvert.DeserializeObject<ArchiveMeta>(File.ReadAllText(metaPath)) ?? new ArchiveMeta();
+            }
+            catch
+            {
+                return new ArchiveMeta();
+            }
         }
 
         private Dictionary<string, FolderDetail> BuildDetailsFromExport(string dataPath)
@@ -126,6 +163,75 @@ namespace NtfsAudit.App.Services
             }
 
             return details;
+        }
+
+        private Dictionary<string, List<string>> BuildTreeFromExport(string dataPath)
+        {
+            var treeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            if (!File.Exists(dataPath)) return treeMap;
+
+            var folders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var line in File.ReadLines(dataPath))
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                ExportRecord record;
+                try
+                {
+                    record = JsonConvert.DeserializeObject<ExportRecord>(line);
+                }
+                catch
+                {
+                    continue;
+                }
+                if (record == null || string.IsNullOrWhiteSpace(record.FolderPath)) continue;
+                folders.Add(record.FolderPath);
+            }
+
+            var toProcess = folders.ToList();
+            foreach (var folder in toProcess)
+            {
+                var parent = SafeGetParent(folder);
+                while (!string.IsNullOrWhiteSpace(parent))
+                {
+                    if (!folders.Add(parent))
+                    {
+                        break;
+                    }
+                    parent = SafeGetParent(parent);
+                }
+            }
+
+            foreach (var folder in folders)
+            {
+                if (!treeMap.ContainsKey(folder))
+                {
+                    treeMap[folder] = new List<string>();
+                }
+            }
+
+            foreach (var folder in folders)
+            {
+                var parent = SafeGetParent(folder);
+                if (parent != null && treeMap.ContainsKey(parent))
+                {
+                    treeMap[parent].Add(folder);
+                }
+            }
+
+            return treeMap;
+        }
+
+        private string SafeGetParent(string path)
+        {
+            try
+            {
+                var parent = Directory.GetParent(path);
+                return parent == null ? null : parent.FullName;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private void AddFileEntry(ZipArchive archive, string entryName, string sourcePath)

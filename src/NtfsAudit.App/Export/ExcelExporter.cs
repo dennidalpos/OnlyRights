@@ -81,7 +81,15 @@ namespace NtfsAudit.App.Export
             foreach (var line in File.ReadLines(tempDataPath))
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var record = JsonConvert.DeserializeObject<ExportRecord>(line);
+                ExportRecord record;
+                try
+                {
+                    record = JsonConvert.DeserializeObject<ExportRecord>(line);
+                }
+                catch
+                {
+                    continue;
+                }
                 if (record == null) continue;
                 UpdateColumnWidths(columnWidths, record.FolderPath, record.PrincipalName, record.PrincipalSid, record.PrincipalType,
                     record.AllowDeny, record.RightsSummary, record.IsInherited.ToString(), record.InheritanceFlags,
@@ -134,7 +142,15 @@ namespace NtfsAudit.App.Export
             foreach (var line in File.ReadLines(errorPath))
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var error = JsonConvert.DeserializeObject<ErrorEntry>(line);
+                ErrorEntry error;
+                try
+                {
+                    error = JsonConvert.DeserializeObject<ErrorEntry>(line);
+                }
+                catch
+                {
+                    continue;
+                }
                 if (error == null) continue;
                 UpdateColumnWidths(columnWidths, error.Path, error.ErrorType, error.Message);
                 errors.Add(error);
@@ -157,7 +173,15 @@ namespace NtfsAudit.App.Export
                     foreach (var line in File.ReadLines(tempDataPath))
                     {
                         if (string.IsNullOrWhiteSpace(line)) continue;
-                        var record = JsonConvert.DeserializeObject<ExportRecord>(line);
+                        ExportRecord record;
+                        try
+                        {
+                            record = JsonConvert.DeserializeObject<ExportRecord>(line);
+                        }
+                        catch
+                        {
+                            continue;
+                        }
                         if (record == null) continue;
                         WriteRow(writer,
                             record.FolderPath,
@@ -320,7 +344,7 @@ namespace NtfsAudit.App.Export
             {
                 var modulo = (dividend - 1) % 26;
                 columnName = Convert.ToChar('A' + modulo) + columnName;
-                dividend = (dividend - modulo) / 26;
+                dividend = (dividend - 1) / 26;
             }
             return columnName;
         }
