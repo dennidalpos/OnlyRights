@@ -27,7 +27,7 @@ namespace NtfsAudit.App.ViewModels
         private bool _isScanning;
         private string _rootPath;
         private int _maxDepth = 5;
-        private bool _scanAllDepths;
+        private bool _scanAllDepths = true;
         private bool _includeInherited = true;
         private bool _resolveIdentities = true;
         private bool _expandGroups = true;
@@ -488,7 +488,11 @@ namespace NtfsAudit.App.ViewModels
 
         private void UpdateProgress(ScanProgress progress)
         {
-            ProgressText = string.Format("Cartelle processate: {0} | In coda: {1} | Errori: {2} | Tempo: {3}",
+            var stage = string.IsNullOrWhiteSpace(progress.Stage) ? "Scansione" : progress.Stage;
+            var path = string.IsNullOrWhiteSpace(progress.CurrentPath) ? string.Empty : string.Format(" | {0}", progress.CurrentPath);
+            ProgressText = string.Format("{0}{1} | Cartelle processate: {2} | In coda: {3} | Errori: {4} | Tempo: {5}",
+                stage,
+                path,
                 progress.Processed,
                 progress.QueueCount,
                 progress.Errors,

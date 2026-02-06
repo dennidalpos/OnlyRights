@@ -87,6 +87,18 @@ namespace NtfsAudit.App.Services
                             {
                                 try
                                 {
+                                    if (progress != null)
+                                    {
+                                        progress.Report(new ScanProgress
+                                        {
+                                            Processed = processedCount,
+                                            QueueCount = Volatile.Read(ref pendingCount),
+                                            Errors = Volatile.Read(ref errorCount),
+                                            Elapsed = stopwatch.Elapsed,
+                                            Stage = "Enumerazione cartelle",
+                                            CurrentPath = current
+                                        });
+                                    }
                                     children = Directory.EnumerateDirectories(current, "*", SearchOption.TopDirectoryOnly).ToList();
                                 }
                                 catch (Exception ex)
@@ -112,6 +124,18 @@ namespace NtfsAudit.App.Services
 
                             try
                             {
+                                if (progress != null)
+                                {
+                                    progress.Report(new ScanProgress
+                                    {
+                                        Processed = processedCount,
+                                        QueueCount = Volatile.Read(ref pendingCount),
+                                        Errors = Volatile.Read(ref errorCount),
+                                        Elapsed = stopwatch.Elapsed,
+                                        Stage = "Lettura ACL",
+                                        CurrentPath = current
+                                    });
+                                }
                                 var security = new DirectoryInfo(current).GetAccessControl(AccessControlSections.Access);
                                 var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier));
 
@@ -220,16 +244,18 @@ namespace NtfsAudit.App.Services
                                 }
                             }
 
-                            if (progress != null)
-                            {
-                                progress.Report(new ScanProgress
-                                {
-                                    Processed = processedCount,
-                                    QueueCount = Volatile.Read(ref pendingCount),
-                                    Errors = Volatile.Read(ref errorCount),
-                                    Elapsed = stopwatch.Elapsed
-                                });
-                            }
+                                    if (progress != null)
+                                    {
+                                        progress.Report(new ScanProgress
+                                        {
+                                            Processed = processedCount,
+                                            QueueCount = Volatile.Read(ref pendingCount),
+                                            Errors = Volatile.Read(ref errorCount),
+                                            Elapsed = stopwatch.Elapsed,
+                                            Stage = "Analisi ACL",
+                                            CurrentPath = current
+                                        });
+                                    }
                         }
                     }, token);
                 }

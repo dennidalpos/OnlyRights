@@ -118,8 +118,11 @@
               <CheckBox Content="Colora per diritto" IsChecked="{Binding ColorizeRights}" VerticalAlignment="Center" />
             </StackPanel>
           </Border>
-          <ProgressBar Width="260" Height="18" IsIndeterminate="{Binding IsIndeterminate}" Value="{Binding ProgressValue}" Maximum="100" Margin="0,0,12,0" />
-          <TextBlock Text="{Binding ProgressText}" VerticalAlignment="Center" />
+          <Grid Margin="0,0,12,0" VerticalAlignment="Center">
+            <ProgressBar Width="360" Height="22" IsIndeterminate="{Binding IsIndeterminate}" Value="{Binding ProgressValue}" Maximum="100" />
+            <TextBlock Text="{Binding ProgressText}" HorizontalAlignment="Center" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+          </Grid>
+          <TextBlock Text="{Binding ProgressText}" VerticalAlignment="Center" Visibility="Collapsed" />
           <TextBlock Text=" | Analizzate: " VerticalAlignment="Center" />
           <TextBlock Text="{Binding ProcessedCount}" VerticalAlignment="Center" />
           <TextBlock Text=" | Rimanenti: " VerticalAlignment="Center" />
