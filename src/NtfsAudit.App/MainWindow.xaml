@@ -95,21 +95,21 @@
 
         <UniformGrid Grid.Row="2" Columns="2" Margin="0,0,0,8">
           <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <WrapPanel VerticalAlignment="Center">
               <TextBlock Text="MaxDepth" VerticalAlignment="Center" Margin="0,0,6,0" />
-              <TextBox Width="60" Height="24" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" />
-              <CheckBox Margin="10,0,0,0" Content="Analizza tutte le sottocartelle" IsChecked="{Binding ScanAllDepths}" />
-            </StackPanel>
+              <TextBox Width="60" Height="24" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0,0,12,0" />
+              <CheckBox Content="Analizza tutte le sottocartelle" IsChecked="{Binding ScanAllDepths}" />
+            </WrapPanel>
           </Border>
           <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <WrapPanel VerticalAlignment="Center">
               <CheckBox Margin="0,0,12,0" Content="Includi permessi ereditati" IsChecked="{Binding IncludeInherited}" />
               <CheckBox Margin="0,0,12,0" Content="Risolvi identità (più lento)" IsChecked="{Binding ResolveIdentities}" />
               <CheckBox Margin="0,0,12,0" Content="Espandi gruppi annidati" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
-              <CheckBox Content="Usa PowerShell per AD" IsChecked="{Binding UsePowerShell}" />
-              <CheckBox Margin="12,0,0,0" Content="Escludi utenti di servizio" IsChecked="{Binding ExcludeServiceAccounts}" />
-              <CheckBox Margin="12,0,0,0" Content="Escludi utenti admin" IsChecked="{Binding ExcludeAdminAccounts}" />
-            </StackPanel>
+              <CheckBox Margin="0,0,12,0" Content="Usa PowerShell per AD" IsChecked="{Binding UsePowerShell}" />
+              <CheckBox Margin="0,0,12,0" Content="Escludi utenti di servizio" IsChecked="{Binding ExcludeServiceAccounts}" />
+              <CheckBox Content="Escludi utenti admin" IsChecked="{Binding ExcludeAdminAccounts}" />
+            </WrapPanel>
           </Border>
         </UniformGrid>
 
@@ -121,14 +121,21 @@
             </StackPanel>
           </Border>
           <Grid Margin="0,0,12,0" VerticalAlignment="Center">
-            <ProgressBar Width="360" Height="22" IsIndeterminate="{Binding IsIndeterminate}" Value="{Binding ProgressValue}" Maximum="100" />
-            <TextBlock Text="{Binding ProgressText}" HorizontalAlignment="Center" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0" MinWidth="320" ClipToBounds="True">
+              <ProgressBar Height="22" IsIndeterminate="{Binding IsIndeterminate}" Value="{Binding ProgressValue}" Maximum="100" />
+              <TextBlock Text="{Binding ProgressText}" HorizontalAlignment="Center" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="6,0" />
+            </Grid>
+            <WrapPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
+              <TextBlock Text="Analizzate: " VerticalAlignment="Center" />
+              <TextBlock Text="{Binding ProcessedCount}" VerticalAlignment="Center" />
+              <TextBlock Text=" | Rimanenti: " VerticalAlignment="Center" />
+              <TextBlock Text="{Binding RemainingCount}" VerticalAlignment="Center" />
+            </WrapPanel>
           </Grid>
-          <TextBlock Text="{Binding ProgressText}" VerticalAlignment="Center" Visibility="Collapsed" />
-          <TextBlock Text=" | Analizzate: " VerticalAlignment="Center" />
-          <TextBlock Text="{Binding ProcessedCount}" VerticalAlignment="Center" />
-          <TextBlock Text=" | Rimanenti: " VerticalAlignment="Center" />
-          <TextBlock Text="{Binding RemainingCount}" VerticalAlignment="Center" />
         </StackPanel>
       </Grid>
     </Border>
