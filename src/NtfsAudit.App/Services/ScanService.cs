@@ -286,7 +286,19 @@ namespace NtfsAudit.App.Services
                     }, token);
                 }
 
-                Task.WaitAll(workers);
+                try
+                {
+                    Task.WaitAll(workers);
+                }
+                catch (AggregateException ex)
+                {
+                    if (ex.InnerExceptions.All(inner => inner is OperationCanceledException))
+                    {
+                        throw new OperationCanceledException(token);
+                    }
+
+                    throw;
+                }
 
                 if (progress != null)
                 {
