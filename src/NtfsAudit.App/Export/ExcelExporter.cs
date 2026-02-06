@@ -60,15 +60,15 @@ namespace NtfsAudit.App.Export
                 var sheets = workbookPart.Workbook.AppendChild(new Sheets());
 
                 var userSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteFolderPermissionsSheet(userSheet, userRecords, headers, "Users");
+                WriteFolderPermissionsSheet(userSheet, userRecords, headers, "UsersTable", 1);
                 sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(userSheet), SheetId = 1, Name = "Users" });
 
                 var groupSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteFolderPermissionsSheet(groupSheet, groupRecords, headers, "Groups");
+                WriteFolderPermissionsSheet(groupSheet, groupRecords, headers, "GroupsTable", 2);
                 sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(groupSheet), SheetId = 2, Name = "Groups" });
 
                 var aclSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteFolderPermissionsSheet(aclSheet, records, headers, "Acl");
+                WriteFolderPermissionsSheet(aclSheet, records, headers, "AclTable", 3);
                 sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(aclSheet), SheetId = 3, Name = "Acl" });
 
                 workbookPart.Workbook.Save();
@@ -102,7 +102,7 @@ namespace NtfsAudit.App.Export
             return records;
         }
 
-        private void WriteFolderPermissionsSheet(WorksheetPart sheetPart, List<ExportRecord> records, string[] headers, string tableName)
+        private void WriteFolderPermissionsSheet(WorksheetPart sheetPart, List<ExportRecord> records, string[] headers, string tableName, uint tableId)
         {
             var columnWidths = InitializeColumnWidths(headers);
             foreach (var record in records)
@@ -148,7 +148,7 @@ namespace NtfsAudit.App.Export
                 }
 
                 writer.WriteEndElement();
-                WriteTableParts(writer, sheetPart, tableName, 1, headers, rowCount);
+                WriteTableParts(writer, sheetPart, tableName, tableId, headers, rowCount);
                 writer.WriteEndElement();
             }
         }
