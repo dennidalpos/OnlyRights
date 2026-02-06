@@ -93,15 +93,19 @@
           <Button Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" />
         </StackPanel>
 
-        <UniformGrid Grid.Row="2" Columns="2" Margin="0,0,0,8">
-          <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0">
+        <Grid Grid.Row="2" Margin="0,0,0,8">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <Border Grid.Column="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0">
             <WrapPanel VerticalAlignment="Center">
               <TextBlock Text="MaxDepth" VerticalAlignment="Center" Margin="0,0,6,0" />
               <TextBox Width="60" Height="24" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0,0,12,0" />
               <CheckBox Content="Analizza tutte le sottocartelle" IsChecked="{Binding ScanAllDepths}" />
             </WrapPanel>
           </Border>
-          <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8">
+          <Border Grid.Column="1" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8">
             <WrapPanel VerticalAlignment="Center">
               <CheckBox Margin="0,0,12,0" Content="Includi permessi ereditati" IsChecked="{Binding IncludeInherited}" />
               <CheckBox Margin="0,0,12,0" Content="Risolvi identità (più lento)" IsChecked="{Binding ResolveIdentities}" />
@@ -111,32 +115,31 @@
               <CheckBox Content="Escludi utenti admin" IsChecked="{Binding ExcludeAdminAccounts}" />
             </WrapPanel>
           </Border>
-        </UniformGrid>
+        </Grid>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" VerticalAlignment="Center">
+        <Grid Grid.Row="3">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
           <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
               <CheckBox Content="Export al termine" Margin="0,0,12,0" IsChecked="{Binding ExportOnComplete}" VerticalAlignment="Center" />
               <CheckBox Content="Colora per diritto" IsChecked="{Binding ColorizeRights}" VerticalAlignment="Center" />
             </StackPanel>
           </Border>
-          <Grid Margin="0,0,12,0" VerticalAlignment="Center">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Grid Grid.Column="0" MinWidth="320" ClipToBounds="True">
-              <ProgressBar Height="22" IsIndeterminate="{Binding IsIndeterminate}" Value="{Binding ProgressValue}" Maximum="100" />
-              <TextBlock Text="{Binding ProgressText}" HorizontalAlignment="Center" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="6,0" />
-            </Grid>
-            <WrapPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
-              <TextBlock Text="Analizzate: " VerticalAlignment="Center" />
-              <TextBlock Text="{Binding ProcessedCount}" VerticalAlignment="Center" />
-              <TextBlock Text=" | Rimanenti: " VerticalAlignment="Center" />
-              <TextBlock Text="{Binding RemainingCount}" VerticalAlignment="Center" />
-            </WrapPanel>
-          </Grid>
-        </StackPanel>
+          <StackPanel Grid.Column="1" Margin="0,0,12,0" VerticalAlignment="Center">
+            <TextBlock Text="{Binding ProgressText}" Margin="0,0,0,4" />
+            <ProgressBar Width="360" Height="22" IsIndeterminate="{Binding IsIndeterminate}" Value="{Binding ProgressValue}" Maximum="100" />
+          </StackPanel>
+          <WrapPanel Grid.Column="2" VerticalAlignment="Center">
+            <TextBlock Text="Analizzate: " VerticalAlignment="Center" />
+            <TextBlock Text="{Binding ProcessedCount}" VerticalAlignment="Center" />
+            <TextBlock Text=" | Rimanenti: " VerticalAlignment="Center" />
+            <TextBlock Text="{Binding RemainingCount}" VerticalAlignment="Center" />
+          </WrapPanel>
+        </Grid>
       </Grid>
     </Border>
 
