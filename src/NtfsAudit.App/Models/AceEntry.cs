@@ -15,6 +15,7 @@ namespace NtfsAudit.App.Models
         public string PropagationFlags { get; set; }
         public string Source { get; set; }
         public int Depth { get; set; }
+        public bool IsDisabled { get; set; }
         public List<string> MemberNames { get; set; }
         public string MembersSummary
         {

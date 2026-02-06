@@ -68,7 +68,8 @@ namespace NtfsAudit.App.Services
                     {
                         Sid = member.Sid,
                         Name = member.Name,
-                        IsGroup = member.IsGroup
+                        IsGroup = member.IsGroup,
+                        IsDisabled = member.IsDisabled
                     })
                     .ToList();
                 if (!cachedMembers.Any(member => member.IsGroup && string.IsNullOrWhiteSpace(member.Sid)))
@@ -86,7 +87,8 @@ namespace NtfsAudit.App.Services
                 {
                     Sid = member.Sid,
                     Name = member.Name,
-                    IsGroup = member.IsGroup
+                    IsGroup = member.IsGroup,
+                    IsDisabled = member.IsDisabled
                 });
             }
             _cache.Set(groupSid, membersToCache);

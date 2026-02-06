@@ -23,17 +23,20 @@ namespace NtfsAudit.App.Services
         public ResolvedPrincipal ResolvePrincipal(string sid)
         {
             if (!_moduleAvailable) return null;
-            var script = string.Format("Import-Module ActiveDirectory -ErrorAction SilentlyContinue; $o = Get-ADObject -Filter \"objectSid -eq '{0}'\" -Properties objectSid,samAccountName,objectClass; if ($o) {{ $sid = $null; if ($o.objectSid) {{ if ($o.objectSid -is [byte[]]) {{ $sid = (New-Object System.Security.Principal.SecurityIdentifier ($o.objectSid,0)).Value }} else {{ $sid = $o.objectSid.ToString() }} }}; [pscustomobject]@{{ Sid=$sid; Name=$o.sAMAccountName; Class=$o.objectClass }} | ConvertTo-Json -Compress }}", sid);
+            var script = string.Format("Import-Module ActiveDirectory -ErrorAction SilentlyContinue; $o = Get-ADObject -Filter \"objectSid -eq '{0}'\" -Properties objectSid,samAccountName,objectClass,Enabled; if ($o) {{ $sid = $null; if ($o.objectSid) {{ if ($o.objectSid -is [byte[]]) {{ $sid = (New-Object System.Security.Principal.SecurityIdentifier ($o.objectSid,0)).Value }} else {{ $sid = $o.objectSid.ToString() }} }}; [pscustomobject]@{{ Sid=$sid; Name=$o.sAMAccountName; Class=$o.objectClass; Enabled=$o.Enabled }} | ConvertTo-Json -Compress }}", sid);
             var output = Run(script);
             if (string.IsNullOrWhiteSpace(output)) return null;
             var obj = JObject.Parse(output);
             var cls = obj["Class"] == null ? string.Empty : obj["Class"].ToString();
             var isGroup = cls.IndexOf("group", StringComparison.OrdinalIgnoreCase) >= 0;
+            var enabledToken = obj["Enabled"];
+            var isDisabled = enabledToken != null && enabledToken.Type == JTokenType.Boolean && !enabledToken.Value<bool>();
             return new ResolvedPrincipal
             {
                 Sid = obj["Sid"] == null ? null : obj["Sid"].ToString(),
                 Name = obj["Name"] == null ? null : obj["Name"].ToString(),
-                IsGroup = isGroup
+                IsGroup = isGroup,
+                IsDisabled = isDisabled
             };
         }
 
@@ -41,7 +44,7 @@ namespace NtfsAudit.App.Services
         {
             var result = new List<ResolvedPrincipal>();
             if (!_moduleAvailable) return result;
-            var script = string.Format("Import-Module ActiveDirectory -ErrorAction SilentlyContinue; $m = Get-ADGroupMember -Identity '{0}' -Recursive:$false | Select-Object SID,objectSid,samAccountName,objectClass; if ($m) {{ $m | ForEach-Object {{ $sidSource = $null; if ($_.SID) {{ $sidSource = $_.SID }} elseif ($_.objectSid) {{ $sidSource = $_.objectSid }}; $sid = $null; if ($sidSource) {{ if ($sidSource -is [byte[]]) {{ $sid = (New-Object System.Security.Principal.SecurityIdentifier ($sidSource,0)).Value }} else {{ $sid = $sidSource.ToString() }} }}; [pscustomobject]@{{ Sid=$sid; Name=$_.sAMAccountName; Class=$_.objectClass }} }} | ConvertTo-Json -Compress }}", groupSid);
+            var script = string.Format("Import-Module ActiveDirectory -ErrorAction SilentlyContinue; $m = Get-ADGroupMember -Identity '{0}' -Recursive:$false | Select-Object SID,objectSid,samAccountName,objectClass,Enabled; if ($m) {{ $m | ForEach-Object {{ $sidSource = $null; if ($_.SID) {{ $sidSource = $_.SID }} elseif ($_.objectSid) {{ $sidSource = $_.objectSid }}; $sid = $null; if ($sidSource) {{ if ($sidSource -is [byte[]]) {{ $sid = (New-Object System.Security.Principal.SecurityIdentifier ($sidSource,0)).Value }} else {{ $sid = $sidSource.ToString() }} }}; [pscustomobject]@{{ Sid=$sid; Name=$_.sAMAccountName; Class=$_.objectClass; Enabled=$_.Enabled }} }} | ConvertTo-Json -Compress }}", groupSid);
             var output = Run(script);
             if (string.IsNullOrWhiteSpace(output)) return result;
             if (output.TrimStart().StartsWith("["))
@@ -63,7 +66,7 @@ namespace NtfsAudit.App.Services
         {
             var result = new List<ResolvedPrincipal>();
             if (!_moduleAvailable) return result;
-            var script = string.Format("Import-Module ActiveDirectory -ErrorAction SilentlyContinue; $m = Get-ADPrincipalGroupMembership -Identity '{0}' | Select-Object SID,objectSid,samAccountName,objectClass; if ($m) {{ $m | ForEach-Object {{ $sidSource = $null; if ($_.SID) {{ $sidSource = $_.SID }} elseif ($_.objectSid) {{ $sidSource = $_.objectSid }}; $sid = $null; if ($sidSource) {{ if ($sidSource -is [byte[]]) {{ $sid = (New-Object System.Security.Principal.SecurityIdentifier ($sidSource,0)).Value }} else {{ $sid = $sidSource.ToString() }} }}; [pscustomobject]@{{ Sid=$sid; Name=$_.sAMAccountName; Class=$_.objectClass }} }} | ConvertTo-Json -Compress }}", userSid);
+            var script = string.Format("Import-Module ActiveDirectory -ErrorAction SilentlyContinue; $m = Get-ADPrincipalGroupMembership -Identity '{0}' | Select-Object SID,objectSid,samAccountName,objectClass,Enabled; if ($m) {{ $m | ForEach-Object {{ $sidSource = $null; if ($_.SID) {{ $sidSource = $_.SID }} elseif ($_.objectSid) {{ $sidSource = $_.objectSid }}; $sid = $null; if ($sidSource) {{ if ($sidSource -is [byte[]]) {{ $sid = (New-Object System.Security.Principal.SecurityIdentifier ($sidSource,0)).Value }} else {{ $sid = $sidSource.ToString() }} }}; [pscustomobject]@{{ Sid=$sid; Name=$_.sAMAccountName; Class=$_.objectClass; Enabled=$_.Enabled }} }} | ConvertTo-Json -Compress }}", userSid);
             var output = Run(script);
             if (string.IsNullOrWhiteSpace(output)) return result;
             if (output.TrimStart().StartsWith("["))
@@ -85,11 +88,14 @@ namespace NtfsAudit.App.Services
         {
             var cls = token["Class"] == null ? string.Empty : token["Class"].ToString();
             var isGroup = cls.IndexOf("group", StringComparison.OrdinalIgnoreCase) >= 0;
+            var enabledToken = token["Enabled"];
+            var isDisabled = enabledToken != null && enabledToken.Type == JTokenType.Boolean && !enabledToken.Value<bool>();
             return new ResolvedPrincipal
             {
                 Sid = token["Sid"] == null ? null : token["Sid"].ToString(),
                 Name = token["Name"] == null ? null : token["Name"].ToString(),
-                IsGroup = isGroup
+                IsGroup = isGroup,
+                IsDisabled = isDisabled
             };
         }
 

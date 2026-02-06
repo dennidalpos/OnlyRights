@@ -27,17 +27,18 @@ namespace NtfsAudit.App.Services
                     if (refreshed != null)
                     {
                         var refreshedName = string.IsNullOrWhiteSpace(cached.Name) ? refreshed.Name : cached.Name;
-                        _sidNameCache.Set(sid, refreshedName ?? sid, refreshed.IsGroup);
+                        _sidNameCache.Set(sid, refreshedName ?? sid, refreshed.IsGroup, refreshed.IsDisabled);
                         return new ResolvedPrincipal
                         {
                             Sid = sid,
                             Name = refreshedName ?? sid,
-                            IsGroup = refreshed.IsGroup
+                            IsGroup = refreshed.IsGroup,
+                            IsDisabled = refreshed.IsDisabled
                         };
                     }
                 }
 
-                return new ResolvedPrincipal { Sid = sid, Name = cached.Name, IsGroup = cached.IsGroup };
+                return new ResolvedPrincipal { Sid = sid, Name = cached.Name, IsGroup = cached.IsGroup, IsDisabled = cached.IsDisabled };
             }
 
             string name = null;
@@ -62,18 +63,19 @@ namespace NtfsAudit.App.Services
                     name = adPrincipal.Name;
                 }
 
-                _sidNameCache.Set(sid, name ?? sid, adPrincipal.IsGroup);
-                return new ResolvedPrincipal { Sid = sid, Name = name ?? sid, IsGroup = adPrincipal.IsGroup };
+                _sidNameCache.Set(sid, name ?? sid, adPrincipal.IsGroup, adPrincipal.IsDisabled);
+                return new ResolvedPrincipal { Sid = sid, Name = name ?? sid, IsGroup = adPrincipal.IsGroup, IsDisabled = adPrincipal.IsDisabled };
             }
 
             var resolved = new ResolvedPrincipal
             {
                 Sid = sid,
                 Name = string.IsNullOrWhiteSpace(name) ? sid : name,
-                IsGroup = false
+                IsGroup = false,
+                IsDisabled = false
             };
 
-            _sidNameCache.Set(sid, resolved.Name, resolved.IsGroup);
+            _sidNameCache.Set(sid, resolved.Name, resolved.IsGroup, resolved.IsDisabled);
             return resolved;
         }
     }

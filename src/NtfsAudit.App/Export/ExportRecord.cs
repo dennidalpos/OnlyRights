@@ -13,5 +13,6 @@ namespace NtfsAudit.App.Export
         public string PropagationFlags { get; set; }
         public string Source { get; set; }
         public int Depth { get; set; }
+        public bool IsDisabled { get; set; }
     }
 }

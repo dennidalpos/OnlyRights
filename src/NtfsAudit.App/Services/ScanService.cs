@@ -104,7 +104,8 @@ namespace NtfsAudit.App.Services
                                 InheritanceFlags = rule.InheritanceFlags.ToString(),
                                 PropagationFlags = rule.PropagationFlags.ToString(),
                                 Source = "Diretto",
-                                Depth = depth
+                                Depth = depth,
+                                IsDisabled = resolved.IsDisabled
                             };
 
                             details[current].AllEntries.Add(entry);
@@ -141,7 +142,8 @@ namespace NtfsAudit.App.Services
                                         InheritanceFlags = rule.InheritanceFlags.ToString(),
                                         PropagationFlags = rule.PropagationFlags.ToString(),
                                         Source = source,
-                                        Depth = depth
+                                        Depth = depth,
+                                        IsDisabled = member.IsDisabled
                                     };
                                     details[current].UserEntries.Add(memberEntry);
                                     details[current].AllEntries.Add(memberEntry);
@@ -203,7 +205,8 @@ namespace NtfsAudit.App.Services
                 InheritanceFlags = entry.InheritanceFlags,
                 PropagationFlags = entry.PropagationFlags,
                 Source = entry.Source,
-                Depth = entry.Depth
+                Depth = entry.Depth,
+                IsDisabled = entry.IsDisabled
             };
             writer.WriteLine(JsonConvert.SerializeObject(record));
         }

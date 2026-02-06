@@ -5,6 +5,10 @@
   <Window.Resources>
     <Style x:Key="RightsRowStyle" TargetType="DataGridRow">
       <Style.Triggers>
+        <DataTrigger Binding="{Binding IsDisabled}" Value="True">
+          <Setter Property="TextElement.TextDecorations" Value="Strikethrough" />
+          <Setter Property="Foreground" Value="#FF9E9E9E" />
+        </DataTrigger>
         <MultiDataTrigger>
           <MultiDataTrigger.Conditions>
             <Condition Binding="{Binding DataContext.ColorizeRights, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True" />
@@ -137,16 +141,17 @@
               <DataGrid.Columns>
                 <DataGridTextColumn Header="Gruppo" Binding="{Binding PrincipalName}" />
                 <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
-                <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
-                <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" />
-                <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
-                <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="Modify" Binding="{Binding HasModify, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="R&amp;E" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="Custom" Binding="{Binding IsCustomRights, Mode=OneWay}" />
+            <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
+            <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" />
+            <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
+            <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="Modify" Binding="{Binding HasModify, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="R&amp;E" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="Custom" Binding="{Binding IsCustomRights, Mode=OneWay}" />
                 <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" />
                 <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" />
                 <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" />
@@ -158,16 +163,17 @@
               <DataGrid.Columns>
                 <DataGridTextColumn Header="Utente" Binding="{Binding PrincipalName}" />
                 <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
-                <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
-                <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" />
-                <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
-                <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="Modify" Binding="{Binding HasModify, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="R&amp;E" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="Custom" Binding="{Binding IsCustomRights, Mode=OneWay}" />
+            <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
+            <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" />
+            <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
+            <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="Modify" Binding="{Binding HasModify, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="R&amp;E" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="Custom" Binding="{Binding IsCustomRights, Mode=OneWay}" />
                 <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" />
                 <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" />
                 <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" />
@@ -180,16 +186,17 @@
                 <DataGridTextColumn Header="Principal" Binding="{Binding PrincipalName}" />
                 <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
                 <DataGridTextColumn Header="Tipo" Binding="{Binding PrincipalType}" />
-                <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
-                <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" />
-                <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
-                <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="Modify" Binding="{Binding HasModify, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="R&amp;E" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="Custom" Binding="{Binding IsCustomRights, Mode=OneWay}" />
+            <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
+            <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" />
+            <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
+            <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="Modify" Binding="{Binding HasModify, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="R&amp;E" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" />
+            <DataGridCheckBoxColumn Header="Custom" Binding="{Binding IsCustomRights, Mode=OneWay}" />
                 <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" />
                 <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" />
                 <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" />

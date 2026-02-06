@@ -34,7 +34,8 @@ namespace NtfsAudit.App.Export
                 "InheritanceFlags",
                 "PropagationFlags",
                 "Source",
-                "Depth"
+                "Depth",
+                "Disabilitato"
             };
             var folderColumnWidths = InitializeColumnWidths(folderHeaders);
             var folderRowCount = AnalyzeFolderPermissions(tempDataPath, summaries, folderColumnWidths);
@@ -93,7 +94,8 @@ namespace NtfsAudit.App.Export
                 if (record == null) continue;
                 UpdateColumnWidths(columnWidths, record.FolderPath, record.PrincipalName, record.PrincipalSid, record.PrincipalType,
                     record.AllowDeny, record.RightsSummary, record.IsInherited.ToString(), record.InheritanceFlags,
-                    record.PropagationFlags, record.Source, record.Depth.ToString(CultureInfo.InvariantCulture));
+                    record.PropagationFlags, record.Source, record.Depth.ToString(CultureInfo.InvariantCulture),
+                    record.IsDisabled.ToString());
                 rowCount++;
 
                 SummaryEntry summary;
@@ -194,7 +196,8 @@ namespace NtfsAudit.App.Export
                             record.InheritanceFlags,
                             record.PropagationFlags,
                             record.Source,
-                            record.Depth.ToString(CultureInfo.InvariantCulture));
+                            record.Depth.ToString(CultureInfo.InvariantCulture),
+                            record.IsDisabled.ToString());
                     }
                 }
 
