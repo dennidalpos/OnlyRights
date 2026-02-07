@@ -97,7 +97,7 @@ Formato nome file consigliato:
 ## Viewer .ntaudit
 Il viewer (`NtfsAudit.Viewer.exe`) riutilizza la stessa UI della scansione, ma in modalità sola lettura:
 - consente solo **Import Analisi**,
-- disabilita le impostazioni di scansione e i pulsanti di avvio/esportazione.
+- nasconde elementi di scansione e contatori, mantenendo solo l’area di consultazione.
 
 ## Script
 ### build.ps1
