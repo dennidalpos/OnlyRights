@@ -202,10 +202,6 @@
         </TreeView>
       </Border>
       <Grid Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-        <Grid.RowDefinitions>
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
         <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="4,8,8,8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
           <Grid>
             <Grid.RowDefinitions>
