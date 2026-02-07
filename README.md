@@ -1,6 +1,6 @@
 # NTFS Audit
 
-Applicazione WPF per analizzare permessi NTFS su percorsi locali e UNC, con risoluzione identità, espansione gruppi e export dei risultati in Excel o archivio analisi.
+Applicazione WPF per analizzare permessi NTFS su percorsi locali e UNC, con risoluzione identità, espansione gruppi e export dei risultati in Excel o archivio analisi. Include un viewer dedicato per importare e consultare archivi `.ntaudit` in sola lettura.
 
 ## Panoramica
 NTFS Audit esegue una scansione delle ACL delle cartelle partendo da una root. Durante la scansione:
@@ -19,7 +19,7 @@ NTFS Audit esegue una scansione delle ACL delle cartelle partendo da una root. D
 
 ## Avvio rapido
 1. Compila o pubblica l’app (vedi [Script](#script)).
-2. Avvia `NtfsAudit.App.exe`.
+2. Avvia `NtfsAudit.App.exe` per la scansione o `NtfsAudit.Viewer.exe` per consultare archivi `.ntaudit`.
 3. Seleziona un percorso locale (`C:\...`) o UNC (`\\server\share\...`).
 4. Imposta la profondità o abilita “Analizza tutte le sottocartelle”.
 5. Configura le opzioni (permessi ereditati, risoluzione identità, espansione gruppi).
@@ -94,6 +94,11 @@ Formato nome file consigliato:
 <NomeCartellaRoot>_<dd-MM-yyyy-HH-mm>.ntaudit
 ```
 
+## Viewer .ntaudit
+Il viewer (`NtfsAudit.Viewer.exe`) riutilizza la stessa UI della scansione, ma in modalità sola lettura:
+- consente solo **Import Analisi**,
+- disabilita le impostazioni di scansione e i pulsanti di avvio/esportazione.
+
 ## Script
 ### build.ps1
 Compila e (opzionalmente) pubblica:
@@ -114,6 +119,7 @@ Parametri:
 - `-PublishReadyToRun`
 
 Output di default: `dist\<Configuration>` (aggiunge `<Runtime>` e/o `<Framework>` se presenti).
+Il publish include anche il viewer in `dist\<Configuration>\Viewer`.
 
 ### clean.ps1
 Rimuove build, dist e cache:

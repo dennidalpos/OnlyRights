@@ -4,6 +4,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NtfsAudit.App", "src\NtfsAudit.App\NtfsAudit.App.csproj", "{8C2C8F42-5307-4C88-A1C4-5A0AFDE2A0D8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NtfsAudit.Viewer", "src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj", "{41646C82-A031-4240-B592-ABDEC9DC4C83}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -14,5 +16,9 @@ Global
 		{8C2C8F42-5307-4C88-A1C4-5A0AFDE2A0D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8C2C8F42-5307-4C88-A1C4-5A0AFDE2A0D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C2C8F42-5307-4C88-A1C4-5A0AFDE2A0D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41646C82-A031-4240-B592-ABDEC9DC4C83}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41646C82-A031-4240-B592-ABDEC9DC4C83}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41646C82-A031-4240-B592-ABDEC9DC4C83}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41646C82-A031-4240-B592-ABDEC9DC4C83}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

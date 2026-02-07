@@ -30,6 +30,7 @@ namespace NtfsAudit.App.ViewModels
         private CancellationTokenSource _cts;
         private bool _isScanning;
         private bool _isBusy;
+        private bool _isViewerMode;
         private DispatcherTimer _scanTimer;
         private DateTime _scanStart;
         private string _rootPath;
@@ -51,8 +52,9 @@ namespace NtfsAudit.App.ViewModels
         private bool _colorizeRights = true;
         private string _currentPathBackground = "Transparent";
 
-        public MainViewModel()
+        public MainViewModel(bool viewerMode = false)
         {
+            _isViewerMode = viewerMode;
             _cacheStore = new LocalCacheStore();
             _sidNameCache = new SidNameCache();
             _groupMembershipCache = new GroupMembershipCache(TimeSpan.FromHours(2));
@@ -293,6 +295,9 @@ namespace NtfsAudit.App.ViewModels
 
         public bool IsScanning { get { return _isScanning; } }
         public bool IsNotScanning { get { return !_isScanning; } }
+        public bool IsViewerMode { get { return _isViewerMode; } }
+        public bool IsNotViewerMode { get { return !_isViewerMode; } }
+        public bool IsScanConfigEnabled { get { return !_isViewerMode && !_isScanning; } }
         public bool HasScanResult { get { return _scanResult != null; } }
         public bool IsBusy { get { return _isBusy; } }
         public bool IsNotBusy { get { return !_isBusy; } }
@@ -315,9 +320,9 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        public bool CanStart { get { return !_isScanning && !IsBusy && !string.IsNullOrWhiteSpace(RootPath); } }
-        public bool CanStop { get { return _isScanning && !IsBusy; } }
-        public bool CanExport { get { return !_isScanning && !IsBusy && _scanResult != null; } }
+        public bool CanStart { get { return !_isViewerMode && !_isScanning && !IsBusy && !string.IsNullOrWhiteSpace(RootPath); } }
+        public bool CanStop { get { return !_isViewerMode && _isScanning && !IsBusy; } }
+        public bool CanExport { get { return !_isViewerMode && !_isScanning && !IsBusy && _scanResult != null; } }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -359,6 +364,7 @@ namespace NtfsAudit.App.ViewModels
 
         private void Browse()
         {
+            if (_isViewerMode) return;
             using (var dialog = new FolderBrowserDialog())
             {
                 dialog.ShowNewFolderButton = false;
@@ -372,6 +378,7 @@ namespace NtfsAudit.App.ViewModels
 
         private void StartScan()
         {
+            if (_isViewerMode) return;
             var normalizedRoot = PathResolver.NormalizeRootPath(RootPath);
             if (!string.IsNullOrWhiteSpace(normalizedRoot) &&
                 !string.Equals(normalizedRoot, RootPath, StringComparison.OrdinalIgnoreCase))
@@ -412,6 +419,7 @@ namespace NtfsAudit.App.ViewModels
 
         private void StopScan()
         {
+            if (_isViewerMode) return;
             if (_cts != null)
             {
                 _cts.Cancel();
@@ -420,6 +428,7 @@ namespace NtfsAudit.App.ViewModels
 
         private async void Export()
         {
+            if (_isViewerMode) return;
             if (_scanResult == null) return;
             using (var dialog = new FolderBrowserDialog())
             {
@@ -437,6 +446,7 @@ namespace NtfsAudit.App.ViewModels
 
         private async void ExportAnalysis()
         {
+            if (_isViewerMode) return;
             if (_scanResult == null) return;
             var dialog = new Win32.SaveFileDialog
             {
@@ -453,6 +463,7 @@ namespace NtfsAudit.App.ViewModels
 
         private async void ExportHtml()
         {
+            if (_isViewerMode) return;
             if (_scanResult == null) return;
             var dialog = new Win32.SaveFileDialog
             {
@@ -721,6 +732,7 @@ namespace NtfsAudit.App.ViewModels
         {
             OnPropertyChanged("IsScanning");
             OnPropertyChanged("IsNotScanning");
+            OnPropertyChanged("IsScanConfigEnabled");
             OnPropertyChanged("HasScanResult");
             OnPropertyChanged("StatusText");
             OnPropertyChanged("StatusBrush");

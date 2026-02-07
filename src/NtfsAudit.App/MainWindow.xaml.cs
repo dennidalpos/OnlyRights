@@ -10,9 +10,14 @@ namespace NtfsAudit.App
     public partial class MainWindow : Window
     {
         public MainWindow()
+            : this(new MainViewModel())
+        {
+        }
+
+        public MainWindow(MainViewModel viewModel)
         {
             InitializeComponent();
-            DataContext = new MainViewModel();
+            DataContext = viewModel ?? new MainViewModel();
         }
 
         private void TreeView_OnSelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)

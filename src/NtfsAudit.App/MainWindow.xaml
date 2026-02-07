@@ -83,7 +83,7 @@
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" IsEnabled="{Binding IsNotScanning}">
+        <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" IsEnabled="{Binding IsScanConfigEnabled}">
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" />
@@ -110,14 +110,14 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
           </Grid.ColumnDefinitions>
-          <Border Grid.Column="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0" IsEnabled="{Binding IsNotScanning}">
+          <Border Grid.Column="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0" IsEnabled="{Binding IsScanConfigEnabled}">
             <WrapPanel VerticalAlignment="Center">
               <TextBlock Text="MaxDepth" VerticalAlignment="Center" Margin="0,0,6,0" />
               <TextBox Width="60" Height="24" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0,0,12,0" />
               <CheckBox Content="Analizza tutte le sottocartelle" IsChecked="{Binding ScanAllDepths}" />
             </WrapPanel>
           </Border>
-          <Border Grid.Column="1" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" IsEnabled="{Binding IsNotScanning}">
+          <Border Grid.Column="1" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" IsEnabled="{Binding IsScanConfigEnabled}">
             <WrapPanel VerticalAlignment="Center">
               <CheckBox Margin="0,0,12,0" Content="Includi permessi ereditati" IsChecked="{Binding IncludeInherited}" />
               <CheckBox Margin="0,0,12,0" Content="Risolvi identità (più lento)" IsChecked="{Binding ResolveIdentities}" />
