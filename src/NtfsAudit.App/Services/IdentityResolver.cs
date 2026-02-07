@@ -18,6 +18,18 @@ namespace NtfsAudit.App.Services
 
         public ResolvedPrincipal Resolve(string sid)
         {
+            if (string.IsNullOrWhiteSpace(sid))
+            {
+                return new ResolvedPrincipal
+                {
+                    Sid = sid,
+                    Name = sid ?? string.Empty,
+                    IsGroup = false,
+                    IsDisabled = false,
+                    IsServiceAccount = false,
+                    IsAdminAccount = false
+                };
+            }
             SidCacheEntry cached;
             if (_sidNameCache.TryGet(sid, out cached) && !string.IsNullOrWhiteSpace(cached.Name))
             {
@@ -84,31 +96,9 @@ namespace NtfsAudit.App.Services
                 Name = resolvedName,
                 IsGroup = isGroup,
                 IsDisabled = isDisabled,
-                IsServiceAccount = IsServiceAccountName(resolvedName),
-                IsAdminAccount = IsAdminAccountName(resolvedName)
+                IsServiceAccount = SidClassifier.IsServiceAccountSid(sid),
+                IsAdminAccount = SidClassifier.IsPrivilegedGroupSid(sid)
             };
-        }
-
-        private bool IsServiceAccountName(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return false;
-            var normalized = name.ToLowerInvariant();
-            if (normalized == "nt authority\\system")
-            {
-                return true;
-            }
-            if (normalized.Contains("svc") || normalized.Contains("service"))
-            {
-                return true;
-            }
-            return normalized.EndsWith("$", StringComparison.Ordinal);
-        }
-
-        private bool IsAdminAccountName(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return false;
-            var normalized = name.ToLowerInvariant();
-            return normalized.Contains("admin");
         }
     }
 }

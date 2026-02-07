@@ -188,6 +188,13 @@ namespace NtfsAudit.App.Services
                                             IsAdminAccount = false
                                         };
                                     }
+                                    if (options.ResolveIdentities && options.ExcludeAdminAccounts && !resolved.IsGroup && !resolved.IsAdminAccount)
+                                    {
+                                        if (_groupExpansion != null && _groupExpansion.IsPrivilegedUser(sid))
+                                        {
+                                            resolved.IsAdminAccount = true;
+                                        }
+                                    }
                                     if (options.ResolveIdentities && options.ExcludeServiceAccounts && resolved.IsServiceAccount)
                                     {
                                         continue;

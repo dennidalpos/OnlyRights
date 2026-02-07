@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -113,7 +114,11 @@ namespace NtfsAudit.App.Services
             try
             {
                 var info = Marshal.PtrToStructure<DFS_INFO_3>(buffer);
-                var storages = ReadStorages(info.Storage, (int)info.NumberOfStorages);
+                var storages = ReadStorages(info.Storage, (int)info.NumberOfStorages)
+                    .OrderBy(storage => GetStoragePriority(storage))
+                    .ThenBy(storage => storage.ServerName, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(storage => storage.ShareName, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
                 string firstCandidate = null;
 
                 foreach (var storage in storages)
@@ -166,6 +171,17 @@ namespace NtfsAudit.App.Services
                 });
             }
             return result;
+        }
+
+        private static int GetStoragePriority(DfsStorageInfo storage)
+        {
+            if (storage == null) return int.MaxValue;
+            var state = storage.State;
+            var isActive = (state & 0x0002) != 0;
+            var isOnline = (state & 0x0001) != 0;
+            if (isActive) return 0;
+            if (isOnline) return 1;
+            return 2;
         }
 
         [DllImport("Netapi32.dll", CharSet = CharSet.Unicode)]
