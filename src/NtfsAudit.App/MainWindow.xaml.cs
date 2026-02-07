@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -111,6 +112,26 @@ namespace NtfsAudit.App
             foreach (var child in node.Children)
             {
                 SetExpanded(child, expanded);
+            }
+        }
+
+        private void MainWindow_OnClosing(object sender, CancelEventArgs e)
+        {
+            var viewModel = DataContext as MainViewModel;
+            if (viewModel == null || !viewModel.HasUnexportedData)
+            {
+                return;
+            }
+
+            var result = MessageBox.Show(
+                this,
+                "Hai dati di scansione non esportati. Vuoi chiudere comunque?",
+                "Dati non esportati",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+            if (result != MessageBoxResult.Yes)
+            {
+                e.Cancel = true;
             }
         }
     }
