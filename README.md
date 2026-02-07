@@ -27,6 +27,7 @@ L’applicazione legge le ACL delle cartelle, normalizza i diritti, può risolve
 Durante una scansione, NTFS Audit:
 
 1. Normalizza il percorso (locale o UNC).
+   - Per i namespace DFS seleziona prima il target con priorità più alta e, se non disponibile, usa i fallback.
 2. Costruisce la struttura ad albero delle cartelle.
 3. Legge le ACE (Allow/Deny) per ogni cartella.
 4. Normalizza i diritti (Full, Modify, Read, ecc.).
