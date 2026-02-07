@@ -49,7 +49,6 @@ namespace NtfsAudit.App.Export
                 "IsAdminAccount",
                 "HasExplicitPermissions",
                 "IsInheritanceDisabled",
-                "GroupMembers",
                 "IncludeInherited",
                 "ResolveIdentities",
                 "ExcludeServiceAccounts",
@@ -121,7 +120,7 @@ namespace NtfsAudit.App.Export
                     record.PropagationFlags, record.Source, record.Depth.ToString(CultureInfo.InvariantCulture),
                     record.IsDisabled.ToString(), record.IsServiceAccount.ToString(), record.IsAdminAccount.ToString(),
                     record.HasExplicitPermissions.ToString(), record.IsInheritanceDisabled.ToString(),
-                    BuildMembersSummary(record), record.IncludeInherited.ToString(), record.ResolveIdentities.ToString(),
+                    record.IncludeInherited.ToString(), record.ResolveIdentities.ToString(),
                     record.ExcludeServiceAccounts.ToString(), record.ExcludeAdminAccounts.ToString());
             }
             var rowCount = records.Count + 1;
@@ -153,7 +152,6 @@ namespace NtfsAudit.App.Export
                         record.IsAdminAccount.ToString(),
                         record.HasExplicitPermissions.ToString(),
                         record.IsInheritanceDisabled.ToString(),
-                        BuildMembersSummary(record),
                         record.IncludeInherited.ToString(),
                         record.ResolveIdentities.ToString(),
                         record.ExcludeServiceAccounts.ToString(),
@@ -266,16 +264,6 @@ namespace NtfsAudit.App.Export
                 dividend = (dividend - 1) / 26;
             }
             return columnName;
-        }
-
-        private string BuildMembersSummary(ExportRecord record)
-        {
-            if (record.MemberNames == null || record.MemberNames.Count == 0)
-            {
-                return string.Empty;
-            }
-
-            return string.Join(", ", record.MemberNames);
         }
 
         private void WriteRow(OpenXmlWriter writer, params string[] values)

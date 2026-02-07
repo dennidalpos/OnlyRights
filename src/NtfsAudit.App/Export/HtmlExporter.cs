@@ -91,7 +91,6 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }");
             builder.AppendLine("    th { background: #f5f5f5; position: sticky; top: 0; z-index: 1; }");
             builder.AppendLine("    tr.row-disabled { text-decoration: line-through; color: #9e9e9e; }");
-            builder.AppendLine("    tr.rights-custom { background: #e6e6e6; }");
             builder.AppendLine("    tr.rights-read { background: #e3f2fd; }");
             builder.AppendLine("    tr.rights-list { background: #e8f5e9; }");
             builder.AppendLine("    tr.rights-readexecute { background: #e0f7fa; }");
@@ -113,10 +112,11 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("        <button id=\"collapseAll\" class=\"secondary\">Comprimi</button>");
             builder.AppendLine("      </div>");
             builder.AppendLine("      <div class=\"legend\">");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-protected\">P</span>Protected (ereditarietà disabilitata)</div>");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-added\">+N</span>ACE esplicite aggiunte</div>");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-removed\">-N</span>ACE rimosse rispetto al padre</div>");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-deny\">D</span>Deny espliciti</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><strong>Legenda:</strong></div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-protected\">p</span>Protected (ereditarietà disabilitata)</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-added\">+n</span>ACE esplicite aggiunte</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-removed\">-n</span>ACE rimosse rispetto al padre</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-deny\">d</span>Deny espliciti</div>");
             builder.AppendLine("      </div>");
             builder.AppendLine("      <div id=\"treeContainer\"></div>");
             builder.AppendLine("    </aside>");
@@ -170,7 +170,6 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      { key: 'HasList', label: 'List', type: 'bool' },");
             builder.AppendLine("      { key: 'HasRead', label: 'Read', type: 'bool' },");
             builder.AppendLine("      { key: 'HasWrite', label: 'Write', type: 'bool' },");
-            builder.AppendLine("      { key: 'IsCustomRights', label: 'Custom', type: 'bool' },");
             builder.AppendLine("      { key: 'IsInherited', label: 'Inherited', type: 'bool' },");
             builder.AppendLine("      { key: 'InheritanceFlags', label: 'Inheritance' },");
             builder.AppendLine("      { key: 'PropagationFlags', label: 'Propagation' }");
@@ -188,7 +187,6 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      { key: 'HasList', label: 'List', type: 'bool' },");
             builder.AppendLine("      { key: 'HasRead', label: 'Read', type: 'bool' },");
             builder.AppendLine("      { key: 'HasWrite', label: 'Write', type: 'bool' },");
-            builder.AppendLine("      { key: 'IsCustomRights', label: 'Custom', type: 'bool' },");
             builder.AppendLine("      { key: 'IsInherited', label: 'Inherited', type: 'bool' },");
             builder.AppendLine("      { key: 'InheritanceFlags', label: 'Inheritance' },");
             builder.AppendLine("      { key: 'PropagationFlags', label: 'Propagation' }");
@@ -207,7 +205,6 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      { key: 'HasList', label: 'List', type: 'bool' },");
             builder.AppendLine("      { key: 'HasRead', label: 'Read', type: 'bool' },");
             builder.AppendLine("      { key: 'HasWrite', label: 'Write', type: 'bool' },");
-            builder.AppendLine("      { key: 'IsCustomRights', label: 'Custom', type: 'bool' },");
             builder.AppendLine("      { key: 'IsInherited', label: 'Inherited', type: 'bool' },");
             builder.AppendLine("      { key: 'InheritanceFlags', label: 'Inheritance' },");
             builder.AppendLine("      { key: 'PropagationFlags', label: 'Propagation' }");
@@ -323,7 +320,6 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      else if (entry.HasReadAndExecute) classes.push('rights-readexecute');" );
             builder.AppendLine("      else if (entry.HasList) classes.push('rights-list');" );
             builder.AppendLine("      else if (entry.HasRead) classes.push('rights-read');" );
-            builder.AppendLine("      else if (entry.IsCustomRights) classes.push('rights-custom');" );
             builder.AppendLine("      return classes.join(' ');" );
             builder.AppendLine("    }");
 

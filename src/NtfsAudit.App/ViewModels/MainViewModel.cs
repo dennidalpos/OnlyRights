@@ -33,6 +33,7 @@ namespace NtfsAudit.App.ViewModels
         private bool _isViewerMode;
         private DispatcherTimer _scanTimer;
         private DateTime _scanStart;
+        private bool _hasExported;
         private string _rootPath;
         private int _maxDepth = 5;
         private bool _scanAllDepths = true;
@@ -346,6 +347,7 @@ namespace NtfsAudit.App.ViewModels
         public bool CanStart { get { return !_isViewerMode && !_isScanning && !IsBusy && !string.IsNullOrWhiteSpace(RootPath); } }
         public bool CanStop { get { return !_isViewerMode && _isScanning && !IsBusy; } }
         public bool CanExport { get { return !_isViewerMode && !_isScanning && !IsBusy && _scanResult != null; } }
+        public bool HasUnexportedData { get { return !_isViewerMode && _scanResult != null && !_hasExported; } }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -523,6 +525,7 @@ namespace NtfsAudit.App.ViewModels
                 SetBusy(true);
                 var imported = await Task.Run(() => _analysisArchive.Import(dialog.FileName));
                 _scanResult = imported.ScanResult;
+                _hasExported = false;
                 ApplyDiffs(_scanResult);
                 if (!ValidateImportedResult(_scanResult, out var validationMessage))
                 {
@@ -573,6 +576,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 SetBusy(true);
                 await Task.Run(exportAction);
+                _hasExported = true;
                 ProgressText = progressMessage;
                 WpfMessageBox.Show(dialogMessage, "Export completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
@@ -606,6 +610,7 @@ namespace NtfsAudit.App.ViewModels
                 {
                     ApplyDiffs(result);
                     _scanResult = result;
+                    _hasExported = false;
                     SaveCache();
                     LoadTree(result);
                     LoadErrors(result.ErrorPath);
@@ -797,6 +802,7 @@ namespace NtfsAudit.App.ViewModels
             OnPropertyChanged("IsNotScanning");
             OnPropertyChanged("IsScanConfigEnabled");
             OnPropertyChanged("HasScanResult");
+            OnPropertyChanged("HasUnexportedData");
             OnPropertyChanged("StatusText");
             OnPropertyChanged("StatusBrush");
             OnPropertyChanged("CanStart");

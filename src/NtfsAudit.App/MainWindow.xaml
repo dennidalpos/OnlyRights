@@ -6,7 +6,8 @@
         Height="640"
         MinWidth="800"
         MinHeight="480"
-        FontFamily="Segoe UI, Microsoft YaHei UI, Microsoft JhengHei UI, Yu Gothic UI">
+        FontFamily="Segoe UI, Microsoft YaHei UI, Microsoft JhengHei UI, Yu Gothic UI"
+        Closing="MainWindow_OnClosing">
   <Window.Resources>
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     <Style x:Key="RightsRowStyle" TargetType="DataGridRow">
@@ -15,13 +16,6 @@
           <Setter Property="TextBlock.TextDecorations" Value="Strikethrough" />
           <Setter Property="Foreground" Value="#FF9E9E9E" />
         </DataTrigger>
-        <MultiDataTrigger>
-          <MultiDataTrigger.Conditions>
-            <Condition Binding="{Binding DataContext.ColorizeRights, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True" />
-            <Condition Binding="{Binding IsCustomRights}" Value="True" />
-          </MultiDataTrigger.Conditions>
-          <Setter Property="Background" Value="#FFE6E6E6" />
-        </MultiDataTrigger>
         <MultiDataTrigger>
           <MultiDataTrigger.Conditions>
             <Condition Binding="{Binding DataContext.ColorizeRights, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True" />
@@ -302,7 +296,6 @@
                     <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" Width="60" />
                     <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" Width="60" />
                     <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" Width="60" />
-                    <DataGridCheckBoxColumn Header="Custom" Binding="{Binding IsCustomRights, Mode=OneWay}" Width="70" />
                     <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" Width="90" />
                     <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" Width="120" />
                     <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" Width="120" />
@@ -337,7 +330,6 @@
                     <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" Width="60" />
                     <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" Width="60" />
                     <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" Width="60" />
-                    <DataGridCheckBoxColumn Header="Custom" Binding="{Binding IsCustomRights, Mode=OneWay}" Width="70" />
                     <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" Width="90" />
                     <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" Width="120" />
                     <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" Width="120" />
@@ -372,7 +364,6 @@
                     <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" Width="60" />
                     <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" Width="60" />
                     <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" Width="60" />
-                    <DataGridCheckBoxColumn Header="Custom" Binding="{Binding IsCustomRights, Mode=OneWay}" Width="70" />
                     <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" Width="90" />
                     <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" Width="120" />
                     <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" Width="120" />

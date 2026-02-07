@@ -20,6 +20,10 @@ namespace NtfsAudit.App.Services
         public List<ResolvedPrincipal> ExpandGroup(string groupSid, CancellationToken token)
         {
             var result = new List<ResolvedPrincipal>();
+            if (string.IsNullOrWhiteSpace(groupSid))
+            {
+                return result;
+            }
             var queue = new Queue<string>();
             var visited = new HashSet<string>();
             queue.Enqueue(groupSid);
@@ -53,8 +57,32 @@ namespace NtfsAudit.App.Services
                 .ToList();
         }
 
+        public bool IsPrivilegedUser(string userSid)
+        {
+            if (string.IsNullOrWhiteSpace(userSid)) return false;
+            if (_adResolver == null || !_adResolver.IsAvailable) return false;
+            try
+            {
+                var groups = _adResolver.GetUserGroups(userSid);
+                if (groups == null || groups.Count == 0) return false;
+                foreach (var group in groups)
+                {
+                    if (group == null || string.IsNullOrWhiteSpace(group.Sid)) continue;
+                    if (SidClassifier.IsPrivilegedGroupSid(group.Sid)) return true;
+                }
+            }
+            catch
+            {
+            }
+            return false;
+        }
+
         private List<ResolvedPrincipal> GetMembers(string groupSid)
         {
+            if (string.IsNullOrWhiteSpace(groupSid))
+            {
+                return new List<ResolvedPrincipal>();
+            }
             if (_adResolver == null || !_adResolver.IsAvailable)
             {
                 return new List<ResolvedPrincipal>();
@@ -85,8 +113,8 @@ namespace NtfsAudit.App.Services
             foreach (var member in members)
             {
                 EnsureSid(member, member.Sid);
-                var isServiceAccount = IsServiceAccountName(member.Name);
-                var isAdminAccount = IsAdminAccountName(member.Name);
+                var isServiceAccount = SidClassifier.IsServiceAccountSid(member.Sid);
+                var isAdminAccount = SidClassifier.IsPrivilegedGroupSid(member.Sid);
                 member.IsServiceAccount = isServiceAccount;
                 member.IsAdminAccount = isAdminAccount;
                 membersToCache.Add(new ResolvedPrincipal
@@ -117,21 +145,5 @@ namespace NtfsAudit.App.Services
             return principal;
         }
 
-        private bool IsServiceAccountName(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return false;
-            var normalized = name.ToLowerInvariant();
-            if (normalized.Contains("svc") || normalized.Contains("service"))
-            {
-                return true;
-            }
-            return normalized.EndsWith("$");
-        }
-
-        private bool IsAdminAccountName(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return false;
-            return name.ToLowerInvariant().Contains("admin");
-        }
     }
 }
