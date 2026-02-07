@@ -678,12 +678,17 @@ namespace NtfsAudit.App.ViewModels
             var rootName = Path.GetFileName(rootPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
             if (string.IsNullOrWhiteSpace(rootName)) rootName = rootPath;
             var rootDetail = result.Details != null && result.Details.TryGetValue(rootPath, out var detail) ? detail : null;
+            var rootSummary = rootDetail == null ? null : rootDetail.DiffSummary;
             var rootNode = new FolderNodeViewModel(
                 rootPath,
                 rootName,
                 provider,
                 rootDetail != null && rootDetail.HasExplicitPermissions,
-                rootDetail != null && rootDetail.IsInheritanceDisabled);
+                rootDetail != null && rootDetail.IsInheritanceDisabled,
+                rootSummary == null ? 0 : rootSummary.Added.Count(key => !key.IsInherited),
+                rootSummary == null ? 0 : rootSummary.Removed.Count,
+                rootSummary == null ? 0 : rootSummary.DenyExplicitCount,
+                rootSummary != null && rootSummary.IsProtected);
             rootNode.IsExpanded = true;
             rootNode.IsSelected = true;
             FolderTree.Add(rootNode);

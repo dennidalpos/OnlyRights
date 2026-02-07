@@ -13,13 +13,26 @@ namespace NtfsAudit.App.ViewModels
         private bool _isSelected;
         private readonly bool _isPlaceholder;
 
-        public FolderNodeViewModel(string path, string displayName, FolderTreeProvider treeProvider, bool hasExplicitPermissions, bool isInheritanceDisabled)
+        public FolderNodeViewModel(
+            string path,
+            string displayName,
+            FolderTreeProvider treeProvider,
+            bool hasExplicitPermissions,
+            bool isInheritanceDisabled,
+            int explicitAddedCount,
+            int explicitRemovedCount,
+            int denyExplicitCount,
+            bool isProtected)
         {
             Path = path;
             DisplayName = displayName;
             _treeProvider = treeProvider;
             HasExplicitPermissions = hasExplicitPermissions;
             IsInheritanceDisabled = isInheritanceDisabled;
+            ExplicitAddedCount = explicitAddedCount;
+            ExplicitRemovedCount = explicitRemovedCount;
+            DenyExplicitCount = denyExplicitCount;
+            IsProtected = isProtected;
             Children = new ObservableCollection<FolderNodeViewModel>();
             if (_treeProvider != null && _treeProvider.HasChildren(path))
             {
@@ -40,6 +53,16 @@ namespace NtfsAudit.App.ViewModels
         public ObservableCollection<FolderNodeViewModel> Children { get; private set; }
         public bool HasExplicitPermissions { get; private set; }
         public bool IsInheritanceDisabled { get; private set; }
+        public int ExplicitAddedCount { get; private set; }
+        public int ExplicitRemovedCount { get; private set; }
+        public int DenyExplicitCount { get; private set; }
+        public bool IsProtected { get; private set; }
+        public bool HasExplicitAdded { get { return ExplicitAddedCount > 0; } }
+        public bool HasExplicitRemoved { get { return ExplicitRemovedCount > 0; } }
+        public bool HasDenyExplicit { get { return DenyExplicitCount > 0; } }
+        public string ExplicitAddedLabel { get { return string.Format("+{0}", ExplicitAddedCount); } }
+        public string ExplicitRemovedLabel { get { return string.Format("-{0}", ExplicitRemovedCount); } }
+        public string DenyExplicitLabel { get { return "D"; } }
 
         public bool IsExpanded
         {

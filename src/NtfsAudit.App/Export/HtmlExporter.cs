@@ -73,6 +73,11 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    .tree-marker { width: 8px; height: 8px; display: inline-block; }");
             builder.AppendLine("    .marker-inheritance { background: #c62828; border-radius: 2px; }");
             builder.AppendLine("    .marker-explicit { background: #ffa000; border-radius: 50%; }");
+            builder.AppendLine("    .badge { display: inline-flex; align-items: center; justify-content: center; padding: 1px 4px; border-radius: 2px; font-size: 10px; color: #fff; }");
+            builder.AppendLine("    .badge-protected { background: #c62828; }");
+            builder.AppendLine("    .badge-added { background: #2e7d32; }");
+            builder.AppendLine("    .badge-removed { background: #f57c00; }");
+            builder.AppendLine("    .badge-deny { background: #6a1b9a; }");
             builder.AppendLine("    .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; margin-bottom: 8px; }");
             builder.AppendLine("    .legend-item { display: inline-flex; align-items: center; gap: 6px; }");
             builder.AppendLine("    .toolbar { display: flex; gap: 16px; align-items: center; margin-bottom: 12px; }");
@@ -107,8 +112,10 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("        <button id=\"collapseAll\" class=\"secondary\">Comprimi</button>");
             builder.AppendLine("      </div>");
             builder.AppendLine("      <div class=\"legend\">");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"tree-marker marker-inheritance\"></span>Ereditarietà disabilitata</div>");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"tree-marker marker-explicit\"></span>Permessi espliciti (non ereditati)</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-protected\">P</span>Protected (ereditarietà disabilitata)</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-added\">+N</span>ACE esplicite aggiunte</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-removed\">-N</span>ACE rimosse rispetto al padre</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-deny\">D</span>Deny espliciti</div>");
             builder.AppendLine("      </div>");
             builder.AppendLine("      <div id=\"treeContainer\"></div>");
             builder.AppendLine("    </aside>");
@@ -231,15 +238,29 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      name.textContent = displayNames[path] || path;" );
             builder.AppendLine("      label.appendChild(name);");
             builder.AppendLine("      const flags = detailsData[path] || {};");
-            builder.AppendLine("      if (flags.IsInheritanceDisabled) {");
-            builder.AppendLine("        const marker = document.createElement('span');");
-            builder.AppendLine("        marker.className = 'tree-marker marker-inheritance';");
-            builder.AppendLine("        label.appendChild(marker);");
+            builder.AppendLine("      if (flags.IsProtected) {");
+            builder.AppendLine("        const badge = document.createElement('span');");
+            builder.AppendLine("        badge.className = 'badge badge-protected';");
+            builder.AppendLine("        badge.textContent = 'P';");
+            builder.AppendLine("        label.appendChild(badge);");
             builder.AppendLine("      }");
-            builder.AppendLine("      if (flags.HasExplicitPermissions) {");
-            builder.AppendLine("        const marker = document.createElement('span');");
-            builder.AppendLine("        marker.className = 'tree-marker marker-explicit';");
-            builder.AppendLine("        label.appendChild(marker);");
+            builder.AppendLine("      if ((flags.ExplicitAddedCount || 0) > 0) {");
+            builder.AppendLine("        const badge = document.createElement('span');");
+            builder.AppendLine("        badge.className = 'badge badge-added';");
+            builder.AppendLine("        badge.textContent = `+${flags.ExplicitAddedCount}`;");
+            builder.AppendLine("        label.appendChild(badge);");
+            builder.AppendLine("      }");
+            builder.AppendLine("      if ((flags.ExplicitRemovedCount || 0) > 0) {");
+            builder.AppendLine("        const badge = document.createElement('span');");
+            builder.AppendLine("        badge.className = 'badge badge-removed';");
+            builder.AppendLine("        badge.textContent = `-${flags.ExplicitRemovedCount}`;");
+            builder.AppendLine("        label.appendChild(badge);");
+            builder.AppendLine("      }");
+            builder.AppendLine("      if ((flags.DenyExplicitCount || 0) > 0) {");
+            builder.AppendLine("        const badge = document.createElement('span');");
+            builder.AppendLine("        badge.className = 'badge badge-deny';");
+            builder.AppendLine("        badge.textContent = 'D';");
+            builder.AppendLine("        label.appendChild(badge);");
             builder.AppendLine("      }");
             builder.AppendLine("      label.addEventListener('click', (event) => {" );
             builder.AppendLine("        event.stopPropagation();" );
@@ -410,13 +431,21 @@ namespace NtfsAudit.App.Export
             var payload = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
             foreach (var entry in details)
             {
+                var summary = entry.Value.DiffSummary;
+                var added = summary == null ? 0 : summary.Added.Count(key => !key.IsInherited);
+                var removed = summary == null ? 0 : summary.Removed.Count;
+                var deny = summary == null ? 0 : summary.DenyExplicitCount;
                 payload[entry.Key] = new
                 {
                     GroupEntries = entry.Value.GroupEntries ?? new List<AceEntry>(),
                     UserEntries = entry.Value.UserEntries ?? new List<AceEntry>(),
                     AllEntries = entry.Value.AllEntries ?? new List<AceEntry>(),
                     HasExplicitPermissions = entry.Value.HasExplicitPermissions,
-                    IsInheritanceDisabled = entry.Value.IsInheritanceDisabled
+                    IsInheritanceDisabled = entry.Value.IsInheritanceDisabled,
+                    IsProtected = summary != null ? summary.IsProtected : entry.Value.IsInheritanceDisabled,
+                    ExplicitAddedCount = added,
+                    ExplicitRemovedCount = removed,
+                    DenyExplicitCount = deny
                 };
             }
             return payload;
