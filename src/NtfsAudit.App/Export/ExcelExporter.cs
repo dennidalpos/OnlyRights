@@ -96,6 +96,11 @@ namespace NtfsAudit.App.Export
                     continue;
                 }
                 if (record == null) continue;
+                if (string.Equals(record.PrincipalType, "Meta", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(record.PrincipalName, "SCAN_OPTIONS", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
                 records.Add(record);
             }
 

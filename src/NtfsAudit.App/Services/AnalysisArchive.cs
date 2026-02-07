@@ -129,6 +129,12 @@ namespace NtfsAudit.App.Services
                     continue;
                 }
                 if (record == null) continue;
+                if (string.IsNullOrWhiteSpace(record.FolderPath)) continue;
+                if (string.Equals(record.PrincipalType, "Meta", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(record.PrincipalName, "SCAN_OPTIONS", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
 
                 FolderDetail detail;
                 if (!details.TryGetValue(record.FolderPath, out detail))
@@ -221,6 +227,11 @@ namespace NtfsAudit.App.Services
                     continue;
                 }
                 if (record == null || string.IsNullOrWhiteSpace(record.FolderPath)) continue;
+                if (string.Equals(record.PrincipalType, "Meta", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(record.PrincipalName, "SCAN_OPTIONS", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
                 folders.Add(record.FolderPath);
             }
 

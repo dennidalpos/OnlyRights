@@ -8,6 +8,34 @@ namespace NtfsAudit.App.Services
 {
     public static class PathResolver
     {
+        public static string ToExtendedPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return path;
+            if (path.StartsWith(@"\\?\", StringComparison.Ordinal)) return path;
+            if (path.StartsWith(@"\\", StringComparison.Ordinal))
+            {
+                return @"\\?\UNC\" + path.TrimStart('\\');
+            }
+
+            return @"\\?\" + path;
+        }
+
+        public static string FromExtendedPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return path;
+            if (path.StartsWith(@"\\?\UNC\", StringComparison.Ordinal))
+            {
+                return @"\\" + path.Substring(8);
+            }
+
+            if (path.StartsWith(@"\\?\", StringComparison.Ordinal))
+            {
+                return path.Substring(4);
+            }
+
+            return path;
+        }
+
         public static string NormalizeRootPath(string input)
         {
             if (string.IsNullOrWhiteSpace(input)) return input;
