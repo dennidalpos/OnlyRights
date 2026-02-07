@@ -96,34 +96,44 @@ namespace NtfsAudit.App.Services
                 Name = resolvedName,
                 IsGroup = isGroup,
                 IsDisabled = isDisabled,
-                IsServiceAccount = IsServiceAccountName(resolvedName),
-                IsAdminAccount = IsAdminAccountName(resolvedName)
+                IsServiceAccount = IsServiceAccountSid(sid),
+                IsAdminAccount = IsAdminAccountSid(sid)
             };
         }
 
-        private bool IsServiceAccountName(string name)
+        private bool IsServiceAccountSid(string sid)
         {
-            if (string.IsNullOrWhiteSpace(name)) return false;
-            var normalized = name.ToLowerInvariant();
-            if (normalized == "nt authority\\system"
-                || normalized == "nt authority\\local service"
-                || normalized == "nt authority\\network service"
-                || normalized.StartsWith("nt service\\", StringComparison.Ordinal))
+            if (string.IsNullOrWhiteSpace(sid)) return false;
+            if (sid.StartsWith("S-1-5-80-", StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
-            if (normalized.Contains("svc") || normalized.Contains("service"))
+            try
             {
-                return true;
+                var sidObj = new SecurityIdentifier(sid);
+                return sidObj.IsWellKnown(WellKnownSidType.LocalSystemSid)
+                    || sidObj.IsWellKnown(WellKnownSidType.LocalServiceSid)
+                    || sidObj.IsWellKnown(WellKnownSidType.NetworkServiceSid);
             }
-            return normalized.EndsWith("$", StringComparison.Ordinal);
+            catch
+            {
+                return false;
+            }
         }
 
-        private bool IsAdminAccountName(string name)
+        private bool IsAdminAccountSid(string sid)
         {
-            if (string.IsNullOrWhiteSpace(name)) return false;
-            var normalized = name.ToLowerInvariant();
-            return normalized.Contains("admin");
+            if (string.IsNullOrWhiteSpace(sid)) return false;
+            try
+            {
+                var sidObj = new SecurityIdentifier(sid);
+                return sidObj.IsWellKnown(WellKnownSidType.AccountAdministratorSid)
+                    || sidObj.IsWellKnown(WellKnownSidType.BuiltinAdministratorsSid);
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

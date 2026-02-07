@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Principal;
 using System.Threading;
 using NtfsAudit.App.Cache;
 using NtfsAudit.App.Models;
@@ -8,16 +9,17 @@ namespace NtfsAudit.App.Services
 {
     public class GroupExpansionService
     {
-        private static readonly HashSet<string> PrivilegedGroupNames = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
+        private static readonly WellKnownSidType[] PrivilegedGroupSids =
         {
-            "domain admins",
-            "enterprise admins",
-            "schema admins",
-            "administrators",
-            "account operators",
-            "server operators",
-            "backup operators",
-            "print operators"
+            WellKnownSidType.BuiltinAdministratorsSid,
+            WellKnownSidType.AccountAdministratorSid,
+            WellKnownSidType.AccountDomainAdminsSid,
+            WellKnownSidType.AccountEnterpriseAdminsSid,
+            WellKnownSidType.AccountSchemaAdminsSid,
+            WellKnownSidType.AccountOperatorsSid,
+            WellKnownSidType.ServerOperatorsSid,
+            WellKnownSidType.BackupOperatorsSid,
+            WellKnownSidType.PrintOperatorsSid
         };
 
         private readonly IAdResolver _adResolver;
@@ -79,9 +81,8 @@ namespace NtfsAudit.App.Services
                 if (groups == null || groups.Count == 0) return false;
                 foreach (var group in groups)
                 {
-                    var normalized = NormalizeGroupName(group == null ? null : group.Name);
-                    if (string.IsNullOrWhiteSpace(normalized)) continue;
-                    if (PrivilegedGroupNames.Contains(normalized)) return true;
+                    if (group == null || string.IsNullOrWhiteSpace(group.Sid)) continue;
+                    if (IsPrivilegedSid(group.Sid)) return true;
                 }
             }
             catch
@@ -126,8 +127,8 @@ namespace NtfsAudit.App.Services
             foreach (var member in members)
             {
                 EnsureSid(member, member.Sid);
-                var isServiceAccount = IsServiceAccountName(member.Name);
-                var isAdminAccount = IsAdminAccountName(member.Name);
+                var isServiceAccount = IsServiceAccountSid(member.Sid);
+                var isAdminAccount = IsPrivilegedSid(member.Sid);
                 member.IsServiceAccount = isServiceAccount;
                 member.IsAdminAccount = isAdminAccount;
                 membersToCache.Add(new ResolvedPrincipal
@@ -158,40 +159,44 @@ namespace NtfsAudit.App.Services
             return principal;
         }
 
-        private bool IsServiceAccountName(string name)
+        private bool IsServiceAccountSid(string sid)
         {
-            if (string.IsNullOrWhiteSpace(name)) return false;
-            var normalized = name.ToLowerInvariant();
-            if (normalized == "nt authority\\system"
-                || normalized == "nt authority\\local service"
-                || normalized == "nt authority\\network service"
-                || normalized.StartsWith("nt service\\", System.StringComparison.Ordinal))
+            if (string.IsNullOrWhiteSpace(sid)) return false;
+            if (sid.StartsWith("S-1-5-80-", System.StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
-            if (normalized.Contains("svc") || normalized.Contains("service"))
+            try
             {
-                return true;
+                var sidObj = new System.Security.Principal.SecurityIdentifier(sid);
+                return sidObj.IsWellKnown(System.Security.Principal.WellKnownSidType.LocalSystemSid)
+                    || sidObj.IsWellKnown(System.Security.Principal.WellKnownSidType.LocalServiceSid)
+                    || sidObj.IsWellKnown(System.Security.Principal.WellKnownSidType.NetworkServiceSid);
             }
-            return normalized.EndsWith("$");
+            catch
+            {
+                return false;
+            }
         }
 
-        private bool IsAdminAccountName(string name)
+        private bool IsPrivilegedSid(string sid)
         {
-            if (string.IsNullOrWhiteSpace(name)) return false;
-            return name.ToLowerInvariant().Contains("admin");
-        }
-
-        private static string NormalizeGroupName(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return null;
-            var trimmed = name.Trim();
-            var separatorIndex = trimmed.LastIndexOf('\\');
-            if (separatorIndex >= 0 && separatorIndex + 1 < trimmed.Length)
+            if (string.IsNullOrWhiteSpace(sid)) return false;
+            try
             {
-                trimmed = trimmed.Substring(separatorIndex + 1);
+                var sidObj = new System.Security.Principal.SecurityIdentifier(sid);
+                foreach (var privilegedSid in PrivilegedGroupSids)
+                {
+                    if (sidObj.IsWellKnown(privilegedSid))
+                    {
+                        return true;
+                    }
+                }
             }
-            return trimmed.Trim();
+            catch
+            {
+            }
+            return false;
         }
     }
 }
