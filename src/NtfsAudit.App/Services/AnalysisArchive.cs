@@ -20,11 +20,28 @@ namespace NtfsAudit.App.Services
         {
             if (result == null) throw new ArgumentNullException("result");
             if (string.IsNullOrWhiteSpace(outputPath)) throw new ArgumentException("Output path required", "outputPath");
+            if (string.IsNullOrWhiteSpace(result.TempDataPath) || !File.Exists(result.TempDataPath))
+            {
+                throw new FileNotFoundException("Scan data file not found.", result.TempDataPath);
+            }
+
+            var outputDirectory = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrWhiteSpace(outputDirectory))
+            {
+                Directory.CreateDirectory(outputDirectory);
+            }
+            if (File.Exists(outputPath))
+            {
+                File.Delete(outputPath);
+            }
 
             using (var archive = ZipFile.Open(outputPath, ZipArchiveMode.Create))
             {
                 AddFileEntry(archive, DataEntryName, result.TempDataPath);
-                AddFileEntry(archive, ErrorsEntryName, result.ErrorPath);
+                if (!AddFileEntry(archive, ErrorsEntryName, result.ErrorPath))
+                {
+                    AddEmptyEntry(archive, ErrorsEntryName);
+                }
                 AddJsonEntry(archive, TreeEntryName, result.TreeMap);
                 AddJsonEntry(archive, MetaEntryName, new ArchiveMeta
                 {
@@ -52,6 +69,14 @@ namespace NtfsAudit.App.Services
             var errorPath = Path.Combine(tempDir, ErrorsEntryName);
             var treePath = Path.Combine(tempDir, TreeEntryName);
             var metaPath = Path.Combine(tempDir, MetaEntryName);
+            if (!File.Exists(dataPath))
+            {
+                throw new InvalidDataException("Archivio analisi non valido: dati mancanti.");
+            }
+            if (!File.Exists(errorPath))
+            {
+                File.WriteAllText(errorPath, string.Empty);
+            }
 
             var treeMap = LoadTreeMap(treePath, dataPath);
             var meta = LoadMeta(metaPath);
@@ -308,10 +333,11 @@ namespace NtfsAudit.App.Services
             return parentValue;
         }
 
-        private void AddFileEntry(ZipArchive archive, string entryName, string sourcePath)
+        private bool AddFileEntry(ZipArchive archive, string entryName, string sourcePath)
         {
-            if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath)) return;
+            if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath)) return false;
             archive.CreateEntryFromFile(sourcePath, entryName);
+            return true;
         }
 
         private void AddJsonEntry(ZipArchive archive, string entryName, object data)
@@ -330,6 +356,16 @@ namespace NtfsAudit.App.Services
             if (entry == null) return;
             var destinationPath = Path.Combine(destinationDir, entryName);
             entry.ExtractToFile(destinationPath, true);
+        }
+
+        private void AddEmptyEntry(ZipArchive archive, string entryName)
+        {
+            var entry = archive.CreateEntry(entryName);
+            using (var stream = entry.Open())
+            using (var writer = new StreamWriter(stream))
+            {
+                writer.Write(string.Empty);
+            }
         }
 
         private class ArchiveMeta

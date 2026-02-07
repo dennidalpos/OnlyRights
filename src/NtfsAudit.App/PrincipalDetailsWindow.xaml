@@ -10,10 +10,19 @@
     <TextBlock x:Name="HeaderText" FontWeight="Bold" Margin="0,0,0,8" />
     <Grid Grid.Row="1">
       <TextBlock x:Name="EmptyText" Text="Nessun elemento trovato." HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
-      <DataGrid x:Name="EntriesGrid" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
+      <DataGrid x:Name="EntriesGrid"
+                AutoGenerateColumns="False"
+                IsReadOnly="True"
+                EnableRowVirtualization="True"
+                EnableColumnVirtualization="True"
+                ScrollViewer.CanContentScroll="True"
+                ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                ColumnWidth="SizeToHeader"
+                MinColumnWidth="80">
         <DataGrid.Columns>
-          <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="*" />
-          <DataGridTextColumn Header="SID" Binding="{Binding Sid}" Width="2*" />
+          <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="200" />
+          <DataGridTextColumn Header="SID" Binding="{Binding Sid}" Width="240" />
           <DataGridTextColumn Header="Tipo" Binding="{Binding Type}" Width="120" />
           <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" Width="120" />
         </DataGrid.Columns>

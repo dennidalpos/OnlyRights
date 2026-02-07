@@ -3,6 +3,7 @@ param(
     [switch]$SkipRestore,
     [switch]$SkipBuild,
     [switch]$SkipPublish,
+    [string]$Framework,
     [string]$OutputPath,
     [string]$Runtime,
     [switch]$SelfContained,
@@ -26,12 +27,16 @@ if (!(Test-Path $project)) { throw "Project not found" }
 if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) { throw "dotnet SDK not found." }
 
 if (-not $SkipRestore) {
-    & dotnet restore $solution
+    & dotnet restore $solution --nologo
     if ($LASTEXITCODE -ne 0) { throw "Restore failed." }
 }
 
 if (-not $SkipBuild) {
-    & dotnet build $solution -c $Configuration --no-restore
+    $buildArgs = @("build", $solution, "-c", $Configuration, "--no-restore", "--nologo")
+    if ($Framework) {
+        $buildArgs += @("-f", $Framework)
+    }
+    & dotnet @buildArgs
     if ($LASTEXITCODE -ne 0) { throw "Build failed." }
 }
 
@@ -46,7 +51,10 @@ if (-not $SkipPublish) {
         throw "Runtime required for self-contained publish."
     }
 
-    $publishArgs = @("publish", $project, "-c", $Configuration, "--no-build", "-o", $dist)
+    $publishArgs = @("publish", $project, "-c", $Configuration, "--no-build", "--nologo", "-o", $dist)
+    if ($Framework) {
+        $publishArgs += @("-f", $Framework)
+    }
     if ($Runtime) {
         $publishArgs += @("-r", $Runtime)
         $publishArgs += @("--self-contained", $SelfContained.IsPresent.ToString().ToLowerInvariant())

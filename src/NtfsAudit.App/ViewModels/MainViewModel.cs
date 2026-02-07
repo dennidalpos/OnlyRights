@@ -34,7 +34,6 @@ namespace NtfsAudit.App.ViewModels
         private bool _excludeAdminAccounts;
         private bool _expandGroups = true;
         private bool _usePowerShell = true;
-        private bool _exportOnComplete;
         private string _progressText = "Pronto";
         private string _currentPathText;
         private int _processedCount;
@@ -187,16 +186,6 @@ namespace NtfsAudit.App.ViewModels
             {
                 _usePowerShell = value;
                 OnPropertyChanged("UsePowerShell");
-            }
-        }
-
-        public bool ExportOnComplete
-        {
-            get { return _exportOnComplete; }
-            set
-            {
-                _exportOnComplete = value;
-                OnPropertyChanged("ExportOnComplete");
             }
         }
 
@@ -401,8 +390,7 @@ namespace NtfsAudit.App.ViewModels
                 ExcludeServiceAccounts = ExcludeServiceAccounts,
                 ExcludeAdminAccounts = ExcludeAdminAccounts,
                 ExpandGroups = ResolveIdentities && ExpandGroups,
-                UsePowerShell = UsePowerShell,
-                ExportOnComplete = ExportOnComplete
+                UsePowerShell = UsePowerShell
             };
 
             Task.Run(() => ExecuteScan(options, _cts.Token));
@@ -424,9 +412,16 @@ namespace NtfsAudit.App.ViewModels
                 dialog.ShowNewFolderButton = true;
                 var result = dialog.ShowDialog();
                 if (result != DialogResult.OK) return;
-                var outputPath = BuildExportPath(dialog.SelectedPath, RootPath);
-                _excelExporter.Export(_scanResult.TempDataPath, _scanResult.ErrorPath, outputPath);
-                ProgressText = string.Format("Export completato: {0}", outputPath);
+                try
+                {
+                    var outputPath = BuildExportPath(dialog.SelectedPath, RootPath);
+                    _excelExporter.Export(_scanResult.TempDataPath, _scanResult.ErrorPath, outputPath);
+                    ProgressText = string.Format("Export completato: {0}", outputPath);
+                }
+                catch (Exception ex)
+                {
+                    ProgressText = string.Format("Errore export: {0}", ex.Message);
+                }
             }
         }
 
@@ -439,8 +434,15 @@ namespace NtfsAudit.App.ViewModels
                 FileName = "analisi-ntfs-audit.ntaudit"
             };
             if (dialog.ShowDialog() != true) return;
-            _analysisArchive.Export(_scanResult, RootPath, dialog.FileName);
-            ProgressText = string.Format("Analisi esportata: {0}", dialog.FileName);
+            try
+            {
+                _analysisArchive.Export(_scanResult, RootPath, dialog.FileName);
+                ProgressText = string.Format("Analisi esportata: {0}", dialog.FileName);
+            }
+            catch (Exception ex)
+            {
+                ProgressText = string.Format("Errore export analisi: {0}", ex.Message);
+            }
         }
 
         private void ImportAnalysis()
@@ -450,26 +452,32 @@ namespace NtfsAudit.App.ViewModels
                 Filter = "Analisi NtfsAudit (*.ntaudit)|*.ntaudit"
             };
             if (dialog.ShowDialog() != true) return;
-
-            var imported = _analysisArchive.Import(dialog.FileName);
-            _scanResult = imported.ScanResult;
-            RootPath = string.IsNullOrWhiteSpace(imported.RootPath) ? RootPath : imported.RootPath;
-            ClearResults();
-            LoadTree(_scanResult);
-            LoadErrors(_scanResult.ErrorPath);
-            if (!string.IsNullOrWhiteSpace(RootPath) && _scanResult.TreeMap.Count > 0 && !_scanResult.TreeMap.ContainsKey(RootPath))
+            try
             {
-                RootPath = _scanResult.TreeMap.Keys.First();
+                var imported = _analysisArchive.Import(dialog.FileName);
+                _scanResult = imported.ScanResult;
+                RootPath = string.IsNullOrWhiteSpace(imported.RootPath) ? RootPath : imported.RootPath;
+                ClearResults();
+                LoadTree(_scanResult);
+                LoadErrors(_scanResult.ErrorPath);
+                if (!string.IsNullOrWhiteSpace(RootPath) && _scanResult.TreeMap.Count > 0 && !_scanResult.TreeMap.ContainsKey(RootPath))
+                {
+                    RootPath = _scanResult.TreeMap.Keys.First();
+                }
+                var root = RootPath;
+                if (string.IsNullOrWhiteSpace(root) && _scanResult.TreeMap.Count > 0)
+                {
+                    root = _scanResult.TreeMap.Keys.First();
+                    RootPath = root;
+                }
+                SelectFolder(root);
+                ProgressText = string.Format("Analisi importata: {0}", dialog.FileName);
+                UpdateCommands();
             }
-            var root = RootPath;
-            if (string.IsNullOrWhiteSpace(root) && _scanResult.TreeMap.Count > 0)
+            catch (Exception ex)
             {
-                root = _scanResult.TreeMap.Keys.First();
-                RootPath = root;
+                ProgressText = string.Format("Errore import analisi: {0}", ex.Message);
             }
-            SelectFolder(root);
-            ProgressText = string.Format("Analisi importata: {0}", dialog.FileName);
-            UpdateCommands();
         }
 
         private void ExecuteScan(ScanOptions options, CancellationToken token)
@@ -497,10 +505,6 @@ namespace NtfsAudit.App.ViewModels
                     SelectFolder(options.RootPath);
                 });
 
-                if (options.ExportOnComplete)
-                {
-                    RunOnUi(Export);
-                }
             }
             catch (OperationCanceledException)
             {
