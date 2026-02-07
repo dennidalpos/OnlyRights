@@ -28,5 +28,11 @@ namespace NtfsAudit.App.Services
                 yield return new FolderNodeViewModel(child, name, this);
             }
         }
+
+        public bool HasChildren(string parentPath)
+        {
+            List<string> children;
+            return _childrenMap.TryGetValue(parentPath, out children) && children.Count > 0;
+        }
     }
 }

@@ -167,34 +167,46 @@
 
     <Grid Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="280" />
+        <ColumnDefinition Width="300" />
+        <ColumnDefinition Width="6" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
       <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Margin="8,8,4,8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-        <TreeView ItemsSource="{Binding FolderTree}" SelectedItemChanged="TreeView_OnSelectedItemChanged" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling">
-          <TreeView.ItemContainerStyle>
-            <Style TargetType="TreeViewItem">
-              <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-              <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
-              <Setter Property="Background" Value="Transparent" />
-              <Setter Property="Foreground" Value="#FF212121" />
-              <Style.Triggers>
-                <Trigger Property="IsSelected" Value="True">
-                  <Setter Property="Background" Value="#FFBBDEFB" />
-                  <Setter Property="Foreground" Value="#FF0D47A1" />
-                  <Setter Property="FontWeight" Value="SemiBold" />
-                </Trigger>
-              </Style.Triggers>
-            </Style>
-          </TreeView.ItemContainerStyle>
-          <TreeView.ItemTemplate>
-            <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-              <TextBlock Text="{Binding DisplayName}" />
-            </HierarchicalDataTemplate>
-          </TreeView.ItemTemplate>
-        </TreeView>
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+          <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+            <Button Margin="0,0,6,0" Padding="8,2" Content="Espandi" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
+            <Button Padding="8,2" Content="Comprimi" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
+          </StackPanel>
+          <TreeView x:Name="FolderTreeView" Grid.Row="1" ItemsSource="{Binding FolderTree}" SelectedItemChanged="TreeView_OnSelectedItemChanged" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling">
+            <TreeView.ItemContainerStyle>
+              <Style TargetType="TreeViewItem">
+                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="#FF212121" />
+                <Style.Triggers>
+                  <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#FFBBDEFB" />
+                    <Setter Property="Foreground" Value="#FF0D47A1" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                  </Trigger>
+                </Style.Triggers>
+              </Style>
+            </TreeView.ItemContainerStyle>
+            <TreeView.ItemTemplate>
+              <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                <TextBlock Text="{Binding DisplayName}" />
+              </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+          </TreeView>
+        </Grid>
       </Border>
-      <Grid Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+      <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FFE0E0E0" />
+      <Grid Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="4,8,8,8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
           <Grid>
             <Grid.RowDefinitions>

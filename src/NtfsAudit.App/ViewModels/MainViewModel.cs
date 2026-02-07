@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Forms;
 using Win32 = Microsoft.Win32;
@@ -417,6 +418,7 @@ namespace NtfsAudit.App.ViewModels
                     var outputPath = BuildExportPath(dialog.SelectedPath, RootPath);
                     _excelExporter.Export(_scanResult.TempDataPath, _scanResult.ErrorPath, outputPath);
                     ProgressText = string.Format("Export completato: {0}", outputPath);
+                    MessageBox.Show(string.Format("Export completato:\n{0}", outputPath), "Export completato", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
@@ -438,6 +440,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _analysisArchive.Export(_scanResult, RootPath, dialog.FileName);
                 ProgressText = string.Format("Analisi esportata: {0}", dialog.FileName);
+                MessageBox.Show(string.Format("Analisi esportata:\n{0}", dialog.FileName), "Export completato", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {

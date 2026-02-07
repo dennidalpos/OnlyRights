@@ -78,5 +78,35 @@ namespace NtfsAudit.App
             window.Owner = this;
             window.ShowDialog();
         }
+
+        private void ExpandTree_Click(object sender, RoutedEventArgs e)
+        {
+            var viewModel = DataContext as MainViewModel;
+            if (viewModel == null) return;
+            foreach (var node in viewModel.FolderTree)
+            {
+                SetExpanded(node, true);
+            }
+        }
+
+        private void CollapseTree_Click(object sender, RoutedEventArgs e)
+        {
+            var viewModel = DataContext as MainViewModel;
+            if (viewModel == null) return;
+            foreach (var node in viewModel.FolderTree)
+            {
+                SetExpanded(node, false);
+            }
+        }
+
+        private void SetExpanded(FolderNodeViewModel node, bool expanded)
+        {
+            if (node == null || node.IsPlaceholder) return;
+            node.IsExpanded = expanded;
+            foreach (var child in node.Children)
+            {
+                SetExpanded(child, expanded);
+            }
+        }
     }
 }

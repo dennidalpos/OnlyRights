@@ -6,16 +6,30 @@ namespace NtfsAudit.App.ViewModels
 {
     public class FolderNodeViewModel : INotifyPropertyChanged
     {
+        private static readonly FolderNodeViewModel Placeholder = new FolderNodeViewModel();
         private readonly FolderTreeProvider _treeProvider;
         private bool _isExpanded;
         private bool _childrenLoaded;
         private bool _isSelected;
+        private readonly bool _isPlaceholder;
 
         public FolderNodeViewModel(string path, string displayName, FolderTreeProvider treeProvider)
         {
             Path = path;
             DisplayName = displayName;
             _treeProvider = treeProvider;
+            Children = new ObservableCollection<FolderNodeViewModel>();
+            if (_treeProvider != null && _treeProvider.HasChildren(path))
+            {
+                Children.Add(Placeholder);
+            }
+        }
+
+        private FolderNodeViewModel()
+        {
+            Path = string.Empty;
+            DisplayName = string.Empty;
+            _isPlaceholder = true;
             Children = new ObservableCollection<FolderNodeViewModel>();
         }
 
@@ -49,9 +63,18 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
+        public bool IsPlaceholder
+        {
+            get { return _isPlaceholder; }
+        }
+
         private void LoadChildren()
         {
             _childrenLoaded = true;
+            if (Children.Count == 1 && Children[0]._isPlaceholder)
+            {
+                Children.Clear();
+            }
             foreach (var child in _treeProvider.GetChildren(Path))
             {
                 Children.Add(child);
