@@ -336,9 +336,9 @@
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch">
                     <DataGrid.Columns>
-                      <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="2*" />
-                      <DataGridTextColumn Header="Tipo" Binding="{Binding ErrorType}" Width="140" />
-                      <DataGridTextColumn Header="Messaggio" Binding="{Binding Message}" Width="3*" />
+                      <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="360" />
+                      <DataGridTextColumn Header="Tipo" Binding="{Binding ErrorType}" Width="160" />
+                      <DataGridTextColumn Header="Messaggio" Binding="{Binding Message}" Width="420" />
                     </DataGrid.Columns>
                   </DataGrid>
                 </Grid>
