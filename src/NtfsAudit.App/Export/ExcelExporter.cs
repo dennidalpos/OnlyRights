@@ -23,6 +23,7 @@ namespace NtfsAudit.App.Export
             }
 
             var records = LoadFolderPermissions(tempDataPath);
+            var errors = LoadErrors(errorPath);
             var groupRecords = records
                 .Where(record => string.Equals(record.PrincipalType, "Group", StringComparison.OrdinalIgnoreCase))
                 .ToList();
@@ -73,6 +74,16 @@ namespace NtfsAudit.App.Export
                 WriteFolderPermissionsSheet(aclSheet, records, headers, "AclTable", 3);
                 sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(aclSheet), SheetId = 3, Name = "Acl" });
 
+                var errorHeaders = new[]
+                {
+                    "Path",
+                    "ErrorType",
+                    "Message"
+                };
+                var errorSheet = workbookPart.AddNewPart<WorksheetPart>();
+                WriteErrorsSheet(errorSheet, errors, errorHeaders, "ErrorsTable", 4);
+                sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(errorSheet), SheetId = 4, Name = "Errors" });
+
                 workbookPart.Workbook.Save();
             }
         }
@@ -108,6 +119,39 @@ namespace NtfsAudit.App.Export
             }
 
             return records;
+        }
+
+        private List<ErrorEntry> LoadErrors(string errorPath)
+        {
+            var errors = new List<ErrorEntry>();
+            if (string.IsNullOrWhiteSpace(errorPath))
+            {
+                return errors;
+            }
+
+            var ioPath = PathResolver.ToExtendedPath(errorPath);
+            if (!File.Exists(ioPath))
+            {
+                return errors;
+            }
+
+            foreach (var line in File.ReadLines(ioPath))
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                ErrorEntry entry;
+                try
+                {
+                    entry = JsonConvert.DeserializeObject<ErrorEntry>(line);
+                }
+                catch
+                {
+                    continue;
+                }
+                if (entry == null) continue;
+                errors.Add(entry);
+            }
+
+            return errors;
         }
 
         private void WriteFolderPermissionsSheet(WorksheetPart sheetPart, List<ExportRecord> records, string[] headers, string tableName, uint tableId)
@@ -164,6 +208,35 @@ namespace NtfsAudit.App.Export
             }
         }
 
+        private void WriteErrorsSheet(WorksheetPart sheetPart, List<ErrorEntry> errors, string[] headers, string tableName, uint tableId)
+        {
+            var columnWidths = InitializeColumnWidths(headers);
+            foreach (var error in errors)
+            {
+                UpdateColumnWidths(columnWidths, error.Path, error.ErrorType, error.Message);
+            }
+            var rowCount = errors.Count + 1;
+
+            using (var writer = OpenXmlWriter.Create(sheetPart))
+            {
+                writer.WriteStartElement(new Worksheet());
+                WriteColumns(writer, columnWidths);
+                writer.WriteStartElement(new SheetData());
+                WriteRow(writer, headers);
+
+                foreach (var error in errors)
+                {
+                    WriteRow(writer,
+                        error.Path,
+                        error.ErrorType,
+                        error.Message);
+                }
+
+                writer.WriteEndElement();
+                WriteTableParts(writer, sheetPart, tableName, tableId, headers, rowCount);
+                writer.WriteEndElement();
+            }
+        }
 
         private int[] InitializeColumnWidths(string[] headers)
         {
