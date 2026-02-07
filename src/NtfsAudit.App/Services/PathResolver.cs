@@ -119,31 +119,51 @@ namespace NtfsAudit.App.Services
                     .ThenBy(storage => storage.ServerName, StringComparer.OrdinalIgnoreCase)
                     .ThenBy(storage => storage.ShareName, StringComparer.OrdinalIgnoreCase)
                     .ToList();
-                string firstCandidate = null;
 
-                foreach (var storage in storages)
+                var highestPriority = storages.Count > 0 ? GetStoragePriority(storages[0]) : int.MaxValue;
+                var prioritized = storages
+                    .Where(storage => GetStoragePriority(storage) == highestPriority)
+                    .ToList();
+                var fallbacks = storages
+                    .Where(storage => GetStoragePriority(storage) != highestPriority)
+                    .ToList();
+
+                var selected = TrySelectAvailableStorage(prioritized, remainder);
+                if (selected != null)
                 {
-                    var root = string.Format("\\\\{0}\\{1}", storage.ServerName, storage.ShareName);
-                    var candidate = string.IsNullOrEmpty(remainder) ? root : Path.Combine(root, remainder);
-                    if (firstCandidate == null)
-                    {
-                        firstCandidate = candidate;
-                    }
-
-                    if (Directory.Exists(candidate))
-                    {
-                        CacheDfs(normalized, candidate);
-                        return candidate;
-                    }
+                    CacheDfs(normalized, selected);
+                    return selected;
                 }
 
-                CacheDfs(normalized, firstCandidate);
-                return firstCandidate;
+                selected = TrySelectAvailableStorage(fallbacks, remainder);
+                if (selected != null)
+                {
+                    CacheDfs(normalized, selected);
+                    return selected;
+                }
+
+                CacheDfs(normalized, null);
+                return null;
             }
             finally
             {
                 NetApiBufferFree(buffer);
             }
+        }
+
+        private static string TrySelectAvailableStorage(List<DfsStorageInfo> storages, string remainder)
+        {
+            foreach (var storage in storages)
+            {
+                var root = string.Format("\\\\{0}\\{1}", storage.ServerName, storage.ShareName);
+                var candidate = string.IsNullOrEmpty(remainder) ? root : Path.Combine(root, remainder);
+                if (Directory.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
         }
 
         private static void CacheDfs(string key, string value)

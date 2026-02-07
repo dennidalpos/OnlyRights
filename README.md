@@ -95,11 +95,12 @@ Le opzioni principali influenzano prestazioni e dettaglio dei risultati:
 
 ### Export Excel (.xlsx)
 
-Genera un file con tre fogli:
+Genera un file con quattro fogli:
 
 - **Users**: ACE degli utenti.
 - **Groups**: ACE dei gruppi.
 - **Acl**: tutte le ACE.
+- **Errors**: errori di accesso raccolti durante la scansione.
 
 Colonne tipiche:
 
@@ -123,6 +124,7 @@ Produce un file HTML autoconclusivo che replica la vista corrente:
 - albero cartelle e stato di espansione,
 - cartella selezionata,
 - tab con ACL utenti/gruppi/complete,
+- tab errori con filtri applicati,
 - filtri applicati,
 - colori per diritto.
 
@@ -164,6 +166,7 @@ Se `errors.jsonl` manca, l’import procede con un set vuoto. In fase di import,
 Il viewer riutilizza la stessa interfaccia della scansione, ma disabilita le funzioni di analisi:
 
 - consente solo **Import Analisi**,
+- importa anche il pannello errori e i filtri associati,
 - nasconde i controlli di scansione,
 - rende la UI completamente in sola lettura.
 
@@ -185,6 +188,7 @@ Parametri principali:
 - `-SkipPublish`
 - `-SkipViewerPublish`
 - `-SkipPublishClean`
+- `-CleanTemp` (rimuove `%TEMP%\NtfsAudit` prima della build/publish)
 - `-Framework <tfm>` (es. `net8.0-windows`)
 - `-OutputPath <cartella>`
 - `-Runtime <rid>` (es. `win-x64`)
@@ -207,6 +211,7 @@ Parametri:
 - `-Configuration <Release|Debug>`
 - `-Framework <tfm>`
 - `-Runtime <rid>`
+- `-TempRoot <path>` (override di `%TEMP%` per i file temporanei)
 - `-KeepDist`
 - `-KeepArtifacts`
 - `-KeepTemp`

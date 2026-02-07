@@ -5,6 +5,7 @@ param(
     [switch]$SkipPublish,
     [switch]$SkipViewerPublish,
     [switch]$SkipPublishClean,
+    [switch]$CleanTemp,
     [string]$Framework,
     [string]$OutputPath,
     [string]$Runtime,
@@ -32,6 +33,11 @@ if (!(Test-Path $project)) { throw "Project not found" }
 if (!(Test-Path $viewerProject)) { throw "Viewer project not found" }
 
 if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) { throw "dotnet SDK not found." }
+
+if ($CleanTemp) {
+    $temp = Join-Path $env:TEMP "NtfsAudit"
+    if (Test-Path $temp) { Remove-Item $temp -Recurse -Force }
+}
 
 if (-not $SkipRestore) {
     & dotnet restore $solution --nologo

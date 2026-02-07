@@ -79,8 +79,9 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    .badge-added { background: #2e7d32; }");
             builder.AppendLine("    .badge-removed { background: #f57c00; }");
             builder.AppendLine("    .badge-deny { background: #6a1b9a; }");
-            builder.AppendLine("    .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; margin-bottom: 8px; }");
-            builder.AppendLine("    .legend-item { display: inline-flex; align-items: center; gap: 6px; }");
+            builder.AppendLine("    .legend { display: grid; grid-auto-flow: row; grid-auto-rows: max-content; gap: 6px; font-size: 12px; margin-bottom: 8px; align-items: start; }");
+            builder.AppendLine("    .legend-title { font-weight: 600; }");
+            builder.AppendLine("    .legend-item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }");
             builder.AppendLine("    .toolbar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 12px; }");
             builder.AppendLine("    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }");
             builder.AppendLine("    .tab-button { background: #e0e0e0; color: #212121; }");
@@ -112,11 +113,11 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("        <button id=\"collapseAll\" class=\"secondary\">Comprimi</button>");
             builder.AppendLine("      </div>");
             builder.AppendLine("      <div class=\"legend\">");
-            builder.AppendLine("        <div class=\"legend-item\"><strong>Legenda:</strong></div>");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-protected\">p</span>Protected (ereditarietà disabilitata)</div>");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-added\">+n</span>ACE esplicite aggiunte</div>");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-removed\">-n</span>ACE rimosse rispetto al padre</div>");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-deny\">d</span>Deny espliciti</div>");
+            builder.AppendLine("        <div class=\"legend-title\">Legenda:</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-protected\">P</span>Protetto (ereditarietà disabilitata)</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-added\">+N</span>ACE esplicite aggiunte</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-removed\">-N</span>ACE rimosse rispetto al padre</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-deny\">D</span>Deny espliciti</div>");
             builder.AppendLine("      </div>");
             builder.AppendLine("      <div id=\"treeContainer\"></div>");
             builder.AppendLine("    </aside>");

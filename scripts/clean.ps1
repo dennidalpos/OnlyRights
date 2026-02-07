@@ -2,6 +2,7 @@ param(
     [string]$Configuration,
     [string]$Framework,
     [string]$Runtime,
+    [string]$TempRoot,
     [switch]$KeepDist,
     [switch]$KeepArtifacts,
     [switch]$KeepTemp,
@@ -44,7 +45,8 @@ foreach ($path in $paths) {
 }
 
 if (-not $KeepTemp) {
-    $temp = Join-Path $env:TEMP "NtfsAudit"
+    $baseTemp = if ($TempRoot) { $TempRoot } else { $env:TEMP }
+    $temp = Join-Path $baseTemp "NtfsAudit"
     if (Test-Path $temp) { Remove-Item $temp -Recurse -Force }
 }
 
