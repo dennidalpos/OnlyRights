@@ -44,6 +44,9 @@ if (-not $SkipPublish) {
     if (Test-Path $dist) { Remove-Item $dist -Recurse -Force }
     New-Item -ItemType Directory -Path $dist | Out-Null
 
+    if (-not $Framework) {
+        $Framework = "net8.0-windows"
+    }
     if (-not $Runtime -and ($SelfContained -or $PublishSingleFile -or $PublishReadyToRun)) {
         $Runtime = "win-x64"
     }

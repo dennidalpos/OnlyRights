@@ -82,7 +82,7 @@ Parametri:
 - `-SkipRestore`
 - `-SkipBuild`
 - `-SkipPublish`
-- `-Framework <tfm>` (es. `net8.0-windows`)
+- `-Framework <tfm>` (es. `net8.0-windows`, default `net8.0-windows` in publish)
 - `-OutputPath <cartella>`
 - `-Runtime <rid>` (es. `win-x64`)
 - `-SelfContained`
