@@ -38,10 +38,12 @@ namespace NtfsAudit.App.ViewModels
         private string _progressText = "Pronto";
         private string _currentPathText;
         private int _processedCount;
+        private int _errorCount;
         private string _elapsedText = "00:00:00";
         private string _selectedFolderPath;
         private string _errorFilter;
         private bool _colorizeRights = true;
+        private string _currentPathBackground = "Transparent";
 
         public MainViewModel()
         {
@@ -56,6 +58,7 @@ namespace NtfsAudit.App.ViewModels
             UserEntries = new ObservableCollection<AceEntry>();
             AllEntries = new ObservableCollection<AceEntry>();
             Errors = new ObservableCollection<ErrorEntry>();
+            Errors.CollectionChanged += (_, __) => ErrorCount = Errors.Count;
             FilteredErrors = CollectionViewSource.GetDefaultView(Errors);
             FilteredErrors.Filter = FilterErrors;
 
@@ -227,6 +230,16 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
+        public int ErrorCount
+        {
+            get { return _errorCount; }
+            set
+            {
+                _errorCount = value;
+                OnPropertyChanged("ErrorCount");
+            }
+        }
+
         public string ElapsedText
         {
             get { return _elapsedText; }
@@ -234,6 +247,16 @@ namespace NtfsAudit.App.ViewModels
             {
                 _elapsedText = value;
                 OnPropertyChanged("ElapsedText");
+            }
+        }
+
+        public string CurrentPathBackground
+        {
+            get { return _currentPathBackground; }
+            set
+            {
+                _currentPathBackground = value;
+                OnPropertyChanged("CurrentPathBackground");
             }
         }
 
@@ -270,6 +293,25 @@ namespace NtfsAudit.App.ViewModels
 
         public bool IsScanning { get { return _isScanning; } }
         public bool IsNotScanning { get { return !_isScanning; } }
+        public bool HasScanResult { get { return _scanResult != null; } }
+        public string StatusText
+        {
+            get
+            {
+                if (_isScanning) return "RUNNING";
+                if (_scanResult == null) return "IDLE";
+                return "STOPPED";
+            }
+        }
+        public string StatusBrush
+        {
+            get
+            {
+                if (_isScanning) return "#FF2E7D32";
+                if (_scanResult == null) return "#FFFFB300";
+                return "#FFC62828";
+            }
+        }
 
         public bool CanStart { get { return !_isScanning && !string.IsNullOrWhiteSpace(RootPath); } }
         public bool CanStop { get { return _isScanning; } }
@@ -451,6 +493,7 @@ namespace NtfsAudit.App.ViewModels
                     SaveCache();
                     LoadTree(result);
                     LoadErrors(result.ErrorPath);
+                    ErrorCount = Errors.Count;
                     SelectFolder(options.RootPath);
                 });
 
@@ -512,6 +555,19 @@ namespace NtfsAudit.App.ViewModels
             CurrentPathText = string.IsNullOrWhiteSpace(progress.CurrentPath) ? string.Empty : progress.CurrentPath;
             ProcessedCount = progress.Processed;
             ElapsedText = FormatElapsed(progress.Elapsed);
+            ErrorCount = progress.Errors;
+            if (string.Equals(progress.Stage, "Errore", StringComparison.OrdinalIgnoreCase))
+            {
+                CurrentPathBackground = "#FFFFCDD2";
+            }
+            else if (!string.IsNullOrWhiteSpace(progress.CurrentPath))
+            {
+                CurrentPathBackground = "#FFC8E6C9";
+            }
+            else
+            {
+                CurrentPathBackground = "Transparent";
+            }
         }
 
         private void LoadTree(ScanResult result)
@@ -579,14 +635,19 @@ namespace NtfsAudit.App.ViewModels
             Errors.Clear();
             SelectedFolderPath = string.Empty;
             ProcessedCount = 0;
+            ErrorCount = 0;
             ElapsedText = "00:00:00";
             CurrentPathText = string.Empty;
+            CurrentPathBackground = "Transparent";
         }
 
         private void UpdateCommands()
         {
             OnPropertyChanged("IsScanning");
             OnPropertyChanged("IsNotScanning");
+            OnPropertyChanged("HasScanResult");
+            OnPropertyChanged("StatusText");
+            OnPropertyChanged("StatusBrush");
             OnPropertyChanged("CanStart");
             OnPropertyChanged("CanStop");
             OnPropertyChanged("CanExport");
