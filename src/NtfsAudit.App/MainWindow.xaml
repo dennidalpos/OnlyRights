@@ -213,7 +213,7 @@
             <TextBlock FontWeight="Bold" Text="{Binding SelectedFolderPath}" Margin="0,0,0,8" />
             <TabControl Grid.Row="1">
               <TabItem Header="Permessi Gruppi">
-                <DataGrid ItemsSource="{Binding GroupEntries}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" MouseDoubleClick="GroupEntries_OnMouseDoubleClick" RowStyle="{StaticResource RightsRowStyle}">
+                <DataGrid ItemsSource="{Binding GroupEntries}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" MouseDoubleClick="GroupEntries_OnMouseDoubleClick" RowStyle="{StaticResource RightsRowStyle}" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
                   <DataGrid.Columns>
                     <DataGridTextColumn Header="Gruppo" Binding="{Binding PrincipalName}" />
                     <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
@@ -235,7 +235,7 @@
                 </DataGrid>
               </TabItem>
               <TabItem Header="Permessi Utenti">
-                <DataGrid ItemsSource="{Binding UserEntries}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" MouseDoubleClick="UserEntries_OnMouseDoubleClick" RowStyle="{StaticResource RightsRowStyle}">
+                <DataGrid ItemsSource="{Binding UserEntries}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" MouseDoubleClick="UserEntries_OnMouseDoubleClick" RowStyle="{StaticResource RightsRowStyle}" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
                   <DataGrid.Columns>
                     <DataGridTextColumn Header="Utente" Binding="{Binding PrincipalName}" />
                     <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
@@ -257,7 +257,7 @@
                 </DataGrid>
               </TabItem>
               <TabItem Header="Dettaglio ACL">
-                <DataGrid ItemsSource="{Binding AllEntries}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" RowStyle="{StaticResource RightsRowStyle}">
+                <DataGrid ItemsSource="{Binding AllEntries}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" RowStyle="{StaticResource RightsRowStyle}" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
                   <DataGrid.Columns>
                     <DataGridTextColumn Header="Principal" Binding="{Binding PrincipalName}" />
                     <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
@@ -286,7 +286,7 @@
                     <RowDefinition Height="*" />
                   </Grid.RowDefinitions>
                   <TextBox Margin="0,0,0,6" Text="{Binding ErrorFilter, UpdateSourceTrigger=PropertyChanged}" />
-                  <DataGrid Grid.Row="1" ItemsSource="{Binding FilteredErrors}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
+                  <DataGrid Grid.Row="1" ItemsSource="{Binding FilteredErrors}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <DataGrid.Columns>
                       <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="*" />
                       <DataGridTextColumn Header="Tipo" Binding="{Binding ErrorType}" Width="160" />
