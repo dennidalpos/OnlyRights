@@ -162,6 +162,13 @@ namespace NtfsAudit.App.Services
         {
             if (string.IsNullOrWhiteSpace(name)) return false;
             var normalized = name.ToLowerInvariant();
+            if (normalized == "nt authority\\system"
+                || normalized == "nt authority\\local service"
+                || normalized == "nt authority\\network service"
+                || normalized.StartsWith("nt service\\", System.StringComparison.Ordinal))
+            {
+                return true;
+            }
             if (normalized.Contains("svc") || normalized.Contains("service"))
             {
                 return true;

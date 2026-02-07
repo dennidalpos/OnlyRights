@@ -105,7 +105,10 @@ namespace NtfsAudit.App.Services
         {
             if (string.IsNullOrWhiteSpace(name)) return false;
             var normalized = name.ToLowerInvariant();
-            if (normalized == "nt authority\\system")
+            if (normalized == "nt authority\\system"
+                || normalized == "nt authority\\local service"
+                || normalized == "nt authority\\network service"
+                || normalized.StartsWith("nt service\\", StringComparison.Ordinal))
             {
                 return true;
             }
