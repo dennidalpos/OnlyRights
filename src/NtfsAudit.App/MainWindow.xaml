@@ -211,7 +211,7 @@
               <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <TextBlock FontWeight="Bold" Text="{Binding SelectedFolderPath}" Margin="0,0,0,8" />
-            <TabControl Grid.Row="1">
+            <TabControl Grid.Row="1" ScrollViewer.HorizontalScrollBarVisibility="Visible" ScrollViewer.VerticalScrollBarVisibility="Visible">
               <TabItem Header="Permessi Gruppi">
                 <DataGrid ItemsSource="{Binding GroupEntries}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" MouseDoubleClick="GroupEntries_OnMouseDoubleClick" RowStyle="{StaticResource RightsRowStyle}" ScrollViewer.HorizontalScrollBarVisibility="Visible" ScrollViewer.VerticalScrollBarVisibility="Visible">
                   <DataGrid.Columns>
