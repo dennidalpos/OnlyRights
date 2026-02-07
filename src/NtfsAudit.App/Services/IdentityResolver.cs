@@ -1,5 +1,4 @@
 using System;
-using System.Security.Principal;
 using NtfsAudit.App.Cache;
 using NtfsAudit.App.Models;
 
@@ -96,44 +95,9 @@ namespace NtfsAudit.App.Services
                 Name = resolvedName,
                 IsGroup = isGroup,
                 IsDisabled = isDisabled,
-                IsServiceAccount = IsServiceAccountSid(sid),
-                IsAdminAccount = IsAdminAccountSid(sid)
+                IsServiceAccount = SidClassifier.IsServiceAccountSid(sid),
+                IsAdminAccount = SidClassifier.IsPrivilegedGroupSid(sid)
             };
-        }
-
-        private bool IsServiceAccountSid(string sid)
-        {
-            if (string.IsNullOrWhiteSpace(sid)) return false;
-            if (sid.StartsWith("S-1-5-80-", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-            try
-            {
-                var sidObj = new SecurityIdentifier(sid);
-                return sidObj.IsWellKnown(WellKnownSidType.LocalSystemSid)
-                    || sidObj.IsWellKnown(WellKnownSidType.LocalServiceSid)
-                    || sidObj.IsWellKnown(WellKnownSidType.NetworkServiceSid);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        private bool IsAdminAccountSid(string sid)
-        {
-            if (string.IsNullOrWhiteSpace(sid)) return false;
-            try
-            {
-                var sidObj = new SecurityIdentifier(sid);
-                return sidObj.IsWellKnown(WellKnownSidType.AccountAdministratorSid)
-                    || sidObj.IsWellKnown(WellKnownSidType.BuiltinAdministratorsSid);
-            }
-            catch
-            {
-                return false;
-            }
         }
     }
 }

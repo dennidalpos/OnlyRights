@@ -86,8 +86,8 @@ Le opzioni principali influenzano prestazioni e dettaglio dei risultati:
 - **Risolvi identità (più lento)**: traduce i SID in nomi leggibili.
 - **Espandi gruppi annidati**: risolve i membri effettivi dei gruppi.
 - **Usa PowerShell per AD**: preferisce l’AD via PowerShell se disponibile.
-- **Escludi utenti di servizio**: filtra account tipicamente di servizio.
-- **Escludi utenti admin**: filtra account con naming “admin” o membri di gruppi privilegiati (es. Domain Admins, Schema Admins).
+- **Escludi utenti di servizio**: filtra account di servizio/built-in del sistema tramite SID noti (LocalSystem, LocalService, NetworkService, NT SERVICE).
+- **Escludi utenti admin**: filtra account/gruppi privilegiati tramite SID noti (es. Domain Admins, Schema Admins, Builtin Administrators).
 - **Colora per diritto**: evidenzia visivamente le ACL.
 
 ## Export
@@ -156,7 +156,7 @@ Un archivio `.ntaudit` è uno ZIP con le seguenti entry:
 - `meta.json`: metadati (root/timestamp).
 - `folderflags.json`: flag aggiuntivi per folder.
 
-Se `errors.jsonl` manca, l’import procede con un set vuoto.
+Se `errors.jsonl` manca, l’import procede con un set vuoto. In fase di import, i flag `IsServiceAccount` e `IsAdminAccount` vengono ricalcolati da SID per garantire coerenza con le regole correnti.
 
 ## Viewer
 

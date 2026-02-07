@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Principal;
 using System.Threading;
 using NtfsAudit.App.Cache;
 using NtfsAudit.App.Models;
@@ -9,19 +8,6 @@ namespace NtfsAudit.App.Services
 {
     public class GroupExpansionService
     {
-        private static readonly WellKnownSidType[] PrivilegedGroupSids =
-        {
-            WellKnownSidType.BuiltinAdministratorsSid,
-            WellKnownSidType.AccountAdministratorSid,
-            WellKnownSidType.AccountDomainAdminsSid,
-            WellKnownSidType.AccountEnterpriseAdminsSid,
-            WellKnownSidType.AccountSchemaAdminsSid,
-            WellKnownSidType.AccountOperatorsSid,
-            WellKnownSidType.ServerOperatorsSid,
-            WellKnownSidType.BackupOperatorsSid,
-            WellKnownSidType.PrintOperatorsSid
-        };
-
         private readonly IAdResolver _adResolver;
         private readonly GroupMembershipCache _cache;
 
@@ -82,7 +68,7 @@ namespace NtfsAudit.App.Services
                 foreach (var group in groups)
                 {
                     if (group == null || string.IsNullOrWhiteSpace(group.Sid)) continue;
-                    if (IsPrivilegedSid(group.Sid)) return true;
+                    if (SidClassifier.IsPrivilegedGroupSid(group.Sid)) return true;
                 }
             }
             catch
@@ -127,8 +113,8 @@ namespace NtfsAudit.App.Services
             foreach (var member in members)
             {
                 EnsureSid(member, member.Sid);
-                var isServiceAccount = IsServiceAccountSid(member.Sid);
-                var isAdminAccount = IsPrivilegedSid(member.Sid);
+                var isServiceAccount = SidClassifier.IsServiceAccountSid(member.Sid);
+                var isAdminAccount = SidClassifier.IsPrivilegedGroupSid(member.Sid);
                 member.IsServiceAccount = isServiceAccount;
                 member.IsAdminAccount = isAdminAccount;
                 membersToCache.Add(new ResolvedPrincipal
@@ -159,44 +145,5 @@ namespace NtfsAudit.App.Services
             return principal;
         }
 
-        private bool IsServiceAccountSid(string sid)
-        {
-            if (string.IsNullOrWhiteSpace(sid)) return false;
-            if (sid.StartsWith("S-1-5-80-", System.StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-            try
-            {
-                var sidObj = new System.Security.Principal.SecurityIdentifier(sid);
-                return sidObj.IsWellKnown(System.Security.Principal.WellKnownSidType.LocalSystemSid)
-                    || sidObj.IsWellKnown(System.Security.Principal.WellKnownSidType.LocalServiceSid)
-                    || sidObj.IsWellKnown(System.Security.Principal.WellKnownSidType.NetworkServiceSid);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        private bool IsPrivilegedSid(string sid)
-        {
-            if (string.IsNullOrWhiteSpace(sid)) return false;
-            try
-            {
-                var sidObj = new System.Security.Principal.SecurityIdentifier(sid);
-                foreach (var privilegedSid in PrivilegedGroupSids)
-                {
-                    if (sidObj.IsWellKnown(privilegedSid))
-                    {
-                        return true;
-                    }
-                }
-            }
-            catch
-            {
-            }
-            return false;
-        }
     }
 }

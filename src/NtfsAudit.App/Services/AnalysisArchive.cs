@@ -201,8 +201,8 @@ namespace NtfsAudit.App.Services
                     Source = record.Source,
                     Depth = record.Depth,
                     IsDisabled = record.IsDisabled,
-                    IsServiceAccount = record.IsServiceAccount,
-                    IsAdminAccount = record.IsAdminAccount,
+                    IsServiceAccount = SidClassifier.IsServiceAccountSid(record.PrincipalSid),
+                    IsAdminAccount = SidClassifier.IsPrivilegedGroupSid(record.PrincipalSid),
                     HasExplicitPermissions = record.HasExplicitPermissions,
                     IsInheritanceDisabled = record.IsInheritanceDisabled,
                     MemberNames = record.MemberNames == null ? null : new List<string>(record.MemberNames)
