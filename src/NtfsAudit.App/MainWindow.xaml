@@ -194,12 +194,28 @@
             <WrapPanel VerticalAlignment="Center">
               <TextBlock Text="Legenda:" FontWeight="SemiBold" Margin="0,0,8,0" />
               <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
-                <Rectangle Width="10" Height="10" Fill="#FFC62828" Stroke="#FFB71C1C" StrokeThickness="0.5" Margin="0,0,6,0" />
-                <TextBlock Text="Ereditarietà disabilitata" VerticalAlignment="Center" />
+                <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
+                  <TextBlock Text="P" Foreground="White" FontSize="10" />
+                </Border>
+                <TextBlock Text="Protected (ereditarietà disabilitata)" VerticalAlignment="Center" />
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
+                <Border Background="#FF2E7D32" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
+                  <TextBlock Text="+N" Foreground="White" FontSize="10" />
+                </Border>
+                <TextBlock Text="ACE esplicite aggiunte" VerticalAlignment="Center" />
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
+                <Border Background="#FFF57C00" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
+                  <TextBlock Text="-N" Foreground="White" FontSize="10" />
+                </Border>
+                <TextBlock Text="ACE rimosse rispetto al padre" VerticalAlignment="Center" />
               </StackPanel>
               <StackPanel Orientation="Horizontal">
-                <Ellipse Width="10" Height="10" Fill="#FFFFA000" Stroke="#FFF57C00" StrokeThickness="0.5" Margin="0,0,6,0" />
-                <TextBlock Text="Permessi espliciti (non ereditati)" VerticalAlignment="Center" />
+                <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
+                  <TextBlock Text="D" Foreground="White" FontSize="10" />
+                </Border>
+                <TextBlock Text="Deny espliciti" VerticalAlignment="Center" />
               </StackPanel>
             </WrapPanel>
           </StackPanel>
@@ -223,8 +239,18 @@
               <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="{Binding DisplayName}" />
-                  <Rectangle Width="8" Height="8" Fill="#FFC62828" Stroke="#FFB71C1C" StrokeThickness="0.5" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                  <Ellipse Width="8" Height="8" Fill="#FFFFA000" Stroke="#FFF57C00" StrokeThickness="0.5" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasExplicitPermissions, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                  <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsProtected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="P" Foreground="White" FontSize="10" />
+                  </Border>
+                  <Border Background="#FF2E7D32" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasExplicitAdded, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ExplicitAddedLabel}" Foreground="White" FontSize="10" />
+                  </Border>
+                  <Border Background="#FFF57C00" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasExplicitRemoved, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ExplicitRemovedLabel}" Foreground="White" FontSize="10" />
+                  </Border>
+                  <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasDenyExplicit, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding DenyExplicitLabel}" Foreground="White" FontSize="10" />
+                  </Border>
                 </StackPanel>
               </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
@@ -237,12 +263,19 @@
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
               <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <TextBlock FontWeight="Bold" Text="{Binding SelectedFolderPath}" Margin="0,0,0,8" />
-            <TabControl Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <TextBlock Grid.Row="0" FontWeight="Bold" Text="{Binding SelectedFolderPath}" Margin="0,0,0,8" />
+            <Border Grid.Row="1" Margin="0,0,0,8">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Filtro ACL:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                <TextBox Width="260" Height="24" Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
+              </StackPanel>
+            </Border>
+            <TabControl Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
               <TabItem Header="Permessi Gruppi">
-                <DataGrid ItemsSource="{Binding GroupEntries}"
+                <DataGrid ItemsSource="{Binding FilteredGroupEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"
@@ -277,7 +310,7 @@
                 </DataGrid>
               </TabItem>
               <TabItem Header="Permessi Utenti">
-                <DataGrid ItemsSource="{Binding UserEntries}"
+                <DataGrid ItemsSource="{Binding FilteredUserEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"
@@ -312,7 +345,7 @@
                 </DataGrid>
               </TabItem>
               <TabItem Header="Dettaglio ACL">
-                <DataGrid ItemsSource="{Binding AllEntries}"
+                <DataGrid ItemsSource="{Binding FilteredAllEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"

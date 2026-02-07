@@ -38,6 +38,7 @@ namespace NtfsAudit.App.Export
                 "PrincipalType",
                 "AllowDeny",
                 "RightsSummary",
+                "RightsMask",
                 "IsInherited",
                 "InheritanceFlags",
                 "PropagationFlags",
@@ -46,6 +47,8 @@ namespace NtfsAudit.App.Export
                 "Disabilitato",
                 "IsServiceAccount",
                 "IsAdminAccount",
+                "HasExplicitPermissions",
+                "IsInheritanceDisabled",
                 "GroupMembers",
                 "IncludeInherited",
                 "ResolveIdentities",
@@ -114,9 +117,10 @@ namespace NtfsAudit.App.Export
             foreach (var record in records)
             {
                 UpdateColumnWidths(columnWidths, record.FolderPath, record.PrincipalName, record.PrincipalSid, record.PrincipalType,
-                    record.AllowDeny, record.RightsSummary, record.IsInherited.ToString(), record.InheritanceFlags,
+                    record.AllowDeny, record.RightsSummary, record.RightsMask.ToString(CultureInfo.InvariantCulture), record.IsInherited.ToString(), record.InheritanceFlags,
                     record.PropagationFlags, record.Source, record.Depth.ToString(CultureInfo.InvariantCulture),
                     record.IsDisabled.ToString(), record.IsServiceAccount.ToString(), record.IsAdminAccount.ToString(),
+                    record.HasExplicitPermissions.ToString(), record.IsInheritanceDisabled.ToString(),
                     BuildMembersSummary(record), record.IncludeInherited.ToString(), record.ResolveIdentities.ToString(),
                     record.ExcludeServiceAccounts.ToString(), record.ExcludeAdminAccounts.ToString());
             }
@@ -138,6 +142,7 @@ namespace NtfsAudit.App.Export
                         record.PrincipalType,
                         record.AllowDeny,
                         record.RightsSummary,
+                        record.RightsMask.ToString(CultureInfo.InvariantCulture),
                         record.IsInherited.ToString(),
                         record.InheritanceFlags,
                         record.PropagationFlags,
@@ -146,6 +151,8 @@ namespace NtfsAudit.App.Export
                         record.IsDisabled.ToString(),
                         record.IsServiceAccount.ToString(),
                         record.IsAdminAccount.ToString(),
+                        record.HasExplicitPermissions.ToString(),
+                        record.IsInheritanceDisabled.ToString(),
                         BuildMembersSummary(record),
                         record.IncludeInherited.ToString(),
                         record.ResolveIdentities.ToString(),

@@ -14,7 +14,9 @@ $root = Resolve-Path ".."
 $paths = @(
     (Join-Path $root ".vs"),
     (Join-Path $root "src\NtfsAudit.App\bin"),
-    (Join-Path $root "src\NtfsAudit.App\obj")
+    (Join-Path $root "src\NtfsAudit.App\obj"),
+    (Join-Path $root "src\NtfsAudit.Viewer\bin"),
+    (Join-Path $root "src\NtfsAudit.Viewer\obj")
 )
 
 if (-not $KeepDist) {

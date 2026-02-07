@@ -16,6 +16,7 @@ namespace NtfsAudit.App.Export
             string rootPath,
             string selectedFolderPath,
             bool colorizeRights,
+            string aclFilter,
             string errorFilter,
             IEnumerable<string> expandedPaths,
             IEnumerable<ErrorEntry> errors,
@@ -73,9 +74,14 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    .tree-marker { width: 8px; height: 8px; display: inline-block; }");
             builder.AppendLine("    .marker-inheritance { background: #c62828; border-radius: 2px; }");
             builder.AppendLine("    .marker-explicit { background: #ffa000; border-radius: 50%; }");
+            builder.AppendLine("    .badge { display: inline-flex; align-items: center; justify-content: center; padding: 1px 4px; border-radius: 2px; font-size: 10px; color: #fff; }");
+            builder.AppendLine("    .badge-protected { background: #c62828; }");
+            builder.AppendLine("    .badge-added { background: #2e7d32; }");
+            builder.AppendLine("    .badge-removed { background: #f57c00; }");
+            builder.AppendLine("    .badge-deny { background: #6a1b9a; }");
             builder.AppendLine("    .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; margin-bottom: 8px; }");
             builder.AppendLine("    .legend-item { display: inline-flex; align-items: center; gap: 6px; }");
-            builder.AppendLine("    .toolbar { display: flex; gap: 16px; align-items: center; margin-bottom: 12px; }");
+            builder.AppendLine("    .toolbar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 12px; }");
             builder.AppendLine("    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }");
             builder.AppendLine("    .tab-button { background: #e0e0e0; color: #212121; }");
             builder.AppendLine("    .tab-button.active { background: #1565c0; color: white; }");
@@ -107,14 +113,17 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("        <button id=\"collapseAll\" class=\"secondary\">Comprimi</button>");
             builder.AppendLine("      </div>");
             builder.AppendLine("      <div class=\"legend\">");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"tree-marker marker-inheritance\"></span>Ereditarietà disabilitata</div>");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"tree-marker marker-explicit\"></span>Permessi espliciti (non ereditati)</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-protected\">P</span>Protected (ereditarietà disabilitata)</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-added\">+N</span>ACE esplicite aggiunte</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-removed\">-N</span>ACE rimosse rispetto al padre</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-deny\">D</span>Deny espliciti</div>");
             builder.AppendLine("      </div>");
             builder.AppendLine("      <div id=\"treeContainer\"></div>");
             builder.AppendLine("    </aside>");
             builder.AppendLine("    <main class=\"content\">");
             builder.AppendLine("      <div class=\"toolbar\">");
             builder.AppendLine("        <label><input type=\"checkbox\" id=\"colorizeToggle\" /> Colora per diritto</label>");
+            builder.AppendLine("        <input id=\"aclFilter\" class=\"filter-input\" type=\"text\" placeholder=\"Filtra ACL (utente, SID, allow/deny, diritti)...\" />");
             builder.AppendLine("      </div>");
             builder.AppendLine("      <div class=\"tabs\">");
             builder.AppendLine("        <button class=\"tab-button active\" data-tab=\"groups\">Permessi Gruppi</button>");
@@ -146,6 +155,7 @@ namespace NtfsAudit.App.Export
             builder.AppendLine(string.Format("    const rootPath = {0};", JsonConvert.SerializeObject(root, jsonSettings)));
             builder.AppendLine(string.Format("    let selectedPath = {0};", JsonConvert.SerializeObject(selectedPath, jsonSettings)));
             builder.AppendLine(string.Format("    let colorizeRights = {0};", colorizeRights.ToString().ToLowerInvariant()));
+            builder.AppendLine(string.Format("    const initialAclFilter = {0};", JsonConvert.SerializeObject(aclFilter ?? string.Empty, jsonSettings)));
             builder.AppendLine(string.Format("    const initialErrorFilter = {0};", JsonConvert.SerializeObject(errorFilter ?? string.Empty, jsonSettings)));
             builder.AppendLine("\n    const groupColumns = [");
             builder.AppendLine("      { key: 'PrincipalName', label: 'Gruppo' },");
@@ -211,6 +221,7 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    const treeContainer = document.getElementById('treeContainer');");
             builder.AppendLine("    const selectedPathElement = document.getElementById('selectedPath');");
             builder.AppendLine("    const colorizeToggle = document.getElementById('colorizeToggle');");
+            builder.AppendLine("    const aclFilterInput = document.getElementById('aclFilter');");
             builder.AppendLine("    const errorFilterInput = document.getElementById('errorFilter');");
 
             builder.AppendLine("    function getChildren(path) {");
@@ -231,15 +242,29 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      name.textContent = displayNames[path] || path;" );
             builder.AppendLine("      label.appendChild(name);");
             builder.AppendLine("      const flags = detailsData[path] || {};");
-            builder.AppendLine("      if (flags.IsInheritanceDisabled) {");
-            builder.AppendLine("        const marker = document.createElement('span');");
-            builder.AppendLine("        marker.className = 'tree-marker marker-inheritance';");
-            builder.AppendLine("        label.appendChild(marker);");
+            builder.AppendLine("      if (flags.IsProtected) {");
+            builder.AppendLine("        const badge = document.createElement('span');");
+            builder.AppendLine("        badge.className = 'badge badge-protected';");
+            builder.AppendLine("        badge.textContent = 'P';");
+            builder.AppendLine("        label.appendChild(badge);");
             builder.AppendLine("      }");
-            builder.AppendLine("      if (flags.HasExplicitPermissions) {");
-            builder.AppendLine("        const marker = document.createElement('span');");
-            builder.AppendLine("        marker.className = 'tree-marker marker-explicit';");
-            builder.AppendLine("        label.appendChild(marker);");
+            builder.AppendLine("      if ((flags.ExplicitAddedCount || 0) > 0) {");
+            builder.AppendLine("        const badge = document.createElement('span');");
+            builder.AppendLine("        badge.className = 'badge badge-added';");
+            builder.AppendLine("        badge.textContent = `+${flags.ExplicitAddedCount}`;");
+            builder.AppendLine("        label.appendChild(badge);");
+            builder.AppendLine("      }");
+            builder.AppendLine("      if ((flags.ExplicitRemovedCount || 0) > 0) {");
+            builder.AppendLine("        const badge = document.createElement('span');");
+            builder.AppendLine("        badge.className = 'badge badge-removed';");
+            builder.AppendLine("        badge.textContent = `-${flags.ExplicitRemovedCount}`;");
+            builder.AppendLine("        label.appendChild(badge);");
+            builder.AppendLine("      }");
+            builder.AppendLine("      if ((flags.DenyExplicitCount || 0) > 0) {");
+            builder.AppendLine("        const badge = document.createElement('span');");
+            builder.AppendLine("        badge.className = 'badge badge-deny';");
+            builder.AppendLine("        badge.textContent = 'D';");
+            builder.AppendLine("        label.appendChild(badge);");
             builder.AppendLine("      }");
             builder.AppendLine("      label.addEventListener('click', (event) => {" );
             builder.AppendLine("        event.stopPropagation();" );
@@ -308,6 +333,15 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      return value;" );
             builder.AppendLine("    }");
 
+            builder.AppendLine("    function matchesAclFilter(entry, filter) {");
+            builder.AppendLine("      if (!filter) return true;");
+            builder.AppendLine("      const term = filter.toLowerCase();");
+            builder.AppendLine("      return (entry.PrincipalName || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.PrincipalSid || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.AllowDeny || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.RightsSummary || '').toLowerCase().includes(term);");
+            builder.AppendLine("    }");
+
             builder.AppendLine("    function renderTable(tableId, entries, columns, useRightsClass) {");
             builder.AppendLine("      const table = document.getElementById(tableId);" );
             builder.AppendLine("      table.innerHTML = '';" );
@@ -336,9 +370,13 @@ namespace NtfsAudit.App.Export
 
             builder.AppendLine("    function renderTables() {");
             builder.AppendLine("      const detail = detailsData[selectedPath] || { GroupEntries: [], UserEntries: [], AllEntries: [] };" );
-            builder.AppendLine("      renderTable('groupsTable', detail.GroupEntries || [], groupColumns, true);" );
-            builder.AppendLine("      renderTable('usersTable', detail.UserEntries || [], userColumns, true);" );
-            builder.AppendLine("      renderTable('aclTable', detail.AllEntries || [], aclColumns, true);" );
+            builder.AppendLine("      const aclFilterValue = aclFilterInput.value || '';");
+            builder.AppendLine("      const groupEntries = (detail.GroupEntries || []).filter(entry => matchesAclFilter(entry, aclFilterValue));");
+            builder.AppendLine("      const userEntries = (detail.UserEntries || []).filter(entry => matchesAclFilter(entry, aclFilterValue));");
+            builder.AppendLine("      const aclEntries = (detail.AllEntries || []).filter(entry => matchesAclFilter(entry, aclFilterValue));");
+            builder.AppendLine("      renderTable('groupsTable', groupEntries, groupColumns, true);" );
+            builder.AppendLine("      renderTable('usersTable', userEntries, userColumns, true);" );
+            builder.AppendLine("      renderTable('aclTable', aclEntries, aclColumns, true);" );
             builder.AppendLine("      renderErrors();" );
             builder.AppendLine("    }");
 
@@ -383,6 +421,10 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      renderTree();" );
             builder.AppendLine("    });");
 
+            builder.AppendLine("    aclFilterInput.addEventListener('input', () => {");
+            builder.AppendLine("      renderTables();");
+            builder.AppendLine("    });");
+
             builder.AppendLine("    colorizeToggle.addEventListener('change', () => {");
             builder.AppendLine("      colorizeRights = colorizeToggle.checked;" );
             builder.AppendLine("      renderTables();" );
@@ -393,6 +435,7 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    });");
 
             builder.AppendLine("    colorizeToggle.checked = colorizeRights;");
+            builder.AppendLine("    aclFilterInput.value = initialAclFilter;");
             builder.AppendLine("    errorFilterInput.value = initialErrorFilter;");
             builder.AppendLine("    selectedPathElement.textContent = selectedPath || '';" );
             builder.AppendLine("    wireTabs();" );
@@ -410,13 +453,21 @@ namespace NtfsAudit.App.Export
             var payload = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
             foreach (var entry in details)
             {
+                var summary = entry.Value.DiffSummary;
+                var added = summary == null ? 0 : summary.Added.Count(key => !key.IsInherited);
+                var removed = summary == null ? 0 : summary.Removed.Count;
+                var deny = summary == null ? 0 : summary.DenyExplicitCount;
                 payload[entry.Key] = new
                 {
                     GroupEntries = entry.Value.GroupEntries ?? new List<AceEntry>(),
                     UserEntries = entry.Value.UserEntries ?? new List<AceEntry>(),
                     AllEntries = entry.Value.AllEntries ?? new List<AceEntry>(),
                     HasExplicitPermissions = entry.Value.HasExplicitPermissions,
-                    IsInheritanceDisabled = entry.Value.IsInheritanceDisabled
+                    IsInheritanceDisabled = entry.Value.IsInheritanceDisabled,
+                    IsProtected = summary != null ? summary.IsProtected : entry.Value.IsInheritanceDisabled,
+                    ExplicitAddedCount = added,
+                    ExplicitRemovedCount = removed,
+                    DenyExplicitCount = deny
                 };
             }
             return payload;

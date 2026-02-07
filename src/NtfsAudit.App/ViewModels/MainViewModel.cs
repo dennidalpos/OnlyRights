@@ -49,6 +49,7 @@ namespace NtfsAudit.App.ViewModels
         private string _elapsedText = "00:00:00";
         private string _selectedFolderPath;
         private string _errorFilter;
+        private string _aclFilter;
         private bool _colorizeRights = true;
         private string _currentPathBackground = "Transparent";
 
@@ -70,6 +71,12 @@ namespace NtfsAudit.App.ViewModels
             Errors.CollectionChanged += (_, __) => ErrorCount = Errors.Count;
             FilteredErrors = CollectionViewSource.GetDefaultView(Errors);
             FilteredErrors.Filter = FilterErrors;
+            FilteredGroupEntries = CollectionViewSource.GetDefaultView(GroupEntries);
+            FilteredGroupEntries.Filter = FilterAclEntries;
+            FilteredUserEntries = CollectionViewSource.GetDefaultView(UserEntries);
+            FilteredUserEntries.Filter = FilterAclEntries;
+            FilteredAllEntries = CollectionViewSource.GetDefaultView(AllEntries);
+            FilteredAllEntries.Filter = FilterAclEntries;
 
             BrowseCommand = new RelayCommand(Browse);
             StartCommand = new RelayCommand(StartScan, () => CanStart);
@@ -89,6 +96,9 @@ namespace NtfsAudit.App.ViewModels
         public ObservableCollection<AceEntry> AllEntries { get; private set; }
         public ObservableCollection<ErrorEntry> Errors { get; private set; }
         public ICollectionView FilteredErrors { get; private set; }
+        public ICollectionView FilteredGroupEntries { get; private set; }
+        public ICollectionView FilteredUserEntries { get; private set; }
+        public ICollectionView FilteredAllEntries { get; private set; }
 
         public RelayCommand BrowseCommand { get; private set; }
         public RelayCommand StartCommand { get; private set; }
@@ -280,6 +290,19 @@ namespace NtfsAudit.App.ViewModels
                 _errorFilter = value;
                 OnPropertyChanged("ErrorFilter");
                 FilteredErrors.Refresh();
+            }
+        }
+
+        public string AclFilter
+        {
+            get { return _aclFilter; }
+            set
+            {
+                _aclFilter = value;
+                OnPropertyChanged("AclFilter");
+                FilteredGroupEntries.Refresh();
+                FilteredUserEntries.Refresh();
+                FilteredAllEntries.Refresh();
             }
         }
 
@@ -478,6 +501,7 @@ namespace NtfsAudit.App.ViewModels
                     RootPath,
                     SelectedFolderPath,
                     ColorizeRights,
+                    AclFilter,
                     ErrorFilter,
                     expandedPaths,
                     Errors,
@@ -499,6 +523,7 @@ namespace NtfsAudit.App.ViewModels
                 SetBusy(true);
                 var imported = await Task.Run(() => _analysisArchive.Import(dialog.FileName));
                 _scanResult = imported.ScanResult;
+                ApplyDiffs(_scanResult);
                 if (!ValidateImportedResult(_scanResult, out var validationMessage))
                 {
                     var confirm = WpfMessageBox.Show(
@@ -579,6 +604,7 @@ namespace NtfsAudit.App.ViewModels
 
                 RunOnUi(() =>
                 {
+                    ApplyDiffs(result);
                     _scanResult = result;
                     SaveCache();
                     LoadTree(result);
@@ -676,15 +702,27 @@ namespace NtfsAudit.App.ViewModels
             var rootName = Path.GetFileName(rootPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
             if (string.IsNullOrWhiteSpace(rootName)) rootName = rootPath;
             var rootDetail = result.Details != null && result.Details.TryGetValue(rootPath, out var detail) ? detail : null;
+            var rootSummary = rootDetail == null ? null : rootDetail.DiffSummary;
             var rootNode = new FolderNodeViewModel(
                 rootPath,
                 rootName,
                 provider,
                 rootDetail != null && rootDetail.HasExplicitPermissions,
-                rootDetail != null && rootDetail.IsInheritanceDisabled);
+                rootDetail != null && rootDetail.IsInheritanceDisabled,
+                rootSummary == null ? 0 : rootSummary.Added.Count(key => !key.IsInherited),
+                rootSummary == null ? 0 : rootSummary.Removed.Count,
+                rootSummary == null ? 0 : rootSummary.DenyExplicitCount,
+                rootSummary != null && rootSummary.IsProtected);
             rootNode.IsExpanded = true;
             rootNode.IsSelected = true;
             FolderTree.Add(rootNode);
+        }
+
+        private void ApplyDiffs(ScanResult result)
+        {
+            if (result == null || result.Details == null) return;
+            var diffService = new AclDiffService();
+            diffService.ApplyDiffs(result.Details);
         }
 
         private void LoadErrors(string path)
@@ -719,6 +757,24 @@ namespace NtfsAudit.App.ViewModels
             return pathMatch || messageMatch || typeMatch;
         }
 
+        private bool FilterAclEntries(object item)
+        {
+            if (string.IsNullOrWhiteSpace(AclFilter)) return true;
+            var entry = item as AceEntry;
+            if (entry == null) return false;
+            var term = AclFilter;
+            return MatchesFilter(entry.PrincipalName, term)
+                || MatchesFilter(entry.PrincipalSid, term)
+                || MatchesFilter(entry.AllowDeny, term)
+                || MatchesFilter(entry.RightsSummary, term);
+        }
+
+        private bool MatchesFilter(string value, string filter)
+        {
+            return !string.IsNullOrWhiteSpace(value)
+                && value.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         private void ClearResults()
         {
             FolderTree.Clear();
@@ -732,6 +788,7 @@ namespace NtfsAudit.App.ViewModels
             ElapsedText = "00:00:00";
             CurrentPathText = string.Empty;
             CurrentPathBackground = "Transparent";
+            AclFilter = string.Empty;
         }
 
         private void UpdateCommands()

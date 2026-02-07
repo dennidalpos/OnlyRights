@@ -194,6 +194,7 @@ namespace NtfsAudit.App.Services
                     PrincipalType = record.PrincipalType,
                     AllowDeny = record.AllowDeny,
                     RightsSummary = record.RightsSummary,
+                    RightsMask = record.RightsMask,
                     IsInherited = record.IsInherited,
                     InheritanceFlags = record.InheritanceFlags,
                     PropagationFlags = record.PropagationFlags,
@@ -281,11 +282,12 @@ namespace NtfsAudit.App.Services
         {
             var principalKey = string.IsNullOrWhiteSpace(record.PrincipalSid) ? record.PrincipalName : record.PrincipalSid;
             var membersKey = record.MemberNames == null ? string.Empty : string.Join(",", record.MemberNames);
-            return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}|{13}|{14}",
+            return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}|{13}|{14}|{15}",
                 principalKey ?? string.Empty,
                 record.PrincipalType ?? string.Empty,
                 record.AllowDeny ?? string.Empty,
                 record.RightsSummary ?? string.Empty,
+                record.RightsMask,
                 record.IsInherited,
                 record.InheritanceFlags ?? string.Empty,
                 record.PropagationFlags ?? string.Empty,
