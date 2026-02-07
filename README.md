@@ -119,3 +119,4 @@ Questi file vengono riutilizzati per l’export e possono essere rimossi con `cl
 Per garantire la compatibilità con domini basati su Windows Server 2012 R2, usa la build `net6.0-windows`.
 Il progetto è multi-target: `net6.0-windows` per ambienti legacy e `net8.0-windows` per i sistemi più recenti.
 In fase di build/publish puoi selezionare il framework con `-Framework net6.0-windows` o `-Framework net8.0-windows`.
+Il warning NETSDK1138 per `net6.0-windows` è silenziato nel progetto, ma la piattaforma resta EOL.
