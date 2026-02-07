@@ -499,6 +499,7 @@ namespace NtfsAudit.App.ViewModels
                 SetBusy(true);
                 var imported = await Task.Run(() => _analysisArchive.Import(dialog.FileName));
                 _scanResult = imported.ScanResult;
+                ApplyDiffs(_scanResult);
                 if (!ValidateImportedResult(_scanResult, out var validationMessage))
                 {
                     var confirm = WpfMessageBox.Show(
@@ -579,6 +580,7 @@ namespace NtfsAudit.App.ViewModels
 
                 RunOnUi(() =>
                 {
+                    ApplyDiffs(result);
                     _scanResult = result;
                     SaveCache();
                     LoadTree(result);
@@ -685,6 +687,13 @@ namespace NtfsAudit.App.ViewModels
             rootNode.IsExpanded = true;
             rootNode.IsSelected = true;
             FolderTree.Add(rootNode);
+        }
+
+        private void ApplyDiffs(ScanResult result)
+        {
+            if (result == null || result.Details == null) return;
+            var diffService = new AclDiffService();
+            diffService.ApplyDiffs(result.Details);
         }
 
         private void LoadErrors(string path)

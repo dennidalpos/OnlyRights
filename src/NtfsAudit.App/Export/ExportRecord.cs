@@ -10,6 +10,7 @@ namespace NtfsAudit.App.Export
         public string PrincipalType { get; set; }
         public string AllowDeny { get; set; }
         public string RightsSummary { get; set; }
+        public int RightsMask { get; set; }
         public bool IsInherited { get; set; }
         public string InheritanceFlags { get; set; }
         public string PropagationFlags { get; set; }
