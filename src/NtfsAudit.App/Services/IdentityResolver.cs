@@ -1,4 +1,5 @@
 using System;
+using System.Security.Principal;
 using NtfsAudit.App.Cache;
 using NtfsAudit.App.Models;
 
