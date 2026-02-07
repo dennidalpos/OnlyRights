@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -7,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Forms;
+using System.Windows.Threading;
 using Win32 = Microsoft.Win32;
 using WpfMessageBox = System.Windows.MessageBox;
 using NtfsAudit.App.Cache;
@@ -22,10 +24,14 @@ namespace NtfsAudit.App.ViewModels
         private readonly SidNameCache _sidNameCache;
         private readonly GroupMembershipCache _groupMembershipCache;
         private readonly ExcelExporter _excelExporter;
+        private readonly HtmlExporter _htmlExporter;
         private readonly AnalysisArchive _analysisArchive;
         private ScanResult _scanResult;
         private CancellationTokenSource _cts;
         private bool _isScanning;
+        private bool _isBusy;
+        private DispatcherTimer _scanTimer;
+        private DateTime _scanStart;
         private string _rootPath;
         private int _maxDepth = 5;
         private bool _scanAllDepths = true;
@@ -51,6 +57,7 @@ namespace NtfsAudit.App.ViewModels
             _sidNameCache = new SidNameCache();
             _groupMembershipCache = new GroupMembershipCache(TimeSpan.FromHours(2));
             _excelExporter = new ExcelExporter();
+            _htmlExporter = new HtmlExporter();
             _analysisArchive = new AnalysisArchive();
 
             FolderTree = new ObservableCollection<FolderNodeViewModel>();
@@ -67,9 +74,11 @@ namespace NtfsAudit.App.ViewModels
             StopCommand = new RelayCommand(StopScan, () => CanStop);
             ExportCommand = new RelayCommand(Export, () => CanExport);
             ExportAnalysisCommand = new RelayCommand(ExportAnalysis, () => CanExport);
-            ImportAnalysisCommand = new RelayCommand(ImportAnalysis, () => !_isScanning);
+            ExportHtmlCommand = new RelayCommand(ExportHtml, () => CanExport);
+            ImportAnalysisCommand = new RelayCommand(ImportAnalysis, () => !_isScanning && !IsBusy);
 
             LoadCache();
+            InitializeScanTimer();
         }
 
         public ObservableCollection<FolderNodeViewModel> FolderTree { get; private set; }
@@ -84,6 +93,7 @@ namespace NtfsAudit.App.ViewModels
         public RelayCommand StopCommand { get; private set; }
         public RelayCommand ExportCommand { get; private set; }
         public RelayCommand ExportAnalysisCommand { get; private set; }
+        public RelayCommand ExportHtmlCommand { get; private set; }
         public RelayCommand ImportAnalysisCommand { get; private set; }
 
         public string RootPath
@@ -284,6 +294,8 @@ namespace NtfsAudit.App.ViewModels
         public bool IsScanning { get { return _isScanning; } }
         public bool IsNotScanning { get { return !_isScanning; } }
         public bool HasScanResult { get { return _scanResult != null; } }
+        public bool IsBusy { get { return _isBusy; } }
+        public bool IsNotBusy { get { return !_isBusy; } }
         public string StatusText
         {
             get
@@ -303,9 +315,9 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        public bool CanStart { get { return !_isScanning && !string.IsNullOrWhiteSpace(RootPath); } }
-        public bool CanStop { get { return _isScanning; } }
-        public bool CanExport { get { return !_isScanning && _scanResult != null; } }
+        public bool CanStart { get { return !_isScanning && !IsBusy && !string.IsNullOrWhiteSpace(RootPath); } }
+        public bool CanStop { get { return _isScanning && !IsBusy; } }
+        public bool CanExport { get { return !_isScanning && !IsBusy && _scanResult != null; } }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -377,6 +389,7 @@ namespace NtfsAudit.App.ViewModels
             _isScanning = true;
             CurrentPathText = string.Empty;
             ElapsedText = "00:00:00";
+            StartElapsedTimer();
             UpdateCommands();
             ClearResults();
 
@@ -405,7 +418,7 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        private void Export()
+        private async void Export()
         {
             if (_scanResult == null) return;
             using (var dialog = new FolderBrowserDialog())
@@ -414,7 +427,7 @@ namespace NtfsAudit.App.ViewModels
                 var result = dialog.ShowDialog();
                 if (result != DialogResult.OK) return;
                 var outputPath = BuildExportPath(dialog.SelectedPath, RootPath, "xlsx");
-                RunExportAction(
+                await RunExportActionAsync(
                     () => _excelExporter.Export(_scanResult.TempDataPath, _scanResult.ErrorPath, outputPath),
                     string.Format("Export completato: {0}", outputPath),
                     string.Format("Export completato:\n{0}", outputPath),
@@ -422,7 +435,7 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        private void ExportAnalysis()
+        private async void ExportAnalysis()
         {
             if (_scanResult == null) return;
             var dialog = new Win32.SaveFileDialog
@@ -431,14 +444,39 @@ namespace NtfsAudit.App.ViewModels
                 FileName = BuildExportFileName(RootPath, "ntaudit")
             };
             if (dialog.ShowDialog() != true) return;
-            RunExportAction(
+            await RunExportActionAsync(
                 () => _analysisArchive.Export(_scanResult, RootPath, dialog.FileName),
                 string.Format("Analisi esportata: {0}", dialog.FileName),
                 string.Format("Analisi esportata:\n{0}", dialog.FileName),
                 "Errore export analisi");
         }
 
-        private void ImportAnalysis()
+        private async void ExportHtml()
+        {
+            if (_scanResult == null) return;
+            var dialog = new Win32.SaveFileDialog
+            {
+                Filter = "HTML (*.html)|*.html",
+                FileName = BuildExportFileName(RootPath, "html")
+            };
+            if (dialog.ShowDialog() != true) return;
+            var expandedPaths = GetExpandedPaths();
+            await RunExportActionAsync(
+                () => _htmlExporter.Export(
+                    _scanResult,
+                    RootPath,
+                    SelectedFolderPath,
+                    ColorizeRights,
+                    ErrorFilter,
+                    expandedPaths,
+                    Errors,
+                    dialog.FileName),
+                string.Format("Export HTML completato: {0}", dialog.FileName),
+                string.Format("Export HTML completato:\n{0}", dialog.FileName),
+                "Errore export HTML");
+        }
+
+        private async void ImportAnalysis()
         {
             var dialog = new Win32.OpenFileDialog
             {
@@ -447,8 +485,22 @@ namespace NtfsAudit.App.ViewModels
             if (dialog.ShowDialog() != true) return;
             try
             {
-                var imported = _analysisArchive.Import(dialog.FileName);
+                SetBusy(true);
+                var imported = await Task.Run(() => _analysisArchive.Import(dialog.FileName));
                 _scanResult = imported.ScanResult;
+                if (!ValidateImportedResult(_scanResult, out var validationMessage))
+                {
+                    var confirm = WpfMessageBox.Show(
+                        string.Format("{0}\n\nVuoi procedere comunque?", validationMessage),
+                        "Import analisi",
+                        System.Windows.MessageBoxButton.YesNo,
+                        System.Windows.MessageBoxImage.Warning);
+                    if (confirm != System.Windows.MessageBoxResult.Yes)
+                    {
+                        ProgressText = "Import annullato dall'utente.";
+                        return;
+                    }
+                }
                 RootPath = string.IsNullOrWhiteSpace(imported.RootPath) ? RootPath : imported.RootPath;
                 ClearResults();
                 LoadTree(_scanResult);
@@ -471,20 +523,31 @@ namespace NtfsAudit.App.ViewModels
             catch (Exception ex)
             {
                 ProgressText = string.Format("Errore import analisi: {0}", ex.Message);
+                WpfMessageBox.Show(ProgressText, "Errore import", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            finally
+            {
+                SetBusy(false);
             }
         }
 
-        private void RunExportAction(Action exportAction, string progressMessage, string dialogMessage, string errorLabel)
+        private async Task RunExportActionAsync(Action exportAction, string progressMessage, string dialogMessage, string errorLabel)
         {
             try
             {
-                exportAction();
+                SetBusy(true);
+                await Task.Run(exportAction);
                 ProgressText = progressMessage;
                 WpfMessageBox.Show(dialogMessage, "Export completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 ProgressText = string.Format("{0}: {1}", errorLabel, ex.Message);
+                WpfMessageBox.Show(ProgressText, errorLabel, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            finally
+            {
+                SetBusy(false);
             }
         }
 
@@ -535,6 +598,7 @@ namespace NtfsAudit.App.ViewModels
                 RunOnUi(() =>
                 {
                     _isScanning = false;
+                    StopElapsedTimer();
                     UpdateCommands();
                 });
             }
@@ -663,11 +727,37 @@ namespace NtfsAudit.App.ViewModels
             OnPropertyChanged("CanStart");
             OnPropertyChanged("CanStop");
             OnPropertyChanged("CanExport");
+            OnPropertyChanged("IsBusy");
+            OnPropertyChanged("IsNotBusy");
             StartCommand.RaiseCanExecuteChanged();
             StopCommand.RaiseCanExecuteChanged();
             ExportCommand.RaiseCanExecuteChanged();
             ExportAnalysisCommand.RaiseCanExecuteChanged();
+            ExportHtmlCommand.RaiseCanExecuteChanged();
             ImportAnalysisCommand.RaiseCanExecuteChanged();
+        }
+
+        private HashSet<string> GetExpandedPaths()
+        {
+            var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var node in FolderTree)
+            {
+                CollectExpandedPaths(node, paths);
+            }
+            return paths;
+        }
+
+        private void CollectExpandedPaths(FolderNodeViewModel node, HashSet<string> paths)
+        {
+            if (node == null || node.IsPlaceholder) return;
+            if (node.IsExpanded && !string.IsNullOrWhiteSpace(node.Path))
+            {
+                paths.Add(node.Path);
+            }
+            foreach (var child in node.Children)
+            {
+                CollectExpandedPaths(child, paths);
+            }
         }
 
         private string FormatElapsed(TimeSpan elapsed)
@@ -693,6 +783,65 @@ namespace NtfsAudit.App.ViewModels
             if (string.IsNullOrWhiteSpace(baseName)) baseName = "Root";
             var timestamp = DateTime.Now.ToString("dd-MM-yyyy-HH-mm");
             return string.Format("{0}_{1}.{2}", baseName, timestamp, extension);
+        }
+
+        private void InitializeScanTimer()
+        {
+            _scanTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+            _scanTimer.Tick += (_, __) =>
+            {
+                if (!_isScanning) return;
+                ElapsedText = FormatElapsed(DateTime.Now - _scanStart);
+            };
+        }
+
+        private void StartElapsedTimer()
+        {
+            _scanStart = DateTime.Now;
+            if (_scanTimer != null)
+            {
+                _scanTimer.Stop();
+                _scanTimer.Start();
+            }
+        }
+
+        private void StopElapsedTimer()
+        {
+            if (_scanTimer != null)
+            {
+                _scanTimer.Stop();
+            }
+        }
+
+        private void SetBusy(bool isBusy)
+        {
+            if (_isBusy == isBusy) return;
+            _isBusy = isBusy;
+            UpdateCommands();
+        }
+
+        private bool ValidateImportedResult(ScanResult result, out string message)
+        {
+            if (result == null)
+            {
+                message = "Analisi importata non valida: dati mancanti.";
+                return false;
+            }
+            if (result.Details == null || result.TreeMap == null)
+            {
+                message = "Analisi importata non valida: struttura dati incompleta (TreeMap/Details mancanti).";
+                return false;
+            }
+            if (result.TreeMap.Count == 0)
+            {
+                message = "Analisi importata con albero cartelle vuoto.";
+                return false;
+            }
+            message = null;
+            return true;
         }
 
         private void LoadCache()

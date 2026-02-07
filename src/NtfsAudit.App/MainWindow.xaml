@@ -8,6 +8,7 @@
         MinHeight="480"
         FontFamily="Segoe UI, Microsoft YaHei UI, Microsoft JhengHei UI, Yu Gothic UI">
   <Window.Resources>
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     <Style x:Key="RightsRowStyle" TargetType="DataGridRow">
       <Style.Triggers>
         <DataTrigger Binding="{Binding IsDisabled}" Value="True">
@@ -67,6 +68,7 @@
     </Style>
   </Window.Resources>
   <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+    <Grid x:Name="ContentGrid" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsEnabled="{Binding IsNotBusy}">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
@@ -96,7 +98,8 @@
           <StackPanel Orientation="Horizontal">
             <Button Margin="0,0,8,0" Padding="12,4" Content="Start" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" Background="#FF2E7D32" Foreground="White" />
             <Button Margin="0,0,8,0" Padding="12,4" Content="Stop" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" Background="#FFC62828" Foreground="White" />
-            <Button Margin="0,0,8,0" Padding="12,4" Content="Export" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
+            <Button Margin="0,0,8,0" Padding="12,4" Content="Export Excel" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
+            <Button Margin="0,0,8,0" Padding="12,4" Content="Export HTML" Command="{Binding ExportHtmlCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
             <Button Margin="0,0,8,0" Padding="12,4" Content="Export Analisi" Command="{Binding ExportAnalysisCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
             <Button Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding IsNotScanning}" Background="#FF616161" Foreground="White" />
           </StackPanel>
@@ -353,5 +356,14 @@
         </Border>
       </Grid>
     </Grid>
+    </Grid>
+    <Border Background="#80000000" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+      <Border Background="White" Padding="24" CornerRadius="6" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel>
+          <TextBlock Text="Operazione in corso..." FontWeight="SemiBold" Margin="0,0,0,12" HorizontalAlignment="Center" />
+          <ProgressBar Width="240" Height="16" IsIndeterminate="True" />
+        </StackPanel>
+      </Border>
+    </Border>
   </Grid>
 </Window>

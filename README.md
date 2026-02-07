@@ -24,7 +24,7 @@ NTFS Audit esegue una scansione delle ACL delle cartelle partendo da una root. D
 4. Imposta la profondità o abilita “Analizza tutte le sottocartelle”.
 5. Configura le opzioni (permessi ereditati, risoluzione identità, espansione gruppi).
 6. Premi **Start**.
-7. Al termine usa **Export** o **Export Analisi**.
+7. Al termine usa **Export Excel**, **Export HTML** o **Export Analisi**.
 
 ## Funzionalità principali
 - **Albero cartelle** con caricamento lazy.
@@ -32,8 +32,10 @@ NTFS Audit esegue una scansione delle ACL delle cartelle partendo da una root. D
 - **Dettaglio ACL** separato per gruppi, utenti e dettaglio completo.
 - **Filtro errori** integrato.
 - **Barra di avanzamento** con metriche (processate/in coda).
+- **Blocco UI durante import/export** con indicatore di avanzamento.
 - **Colorazione diritti** (Full, Modify, Read, ecc.).
 - **Filtri account** per escludere account di servizio o admin.
+- **Timer scansione live** con aggiornamento in tempo reale.
 
 ## Opzioni di scansione
 - **Analizza tutte le sottocartelle**: ignora MaxDepth e scansiona l’intero albero.
@@ -64,6 +66,18 @@ Formato nome file:
 <NomeCartellaRoot>_<dd-MM-yyyy-HH-mm>.xlsx
 ```
 
+## Export HTML
+L’export HTML genera un file `.html` autoconclusivo che replica la vista corrente:
+- albero cartelle con espansioni correnti,
+- cartella selezionata,
+- tab Permessi Gruppi/Utenti/ACL,
+- colori per diritto e filtro errori.
+
+Formato nome file:
+```
+<NomeCartellaRoot>_<dd-MM-yyyy-HH-mm>.html
+```
+
 ## Export/Import Analisi (.ntaudit)
 L’export analisi salva un archivio `.ntaudit` con:
 - dati ACL in formato JSONL,
@@ -73,6 +87,7 @@ L’export analisi salva un archivio `.ntaudit` con:
 
 L’import ricarica i dati senza rieseguire la scansione, ricostruendo albero, ACL e filtri errori. Se l’archivio manca il file errori, l’import continua con un set vuoto.
 Export e import mostrano un avviso di completamento.
+Durante import/export l’interfaccia viene bloccata con un indicatore di avanzamento.
 
 Formato nome file consigliato:
 ```
@@ -90,6 +105,7 @@ Parametri:
 - `-SkipRestore`
 - `-SkipBuild`
 - `-SkipPublish`
+- `-SkipPublishClean` (non ripulisce la cartella di output)
 - `-Framework <tfm>` (es. `net8.0-windows`, default `net8.0-windows` in publish)
 - `-OutputPath <cartella>`
 - `-Runtime <rid>` (es. `win-x64`)
@@ -107,6 +123,7 @@ Rimuove build, dist e cache:
 Parametri:
 - `-Configuration <Release|Debug>` (rimuove solo `dist\<Configuration>`)
 - `-Framework <tfm>` (rimuove solo `dist\<Configuration>\<Framework>` se specificato)
+- `-Runtime <rid>` (rimuove solo `dist\<Configuration>\<Runtime>` se specificato)
 - `-KeepDist`
 - `-KeepArtifacts`
 - `-KeepTemp`
