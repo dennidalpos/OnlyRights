@@ -74,6 +74,11 @@ L’export analisi salva un archivio `.ntaudit` con:
 L’import ricarica i dati senza rieseguire la scansione, ricostruendo albero, ACL e filtri errori. Se l’archivio manca il file errori, l’import continua con un set vuoto.
 Export e import mostrano un avviso di completamento.
 
+Formato nome file consigliato:
+```
+<NomeCartellaRoot>_<dd-MM-yyyy-HH-mm>.ntaudit
+```
+
 ## Script
 ### build.ps1
 Compila e (opzionalmente) pubblica:

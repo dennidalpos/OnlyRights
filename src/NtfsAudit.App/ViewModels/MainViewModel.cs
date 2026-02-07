@@ -413,7 +413,7 @@ namespace NtfsAudit.App.ViewModels
                 dialog.ShowNewFolderButton = true;
                 var result = dialog.ShowDialog();
                 if (result != DialogResult.OK) return;
-                var outputPath = BuildExportPath(dialog.SelectedPath, RootPath);
+                var outputPath = BuildExportPath(dialog.SelectedPath, RootPath, "xlsx");
                 RunExportAction(
                     () => _excelExporter.Export(_scanResult.TempDataPath, _scanResult.ErrorPath, outputPath),
                     string.Format("Export completato: {0}", outputPath),
@@ -428,7 +428,7 @@ namespace NtfsAudit.App.ViewModels
             var dialog = new Win32.SaveFileDialog
             {
                 Filter = "Analisi NtfsAudit (*.ntaudit)|*.ntaudit",
-                FileName = "analisi-ntfs-audit.ntaudit"
+                FileName = BuildExportFileName(RootPath, "ntaudit")
             };
             if (dialog.ShowDialog() != true) return;
             RunExportAction(
@@ -680,14 +680,19 @@ namespace NtfsAudit.App.ViewModels
             return elapsed.ToString(@"hh\:mm\:ss");
         }
 
-        private string BuildExportPath(string folder, string rootPath)
+        private string BuildExportPath(string folder, string rootPath, string extension)
+        {
+            var fileName = BuildExportFileName(rootPath, extension);
+            return Path.Combine(folder, fileName);
+        }
+
+        private string BuildExportFileName(string rootPath, string extension)
         {
             var safeRoot = rootPath ?? string.Empty;
             var baseName = Path.GetFileName(safeRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
             if (string.IsNullOrWhiteSpace(baseName)) baseName = "Root";
             var timestamp = DateTime.Now.ToString("dd-MM-yyyy-HH-mm");
-            var fileName = string.Format("{0}_{1}.xlsx", baseName, timestamp);
-            return Path.Combine(folder, fileName);
+            return string.Format("{0}_{1}.{2}", baseName, timestamp, extension);
         }
 
         private void LoadCache()
