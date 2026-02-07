@@ -14,5 +14,7 @@ namespace NtfsAudit.App.Models
         public List<AceEntry> AllEntries { get; private set; }
         public List<AceEntry> GroupEntries { get; private set; }
         public List<AceEntry> UserEntries { get; private set; }
+        public bool HasExplicitPermissions { get; set; }
+        public bool IsInheritanceDisabled { get; set; }
     }
 }

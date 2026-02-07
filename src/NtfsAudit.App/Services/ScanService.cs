@@ -156,10 +156,16 @@ namespace NtfsAudit.App.Services
                                 var ioPath = PathResolver.ToExtendedPath(current);
                                 var security = new DirectoryInfo(ioPath).GetAccessControl(AccessControlSections.Access);
                                 var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier));
+                                var isInheritanceDisabled = security.AreAccessRulesProtected;
+                                var hasExplicitPermissions = false;
 
                                 foreach (FileSystemAccessRule rule in rules)
                                 {
                                     token.ThrowIfCancellationRequested();
+                                    if (!rule.IsInherited)
+                                    {
+                                        hasExplicitPermissions = true;
+                                    }
                                     if (!options.IncludeInherited && rule.IsInherited)
                                     {
                                         continue;
@@ -206,7 +212,9 @@ namespace NtfsAudit.App.Services
                                         Depth = depth,
                                         IsDisabled = resolved.IsDisabled,
                                         IsServiceAccount = resolved.IsServiceAccount,
-                                        IsAdminAccount = resolved.IsAdminAccount
+                                        IsAdminAccount = resolved.IsAdminAccount,
+                                        HasExplicitPermissions = !rule.IsInherited,
+                                        IsInheritanceDisabled = isInheritanceDisabled
                                     };
 
                                     lock (currentDetail)
@@ -262,7 +270,9 @@ namespace NtfsAudit.App.Services
                                                 Depth = depth,
                                                 IsDisabled = member.IsDisabled,
                                                 IsServiceAccount = member.IsServiceAccount,
-                                                IsAdminAccount = member.IsAdminAccount
+                                                IsAdminAccount = member.IsAdminAccount,
+                                                HasExplicitPermissions = !rule.IsInherited,
+                                                IsInheritanceDisabled = isInheritanceDisabled
                                             };
                                             lock (currentDetail)
                                             {
@@ -272,6 +282,12 @@ namespace NtfsAudit.App.Services
                                             dataQueue.Add(BuildExportRecord(memberEntry, options));
                                         }
                                     }
+                                }
+
+                                lock (currentDetail)
+                                {
+                                    currentDetail.HasExplicitPermissions = hasExplicitPermissions;
+                                    currentDetail.IsInheritanceDisabled = isInheritanceDisabled;
                                 }
                             }
                             catch (Exception ex)
@@ -370,6 +386,8 @@ namespace NtfsAudit.App.Services
                 IsDisabled = entry.IsDisabled,
                 IsServiceAccount = entry.IsServiceAccount,
                 IsAdminAccount = entry.IsAdminAccount,
+                HasExplicitPermissions = entry.HasExplicitPermissions,
+                IsInheritanceDisabled = entry.IsInheritanceDisabled,
                 MemberNames = entry.MemberNames == null ? null : new List<string>(entry.MemberNames),
                 IncludeInherited = options.IncludeInherited,
                 ResolveIdentities = options.ResolveIdentities,

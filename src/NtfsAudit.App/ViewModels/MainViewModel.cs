@@ -665,7 +665,7 @@ namespace NtfsAudit.App.ViewModels
                 return;
             }
 
-            var provider = new FolderTreeProvider(result.TreeMap);
+            var provider = new FolderTreeProvider(result.TreeMap, result.Details);
             var rootPath = RootPath;
             if (string.IsNullOrWhiteSpace(rootPath) || !result.TreeMap.ContainsKey(rootPath))
             {
@@ -675,7 +675,13 @@ namespace NtfsAudit.App.ViewModels
 
             var rootName = Path.GetFileName(rootPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
             if (string.IsNullOrWhiteSpace(rootName)) rootName = rootPath;
-            var rootNode = new FolderNodeViewModel(rootPath, rootName, provider);
+            var rootDetail = result.Details != null && result.Details.TryGetValue(rootPath, out var detail) ? detail : null;
+            var rootNode = new FolderNodeViewModel(
+                rootPath,
+                rootName,
+                provider,
+                rootDetail != null && rootDetail.HasExplicitPermissions,
+                rootDetail != null && rootDetail.IsInheritanceDisabled);
             rootNode.IsExpanded = true;
             rootNode.IsSelected = true;
             FolderTree.Add(rootNode);
@@ -850,6 +856,11 @@ namespace NtfsAudit.App.ViewModels
             if (result.TreeMap.Count == 0)
             {
                 message = "Analisi importata con albero cartelle vuoto.";
+                return false;
+            }
+            if (result.Details.Count == 0)
+            {
+                message = "Analisi importata senza dettagli ACL.";
                 return false;
             }
             message = null;

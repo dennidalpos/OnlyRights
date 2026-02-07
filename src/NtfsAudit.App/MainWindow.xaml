@@ -186,9 +186,22 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
           </Grid.RowDefinitions>
-          <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
-            <Button Margin="0,0,6,0" Padding="8,2" Content="Espandi" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
-            <Button Padding="8,2" Content="Comprimi" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
+          <StackPanel Grid.Row="0" Margin="0,0,0,6">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+              <Button Margin="0,0,6,0" Padding="8,2" Content="Espandi" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
+              <Button Padding="8,2" Content="Comprimi" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
+            </StackPanel>
+            <WrapPanel VerticalAlignment="Center">
+              <TextBlock Text="Legenda:" FontWeight="SemiBold" Margin="0,0,8,0" />
+              <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
+                <Rectangle Width="10" Height="10" Fill="#FFC62828" Stroke="#FFB71C1C" StrokeThickness="0.5" Margin="0,0,6,0" />
+                <TextBlock Text="Ereditarietà disabilitata" VerticalAlignment="Center" />
+              </StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <Ellipse Width="10" Height="10" Fill="#FFFFA000" Stroke="#FFF57C00" StrokeThickness="0.5" Margin="0,0,6,0" />
+                <TextBlock Text="Permessi espliciti (non ereditati)" VerticalAlignment="Center" />
+              </StackPanel>
+            </WrapPanel>
           </StackPanel>
           <TreeView x:Name="FolderTreeView" Grid.Row="1" ItemsSource="{Binding FolderTree}" SelectedItemChanged="TreeView_OnSelectedItemChanged" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling">
             <TreeView.ItemContainerStyle>
@@ -208,7 +221,11 @@
             </TreeView.ItemContainerStyle>
             <TreeView.ItemTemplate>
               <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                <TextBlock Text="{Binding DisplayName}" />
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="{Binding DisplayName}" />
+                  <Rectangle Width="8" Height="8" Fill="#FFC62828" Stroke="#FFB71C1C" StrokeThickness="0.5" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                  <Ellipse Width="8" Height="8" Fill="#FFFFA000" Stroke="#FFF57C00" StrokeThickness="0.5" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasExplicitPermissions, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                </StackPanel>
               </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
           </TreeView>

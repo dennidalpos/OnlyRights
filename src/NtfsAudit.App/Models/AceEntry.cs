@@ -18,6 +18,8 @@ namespace NtfsAudit.App.Models
         public bool IsDisabled { get; set; }
         public bool IsServiceAccount { get; set; }
         public bool IsAdminAccount { get; set; }
+        public bool HasExplicitPermissions { get; set; }
+        public bool IsInheritanceDisabled { get; set; }
         public List<string> MemberNames { get; set; }
         public string MembersSummary
         {

@@ -70,6 +70,11 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    .tree-label.selected { background: #bbdefb; color: #0d47a1; font-weight: 600; }");
             builder.AppendLine("    .tree-toggle { width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; border-radius: 2px; background: #e0e0e0; font-size: 10px; }");
             builder.AppendLine("    .tree-children.collapsed { display: none; }");
+            builder.AppendLine("    .tree-marker { width: 8px; height: 8px; display: inline-block; }");
+            builder.AppendLine("    .marker-inheritance { background: #c62828; border-radius: 2px; }");
+            builder.AppendLine("    .marker-explicit { background: #ffa000; border-radius: 50%; }");
+            builder.AppendLine("    .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; margin-bottom: 8px; }");
+            builder.AppendLine("    .legend-item { display: inline-flex; align-items: center; gap: 6px; }");
             builder.AppendLine("    .toolbar { display: flex; gap: 16px; align-items: center; margin-bottom: 12px; }");
             builder.AppendLine("    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }");
             builder.AppendLine("    .tab-button { background: #e0e0e0; color: #212121; }");
@@ -100,6 +105,10 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      <div class=\"tree-actions\">");
             builder.AppendLine("        <button id=\"expandAll\">Espandi</button>");
             builder.AppendLine("        <button id=\"collapseAll\" class=\"secondary\">Comprimi</button>");
+            builder.AppendLine("      </div>");
+            builder.AppendLine("      <div class=\"legend\">");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"tree-marker marker-inheritance\"></span>Ereditarietà disabilitata</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"tree-marker marker-explicit\"></span>Permessi espliciti (non ereditati)</div>");
             builder.AppendLine("      </div>");
             builder.AppendLine("      <div id=\"treeContainer\"></div>");
             builder.AppendLine("    </aside>");
@@ -221,6 +230,17 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      const name = document.createElement('span');");
             builder.AppendLine("      name.textContent = displayNames[path] || path;" );
             builder.AppendLine("      label.appendChild(name);");
+            builder.AppendLine("      const flags = detailsData[path] || {};");
+            builder.AppendLine("      if (flags.IsInheritanceDisabled) {");
+            builder.AppendLine("        const marker = document.createElement('span');");
+            builder.AppendLine("        marker.className = 'tree-marker marker-inheritance';");
+            builder.AppendLine("        label.appendChild(marker);");
+            builder.AppendLine("      }");
+            builder.AppendLine("      if (flags.HasExplicitPermissions) {");
+            builder.AppendLine("        const marker = document.createElement('span');");
+            builder.AppendLine("        marker.className = 'tree-marker marker-explicit';");
+            builder.AppendLine("        label.appendChild(marker);");
+            builder.AppendLine("      }");
             builder.AppendLine("      label.addEventListener('click', (event) => {" );
             builder.AppendLine("        event.stopPropagation();" );
             builder.AppendLine("        selectPath(path);" );
@@ -394,7 +414,9 @@ namespace NtfsAudit.App.Export
                 {
                     GroupEntries = entry.Value.GroupEntries ?? new List<AceEntry>(),
                     UserEntries = entry.Value.UserEntries ?? new List<AceEntry>(),
-                    AllEntries = entry.Value.AllEntries ?? new List<AceEntry>()
+                    AllEntries = entry.Value.AllEntries ?? new List<AceEntry>(),
+                    HasExplicitPermissions = entry.Value.HasExplicitPermissions,
+                    IsInheritanceDisabled = entry.Value.IsInheritanceDisabled
                 };
             }
             return payload;
