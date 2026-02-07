@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -22,6 +23,7 @@ namespace NtfsAudit.App.ViewModels
         private readonly SidNameCache _sidNameCache;
         private readonly GroupMembershipCache _groupMembershipCache;
         private readonly ExcelExporter _excelExporter;
+        private readonly HtmlExporter _htmlExporter;
         private readonly AnalysisArchive _analysisArchive;
         private ScanResult _scanResult;
         private CancellationTokenSource _cts;
@@ -51,6 +53,7 @@ namespace NtfsAudit.App.ViewModels
             _sidNameCache = new SidNameCache();
             _groupMembershipCache = new GroupMembershipCache(TimeSpan.FromHours(2));
             _excelExporter = new ExcelExporter();
+            _htmlExporter = new HtmlExporter();
             _analysisArchive = new AnalysisArchive();
 
             FolderTree = new ObservableCollection<FolderNodeViewModel>();
@@ -67,6 +70,7 @@ namespace NtfsAudit.App.ViewModels
             StopCommand = new RelayCommand(StopScan, () => CanStop);
             ExportCommand = new RelayCommand(Export, () => CanExport);
             ExportAnalysisCommand = new RelayCommand(ExportAnalysis, () => CanExport);
+            ExportHtmlCommand = new RelayCommand(ExportHtml, () => CanExport);
             ImportAnalysisCommand = new RelayCommand(ImportAnalysis, () => !_isScanning);
 
             LoadCache();
@@ -84,6 +88,7 @@ namespace NtfsAudit.App.ViewModels
         public RelayCommand StopCommand { get; private set; }
         public RelayCommand ExportCommand { get; private set; }
         public RelayCommand ExportAnalysisCommand { get; private set; }
+        public RelayCommand ExportHtmlCommand { get; private set; }
         public RelayCommand ImportAnalysisCommand { get; private set; }
 
         public string RootPath
@@ -438,6 +443,31 @@ namespace NtfsAudit.App.ViewModels
                 "Errore export analisi");
         }
 
+        private void ExportHtml()
+        {
+            if (_scanResult == null) return;
+            var dialog = new Win32.SaveFileDialog
+            {
+                Filter = "HTML (*.html)|*.html",
+                FileName = BuildExportFileName(RootPath, "html")
+            };
+            if (dialog.ShowDialog() != true) return;
+            var expandedPaths = GetExpandedPaths();
+            RunExportAction(
+                () => _htmlExporter.Export(
+                    _scanResult,
+                    RootPath,
+                    SelectedFolderPath,
+                    ColorizeRights,
+                    ErrorFilter,
+                    expandedPaths,
+                    Errors,
+                    dialog.FileName),
+                string.Format("Export HTML completato: {0}", dialog.FileName),
+                string.Format("Export HTML completato:\n{0}", dialog.FileName),
+                "Errore export HTML");
+        }
+
         private void ImportAnalysis()
         {
             var dialog = new Win32.OpenFileDialog
@@ -667,7 +697,31 @@ namespace NtfsAudit.App.ViewModels
             StopCommand.RaiseCanExecuteChanged();
             ExportCommand.RaiseCanExecuteChanged();
             ExportAnalysisCommand.RaiseCanExecuteChanged();
+            ExportHtmlCommand.RaiseCanExecuteChanged();
             ImportAnalysisCommand.RaiseCanExecuteChanged();
+        }
+
+        private HashSet<string> GetExpandedPaths()
+        {
+            var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var node in FolderTree)
+            {
+                CollectExpandedPaths(node, paths);
+            }
+            return paths;
+        }
+
+        private void CollectExpandedPaths(FolderNodeViewModel node, HashSet<string> paths)
+        {
+            if (node == null || node.IsPlaceholder) return;
+            if (node.IsExpanded && !string.IsNullOrWhiteSpace(node.Path))
+            {
+                paths.Add(node.Path);
+            }
+            foreach (var child in node.Children)
+            {
+                CollectExpandedPaths(child, paths);
+            }
         }
 
         private string FormatElapsed(TimeSpan elapsed)
