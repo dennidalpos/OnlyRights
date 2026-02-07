@@ -31,6 +31,7 @@ NTFS Audit esegue una scansione delle ACL delle cartelle partendo da una root. D
 - **Espandi/Comprimi** albero cartelle e splitter per ridimensionare i pannelli.
 - **Dettaglio ACL** separato per gruppi, utenti e dettaglio completo.
 - **Filtro errori** integrato.
+- **Filtro ACL** per limitare righe nelle griglie permessi (utente/SID/allow/diritti).
 - **Barra di avanzamento** con metriche (processate/in coda).
 - **Blocco UI durante import/export** con indicatore di avanzamento.
 - **Colorazione diritti** (Full, Modify, Read, ecc.).
@@ -56,9 +57,10 @@ Al termine dell’export viene mostrato un avviso di completamento con il percor
 
 Colonne principali:
 - `FolderPath`, `PrincipalName`, `PrincipalSid`, `PrincipalType`
-- `AllowDeny`, `RightsSummary`, `IsInherited`
+- `AllowDeny`, `RightsSummary`, `RightsMask`, `IsInherited`
 - `InheritanceFlags`, `PropagationFlags`, `Source`, `Depth`
 - `IsDisabled`, `IsServiceAccount`, `IsAdminAccount`, `GroupMembers`
+- `HasExplicitPermissions`, `IsInheritanceDisabled`
 - `IncludeInherited`, `ResolveIdentities`, `ExcludeServiceAccounts`, `ExcludeAdminAccounts`
 
 Formato nome file:
@@ -72,6 +74,7 @@ L’export HTML genera un file `.html` autoconclusivo che replica la vista corre
 - cartella selezionata,
 - tab Permessi Gruppi/Utenti/ACL,
 - colori per diritto e filtro errori.
+- filtro ACL (utente/SID/allow/diritti) mantenuto.
 
 Formato nome file:
 ```
@@ -110,6 +113,7 @@ Parametri:
 - `-SkipRestore`
 - `-SkipBuild`
 - `-SkipPublish`
+- `-SkipViewerPublish`
 - `-SkipPublishClean` (non ripulisce la cartella di output)
 - `-Framework <tfm>` (es. `net8.0-windows`, default `net8.0-windows` in publish)
 - `-OutputPath <cartella>`

@@ -16,6 +16,7 @@ namespace NtfsAudit.App.Export
             string rootPath,
             string selectedFolderPath,
             bool colorizeRights,
+            string aclFilter,
             string errorFilter,
             IEnumerable<string> expandedPaths,
             IEnumerable<ErrorEntry> errors,
@@ -80,7 +81,7 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    .badge-deny { background: #6a1b9a; }");
             builder.AppendLine("    .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; margin-bottom: 8px; }");
             builder.AppendLine("    .legend-item { display: inline-flex; align-items: center; gap: 6px; }");
-            builder.AppendLine("    .toolbar { display: flex; gap: 16px; align-items: center; margin-bottom: 12px; }");
+            builder.AppendLine("    .toolbar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 12px; }");
             builder.AppendLine("    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }");
             builder.AppendLine("    .tab-button { background: #e0e0e0; color: #212121; }");
             builder.AppendLine("    .tab-button.active { background: #1565c0; color: white; }");
@@ -122,6 +123,7 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    <main class=\"content\">");
             builder.AppendLine("      <div class=\"toolbar\">");
             builder.AppendLine("        <label><input type=\"checkbox\" id=\"colorizeToggle\" /> Colora per diritto</label>");
+            builder.AppendLine("        <input id=\"aclFilter\" class=\"filter-input\" type=\"text\" placeholder=\"Filtra ACL (utente, SID, allow/deny, diritti)...\" />");
             builder.AppendLine("      </div>");
             builder.AppendLine("      <div class=\"tabs\">");
             builder.AppendLine("        <button class=\"tab-button active\" data-tab=\"groups\">Permessi Gruppi</button>");
@@ -153,6 +155,7 @@ namespace NtfsAudit.App.Export
             builder.AppendLine(string.Format("    const rootPath = {0};", JsonConvert.SerializeObject(root, jsonSettings)));
             builder.AppendLine(string.Format("    let selectedPath = {0};", JsonConvert.SerializeObject(selectedPath, jsonSettings)));
             builder.AppendLine(string.Format("    let colorizeRights = {0};", colorizeRights.ToString().ToLowerInvariant()));
+            builder.AppendLine(string.Format("    const initialAclFilter = {0};", JsonConvert.SerializeObject(aclFilter ?? string.Empty, jsonSettings)));
             builder.AppendLine(string.Format("    const initialErrorFilter = {0};", JsonConvert.SerializeObject(errorFilter ?? string.Empty, jsonSettings)));
             builder.AppendLine("\n    const groupColumns = [");
             builder.AppendLine("      { key: 'PrincipalName', label: 'Gruppo' },");
@@ -218,6 +221,7 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    const treeContainer = document.getElementById('treeContainer');");
             builder.AppendLine("    const selectedPathElement = document.getElementById('selectedPath');");
             builder.AppendLine("    const colorizeToggle = document.getElementById('colorizeToggle');");
+            builder.AppendLine("    const aclFilterInput = document.getElementById('aclFilter');");
             builder.AppendLine("    const errorFilterInput = document.getElementById('errorFilter');");
 
             builder.AppendLine("    function getChildren(path) {");
@@ -329,6 +333,15 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      return value;" );
             builder.AppendLine("    }");
 
+            builder.AppendLine("    function matchesAclFilter(entry, filter) {");
+            builder.AppendLine("      if (!filter) return true;");
+            builder.AppendLine("      const term = filter.toLowerCase();");
+            builder.AppendLine("      return (entry.PrincipalName || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.PrincipalSid || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.AllowDeny || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.RightsSummary || '').toLowerCase().includes(term);");
+            builder.AppendLine("    }");
+
             builder.AppendLine("    function renderTable(tableId, entries, columns, useRightsClass) {");
             builder.AppendLine("      const table = document.getElementById(tableId);" );
             builder.AppendLine("      table.innerHTML = '';" );
@@ -357,9 +370,13 @@ namespace NtfsAudit.App.Export
 
             builder.AppendLine("    function renderTables() {");
             builder.AppendLine("      const detail = detailsData[selectedPath] || { GroupEntries: [], UserEntries: [], AllEntries: [] };" );
-            builder.AppendLine("      renderTable('groupsTable', detail.GroupEntries || [], groupColumns, true);" );
-            builder.AppendLine("      renderTable('usersTable', detail.UserEntries || [], userColumns, true);" );
-            builder.AppendLine("      renderTable('aclTable', detail.AllEntries || [], aclColumns, true);" );
+            builder.AppendLine("      const aclFilterValue = aclFilterInput.value || '';");
+            builder.AppendLine("      const groupEntries = (detail.GroupEntries || []).filter(entry => matchesAclFilter(entry, aclFilterValue));");
+            builder.AppendLine("      const userEntries = (detail.UserEntries || []).filter(entry => matchesAclFilter(entry, aclFilterValue));");
+            builder.AppendLine("      const aclEntries = (detail.AllEntries || []).filter(entry => matchesAclFilter(entry, aclFilterValue));");
+            builder.AppendLine("      renderTable('groupsTable', groupEntries, groupColumns, true);" );
+            builder.AppendLine("      renderTable('usersTable', userEntries, userColumns, true);" );
+            builder.AppendLine("      renderTable('aclTable', aclEntries, aclColumns, true);" );
             builder.AppendLine("      renderErrors();" );
             builder.AppendLine("    }");
 
@@ -404,6 +421,10 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      renderTree();" );
             builder.AppendLine("    });");
 
+            builder.AppendLine("    aclFilterInput.addEventListener('input', () => {");
+            builder.AppendLine("      renderTables();");
+            builder.AppendLine("    });");
+
             builder.AppendLine("    colorizeToggle.addEventListener('change', () => {");
             builder.AppendLine("      colorizeRights = colorizeToggle.checked;" );
             builder.AppendLine("      renderTables();" );
@@ -414,6 +435,7 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    });");
 
             builder.AppendLine("    colorizeToggle.checked = colorizeRights;");
+            builder.AppendLine("    aclFilterInput.value = initialAclFilter;");
             builder.AppendLine("    errorFilterInput.value = initialErrorFilter;");
             builder.AppendLine("    selectedPathElement.textContent = selectedPath || '';" );
             builder.AppendLine("    wireTabs();" );

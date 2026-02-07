@@ -3,6 +3,7 @@ param(
     [switch]$SkipRestore,
     [switch]$SkipBuild,
     [switch]$SkipPublish,
+    [switch]$SkipViewerPublish,
     [switch]$SkipPublishClean,
     [string]$Framework,
     [string]$OutputPath,
@@ -82,26 +83,28 @@ if (-not $SkipPublish) {
     & dotnet @publishArgs
     if ($LASTEXITCODE -ne 0) { throw "Publish failed." }
 
-    $viewerDist = Join-Path $dist "Viewer"
-    if (!(Test-Path $viewerDist)) {
-        New-Item -ItemType Directory -Path $viewerDist | Out-Null
-    }
+    if (-not $SkipViewerPublish) {
+        $viewerDist = Join-Path $dist "Viewer"
+        if (!(Test-Path $viewerDist)) {
+            New-Item -ItemType Directory -Path $viewerDist | Out-Null
+        }
 
-    $viewerPublishArgs = @("publish", $viewerProject, "-c", $Configuration, "--no-build", "--nologo", "-o", $viewerDist)
-    if ($Framework) {
-        $viewerPublishArgs += @("-f", $Framework)
-    }
-    if ($Runtime) {
-        $viewerPublishArgs += @("-r", $Runtime)
-        $viewerPublishArgs += @("--self-contained", $SelfContained.IsPresent.ToString().ToLowerInvariant())
-    }
-    if ($PublishSingleFile) {
-        $viewerPublishArgs += "-p:PublishSingleFile=true"
-    }
-    if ($PublishReadyToRun) {
-        $viewerPublishArgs += "-p:PublishReadyToRun=true"
-    }
+        $viewerPublishArgs = @("publish", $viewerProject, "-c", $Configuration, "--no-build", "--nologo", "-o", $viewerDist)
+        if ($Framework) {
+            $viewerPublishArgs += @("-f", $Framework)
+        }
+        if ($Runtime) {
+            $viewerPublishArgs += @("-r", $Runtime)
+            $viewerPublishArgs += @("--self-contained", $SelfContained.IsPresent.ToString().ToLowerInvariant())
+        }
+        if ($PublishSingleFile) {
+            $viewerPublishArgs += "-p:PublishSingleFile=true"
+        }
+        if ($PublishReadyToRun) {
+            $viewerPublishArgs += "-p:PublishReadyToRun=true"
+        }
 
-    & dotnet @viewerPublishArgs
-    if ($LASTEXITCODE -ne 0) { throw "Viewer publish failed." }
+        & dotnet @viewerPublishArgs
+        if ($LASTEXITCODE -ne 0) { throw "Viewer publish failed." }
+    }
 }

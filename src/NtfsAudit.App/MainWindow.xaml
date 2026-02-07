@@ -265,10 +265,21 @@
               <RowDefinition Height="Auto" />
               <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <TextBlock FontWeight="Bold" Text="{Binding SelectedFolderPath}" Margin="0,0,0,8" />
-            <TabControl Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" FontWeight="Bold" Text="{Binding SelectedFolderPath}" Margin="0,0,0,8" />
+            <Border Grid.Row="1" Margin="0,0,0,8">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Filtro ACL:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                <TextBox Width="260" Height="24" Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
+              </StackPanel>
+            </Border>
+            <TabControl Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
               <TabItem Header="Permessi Gruppi">
-                <DataGrid ItemsSource="{Binding GroupEntries}"
+                <DataGrid ItemsSource="{Binding FilteredGroupEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"
@@ -303,7 +314,7 @@
                 </DataGrid>
               </TabItem>
               <TabItem Header="Permessi Utenti">
-                <DataGrid ItemsSource="{Binding UserEntries}"
+                <DataGrid ItemsSource="{Binding FilteredUserEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"
@@ -338,7 +349,7 @@
                 </DataGrid>
               </TabItem>
               <TabItem Header="Dettaglio ACL">
-                <DataGrid ItemsSource="{Binding AllEntries}"
+                <DataGrid ItemsSource="{Binding FilteredAllEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"
