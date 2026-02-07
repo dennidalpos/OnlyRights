@@ -11,6 +11,5 @@ namespace NtfsAudit.App.Models
         public bool ExcludeAdminAccounts { get; set; }
         public bool ExpandGroups { get; set; }
         public bool UsePowerShell { get; set; }
-        public bool ExportOnComplete { get; set; }
     }
 }

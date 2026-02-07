@@ -41,6 +41,7 @@ NTFS Audit esegue una scansione delle ACL delle cartelle partendo da una root. D
 - **Usa PowerShell per AD**: preferisce AD via PowerShell se disponibile.
 - **Escludi utenti di servizio**: filtra account con naming tipico di servizio.
 - **Escludi utenti admin**: filtra account con naming tipico admin.
+- **Colora per diritto**: evidenzia i permessi nella griglia con colori.
 
 ## Export Excel
 L’export genera un file `.xlsx` con tre fogli:
@@ -67,7 +68,7 @@ L’export analisi salva un archivio `.ntaudit` con:
 - struttura albero,
 - metadati (root e timestamp).
 
-L’import ricarica i dati senza rieseguire la scansione, ricostruendo albero, ACL e filtri errori.
+L’import ricarica i dati senza rieseguire la scansione, ricostruendo albero, ACL e filtri errori. Se l’archivio manca il file errori, l’import continua con un set vuoto.
 
 ## Script
 ### build.ps1
@@ -80,6 +81,7 @@ Parametri:
 - `-SkipRestore`
 - `-SkipBuild`
 - `-SkipPublish`
+- `-Framework <tfm>` (es. `net8.0-windows`)
 - `-OutputPath <cartella>`
 - `-Runtime <rid>` (es. `win-x64`)
 - `-SelfContained`
@@ -94,6 +96,7 @@ Rimuove build, dist e cache:
 .\scripts\clean.ps1
 ```
 Parametri:
+- `-Configuration <Release|Debug>` (rimuove solo `dist\<Configuration>`)
 - `-KeepDist`
 - `-KeepArtifacts`
 - `-KeepTemp`
