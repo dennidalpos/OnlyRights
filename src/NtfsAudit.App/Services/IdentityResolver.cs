@@ -18,6 +18,18 @@ namespace NtfsAudit.App.Services
 
         public ResolvedPrincipal Resolve(string sid)
         {
+            if (string.IsNullOrWhiteSpace(sid))
+            {
+                return new ResolvedPrincipal
+                {
+                    Sid = sid,
+                    Name = sid ?? string.Empty,
+                    IsGroup = false,
+                    IsDisabled = false,
+                    IsServiceAccount = false,
+                    IsAdminAccount = false
+                };
+            }
             SidCacheEntry cached;
             if (_sidNameCache.TryGet(sid, out cached) && !string.IsNullOrWhiteSpace(cached.Name))
             {

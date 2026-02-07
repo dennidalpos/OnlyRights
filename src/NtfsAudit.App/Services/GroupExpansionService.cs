@@ -20,6 +20,10 @@ namespace NtfsAudit.App.Services
         public List<ResolvedPrincipal> ExpandGroup(string groupSid, CancellationToken token)
         {
             var result = new List<ResolvedPrincipal>();
+            if (string.IsNullOrWhiteSpace(groupSid))
+            {
+                return result;
+            }
             var queue = new Queue<string>();
             var visited = new HashSet<string>();
             queue.Enqueue(groupSid);
@@ -55,6 +59,10 @@ namespace NtfsAudit.App.Services
 
         private List<ResolvedPrincipal> GetMembers(string groupSid)
         {
+            if (string.IsNullOrWhiteSpace(groupSid))
+            {
+                return new List<ResolvedPrincipal>();
+            }
             if (_adResolver == null || !_adResolver.IsAvailable)
             {
                 return new List<ResolvedPrincipal>();
