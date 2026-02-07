@@ -112,10 +112,11 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("        <button id=\"collapseAll\" class=\"secondary\">Comprimi</button>");
             builder.AppendLine("      </div>");
             builder.AppendLine("      <div class=\"legend\">");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-protected\">P</span>Protected (ereditarietà disabilitata)</div>");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-added\">+N</span>ACE esplicite aggiunte</div>");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-removed\">-N</span>ACE rimosse rispetto al padre</div>");
-            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-deny\">D</span>Deny espliciti</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><strong>Legenda:</strong></div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-protected\">p</span>Protected (ereditarietà disabilitata)</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-added\">+n</span>ACE esplicite aggiunte</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-removed\">-n</span>ACE rimosse rispetto al padre</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-deny\">d</span>Deny espliciti</div>");
             builder.AppendLine("      </div>");
             builder.AppendLine("      <div id=\"treeContainer\"></div>");
             builder.AppendLine("    </aside>");
