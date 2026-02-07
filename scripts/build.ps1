@@ -20,6 +20,9 @@ $dist = $distRoot
 if ($Runtime) {
     $dist = Join-Path $distRoot $Runtime
 }
+if ($Framework) {
+    $dist = Join-Path $dist $Framework
+}
 
 if (!(Test-Path $solution)) { throw "Solution not found" }
 if (!(Test-Path $project)) { throw "Project not found" }
@@ -44,6 +47,9 @@ if (-not $SkipPublish) {
     if (Test-Path $dist) { Remove-Item $dist -Recurse -Force }
     New-Item -ItemType Directory -Path $dist | Out-Null
 
+    if (-not $Framework) {
+        $Framework = "net8.0-windows"
+    }
     if (-not $Runtime -and ($SelfContained -or $PublishSingleFile -or $PublishReadyToRun)) {
         $Runtime = "win-x64"
     }

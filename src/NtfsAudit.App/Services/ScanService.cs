@@ -54,12 +54,12 @@ namespace NtfsAudit.App.Services
             using (var dataWriter = new StreamWriter(tempDataPath))
             using (var errorWriter = new StreamWriter(errorPath))
             {
-                var dataLock = new object();
-                var errorLock = new object();
-                lock (dataLock)
-                {
-                    WriteExportRecord(dataWriter, BuildScanOptionsRecord(options), options);
-                }
+                var dataQueue = new BlockingCollection<ExportRecord>(new ConcurrentQueue<ExportRecord>());
+                var errorQueue = new BlockingCollection<ErrorEntry>(new ConcurrentQueue<ErrorEntry>());
+                var dataWriterTask = Task.Run(() => DrainQueue(dataQueue, dataWriter, token), token);
+                var errorWriterTask = Task.Run(() => DrainQueue(errorQueue, errorWriter, token), token);
+
+                dataQueue.Add(BuildExportRecord(BuildScanOptionsRecord(options), options));
                 var workerCount = Math.Max(2, Environment.ProcessorCount);
                 var workers = new Task[workerCount];
                 for (var i = 0; i < workerCount; i++)
@@ -104,17 +104,16 @@ namespace NtfsAudit.App.Services
                                 try
                                 {
                                     var ioPath = PathResolver.ToExtendedPath(current);
-                                    children = Directory.EnumerateDirectories(ioPath, "*", SearchOption.TopDirectoryOnly)
-                                        .Select(PathResolver.FromExtendedPath)
-                                        .ToList();
+                                    children = new List<string>();
+                                    foreach (var child in Directory.EnumerateDirectories(ioPath, "*", SearchOption.TopDirectoryOnly))
+                                    {
+                                        children.Add(PathResolver.FromExtendedPath(child));
+                                    }
                                 }
                                 catch (Exception ex)
                                 {
                                     Interlocked.Increment(ref errorCount);
-                                    lock (errorLock)
-                                    {
-                                        LogError(errorWriter, current, ex);
-                                    }
+                                    errorQueue.Add(BuildErrorEntry(current, ex));
                                     if (progress != null)
                                     {
                                         progress.Report(new ScanProgress
@@ -233,10 +232,7 @@ namespace NtfsAudit.App.Services
                                                 : string.Format("{0} ({1})", m.Name, m.Sid)).ToList();
                                     }
 
-                                    lock (dataLock)
-                                    {
-                                        WriteExportRecord(dataWriter, entry, options);
-                                    }
+                                    dataQueue.Add(BuildExportRecord(entry, options));
 
                                     if (members != null)
                                     {
@@ -273,10 +269,7 @@ namespace NtfsAudit.App.Services
                                                 currentDetail.UserEntries.Add(memberEntry);
                                                 currentDetail.AllEntries.Add(memberEntry);
                                             }
-                                            lock (dataLock)
-                                            {
-                                                WriteExportRecord(dataWriter, memberEntry, options);
-                                            }
+                                            dataQueue.Add(BuildExportRecord(memberEntry, options));
                                         }
                                     }
                                 }
@@ -284,10 +277,7 @@ namespace NtfsAudit.App.Services
                             catch (Exception ex)
                             {
                                 Interlocked.Increment(ref errorCount);
-                                lock (errorLock)
-                                {
-                                    LogError(errorWriter, current, ex);
-                                }
+                                errorQueue.Add(BuildErrorEntry(current, ex));
                                 if (progress != null)
                                 {
                                     progress.Report(new ScanProgress
@@ -317,6 +307,10 @@ namespace NtfsAudit.App.Services
 
                     throw;
                 }
+
+                dataQueue.CompleteAdding();
+                errorQueue.CompleteAdding();
+                Task.WaitAll(dataWriterTask, errorWriterTask);
 
                 if (progress != null)
                 {
@@ -350,9 +344,17 @@ namespace NtfsAudit.App.Services
             };
         }
 
-        private void WriteExportRecord(StreamWriter writer, AceEntry entry, ScanOptions options)
+        private static void DrainQueue<T>(BlockingCollection<T> queue, StreamWriter writer, CancellationToken token)
         {
-            var record = new ExportRecord
+            foreach (var item in queue.GetConsumingEnumerable(token))
+            {
+                writer.WriteLine(JsonConvert.SerializeObject(item));
+            }
+        }
+
+        private ExportRecord BuildExportRecord(AceEntry entry, ScanOptions options)
+        {
+            return new ExportRecord
             {
                 FolderPath = entry.FolderPath,
                 PrincipalName = entry.PrincipalName,
@@ -374,18 +376,16 @@ namespace NtfsAudit.App.Services
                 ExcludeServiceAccounts = options.ExcludeServiceAccounts,
                 ExcludeAdminAccounts = options.ExcludeAdminAccounts
             };
-            writer.WriteLine(JsonConvert.SerializeObject(record));
         }
 
-        private void LogError(StreamWriter writer, string path, Exception ex)
+        private ErrorEntry BuildErrorEntry(string path, Exception ex)
         {
-            var error = new ErrorEntry
+            return new ErrorEntry
             {
                 Path = path,
                 ErrorType = ex.GetType().Name,
                 Message = ex.Message
             };
-            writer.WriteLine(JsonConvert.SerializeObject(error));
         }
 
         private AceEntry BuildScanOptionsRecord(ScanOptions options)

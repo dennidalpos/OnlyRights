@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Forms;
 using Win32 = Microsoft.Win32;
+using WpfMessageBox = System.Windows.MessageBox;
 using NtfsAudit.App.Cache;
 using NtfsAudit.App.Export;
 using NtfsAudit.App.Models;
@@ -412,16 +413,12 @@ namespace NtfsAudit.App.ViewModels
                 dialog.ShowNewFolderButton = true;
                 var result = dialog.ShowDialog();
                 if (result != DialogResult.OK) return;
-                try
-                {
-                    var outputPath = BuildExportPath(dialog.SelectedPath, RootPath);
-                    _excelExporter.Export(_scanResult.TempDataPath, _scanResult.ErrorPath, outputPath);
-                    ProgressText = string.Format("Export completato: {0}", outputPath);
-                }
-                catch (Exception ex)
-                {
-                    ProgressText = string.Format("Errore export: {0}", ex.Message);
-                }
+                var outputPath = BuildExportPath(dialog.SelectedPath, RootPath, "xlsx");
+                RunExportAction(
+                    () => _excelExporter.Export(_scanResult.TempDataPath, _scanResult.ErrorPath, outputPath),
+                    string.Format("Export completato: {0}", outputPath),
+                    string.Format("Export completato:\n{0}", outputPath),
+                    "Errore export");
             }
         }
 
@@ -431,18 +428,14 @@ namespace NtfsAudit.App.ViewModels
             var dialog = new Win32.SaveFileDialog
             {
                 Filter = "Analisi NtfsAudit (*.ntaudit)|*.ntaudit",
-                FileName = "analisi-ntfs-audit.ntaudit"
+                FileName = BuildExportFileName(RootPath, "ntaudit")
             };
             if (dialog.ShowDialog() != true) return;
-            try
-            {
-                _analysisArchive.Export(_scanResult, RootPath, dialog.FileName);
-                ProgressText = string.Format("Analisi esportata: {0}", dialog.FileName);
-            }
-            catch (Exception ex)
-            {
-                ProgressText = string.Format("Errore export analisi: {0}", ex.Message);
-            }
+            RunExportAction(
+                () => _analysisArchive.Export(_scanResult, RootPath, dialog.FileName),
+                string.Format("Analisi esportata: {0}", dialog.FileName),
+                string.Format("Analisi esportata:\n{0}", dialog.FileName),
+                "Errore export analisi");
         }
 
         private void ImportAnalysis()
@@ -472,11 +465,26 @@ namespace NtfsAudit.App.ViewModels
                 }
                 SelectFolder(root);
                 ProgressText = string.Format("Analisi importata: {0}", dialog.FileName);
+                WpfMessageBox.Show(string.Format("Analisi importata:\n{0}", dialog.FileName), "Import completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 UpdateCommands();
             }
             catch (Exception ex)
             {
                 ProgressText = string.Format("Errore import analisi: {0}", ex.Message);
+            }
+        }
+
+        private void RunExportAction(Action exportAction, string progressMessage, string dialogMessage, string errorLabel)
+        {
+            try
+            {
+                exportAction();
+                ProgressText = progressMessage;
+                WpfMessageBox.Show(dialogMessage, "Export completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                ProgressText = string.Format("{0}: {1}", errorLabel, ex.Message);
             }
         }
 
@@ -672,14 +680,19 @@ namespace NtfsAudit.App.ViewModels
             return elapsed.ToString(@"hh\:mm\:ss");
         }
 
-        private string BuildExportPath(string folder, string rootPath)
+        private string BuildExportPath(string folder, string rootPath, string extension)
+        {
+            var fileName = BuildExportFileName(rootPath, extension);
+            return Path.Combine(folder, fileName);
+        }
+
+        private string BuildExportFileName(string rootPath, string extension)
         {
             var safeRoot = rootPath ?? string.Empty;
             var baseName = Path.GetFileName(safeRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
             if (string.IsNullOrWhiteSpace(baseName)) baseName = "Root";
             var timestamp = DateTime.Now.ToString("dd-MM-yyyy-HH-mm");
-            var fileName = string.Format("{0}_{1}.xlsx", baseName, timestamp);
-            return Path.Combine(folder, fileName);
+            return string.Format("{0}_{1}.{2}", baseName, timestamp, extension);
         }
 
         private void LoadCache()

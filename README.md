@@ -11,8 +11,9 @@ NTFS Audit esegue una scansione delle ACL delle cartelle partendo da una root. D
 - salva i risultati in file temporanei riutilizzabili per export o import.
 
 ## Requisiti
-- Windows 10/11 o Windows Server 2016+.
-- .NET SDK 8 (target `net8.0-windows`).
+- Windows 10/11 o Windows Server 2016+ (build `net8.0-windows`).
+- Windows Server 2012 R2+ (build `net6.0-windows`).
+- .NET SDK 6+ (multi-target `net6.0-windows;net8.0-windows`).
 - Permessi di lettura ACL sulle cartelle analizzate.
 - (Opzionale) RSAT / modulo ActiveDirectory se si usa la risoluzione AD via PowerShell.
 
@@ -27,6 +28,7 @@ NTFS Audit esegue una scansione delle ACL delle cartelle partendo da una root. D
 
 ## Funzionalità principali
 - **Albero cartelle** con caricamento lazy.
+- **Espandi/Comprimi** albero cartelle e splitter per ridimensionare i pannelli.
 - **Dettaglio ACL** separato per gruppi, utenti e dettaglio completo.
 - **Filtro errori** integrato.
 - **Barra di avanzamento** con metriche (processate/in coda).
@@ -48,6 +50,7 @@ L’export genera un file `.xlsx` con tre fogli:
 - **Users**: tutte le ACE degli utenti.
 - **Groups**: tutte le ACE dei gruppi (con colonna dei membri).
 - **Acl**: l’elenco completo, inclusi utenti, gruppi e record meta.
+Al termine dell’export viene mostrato un avviso di completamento con il percorso del file.
 
 Colonne principali:
 - `FolderPath`, `PrincipalName`, `PrincipalSid`, `PrincipalType`
@@ -69,6 +72,12 @@ L’export analisi salva un archivio `.ntaudit` con:
 - metadati (root e timestamp).
 
 L’import ricarica i dati senza rieseguire la scansione, ricostruendo albero, ACL e filtri errori. Se l’archivio manca il file errori, l’import continua con un set vuoto.
+Export e import mostrano un avviso di completamento.
+
+Formato nome file consigliato:
+```
+<NomeCartellaRoot>_<dd-MM-yyyy-HH-mm>.ntaudit
+```
 
 ## Script
 ### build.ps1
@@ -81,14 +90,14 @@ Parametri:
 - `-SkipRestore`
 - `-SkipBuild`
 - `-SkipPublish`
-- `-Framework <tfm>` (es. `net8.0-windows`)
+- `-Framework <tfm>` (es. `net8.0-windows`, default `net8.0-windows` in publish)
 - `-OutputPath <cartella>`
 - `-Runtime <rid>` (es. `win-x64`)
 - `-SelfContained`
 - `-PublishSingleFile`
 - `-PublishReadyToRun`
 
-Output di default: `dist\<Configuration>`.
+Output di default: `dist\<Configuration>` (aggiunge `<Runtime>` e/o `<Framework>` se presenti).
 
 ### clean.ps1
 Rimuove build, dist e cache:
@@ -97,6 +106,7 @@ Rimuove build, dist e cache:
 ```
 Parametri:
 - `-Configuration <Release|Debug>` (rimuove solo `dist\<Configuration>`)
+- `-Framework <tfm>` (rimuove solo `dist\<Configuration>\<Framework>` se specificato)
 - `-KeepDist`
 - `-KeepArtifacts`
 - `-KeepTemp`
@@ -113,3 +123,9 @@ Questi file vengono riutilizzati per l’export e possono essere rimossi con `cl
 - **Accesso negato su cartelle**: gli errori vengono registrati e la scansione continua.
 - **AD non disponibile**: disattiva “Usa PowerShell per AD” o installa RSAT.
 - **Prestazioni**: riduci MaxDepth o disattiva risoluzione identità/espansione gruppi.
+
+## Nota compatibilità Windows Server 2012 R2
+Per garantire la compatibilità con domini basati su Windows Server 2012 R2, usa la build `net6.0-windows`.
+Il progetto è multi-target: `net6.0-windows` per ambienti legacy e `net8.0-windows` per i sistemi più recenti.
+In fase di build/publish puoi selezionare il framework con `-Framework net6.0-windows` o `-Framework net8.0-windows`.
+Il warning NETSDK1138 per `net6.0-windows` è silenziato nel progetto, ma la piattaforma resta EOL.
