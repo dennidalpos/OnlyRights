@@ -83,7 +83,7 @@
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" IsEnabled="{Binding IsNotScanning}">
+        <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" IsEnabled="{Binding IsScanConfigEnabled}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" />
@@ -94,7 +94,7 @@
           </Grid>
         </Border>
 
-        <Border Grid.Row="1" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8">
+        <Border Grid.Row="1" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
           <StackPanel Orientation="Horizontal">
             <Button Margin="0,0,8,0" Padding="12,4" Content="Start" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" Background="#FF2E7D32" Foreground="White" />
             <Button Margin="0,0,8,0" Padding="12,4" Content="Stop" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" Background="#FFC62828" Foreground="White" />
@@ -105,19 +105,25 @@
           </StackPanel>
         </Border>
 
-        <Grid Grid.Row="2" Margin="0,0,0,8">
+        <Border Grid.Row="1" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+          <StackPanel Orientation="Horizontal">
+            <Button Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding IsNotScanning}" Background="#FF616161" Foreground="White" />
+          </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="2" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
           </Grid.ColumnDefinitions>
-          <Border Grid.Column="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0" IsEnabled="{Binding IsNotScanning}">
+          <Border Grid.Column="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0" IsEnabled="{Binding IsScanConfigEnabled}">
             <WrapPanel VerticalAlignment="Center">
               <TextBlock Text="MaxDepth" VerticalAlignment="Center" Margin="0,0,6,0" />
               <TextBox Width="60" Height="24" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0,0,12,0" />
               <CheckBox Content="Analizza tutte le sottocartelle" IsChecked="{Binding ScanAllDepths}" />
             </WrapPanel>
           </Border>
-          <Border Grid.Column="1" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" IsEnabled="{Binding IsNotScanning}">
+          <Border Grid.Column="1" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" IsEnabled="{Binding IsScanConfigEnabled}">
             <WrapPanel VerticalAlignment="Center">
               <CheckBox Margin="0,0,12,0" Content="Includi permessi ereditati" IsChecked="{Binding IncludeInherited}" />
               <CheckBox Margin="0,0,12,0" Content="Risolvi identità (più lento)" IsChecked="{Binding ResolveIdentities}" />
@@ -130,7 +136,7 @@
           </Border>
         </Grid>
 
-        <Border Grid.Row="3" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8">
+        <Border Grid.Row="3" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
           <Grid>
             <StackPanel Margin="0,0,12,0" VerticalAlignment="Center" HorizontalAlignment="Left">
               <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
@@ -180,9 +186,22 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
           </Grid.RowDefinitions>
-          <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
-            <Button Margin="0,0,6,0" Padding="8,2" Content="Espandi" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
-            <Button Padding="8,2" Content="Comprimi" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
+          <StackPanel Grid.Row="0" Margin="0,0,0,6">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+              <Button Margin="0,0,6,0" Padding="8,2" Content="Espandi" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
+              <Button Padding="8,2" Content="Comprimi" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
+            </StackPanel>
+            <WrapPanel VerticalAlignment="Center">
+              <TextBlock Text="Legenda:" FontWeight="SemiBold" Margin="0,0,8,0" />
+              <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
+                <Rectangle Width="10" Height="10" Fill="#FFC62828" Stroke="#FFB71C1C" StrokeThickness="0.5" Margin="0,0,6,0" />
+                <TextBlock Text="Ereditarietà disabilitata" VerticalAlignment="Center" />
+              </StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <Ellipse Width="10" Height="10" Fill="#FFFFA000" Stroke="#FFF57C00" StrokeThickness="0.5" Margin="0,0,6,0" />
+                <TextBlock Text="Permessi espliciti (non ereditati)" VerticalAlignment="Center" />
+              </StackPanel>
+            </WrapPanel>
           </StackPanel>
           <TreeView x:Name="FolderTreeView" Grid.Row="1" ItemsSource="{Binding FolderTree}" SelectedItemChanged="TreeView_OnSelectedItemChanged" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling">
             <TreeView.ItemContainerStyle>
@@ -202,7 +221,11 @@
             </TreeView.ItemContainerStyle>
             <TreeView.ItemTemplate>
               <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                <TextBlock Text="{Binding DisplayName}" />
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="{Binding DisplayName}" />
+                  <Rectangle Width="8" Height="8" Fill="#FFC62828" Stroke="#FFB71C1C" StrokeThickness="0.5" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                  <Ellipse Width="8" Height="8" Fill="#FFFFA000" Stroke="#FFF57C00" StrokeThickness="0.5" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasExplicitPermissions, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                </StackPanel>
               </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
           </TreeView>

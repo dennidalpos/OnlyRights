@@ -15,6 +15,7 @@ namespace NtfsAudit.App.Services
         private const string ErrorsEntryName = "errors.jsonl";
         private const string TreeEntryName = "tree.json";
         private const string MetaEntryName = "meta.json";
+        private const string FolderFlagsEntryName = "folderflags.json";
 
         public void Export(ScanResult result, string rootPath, string outputPath)
         {
@@ -44,6 +45,7 @@ namespace NtfsAudit.App.Services
                     AddEmptyEntry(archive, ErrorsEntryName);
                 }
                 AddJsonEntry(archive, TreeEntryName, result.TreeMap);
+                AddJsonEntry(archive, FolderFlagsEntryName, BuildFolderFlags(result.Details));
                 AddJsonEntry(archive, MetaEntryName, new ArchiveMeta
                 {
                     RootPath = rootPath,
@@ -63,12 +65,14 @@ namespace NtfsAudit.App.Services
                 ExtractEntry(archive, DataEntryName, tempDir);
                 ExtractEntry(archive, ErrorsEntryName, tempDir);
                 ExtractEntry(archive, TreeEntryName, tempDir);
+                ExtractEntry(archive, FolderFlagsEntryName, tempDir);
                 ExtractEntry(archive, MetaEntryName, tempDir);
             }
 
             var dataPath = Path.Combine(tempDir, DataEntryName);
             var errorPath = Path.Combine(tempDir, ErrorsEntryName);
             var treePath = Path.Combine(tempDir, TreeEntryName);
+            var folderFlagsPath = Path.Combine(tempDir, FolderFlagsEntryName);
             var metaPath = Path.Combine(tempDir, MetaEntryName);
             if (!File.Exists(dataPath))
             {
@@ -83,6 +87,7 @@ namespace NtfsAudit.App.Services
             var meta = LoadMeta(metaPath);
 
             var details = BuildDetailsFromExport(dataPath);
+            ApplyFolderFlags(details, LoadFolderFlags(folderFlagsPath));
 
             var result = new ScanResult
             {
@@ -197,10 +202,20 @@ namespace NtfsAudit.App.Services
                     IsDisabled = record.IsDisabled,
                     IsServiceAccount = record.IsServiceAccount,
                     IsAdminAccount = record.IsAdminAccount,
+                    HasExplicitPermissions = record.HasExplicitPermissions,
+                    IsInheritanceDisabled = record.IsInheritanceDisabled,
                     MemberNames = record.MemberNames == null ? null : new List<string>(record.MemberNames)
                 };
 
                 detail.AllEntries.Add(entry);
+                if (entry.HasExplicitPermissions || !entry.IsInherited)
+                {
+                    detail.HasExplicitPermissions = true;
+                }
+                if (entry.IsInheritanceDisabled)
+                {
+                    detail.IsInheritanceDisabled = true;
+                }
                 if (string.Equals(record.PrincipalType, "Group", StringComparison.OrdinalIgnoreCase))
                 {
                     detail.GroupEntries.Add(entry);
@@ -214,11 +229,59 @@ namespace NtfsAudit.App.Services
             return details;
         }
 
+        private Dictionary<string, FolderFlagsPayload> BuildFolderFlags(Dictionary<string, FolderDetail> details)
+        {
+            var payload = new Dictionary<string, FolderFlagsPayload>(StringComparer.OrdinalIgnoreCase);
+            if (details == null) return payload;
+            foreach (var entry in details)
+            {
+                payload[entry.Key] = new FolderFlagsPayload
+                {
+                    HasExplicitPermissions = entry.Value.HasExplicitPermissions,
+                    IsInheritanceDisabled = entry.Value.IsInheritanceDisabled
+                };
+            }
+            return payload;
+        }
+
+        private Dictionary<string, FolderFlagsPayload> LoadFolderFlags(string flagsPath)
+        {
+            if (!File.Exists(flagsPath)) return new Dictionary<string, FolderFlagsPayload>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                var flags = JsonConvert.DeserializeObject<Dictionary<string, FolderFlagsPayload>>(File.ReadAllText(flagsPath));
+                return flags == null
+                    ? new Dictionary<string, FolderFlagsPayload>(StringComparer.OrdinalIgnoreCase)
+                    : new Dictionary<string, FolderFlagsPayload>(flags, StringComparer.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return new Dictionary<string, FolderFlagsPayload>(StringComparer.OrdinalIgnoreCase);
+            }
+        }
+
+        private void ApplyFolderFlags(Dictionary<string, FolderDetail> details, Dictionary<string, FolderFlagsPayload> flags)
+        {
+            if (flags == null || flags.Count == 0) return;
+            foreach (var entry in flags)
+            {
+                if (string.IsNullOrWhiteSpace(entry.Key)) continue;
+                FolderDetail detail;
+                if (!details.TryGetValue(entry.Key, out detail))
+                {
+                    detail = new FolderDetail();
+                    details[entry.Key] = detail;
+                }
+                detail.HasExplicitPermissions = detail.HasExplicitPermissions || entry.Value.HasExplicitPermissions;
+                detail.IsInheritanceDisabled = detail.IsInheritanceDisabled || entry.Value.IsInheritanceDisabled;
+            }
+        }
+
         private string BuildEntryKey(ExportRecord record)
         {
             var principalKey = string.IsNullOrWhiteSpace(record.PrincipalSid) ? record.PrincipalName : record.PrincipalSid;
             var membersKey = record.MemberNames == null ? string.Empty : string.Join(",", record.MemberNames);
-            return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}",
+            return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}|{13}|{14}",
                 principalKey ?? string.Empty,
                 record.PrincipalType ?? string.Empty,
                 record.AllowDeny ?? string.Empty,
@@ -231,7 +294,9 @@ namespace NtfsAudit.App.Services
                 record.IsDisabled,
                 record.IsServiceAccount,
                 record.IsAdminAccount,
-                membersKey);
+                membersKey,
+                record.HasExplicitPermissions,
+                record.IsInheritanceDisabled);
         }
 
         private Dictionary<string, List<string>> BuildTreeFromExport(string dataPath)
@@ -375,6 +440,12 @@ namespace NtfsAudit.App.Services
         {
             public string RootPath { get; set; }
             public DateTime CreatedAt { get; set; }
+        }
+
+        private class FolderFlagsPayload
+        {
+            public bool HasExplicitPermissions { get; set; }
+            public bool IsInheritanceDisabled { get; set; }
         }
     }
 

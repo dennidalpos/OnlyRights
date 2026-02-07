@@ -16,6 +16,7 @@ $ErrorActionPreference = "Stop"
 $root = Resolve-Path ".."
 $solution = Join-Path $root "NtfsAudit.sln"
 $project = Join-Path $root "src\NtfsAudit.App\NtfsAudit.App.csproj"
+$viewerProject = Join-Path $root "src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj"
 $distRoot = if ($OutputPath) { $OutputPath } else { Join-Path $root "dist\$Configuration" }
 $dist = $distRoot
 if ($Runtime) {
@@ -27,6 +28,7 @@ if ($Framework) {
 
 if (!(Test-Path $solution)) { throw "Solution not found" }
 if (!(Test-Path $project)) { throw "Project not found" }
+if (!(Test-Path $viewerProject)) { throw "Viewer project not found" }
 
 if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) { throw "dotnet SDK not found." }
 
@@ -79,4 +81,27 @@ if (-not $SkipPublish) {
 
     & dotnet @publishArgs
     if ($LASTEXITCODE -ne 0) { throw "Publish failed." }
+
+    $viewerDist = Join-Path $dist "Viewer"
+    if (!(Test-Path $viewerDist)) {
+        New-Item -ItemType Directory -Path $viewerDist | Out-Null
+    }
+
+    $viewerPublishArgs = @("publish", $viewerProject, "-c", $Configuration, "--no-build", "--nologo", "-o", $viewerDist)
+    if ($Framework) {
+        $viewerPublishArgs += @("-f", $Framework)
+    }
+    if ($Runtime) {
+        $viewerPublishArgs += @("-r", $Runtime)
+        $viewerPublishArgs += @("--self-contained", $SelfContained.IsPresent.ToString().ToLowerInvariant())
+    }
+    if ($PublishSingleFile) {
+        $viewerPublishArgs += "-p:PublishSingleFile=true"
+    }
+    if ($PublishReadyToRun) {
+        $viewerPublishArgs += "-p:PublishReadyToRun=true"
+    }
+
+    & dotnet @viewerPublishArgs
+    if ($LASTEXITCODE -ne 0) { throw "Viewer publish failed." }
 }

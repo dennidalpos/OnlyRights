@@ -18,6 +18,8 @@ namespace NtfsAudit.App.Export
         public bool IsDisabled { get; set; }
         public bool IsServiceAccount { get; set; }
         public bool IsAdminAccount { get; set; }
+        public bool HasExplicitPermissions { get; set; }
+        public bool IsInheritanceDisabled { get; set; }
         public List<string> MemberNames { get; set; }
         public bool IncludeInherited { get; set; }
         public bool ResolveIdentities { get; set; }
