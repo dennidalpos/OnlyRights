@@ -11,8 +11,9 @@ NTFS Audit esegue una scansione delle ACL delle cartelle partendo da una root. D
 - salva i risultati in file temporanei riutilizzabili per export o import.
 
 ## Requisiti
-- Windows 10/11 o Windows Server 2016+.
-- .NET SDK 8 (target `net8.0-windows`).
+- Windows 10/11 o Windows Server 2016+ (build `net8.0-windows`).
+- Windows Server 2012 R2+ (build `net6.0-windows`).
+- .NET SDK 6+ (multi-target `net6.0-windows;net8.0-windows`).
 - Permessi di lettura ACL sulle cartelle analizzate.
 - (Opzionale) RSAT / modulo ActiveDirectory se si usa la risoluzione AD via PowerShell.
 
@@ -113,3 +114,8 @@ Questi file vengono riutilizzati per l’export e possono essere rimossi con `cl
 - **Accesso negato su cartelle**: gli errori vengono registrati e la scansione continua.
 - **AD non disponibile**: disattiva “Usa PowerShell per AD” o installa RSAT.
 - **Prestazioni**: riduci MaxDepth o disattiva risoluzione identità/espansione gruppi.
+
+## Nota compatibilità Windows Server 2012 R2
+Per garantire la compatibilità con domini basati su Windows Server 2012 R2, usa la build `net6.0-windows`.
+Il progetto è multi-target: `net6.0-windows` per ambienti legacy e `net8.0-windows` per i sistemi più recenti.
+In fase di build/publish puoi selezionare il framework con `-Framework net6.0-windows` o `-Framework net8.0-windows`.

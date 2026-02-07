@@ -8,6 +8,9 @@ namespace NtfsAudit.App.Services
 {
     public static class PathResolver
     {
+        private static readonly Dictionary<string, string> DfsCache =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
         public static string ToExtendedPath(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) return path;
@@ -40,19 +43,20 @@ namespace NtfsAudit.App.Services
         {
             if (string.IsNullOrWhiteSpace(input)) return input;
             var trimmed = input.Trim();
-            if (trimmed.StartsWith("\\\\"))
+            var normalized = FromExtendedPath(trimmed);
+            if (normalized.StartsWith("\\\\"))
             {
-                var dfsResolved = TryResolveDfsPath(trimmed);
-                return dfsResolved ?? trimmed;
+                var dfsResolved = TryResolveDfsPath(normalized);
+                return dfsResolved ?? normalized;
             }
 
-            if (trimmed.Length < 2 || trimmed[1] != ':') return trimmed;
+            if (normalized.Length < 2 || normalized[1] != ':') return normalized;
 
-            var drive = trimmed.Substring(0, 2);
+            var drive = normalized.Substring(0, 2);
             var uncRoot = TryGetUncPath(drive);
-            if (string.IsNullOrWhiteSpace(uncRoot)) return trimmed;
+            if (string.IsNullOrWhiteSpace(uncRoot)) return normalized;
 
-            var suffix = trimmed.Length > 2 ? trimmed.Substring(2) : string.Empty;
+            var suffix = normalized.Length > 2 ? normalized.Substring(2) : string.Empty;
             var relative = suffix.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             var combined = string.IsNullOrEmpty(relative) ? uncRoot : Path.Combine(uncRoot, relative);
             var dfsResolvedCombined = TryResolveDfsPath(combined);
@@ -72,14 +76,39 @@ namespace NtfsAudit.App.Services
 
         private static string TryResolveDfsPath(string uncPath)
         {
-            var parts = uncPath.TrimStart('\\').Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+            if (string.IsNullOrWhiteSpace(uncPath)) return null;
+            var normalized = FromExtendedPath(uncPath);
+            if (!normalized.StartsWith("\\\\", StringComparison.Ordinal)) return null;
+
+            string cached;
+            lock (DfsCache)
+            {
+                if (DfsCache.TryGetValue(normalized, out cached))
+                {
+                    return string.IsNullOrWhiteSpace(cached) ? null : cached;
+                }
+            }
+
+            var parts = normalized.TrimStart('\\').Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length < 2) return null;
 
             var dfsRoot = string.Format("\\\\{0}\\{1}", parts[0], parts[1]);
             var remainder = parts.Length > 2 ? string.Join("\\", parts, 2, parts.Length - 2) : string.Empty;
             IntPtr buffer;
-            var status = NetDfsGetInfo(dfsRoot, null, null, 3, out buffer);
-            if (status != 0 || buffer == IntPtr.Zero) return null;
+            try
+            {
+                var status = NetDfsGetInfo(dfsRoot, null, null, 3, out buffer);
+                if (status != 0 || buffer == IntPtr.Zero)
+                {
+                    CacheDfs(normalized, null);
+                    return null;
+                }
+            }
+            catch
+            {
+                CacheDfs(normalized, null);
+                return null;
+            }
 
             try
             {
@@ -98,15 +127,25 @@ namespace NtfsAudit.App.Services
 
                     if (Directory.Exists(candidate))
                     {
+                        CacheDfs(normalized, candidate);
                         return candidate;
                     }
                 }
 
+                CacheDfs(normalized, firstCandidate);
                 return firstCandidate;
             }
             finally
             {
                 NetApiBufferFree(buffer);
+            }
+        }
+
+        private static void CacheDfs(string key, string value)
+        {
+            lock (DfsCache)
+            {
+                DfsCache[key] = value ?? string.Empty;
             }
         }
 
