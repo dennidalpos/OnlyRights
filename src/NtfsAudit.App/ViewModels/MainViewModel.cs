@@ -418,7 +418,7 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        private void Export()
+        private async void Export()
         {
             if (_scanResult == null) return;
             using (var dialog = new FolderBrowserDialog())
@@ -427,7 +427,7 @@ namespace NtfsAudit.App.ViewModels
                 var result = dialog.ShowDialog();
                 if (result != DialogResult.OK) return;
                 var outputPath = BuildExportPath(dialog.SelectedPath, RootPath, "xlsx");
-                RunExportAction(
+                await RunExportActionAsync(
                     () => _excelExporter.Export(_scanResult.TempDataPath, _scanResult.ErrorPath, outputPath),
                     string.Format("Export completato: {0}", outputPath),
                     string.Format("Export completato:\n{0}", outputPath),
@@ -435,7 +435,7 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        private void ExportAnalysis()
+        private async void ExportAnalysis()
         {
             if (_scanResult == null) return;
             var dialog = new Win32.SaveFileDialog
@@ -444,14 +444,14 @@ namespace NtfsAudit.App.ViewModels
                 FileName = BuildExportFileName(RootPath, "ntaudit")
             };
             if (dialog.ShowDialog() != true) return;
-            RunExportAction(
+            await RunExportActionAsync(
                 () => _analysisArchive.Export(_scanResult, RootPath, dialog.FileName),
                 string.Format("Analisi esportata: {0}", dialog.FileName),
                 string.Format("Analisi esportata:\n{0}", dialog.FileName),
                 "Errore export analisi");
         }
 
-        private void ExportHtml()
+        private async void ExportHtml()
         {
             if (_scanResult == null) return;
             var dialog = new Win32.SaveFileDialog
@@ -461,7 +461,7 @@ namespace NtfsAudit.App.ViewModels
             };
             if (dialog.ShowDialog() != true) return;
             var expandedPaths = GetExpandedPaths();
-            RunExportAction(
+            await RunExportActionAsync(
                 () => _htmlExporter.Export(
                     _scanResult,
                     RootPath,
@@ -476,7 +476,7 @@ namespace NtfsAudit.App.ViewModels
                 "Errore export HTML");
         }
 
-        private void ImportAnalysis()
+        private async void ImportAnalysis()
         {
             var dialog = new Win32.OpenFileDialog
             {
@@ -486,7 +486,7 @@ namespace NtfsAudit.App.ViewModels
             try
             {
                 SetBusy(true);
-                var imported = _analysisArchive.Import(dialog.FileName);
+                var imported = await Task.Run(() => _analysisArchive.Import(dialog.FileName));
                 _scanResult = imported.ScanResult;
                 RootPath = string.IsNullOrWhiteSpace(imported.RootPath) ? RootPath : imported.RootPath;
                 ClearResults();
@@ -510,6 +510,7 @@ namespace NtfsAudit.App.ViewModels
             catch (Exception ex)
             {
                 ProgressText = string.Format("Errore import analisi: {0}", ex.Message);
+                WpfMessageBox.Show(ProgressText, "Errore import", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
             finally
             {
@@ -517,18 +518,19 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        private void RunExportAction(Action exportAction, string progressMessage, string dialogMessage, string errorLabel)
+        private async Task RunExportActionAsync(Action exportAction, string progressMessage, string dialogMessage, string errorLabel)
         {
             try
             {
                 SetBusy(true);
-                exportAction();
+                await Task.Run(exportAction);
                 ProgressText = progressMessage;
                 WpfMessageBox.Show(dialogMessage, "Export completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 ProgressText = string.Format("{0}: {1}", errorLabel, ex.Message);
+                WpfMessageBox.Show(ProgressText, errorLabel, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
             finally
             {

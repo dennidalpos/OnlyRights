@@ -3,6 +3,7 @@ param(
     [switch]$SkipRestore,
     [switch]$SkipBuild,
     [switch]$SkipPublish,
+    [switch]$SkipPublishClean,
     [string]$Framework,
     [string]$OutputPath,
     [string]$Runtime,
@@ -44,8 +45,12 @@ if (-not $SkipBuild) {
 }
 
 if (-not $SkipPublish) {
-    if (Test-Path $dist) { Remove-Item $dist -Recurse -Force }
-    New-Item -ItemType Directory -Path $dist | Out-Null
+    if (-not $SkipPublishClean) {
+        if (Test-Path $dist) { Remove-Item $dist -Recurse -Force }
+    }
+    if (!(Test-Path $dist)) {
+        New-Item -ItemType Directory -Path $dist | Out-Null
+    }
 
     if (-not $Framework) {
         $Framework = "net8.0-windows"
