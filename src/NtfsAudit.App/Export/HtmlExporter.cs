@@ -79,8 +79,8 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    .badge-added { background: #2e7d32; }");
             builder.AppendLine("    .badge-removed { background: #f57c00; }");
             builder.AppendLine("    .badge-deny { background: #6a1b9a; }");
-            builder.AppendLine("    .legend { display: grid; grid-auto-flow: column; grid-auto-columns: max-content; gap: 12px; font-size: 12px; margin-bottom: 8px; align-items: center; }");
-            builder.AppendLine("    .legend-title { font-weight: 600; white-space: nowrap; }");
+            builder.AppendLine("    .legend { display: grid; grid-auto-flow: row; grid-auto-rows: max-content; gap: 6px; font-size: 12px; margin-bottom: 8px; align-items: start; }");
+            builder.AppendLine("    .legend-title { font-weight: 600; }");
             builder.AppendLine("    .legend-item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }");
             builder.AppendLine("    .toolbar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 12px; }");
             builder.AppendLine("    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }");
