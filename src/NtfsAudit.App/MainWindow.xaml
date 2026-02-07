@@ -217,86 +217,108 @@
             <TextBlock FontWeight="Bold" Text="{Binding SelectedFolderPath}" Margin="0,0,0,8" />
             <TabControl Grid.Row="1" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
               <TabItem Header="Permessi Gruppi">
-                <DataGrid ItemsSource="{Binding GroupEntries}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" MouseDoubleClick="GroupEntries_OnMouseDoubleClick" RowStyle="{StaticResource RightsRowStyle}" ScrollViewer.HorizontalScrollBarVisibility="Visible" ScrollViewer.VerticalScrollBarVisibility="Visible" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                  <DataGrid.Columns>
-                    <DataGridTextColumn Header="Gruppo" Binding="{Binding PrincipalName}" />
-                    <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
-            <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
-            <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" />
-            <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
-            <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="Modify" Binding="{Binding HasModify, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="R&amp;E" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="Custom" Binding="{Binding IsCustomRights, Mode=OneWay}" />
-                    <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" />
-                    <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" />
-                    <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" />
-                  </DataGrid.Columns>
-                </DataGrid>
+                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                  <ScrollViewer HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" CanContentScroll="False">
+                    <Grid MinWidth="800" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                      <DataGrid ItemsSource="{Binding GroupEntries}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" MouseDoubleClick="GroupEntries_OnMouseDoubleClick" RowStyle="{StaticResource RightsRowStyle}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <DataGrid.Columns>
+                          <DataGridTextColumn Header="Gruppo" Binding="{Binding PrincipalName}" />
+                          <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
+              <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
+              <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" />
+              <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
+              <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="Modify" Binding="{Binding HasModify, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="R&amp;E" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="Custom" Binding="{Binding IsCustomRights, Mode=OneWay}" />
+                          <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" />
+                          <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" />
+                          <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" />
+                        </DataGrid.Columns>
+                      </DataGrid>
+                    </Grid>
+                  </ScrollViewer>
+                </Grid>
               </TabItem>
               <TabItem Header="Permessi Utenti">
-                <DataGrid ItemsSource="{Binding UserEntries}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" MouseDoubleClick="UserEntries_OnMouseDoubleClick" RowStyle="{StaticResource RightsRowStyle}" ScrollViewer.HorizontalScrollBarVisibility="Visible" ScrollViewer.VerticalScrollBarVisibility="Visible" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                  <DataGrid.Columns>
-                    <DataGridTextColumn Header="Utente" Binding="{Binding PrincipalName}" />
-                    <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
-            <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
-            <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" />
-            <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
-            <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="Modify" Binding="{Binding HasModify, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="R&amp;E" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="Custom" Binding="{Binding IsCustomRights, Mode=OneWay}" />
-                    <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" />
-                    <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" />
-                    <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" />
-                  </DataGrid.Columns>
-                </DataGrid>
+                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                  <ScrollViewer HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" CanContentScroll="False">
+                    <Grid MinWidth="800" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                      <DataGrid ItemsSource="{Binding UserEntries}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" MouseDoubleClick="UserEntries_OnMouseDoubleClick" RowStyle="{StaticResource RightsRowStyle}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <DataGrid.Columns>
+                          <DataGridTextColumn Header="Utente" Binding="{Binding PrincipalName}" />
+                          <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
+              <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
+              <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" />
+              <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
+              <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="Modify" Binding="{Binding HasModify, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="R&amp;E" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="Custom" Binding="{Binding IsCustomRights, Mode=OneWay}" />
+                          <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" />
+                          <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" />
+                          <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" />
+                        </DataGrid.Columns>
+                      </DataGrid>
+                    </Grid>
+                  </ScrollViewer>
+                </Grid>
               </TabItem>
               <TabItem Header="Dettaglio ACL">
-                <DataGrid ItemsSource="{Binding AllEntries}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" RowStyle="{StaticResource RightsRowStyle}" ScrollViewer.HorizontalScrollBarVisibility="Visible" ScrollViewer.VerticalScrollBarVisibility="Visible" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                  <DataGrid.Columns>
-                    <DataGridTextColumn Header="Principal" Binding="{Binding PrincipalName}" />
-                    <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
-                    <DataGridTextColumn Header="Tipo" Binding="{Binding PrincipalType}" />
-            <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
-            <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" />
-            <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
-            <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="Modify" Binding="{Binding HasModify, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="R&amp;E" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" />
-            <DataGridCheckBoxColumn Header="Custom" Binding="{Binding IsCustomRights, Mode=OneWay}" />
-                    <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" />
-                    <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" />
-                    <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" />
-                  </DataGrid.Columns>
-                </DataGrid>
+                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                  <ScrollViewer HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" CanContentScroll="False">
+                    <Grid MinWidth="800" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                      <DataGrid ItemsSource="{Binding AllEntries}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" RowStyle="{StaticResource RightsRowStyle}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <DataGrid.Columns>
+                          <DataGridTextColumn Header="Principal" Binding="{Binding PrincipalName}" />
+                          <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
+                          <DataGridTextColumn Header="Tipo" Binding="{Binding PrincipalType}" />
+              <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
+              <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" />
+              <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
+              <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="Modify" Binding="{Binding HasModify, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="R&amp;E" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" />
+              <DataGridCheckBoxColumn Header="Custom" Binding="{Binding IsCustomRights, Mode=OneWay}" />
+                          <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" />
+                          <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" />
+                          <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" />
+                        </DataGrid.Columns>
+                      </DataGrid>
+                    </Grid>
+                  </ScrollViewer>
+                </Grid>
               </TabItem>
               <TabItem Header="Errori">
-                <Grid>
-                  <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                  </Grid.RowDefinitions>
-                  <TextBox Margin="0,0,0,6" Text="{Binding ErrorFilter, UpdateSourceTrigger=PropertyChanged}" />
-                  <DataGrid Grid.Row="1" ItemsSource="{Binding FilteredErrors}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" ScrollViewer.HorizontalScrollBarVisibility="Visible" ScrollViewer.VerticalScrollBarVisibility="Visible" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                    <DataGrid.Columns>
-                      <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="*" />
-                      <DataGridTextColumn Header="Tipo" Binding="{Binding ErrorType}" Width="160" />
-                      <DataGridTextColumn Header="Messaggio" Binding="{Binding Message}" Width="*" />
-                    </DataGrid.Columns>
-                  </DataGrid>
+                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                  <ScrollViewer HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" CanContentScroll="False">
+                    <Grid MinWidth="800" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                      <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                      </Grid.RowDefinitions>
+                      <TextBox Margin="0,0,0,6" Text="{Binding ErrorFilter, UpdateSourceTrigger=PropertyChanged}" />
+                      <DataGrid Grid.Row="1" ItemsSource="{Binding FilteredErrors}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <DataGrid.Columns>
+                          <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="*" />
+                          <DataGridTextColumn Header="Tipo" Binding="{Binding ErrorType}" Width="160" />
+                          <DataGridTextColumn Header="Messaggio" Binding="{Binding Message}" Width="*" />
+                        </DataGrid.Columns>
+                      </DataGrid>
+                    </Grid>
+                  </ScrollViewer>
                 </Grid>
               </TabItem>
             </TabControl>
