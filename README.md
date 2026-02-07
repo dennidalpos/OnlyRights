@@ -87,7 +87,7 @@ Le opzioni principali influenzano prestazioni e dettaglio dei risultati:
 - **Espandi gruppi annidati**: risolve i membri effettivi dei gruppi.
 - **Usa PowerShell per AD**: preferisce l’AD via PowerShell se disponibile.
 - **Escludi utenti di servizio**: filtra account tipicamente di servizio.
-- **Escludi utenti admin**: filtra account con naming “admin”.
+- **Escludi utenti admin**: filtra account con naming “admin” o membri di gruppi privilegiati (es. Domain Admins, Schema Admins).
 - **Colora per diritto**: evidenzia visivamente le ACL.
 
 ## Export
@@ -97,7 +97,7 @@ Le opzioni principali influenzano prestazioni e dettaglio dei risultati:
 Genera un file con tre fogli:
 
 - **Users**: ACE degli utenti.
-- **Groups**: ACE dei gruppi (con colonna dei membri).
+- **Groups**: ACE dei gruppi.
 - **Acl**: tutte le ACE.
 
 Colonne tipiche:
@@ -106,7 +106,7 @@ Colonne tipiche:
 - `AllowDeny`, `RightsSummary`, `RightsMask`, `IsInherited`
 - `InheritanceFlags`, `PropagationFlags`, `Source`, `Depth`
 - `IsDisabled`, `IsServiceAccount`, `IsAdminAccount`
-- `GroupMembers`, `HasExplicitPermissions`, `IsInheritanceDisabled`
+- `HasExplicitPermissions`, `IsInheritanceDisabled`
 - `IncludeInherited`, `ResolveIdentities`, `ExcludeServiceAccounts`, `ExcludeAdminAccounts`
 
 Formato nome file:

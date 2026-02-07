@@ -33,7 +33,6 @@ namespace NtfsAudit.App.Models
         public bool HasList { get { return HasRight("List"); } }
         public bool HasRead { get { return HasRight("Read"); } }
         public bool HasWrite { get { return HasRight("Write"); } }
-        public bool IsCustomRights { get { return HasRight("Custom"); } }
 
         private bool HasRight(string right)
         {

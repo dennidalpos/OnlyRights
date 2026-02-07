@@ -8,6 +8,18 @@ namespace NtfsAudit.App.Services
 {
     public class GroupExpansionService
     {
+        private static readonly HashSet<string> PrivilegedGroupNames = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
+        {
+            "domain admins",
+            "enterprise admins",
+            "schema admins",
+            "administrators",
+            "account operators",
+            "server operators",
+            "backup operators",
+            "print operators"
+        };
+
         private readonly IAdResolver _adResolver;
         private readonly GroupMembershipCache _cache;
 
@@ -55,6 +67,27 @@ namespace NtfsAudit.App.Services
                 .GroupBy(m => string.IsNullOrWhiteSpace(m.Sid) ? m.Name : m.Sid)
                 .Select(g => g.First())
                 .ToList();
+        }
+
+        public bool IsPrivilegedUser(string userSid)
+        {
+            if (string.IsNullOrWhiteSpace(userSid)) return false;
+            if (_adResolver == null || !_adResolver.IsAvailable) return false;
+            try
+            {
+                var groups = _adResolver.GetUserGroups(userSid);
+                if (groups == null || groups.Count == 0) return false;
+                foreach (var group in groups)
+                {
+                    var normalized = NormalizeGroupName(group == null ? null : group.Name);
+                    if (string.IsNullOrWhiteSpace(normalized)) continue;
+                    if (PrivilegedGroupNames.Contains(normalized)) return true;
+                }
+            }
+            catch
+            {
+            }
+            return false;
         }
 
         private List<ResolvedPrincipal> GetMembers(string groupSid)
@@ -140,6 +173,18 @@ namespace NtfsAudit.App.Services
         {
             if (string.IsNullOrWhiteSpace(name)) return false;
             return name.ToLowerInvariant().Contains("admin");
+        }
+
+        private static string NormalizeGroupName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return null;
+            var trimmed = name.Trim();
+            var separatorIndex = trimmed.LastIndexOf('\\');
+            if (separatorIndex >= 0 && separatorIndex + 1 < trimmed.Length)
+            {
+                trimmed = trimmed.Substring(separatorIndex + 1);
+            }
+            return trimmed.Trim();
         }
     }
 }
