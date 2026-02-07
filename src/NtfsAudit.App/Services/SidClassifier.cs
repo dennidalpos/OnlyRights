@@ -11,11 +11,16 @@ namespace NtfsAudit.App.Services
             WellKnownSidType.AccountAdministratorSid,
             WellKnownSidType.AccountDomainAdminsSid,
             WellKnownSidType.AccountEnterpriseAdminsSid,
-            WellKnownSidType.AccountSchemaAdminsSid,
-            WellKnownSidType.AccountOperatorsSid,
-            WellKnownSidType.ServerOperatorsSid,
-            WellKnownSidType.BackupOperatorsSid,
-            WellKnownSidType.PrintOperatorsSid
+            WellKnownSidType.AccountSchemaAdminsSid
+        };
+
+        private static readonly string[] PrivilegedGroupSidStrings =
+        {
+            "S-1-5-32-544", // BUILTIN\\Administrators
+            "S-1-5-32-548", // BUILTIN\\Account Operators
+            "S-1-5-32-549", // BUILTIN\\Server Operators
+            "S-1-5-32-550", // BUILTIN\\Print Operators
+            "S-1-5-32-551"  // BUILTIN\\Backup Operators
         };
 
         public static bool IsServiceAccountSid(string sid)
@@ -54,6 +59,13 @@ namespace NtfsAudit.App.Services
             }
             catch
             {
+            }
+            foreach (var privilegedSid in PrivilegedGroupSidStrings)
+            {
+                if (string.Equals(sid, privilegedSid, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
             }
             return false;
         }
