@@ -78,12 +78,13 @@ namespace NtfsAudit.App.Export
         private List<ExportRecord> LoadFolderPermissions(string tempDataPath)
         {
             var records = new List<ExportRecord>();
-            if (!File.Exists(tempDataPath))
+            var ioPath = PathResolver.ToExtendedPath(tempDataPath);
+            if (!File.Exists(ioPath))
             {
                 return records;
             }
 
-            foreach (var line in File.ReadLines(tempDataPath))
+            foreach (var line in File.ReadLines(ioPath))
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
                 ExportRecord record;

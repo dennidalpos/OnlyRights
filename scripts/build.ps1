@@ -20,6 +20,9 @@ $dist = $distRoot
 if ($Runtime) {
     $dist = Join-Path $distRoot $Runtime
 }
+if ($Framework) {
+    $dist = Join-Path $dist $Framework
+}
 
 if (!(Test-Path $solution)) { throw "Solution not found" }
 if (!(Test-Path $project)) { throw "Project not found" }

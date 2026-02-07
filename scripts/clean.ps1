@@ -1,5 +1,6 @@
 param(
     [string]$Configuration,
+    [string]$Framework,
     [switch]$KeepDist,
     [switch]$KeepArtifacts,
     [switch]$KeepTemp,
@@ -17,7 +18,11 @@ $paths = @(
 
 if (-not $KeepDist) {
     if ($Configuration) {
-        $paths += (Join-Path $root "dist\$Configuration")
+        if ($Framework) {
+            $paths += (Join-Path $root "dist\$Configuration\$Framework")
+        } else {
+            $paths += (Join-Path $root "dist\$Configuration")
+        }
     } else {
         $paths += (Join-Path $root "dist")
     }

@@ -413,17 +413,12 @@ namespace NtfsAudit.App.ViewModels
                 dialog.ShowNewFolderButton = true;
                 var result = dialog.ShowDialog();
                 if (result != DialogResult.OK) return;
-                try
-                {
-                    var outputPath = BuildExportPath(dialog.SelectedPath, RootPath);
-                    _excelExporter.Export(_scanResult.TempDataPath, _scanResult.ErrorPath, outputPath);
-                    ProgressText = string.Format("Export completato: {0}", outputPath);
-                    WpfMessageBox.Show(string.Format("Export completato:\n{0}", outputPath), "Export completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                }
-                catch (Exception ex)
-                {
-                    ProgressText = string.Format("Errore export: {0}", ex.Message);
-                }
+                var outputPath = BuildExportPath(dialog.SelectedPath, RootPath);
+                RunExportAction(
+                    () => _excelExporter.Export(_scanResult.TempDataPath, _scanResult.ErrorPath, outputPath),
+                    string.Format("Export completato: {0}", outputPath),
+                    string.Format("Export completato:\n{0}", outputPath),
+                    "Errore export");
             }
         }
 
@@ -436,16 +431,11 @@ namespace NtfsAudit.App.ViewModels
                 FileName = "analisi-ntfs-audit.ntaudit"
             };
             if (dialog.ShowDialog() != true) return;
-            try
-            {
-                _analysisArchive.Export(_scanResult, RootPath, dialog.FileName);
-                ProgressText = string.Format("Analisi esportata: {0}", dialog.FileName);
-                WpfMessageBox.Show(string.Format("Analisi esportata:\n{0}", dialog.FileName), "Export completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                ProgressText = string.Format("Errore export analisi: {0}", ex.Message);
-            }
+            RunExportAction(
+                () => _analysisArchive.Export(_scanResult, RootPath, dialog.FileName),
+                string.Format("Analisi esportata: {0}", dialog.FileName),
+                string.Format("Analisi esportata:\n{0}", dialog.FileName),
+                "Errore export analisi");
         }
 
         private void ImportAnalysis()
@@ -475,11 +465,26 @@ namespace NtfsAudit.App.ViewModels
                 }
                 SelectFolder(root);
                 ProgressText = string.Format("Analisi importata: {0}", dialog.FileName);
+                WpfMessageBox.Show(string.Format("Analisi importata:\n{0}", dialog.FileName), "Import completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 UpdateCommands();
             }
             catch (Exception ex)
             {
                 ProgressText = string.Format("Errore import analisi: {0}", ex.Message);
+            }
+        }
+
+        private void RunExportAction(Action exportAction, string progressMessage, string dialogMessage, string errorLabel)
+        {
+            try
+            {
+                exportAction();
+                ProgressText = progressMessage;
+                WpfMessageBox.Show(dialogMessage, "Export completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                ProgressText = string.Format("{0}: {1}", errorLabel, ex.Message);
             }
         }
 

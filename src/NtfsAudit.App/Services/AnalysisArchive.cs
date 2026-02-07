@@ -20,7 +20,8 @@ namespace NtfsAudit.App.Services
         {
             if (result == null) throw new ArgumentNullException("result");
             if (string.IsNullOrWhiteSpace(outputPath)) throw new ArgumentException("Output path required", "outputPath");
-            if (string.IsNullOrWhiteSpace(result.TempDataPath) || !File.Exists(result.TempDataPath))
+            var dataPath = PathResolver.ToExtendedPath(result.TempDataPath);
+            if (string.IsNullOrWhiteSpace(result.TempDataPath) || !File.Exists(dataPath))
             {
                 throw new FileNotFoundException("Scan data file not found.", result.TempDataPath);
             }
@@ -335,8 +336,10 @@ namespace NtfsAudit.App.Services
 
         private bool AddFileEntry(ZipArchive archive, string entryName, string sourcePath)
         {
-            if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath)) return false;
-            archive.CreateEntryFromFile(sourcePath, entryName);
+            if (string.IsNullOrWhiteSpace(sourcePath)) return false;
+            var ioPath = PathResolver.ToExtendedPath(sourcePath);
+            if (!File.Exists(ioPath)) return false;
+            archive.CreateEntryFromFile(ioPath, entryName);
             return true;
         }
 

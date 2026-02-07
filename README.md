@@ -28,6 +28,7 @@ NTFS Audit esegue una scansione delle ACL delle cartelle partendo da una root. D
 
 ## Funzionalità principali
 - **Albero cartelle** con caricamento lazy.
+- **Espandi/Comprimi** albero cartelle e splitter per ridimensionare i pannelli.
 - **Dettaglio ACL** separato per gruppi, utenti e dettaglio completo.
 - **Filtro errori** integrato.
 - **Barra di avanzamento** con metriche (processate/in coda).
@@ -49,6 +50,7 @@ L’export genera un file `.xlsx` con tre fogli:
 - **Users**: tutte le ACE degli utenti.
 - **Groups**: tutte le ACE dei gruppi (con colonna dei membri).
 - **Acl**: l’elenco completo, inclusi utenti, gruppi e record meta.
+Al termine dell’export viene mostrato un avviso di completamento con il percorso del file.
 
 Colonne principali:
 - `FolderPath`, `PrincipalName`, `PrincipalSid`, `PrincipalType`
@@ -70,6 +72,7 @@ L’export analisi salva un archivio `.ntaudit` con:
 - metadati (root e timestamp).
 
 L’import ricarica i dati senza rieseguire la scansione, ricostruendo albero, ACL e filtri errori. Se l’archivio manca il file errori, l’import continua con un set vuoto.
+Export e import mostrano un avviso di completamento.
 
 ## Script
 ### build.ps1
@@ -89,7 +92,7 @@ Parametri:
 - `-PublishSingleFile`
 - `-PublishReadyToRun`
 
-Output di default: `dist\<Configuration>`.
+Output di default: `dist\<Configuration>` (aggiunge `<Runtime>` e/o `<Framework>` se presenti).
 
 ### clean.ps1
 Rimuove build, dist e cache:
@@ -98,6 +101,7 @@ Rimuove build, dist e cache:
 ```
 Parametri:
 - `-Configuration <Release|Debug>` (rimuove solo `dist\<Configuration>`)
+- `-Framework <tfm>` (rimuove solo `dist\<Configuration>\<Framework>` se specificato)
 - `-KeepDist`
 - `-KeepArtifacts`
 - `-KeepTemp`
