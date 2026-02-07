@@ -488,6 +488,19 @@ namespace NtfsAudit.App.ViewModels
                 SetBusy(true);
                 var imported = await Task.Run(() => _analysisArchive.Import(dialog.FileName));
                 _scanResult = imported.ScanResult;
+                if (!ValidateImportedResult(_scanResult, out var validationMessage))
+                {
+                    var confirm = WpfMessageBox.Show(
+                        string.Format("{0}\n\nVuoi procedere comunque?", validationMessage),
+                        "Import analisi",
+                        System.Windows.MessageBoxButton.YesNo,
+                        System.Windows.MessageBoxImage.Warning);
+                    if (confirm != System.Windows.MessageBoxResult.Yes)
+                    {
+                        ProgressText = "Import annullato dall'utente.";
+                        return;
+                    }
+                }
                 RootPath = string.IsNullOrWhiteSpace(imported.RootPath) ? RootPath : imported.RootPath;
                 ClearResults();
                 LoadTree(_scanResult);
@@ -808,6 +821,27 @@ namespace NtfsAudit.App.ViewModels
             if (_isBusy == isBusy) return;
             _isBusy = isBusy;
             UpdateCommands();
+        }
+
+        private bool ValidateImportedResult(ScanResult result, out string message)
+        {
+            if (result == null)
+            {
+                message = "Analisi importata non valida: dati mancanti.";
+                return false;
+            }
+            if (result.Details == null || result.TreeMap == null)
+            {
+                message = "Analisi importata non valida: struttura dati incompleta (TreeMap/Details mancanti).";
+                return false;
+            }
+            if (result.TreeMap.Count == 0)
+            {
+                message = "Analisi importata con albero cartelle vuoto.";
+                return false;
+            }
+            message = null;
+            return true;
         }
 
         private void LoadCache()
