@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Data;
@@ -73,6 +74,7 @@ namespace NtfsAudit.App.ViewModels
         private int _summaryFilesCount;
         private int _summaryBaselineAdded;
         private int _summaryBaselineRemoved;
+        private bool _isElevated;
 
         public MainViewModel(bool viewerMode = false)
         {
@@ -99,6 +101,8 @@ namespace NtfsAudit.App.ViewModels
             FilteredAllEntries = CollectionViewSource.GetDefaultView(AllEntries);
             FilteredAllEntries.Filter = FilterAclEntries;
 
+            _isElevated = IsProcessElevated();
+
             BrowseCommand = new RelayCommand(Browse);
             StartCommand = new RelayCommand(StartScan, () => CanStart);
             StopCommand = new RelayCommand(StopScan, () => CanStop);
@@ -109,6 +113,16 @@ namespace NtfsAudit.App.ViewModels
 
             LoadCache();
             InitializeScanTimer();
+        }
+
+        public bool IsElevated
+        {
+            get { return _isElevated; }
+        }
+
+        public bool IsNotElevated
+        {
+            get { return !_isElevated; }
         }
 
         public ObservableCollection<FolderNodeViewModel> FolderTree { get; private set; }
@@ -973,6 +987,16 @@ namespace NtfsAudit.App.ViewModels
             var candidate = Path.Combine(system, "WindowsPowerShell", "v1.0", "powershell.exe");
             if (File.Exists(candidate)) return candidate;
             return "powershell.exe";
+        }
+
+        private static bool IsProcessElevated()
+        {
+            using (var identity = WindowsIdentity.GetCurrent())
+            {
+                if (identity == null) return false;
+                var principal = new WindowsPrincipal(identity);
+                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+            }
         }
 
         private void UpdateProgress(ScanProgress progress)

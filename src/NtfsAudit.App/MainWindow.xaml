@@ -75,6 +75,7 @@
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
           <StackPanel Orientation="Horizontal">
@@ -93,7 +94,14 @@
           </StackPanel>
         </Border>
 
-        <Grid Grid.Row="1" Margin="0,0,0,6" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Border Grid.Row="1" Background="#FFFFF3CD" BorderBrush="#FFFFEEBA" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,8"
+                Visibility="{Binding IsNotElevated, Converter={StaticResource BooleanToVisibilityConverter}}">
+          <TextBlock Text="Esegui l'app come amministratore per evitare errori di accesso e leggere Owner/SACL."
+                     Foreground="#FF856404"
+                     FontWeight="SemiBold" />
+        </Border>
+
+        <Grid Grid.Row="2" Margin="0,0,0,6" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="300" />
             <ColumnDefinition Width="300" />
@@ -230,7 +238,7 @@
           </GroupBox>
         </Grid>
 
-        <Border Grid.Row="2" BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Border Grid.Row="3" BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
