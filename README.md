@@ -263,6 +263,10 @@ Gli import di analisi usano `%TEMP%\NtfsAudit\\imports` e possono essere elimina
 ## Troubleshooting
 
 - **Accesso negato**: gli errori vengono registrati, la scansione continua.
+- **TreeView vuota o senza marker**:
+  - Se la mappa albero non è disponibile, la UI ricostruisce l’albero dai dettagli ACL o dai record di export; una scansione con molti errori o percorsi non accessibili può produrre pochi nodi.
+  - Verifica che il percorso root sia corretto e raggiungibile (UNC/DFS) e, se possibile, avvia l’app come amministratore per leggere Owner/SACL e ottenere più dettagli.
+  - In ambienti con ACL particolarmente restrittive, abilita “Analizza tutte le sottocartelle” per massimizzare la copertura e riduci l’uso di filtri che escludono molte ACE.
 - **AD non disponibile**: disattiva “Usa PowerShell per AD” o installa RSAT.
 - **Prestazioni**: riduci la profondità o disattiva risoluzione identità/espansione gruppi.
 - **Compatibilità 2012 R2**: usa `net6.0-windows` per server legacy.

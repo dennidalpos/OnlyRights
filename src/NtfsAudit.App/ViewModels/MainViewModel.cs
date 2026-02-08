@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Data;
@@ -73,6 +74,7 @@ namespace NtfsAudit.App.ViewModels
         private int _summaryFilesCount;
         private int _summaryBaselineAdded;
         private int _summaryBaselineRemoved;
+        private bool _isElevated;
 
         public MainViewModel(bool viewerMode = false)
         {
@@ -99,6 +101,8 @@ namespace NtfsAudit.App.ViewModels
             FilteredAllEntries = CollectionViewSource.GetDefaultView(AllEntries);
             FilteredAllEntries.Filter = FilterAclEntries;
 
+            _isElevated = IsProcessElevated();
+
             BrowseCommand = new RelayCommand(Browse);
             StartCommand = new RelayCommand(StartScan, () => CanStart);
             StopCommand = new RelayCommand(StopScan, () => CanStop);
@@ -109,6 +113,16 @@ namespace NtfsAudit.App.ViewModels
 
             LoadCache();
             InitializeScanTimer();
+        }
+
+        public bool IsElevated
+        {
+            get { return _isElevated; }
+        }
+
+        public bool IsNotElevated
+        {
+            get { return !_isElevated; }
         }
 
         public ObservableCollection<FolderNodeViewModel> FolderTree { get; private set; }
@@ -670,6 +684,11 @@ namespace NtfsAudit.App.ViewModels
             using (var dialog = new FolderBrowserDialog())
             {
                 dialog.ShowNewFolderButton = false;
+                dialog.RootFolder = Environment.SpecialFolder.MyComputer;
+                if (!string.IsNullOrWhiteSpace(RootPath))
+                {
+                    dialog.SelectedPath = RootPath;
+                }
                 var result = dialog.ShowDialog();
                 if (result == DialogResult.OK)
                 {
@@ -682,11 +701,14 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_isViewerMode) return;
             var inputRoot = string.IsNullOrWhiteSpace(SelectedDfsTarget) ? RootPath : SelectedDfsTarget;
-            var normalizedRoot = PathResolver.NormalizeRootPath(inputRoot, string.IsNullOrWhiteSpace(SelectedDfsTarget));
-            if (!string.IsNullOrWhiteSpace(normalizedRoot) &&
-                !string.Equals(normalizedRoot, inputRoot, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(inputRoot) && inputRoot.StartsWith(@"\\", StringComparison.Ordinal))
             {
-                inputRoot = normalizedRoot;
+                var normalizedRoot = PathResolver.NormalizeRootPath(inputRoot, string.IsNullOrWhiteSpace(SelectedDfsTarget));
+                if (!string.IsNullOrWhiteSpace(normalizedRoot) &&
+                    !string.Equals(normalizedRoot, inputRoot, StringComparison.OrdinalIgnoreCase))
+                {
+                    inputRoot = normalizedRoot;
+                }
             }
 
             var ioRootPath = PathResolver.ToExtendedPath(inputRoot);
@@ -711,10 +733,10 @@ namespace NtfsAudit.App.ViewModels
                 ScanAllDepths = ScanAllDepths,
                 IncludeInherited = IncludeInherited,
                 ResolveIdentities = ResolveIdentities,
-                ExcludeServiceAccounts = ExcludeServiceAccounts,
-                ExcludeAdminAccounts = ExcludeAdminAccounts,
+                ExcludeServiceAccounts = ResolveIdentities && ExcludeServiceAccounts,
+                ExcludeAdminAccounts = ResolveIdentities && ExcludeAdminAccounts,
                 ExpandGroups = ResolveIdentities && ExpandGroups,
-                UsePowerShell = UsePowerShell,
+                UsePowerShell = ResolveIdentities && UsePowerShell,
                 EnableAdvancedAudit = EnableAdvancedAudit,
                 ComputeEffectiveAccess = EnableAdvancedAudit && ComputeEffectiveAccess,
                 IncludeFiles = EnableAdvancedAudit && IncludeFiles,
@@ -975,6 +997,16 @@ namespace NtfsAudit.App.ViewModels
             return "powershell.exe";
         }
 
+        private static bool IsProcessElevated()
+        {
+            using (var identity = WindowsIdentity.GetCurrent())
+            {
+                if (identity == null) return false;
+                var principal = new WindowsPrincipal(identity);
+                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+            }
+        }
+
         private void UpdateProgress(ScanProgress progress)
         {
             CurrentPathText = string.IsNullOrWhiteSpace(progress.CurrentPath) ? string.Empty : progress.CurrentPath;
@@ -998,17 +1030,27 @@ namespace NtfsAudit.App.ViewModels
         private void LoadTree(ScanResult result)
         {
             FolderTree.Clear();
-            if (result == null || result.TreeMap == null || result.TreeMap.Count == 0)
+            if (result == null)
             {
                 return;
             }
 
-            var provider = new FolderTreeProvider(result.TreeMap, result.Details);
-            var rootPath = RootPath;
-            if (string.IsNullOrWhiteSpace(rootPath) || !result.TreeMap.ContainsKey(rootPath))
+            var treeMap = result.TreeMap;
+            if (treeMap == null || treeMap.Count == 0)
             {
-                rootPath = result.TreeMap.Keys.First();
+                treeMap = BuildTreeMapFromDetails(result.Details, RootPath);
             }
+            if (treeMap == null || treeMap.Count == 0)
+            {
+                treeMap = BuildTreeMapFromExportRecords(result.TempDataPath, RootPath);
+            }
+            if (treeMap == null || treeMap.Count == 0)
+            {
+                return;
+            }
+
+            var provider = new FolderTreeProvider(treeMap, result.Details);
+            var rootPath = ResolveTreeRoot(treeMap, RootPath);
             if (string.IsNullOrWhiteSpace(rootPath)) return;
 
             var rootName = Path.GetFileName(rootPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
@@ -1028,6 +1070,179 @@ namespace NtfsAudit.App.ViewModels
             rootNode.IsExpanded = true;
             rootNode.IsSelected = true;
             FolderTree.Add(rootNode);
+        }
+
+        private string ResolveTreeRoot(Dictionary<string, List<string>> treeMap, string preferredRoot)
+        {
+            if (treeMap == null || treeMap.Count == 0)
+            {
+                return preferredRoot;
+            }
+            if (!string.IsNullOrWhiteSpace(preferredRoot) && treeMap.ContainsKey(preferredRoot))
+            {
+                return preferredRoot;
+            }
+
+            var childSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var entry in treeMap)
+            {
+                foreach (var child in entry.Value)
+                {
+                    if (!string.IsNullOrWhiteSpace(child))
+                    {
+                        childSet.Add(child);
+                    }
+                }
+            }
+
+            var roots = treeMap.Keys
+                .Where(key => !childSet.Contains(key))
+                .OrderBy(key => key.Length)
+                .ToList();
+            if (roots.Count > 0)
+            {
+                return roots[0];
+            }
+
+            return treeMap.Keys.First();
+        }
+
+        private Dictionary<string, List<string>> BuildTreeMapFromDetails(
+            Dictionary<string, FolderDetail> details,
+            string fallbackRoot)
+        {
+            if (details == null || details.Count == 0)
+            {
+                if (string.IsNullOrWhiteSpace(fallbackRoot))
+                {
+                    return null;
+                }
+                return new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
+                {
+                    [fallbackRoot] = new List<string>()
+                };
+            }
+
+            var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var path in details.Keys.Where(key => !string.IsNullOrWhiteSpace(key)))
+            {
+                var current = path;
+                if (!map.ContainsKey(current))
+                {
+                    map[current] = new List<string>();
+                }
+
+                while (true)
+                {
+                    var parent = SafeGetParentPath(current);
+                    if (string.IsNullOrWhiteSpace(parent))
+                    {
+                        break;
+                    }
+                    if (!map.ContainsKey(parent))
+                    {
+                        map[parent] = new List<string>();
+                    }
+                    if (!map[parent].Contains(current, StringComparer.OrdinalIgnoreCase))
+                    {
+                        map[parent].Add(current);
+                    }
+                    current = parent;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(fallbackRoot) && !map.ContainsKey(fallbackRoot))
+            {
+                map[fallbackRoot] = new List<string>();
+            }
+
+            return map;
+        }
+
+        private Dictionary<string, List<string>> BuildTreeMapFromExportRecords(string dataPath, string fallbackRoot)
+        {
+            if (string.IsNullOrWhiteSpace(dataPath))
+            {
+                return null;
+            }
+            var ioPath = PathResolver.ToExtendedPath(dataPath);
+            if (!File.Exists(ioPath))
+            {
+                return null;
+            }
+
+            var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                foreach (var line in File.ReadLines(ioPath))
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    ExportRecord record;
+                    try
+                    {
+                        record = Newtonsoft.Json.JsonConvert.DeserializeObject<ExportRecord>(line);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                    if (record == null) continue;
+                    var path = string.IsNullOrWhiteSpace(record.TargetPath) ? record.FolderPath : record.TargetPath;
+                    if (string.IsNullOrWhiteSpace(path)) continue;
+                    AddPathWithAncestors(map, path);
+                }
+            }
+            catch
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(fallbackRoot) && !map.ContainsKey(fallbackRoot))
+            {
+                map[fallbackRoot] = new List<string>();
+            }
+
+            return map.Count == 0 ? null : map;
+        }
+
+        private void AddPathWithAncestors(Dictionary<string, List<string>> map, string path)
+        {
+            var current = path;
+            if (!map.ContainsKey(current))
+            {
+                map[current] = new List<string>();
+            }
+
+            while (true)
+            {
+                var parent = SafeGetParentPath(current);
+                if (string.IsNullOrWhiteSpace(parent))
+                {
+                    break;
+                }
+                if (!map.ContainsKey(parent))
+                {
+                    map[parent] = new List<string>();
+                }
+                if (!map[parent].Contains(current, StringComparer.OrdinalIgnoreCase))
+                {
+                    map[parent].Add(current);
+                }
+                current = parent;
+            }
+        }
+
+        private string SafeGetParentPath(string path)
+        {
+            try
+            {
+                var parent = Directory.GetParent(path);
+                return parent == null ? null : parent.FullName;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private void ApplyDiffs(ScanResult result)

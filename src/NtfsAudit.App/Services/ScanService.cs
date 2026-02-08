@@ -108,7 +108,13 @@ namespace NtfsAudit.App.Services
                                 {
                                     var ioPath = PathResolver.ToExtendedPath(current);
                                     children = new List<string>();
-                                    foreach (var child in Directory.EnumerateDirectories(ioPath, "*", SearchOption.TopDirectoryOnly))
+                                    var enumerationOptions = new EnumerationOptions
+                                    {
+                                        IgnoreInaccessible = true,
+                                        RecurseSubdirectories = false,
+                                        AttributesToSkip = 0
+                                    };
+                                    foreach (var child in Directory.EnumerateDirectories(ioPath, "*", enumerationOptions))
                                     {
                                         var childPath = PathResolver.FromExtendedPath(child);
                                         children.Add(childPath);
@@ -165,7 +171,12 @@ namespace NtfsAudit.App.Services
                                 {
                                     accessSections |= AccessControlSections.Owner | AccessControlSections.Audit;
                                 }
-                                var security = directoryInfo.GetAccessControl(accessSections);
+                                var security = GetAccessControlWithFallback(
+                                    sections => directoryInfo.GetAccessControl(sections),
+                                    accessSections,
+                                    current,
+                                    errorQueue,
+                                    () => Interlocked.Increment(ref errorCount));
                                 ProcessAccessControl(
                                     security,
                                     current,
@@ -192,14 +203,25 @@ namespace NtfsAudit.App.Services
                                             CurrentPath = current
                                         });
                                     }
-                                    foreach (var file in Directory.EnumerateFiles(ioPath, "*", SearchOption.TopDirectoryOnly))
+                                    var enumerationOptions = new EnumerationOptions
+                                    {
+                                        IgnoreInaccessible = true,
+                                        RecurseSubdirectories = false,
+                                        AttributesToSkip = 0
+                                    };
+                                    foreach (var file in Directory.EnumerateFiles(ioPath, "*", enumerationOptions))
                                     {
                                         token.ThrowIfCancellationRequested();
                                         try
                                         {
                                             var filePath = PathResolver.FromExtendedPath(file);
                                             var fileInfo = new FileInfo(file);
-                                            var fileSecurity = fileInfo.GetAccessControl(accessSections);
+                                            var fileSecurity = GetAccessControlWithFallback(
+                                                sections => fileInfo.GetAccessControl(sections),
+                                                accessSections,
+                                                filePath,
+                                                errorQueue,
+                                                () => Interlocked.Increment(ref errorCount));
                                             ProcessAccessControl(
                                                 fileSecurity,
                                                 current,
@@ -573,7 +595,16 @@ namespace NtfsAudit.App.Services
                 {
                     accessSections |= AccessControlSections.Owner | AccessControlSections.Audit;
                 }
-                var security = new DirectoryInfo(ioRootPath).GetAccessControl(accessSections);
+                var security = GetAccessControlWithFallback(
+                    sections => new DirectoryInfo(ioRootPath).GetAccessControl(sections),
+                    accessSections,
+                    options.RootPath,
+                    errorQueue,
+                    null);
+                if (security == null)
+                {
+                    return null;
+                }
                 var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
                 return BuildAclKeysFromRules(rules, options);
             }
@@ -608,6 +639,50 @@ namespace NtfsAudit.App.Services
                 });
             }
             return keys;
+        }
+
+        private FileSystemSecurity GetAccessControlWithFallback(
+            Func<AccessControlSections, FileSystemSecurity> accessControlFetcher,
+            AccessControlSections accessSections,
+            string path,
+            BlockingCollection<ErrorEntry> errorQueue,
+            Action incrementError)
+        {
+            try
+            {
+                return accessControlFetcher(accessSections);
+            }
+            catch (PrivilegeNotHeldException ex)
+            {
+                if (incrementError != null)
+                {
+                    incrementError();
+                }
+                if (errorQueue != null)
+                {
+                    errorQueue.Add(BuildErrorEntry(path, ex));
+                }
+                try
+                {
+                    if (accessSections == AccessControlSections.Access)
+                    {
+                        return null;
+                    }
+                    return accessControlFetcher(AccessControlSections.Access);
+                }
+                catch (Exception accessEx)
+                {
+                    if (incrementError != null)
+                    {
+                        incrementError();
+                    }
+                    if (errorQueue != null)
+                    {
+                        errorQueue.Add(BuildErrorEntry(path, accessEx));
+                    }
+                    return null;
+                }
+            }
         }
 
         private static AclDiffSummary BuildBaselineDiff(IEnumerable<AclDiffKey> baseline, IEnumerable<AclDiffKey> current)
