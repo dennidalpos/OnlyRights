@@ -11,6 +11,7 @@ namespace NtfsAudit.App.Services
 {
     public class AnalysisArchive
     {
+        private const int CurrentArchiveVersion = 2;
         private const string DataEntryName = "data.jsonl";
         private const string ErrorsEntryName = "errors.jsonl";
         private const string TreeEntryName = "tree.json";
@@ -50,7 +51,8 @@ namespace NtfsAudit.App.Services
                 AddJsonEntry(archive, MetaEntryName, new ArchiveMeta
                 {
                     RootPath = rootPath,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    Version = CurrentArchiveVersion
                 });
             }
         }
@@ -132,16 +134,21 @@ namespace NtfsAudit.App.Services
         {
             if (!File.Exists(metaPath))
             {
-                return new ArchiveMeta();
+                return new ArchiveMeta { Version = 1 };
             }
 
             try
             {
-                return JsonConvert.DeserializeObject<ArchiveMeta>(File.ReadAllText(metaPath)) ?? new ArchiveMeta();
+                var meta = JsonConvert.DeserializeObject<ArchiveMeta>(File.ReadAllText(metaPath)) ?? new ArchiveMeta();
+                if (meta.Version <= 0)
+                {
+                    meta.Version = 1;
+                }
+                return meta;
             }
             catch
             {
-                return new ArchiveMeta();
+                return new ArchiveMeta { Version = 1 };
             }
         }
 
@@ -196,12 +203,18 @@ namespace NtfsAudit.App.Services
                     PrincipalName = record.PrincipalName,
                     PrincipalSid = record.PrincipalSid,
                     PrincipalType = record.PrincipalType,
+                    PermissionLayer = record.PermissionLayer,
                     AllowDeny = record.AllowDeny,
                     RightsSummary = record.RightsSummary,
                     RightsMask = record.RightsMask,
                     EffectiveRightsSummary = record.EffectiveRightsSummary,
                     EffectiveRightsMask = record.EffectiveRightsMask,
+                    ShareRightsMask = record.ShareRightsMask,
+                    NtfsRightsMask = record.NtfsRightsMask,
                     IsInherited = record.IsInherited,
+                    AppliesToThisFolder = record.AppliesToThisFolder,
+                    AppliesToSubfolders = record.AppliesToSubfolders,
+                    AppliesToFiles = record.AppliesToFiles,
                     InheritanceFlags = record.InheritanceFlags,
                     PropagationFlags = record.PropagationFlags,
                     Source = record.Source,
@@ -209,6 +222,8 @@ namespace NtfsAudit.App.Services
                     ResourceType = record.ResourceType,
                     TargetPath = record.TargetPath,
                     Owner = record.Owner,
+                    ShareName = record.ShareName,
+                    ShareServer = record.ShareServer,
                     AuditSummary = record.AuditSummary,
                     RiskLevel = record.RiskLevel,
                     IsDisabled = record.IsDisabled,
@@ -219,20 +234,34 @@ namespace NtfsAudit.App.Services
                     MemberNames = record.MemberNames == null ? null : new List<string>(record.MemberNames)
                 };
 
-                detail.AllEntries.Add(entry);
-                if (entry.HasExplicitPermissions || !entry.IsInherited)
+                if (entry.PermissionLayer == PermissionLayer.Share)
                 {
-                    detail.HasExplicitPermissions = true;
+                    detail.ShareEntries.Add(entry);
+                    detail.HasExplicitShare = true;
+                }
+                else if (entry.PermissionLayer == PermissionLayer.Effective)
+                {
+                    detail.EffectiveEntries.Add(entry);
+                }
+                else
+                {
+                    detail.AllEntries.Add(entry);
+                    detail.HasExplicitNtfs = detail.HasExplicitNtfs || entry.HasExplicitPermissions || !entry.IsInherited;
+                    if (entry.HasExplicitPermissions || !entry.IsInherited)
+                    {
+                        detail.HasExplicitPermissions = true;
+                    }
                 }
                 if (entry.IsInheritanceDisabled)
                 {
                     detail.IsInheritanceDisabled = true;
                 }
-                if (string.Equals(record.PrincipalType, "Group", StringComparison.OrdinalIgnoreCase))
+                if (entry.PermissionLayer == PermissionLayer.Ntfs
+                    && string.Equals(record.PrincipalType, "Group", StringComparison.OrdinalIgnoreCase))
                 {
                     detail.GroupEntries.Add(entry);
                 }
-                else
+                else if (entry.PermissionLayer == PermissionLayer.Ntfs)
                 {
                     detail.UserEntries.Add(entry);
                 }
@@ -272,6 +301,7 @@ namespace NtfsAudit.App.Services
                     ExcludeAdminAccounts = record.ExcludeAdminAccounts,
                     EnableAdvancedAudit = record.EnableAdvancedAudit,
                     ComputeEffectiveAccess = record.ComputeEffectiveAccess,
+                    IncludeSharePermissions = record.IncludeSharePermissions,
                     IncludeFiles = record.IncludeFiles,
                     ReadOwnerAndSacl = record.ReadOwnerAndSacl,
                     CompareBaseline = record.CompareBaseline,
@@ -291,10 +321,16 @@ namespace NtfsAudit.App.Services
             if (details == null) return payload;
             foreach (var entry in details)
             {
+                var baselineAdded = entry.Value.BaselineSummary == null ? new List<AclDiffKey>() : entry.Value.BaselineSummary.Added;
+                var baselineRemoved = entry.Value.BaselineSummary == null ? new List<AclDiffKey>() : entry.Value.BaselineSummary.Removed;
                 payload[entry.Key] = new FolderFlagsPayload
                 {
                     HasExplicitPermissions = entry.Value.HasExplicitPermissions,
-                    IsInheritanceDisabled = entry.Value.IsInheritanceDisabled
+                    HasExplicitNtfs = entry.Value.HasExplicitNtfs,
+                    HasExplicitShare = entry.Value.HasExplicitShare,
+                    IsInheritanceDisabled = entry.Value.IsInheritanceDisabled,
+                    BaselineAdded = baselineAdded,
+                    BaselineRemoved = baselineRemoved
                 };
             }
             return payload;
@@ -329,7 +365,16 @@ namespace NtfsAudit.App.Services
                     details[entry.Key] = detail;
                 }
                 detail.HasExplicitPermissions = detail.HasExplicitPermissions || entry.Value.HasExplicitPermissions;
+                detail.HasExplicitNtfs = detail.HasExplicitNtfs || entry.Value.HasExplicitNtfs;
+                detail.HasExplicitShare = detail.HasExplicitShare || entry.Value.HasExplicitShare;
                 detail.IsInheritanceDisabled = detail.IsInheritanceDisabled || entry.Value.IsInheritanceDisabled;
+                if ((entry.Value.BaselineAdded != null && entry.Value.BaselineAdded.Count > 0) ||
+                    (entry.Value.BaselineRemoved != null && entry.Value.BaselineRemoved.Count > 0))
+                {
+                    detail.BaselineSummary = new AclDiffSummary();
+                    detail.BaselineSummary.Added.AddRange(entry.Value.BaselineAdded ?? new List<AclDiffKey>());
+                    detail.BaselineSummary.Removed.AddRange(entry.Value.BaselineRemoved ?? new List<AclDiffKey>());
+                }
             }
         }
 
@@ -337,15 +382,21 @@ namespace NtfsAudit.App.Services
         {
             var principalKey = string.IsNullOrWhiteSpace(record.PrincipalSid) ? record.PrincipalName : record.PrincipalSid;
             var membersKey = record.MemberNames == null ? string.Empty : string.Join(",", record.MemberNames);
-            return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}|{13}|{14}|{15}|{16}|{17}|{18}|{19}|{20}|{21}|{22}",
+            return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}|{13}|{14}|{15}|{16}|{17}|{18}|{19}|{20}|{21}|{22}|{23}|{24}|{25}|{26}|{27}|{28}",
                 principalKey ?? string.Empty,
                 record.PrincipalType ?? string.Empty,
+                record.PermissionLayer.ToString(),
                 record.AllowDeny ?? string.Empty,
                 record.RightsSummary ?? string.Empty,
                 record.RightsMask,
                 record.EffectiveRightsSummary ?? string.Empty,
                 record.EffectiveRightsMask,
+                record.ShareRightsMask,
+                record.NtfsRightsMask,
                 record.IsInherited,
+                record.AppliesToThisFolder,
+                record.AppliesToSubfolders,
+                record.AppliesToFiles,
                 record.InheritanceFlags ?? string.Empty,
                 record.PropagationFlags ?? string.Empty,
                 record.Source ?? string.Empty,
@@ -353,6 +404,8 @@ namespace NtfsAudit.App.Services
                 record.ResourceType ?? string.Empty,
                 record.TargetPath ?? string.Empty,
                 record.Owner ?? string.Empty,
+                record.ShareName ?? string.Empty,
+                record.ShareServer ?? string.Empty,
                 record.AuditSummary ?? string.Empty,
                 record.RiskLevel ?? string.Empty,
                 record.IsDisabled,
@@ -557,12 +610,17 @@ namespace NtfsAudit.App.Services
         {
             public string RootPath { get; set; }
             public DateTime CreatedAt { get; set; }
+            public int Version { get; set; }
         }
 
         private class FolderFlagsPayload
         {
             public bool HasExplicitPermissions { get; set; }
+            public bool HasExplicitNtfs { get; set; }
+            public bool HasExplicitShare { get; set; }
             public bool IsInheritanceDisabled { get; set; }
+            public List<AclDiffKey> BaselineAdded { get; set; }
+            public List<AclDiffKey> BaselineRemoved { get; set; }
         }
     }
 

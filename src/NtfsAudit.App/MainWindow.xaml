@@ -60,6 +60,19 @@
         </MultiDataTrigger>
       </Style.Triggers>
     </Style>
+    <DataTemplate x:Key="PermissionBadgesTemplate">
+      <StackPanel Orientation="Horizontal">
+        <Border Background="#FF1976D2" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInherited, Converter={StaticResource BooleanToVisibilityConverter}}">
+          <TextBlock Text="I" Foreground="White" FontSize="10" />
+        </Border>
+        <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+          <TextBlock Text="P" Foreground="White" FontSize="10" />
+        </Border>
+        <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}">
+          <TextBlock Text="D" Foreground="White" FontSize="10" />
+        </Border>
+      </StackPanel>
+    </DataTemplate>
   </Window.Resources>
   <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
     <Grid x:Name="ContentGrid" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsEnabled="{Binding IsNotBusy}">
@@ -161,6 +174,7 @@
               <CheckBox Margin="0,0,0,6" Content="Abilita audit avanzato" IsChecked="{Binding EnableAdvancedAudit}" />
               <StackPanel IsEnabled="{Binding IsAdvancedAuditEnabled}">
                 <CheckBox Margin="0,0,0,6" Content="Calcola Effective Access" IsChecked="{Binding ComputeEffectiveAccess}" />
+                <CheckBox Margin="0,0,0,6" Content="Leggi permessi Share (SMB)" IsChecked="{Binding IncludeSharePermissions}" />
                 <CheckBox Margin="0,0,0,6" Content="Scansiona file" IsChecked="{Binding IncludeFiles}" />
                 <CheckBox Margin="0,0,0,6" Content="Leggi Owner e SACL" IsChecked="{Binding ReadOwnerAndSacl}" />
                 <CheckBox Content="Confronta con baseline/policy attese" IsChecked="{Binding CompareBaseline}" />
@@ -327,6 +341,38 @@
                   <TextBlock Text="Deny espliciti" VerticalAlignment="Center" />
                 </StackPanel>
               </Border>
+              <Border CornerRadius="4" Padding="4" Margin="0,4,0,0" BorderBrush="#DDDDDD" BorderThickness="1">
+                <StackPanel Orientation="Horizontal">
+                  <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
+                    <TextBlock Text="B+N" Foreground="White" FontSize="10" />
+                  </Border>
+                  <TextBlock Text="Aggiunte vs baseline" VerticalAlignment="Center" />
+                </StackPanel>
+              </Border>
+              <Border CornerRadius="4" Padding="4" BorderBrush="#DDDDDD" BorderThickness="1">
+                <StackPanel Orientation="Horizontal">
+                  <Border Background="#FF78909C" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
+                    <TextBlock Text="B-N" Foreground="White" FontSize="10" />
+                  </Border>
+                  <TextBlock Text="Rimozioni vs baseline" VerticalAlignment="Center" />
+                </StackPanel>
+              </Border>
+              <Border CornerRadius="4" Padding="4" BorderBrush="#DDDDDD" BorderThickness="1">
+                <StackPanel Orientation="Horizontal">
+                  <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
+                    <TextBlock Text="N" Foreground="White" FontSize="10" />
+                  </Border>
+                  <TextBlock Text="ACE NTFS esplicite" VerticalAlignment="Center" />
+                </StackPanel>
+              </Border>
+              <Border CornerRadius="4" Padding="4" BorderBrush="#DDDDDD" BorderThickness="1">
+                <StackPanel Orientation="Horizontal">
+                  <Border Background="#FF5E35B1" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
+                    <TextBlock Text="S" Foreground="White" FontSize="10" />
+                  </Border>
+                  <TextBlock Text="Permessi Share presenti" VerticalAlignment="Center" />
+                </StackPanel>
+              </Border>
             </StackPanel>
           </StackPanel>
           <TreeView x:Name="FolderTreeView" Grid.Row="2" ItemsSource="{Binding FolderTree}" SelectedItemChanged="TreeView_OnSelectedItemChanged" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling">
@@ -360,6 +406,18 @@
                   </Border>
                   <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasDenyExplicit, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <TextBlock Text="{Binding DenyExplicitLabel}" Foreground="White" FontSize="10" />
+                  </Border>
+                  <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasBaselineAdded, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding BaselineAddedLabel}" Foreground="White" FontSize="10" />
+                  </Border>
+                  <Border Background="#FF78909C" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasBaselineRemoved, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding BaselineRemovedLabel}" Foreground="White" FontSize="10" />
+                  </Border>
+                  <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasExplicitNtfs, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ExplicitNtfsLabel}" Foreground="White" FontSize="10" />
+                  </Border>
+                  <Border Background="#FF5E35B1" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasExplicitShare, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ExplicitShareLabel}" Foreground="White" FontSize="10" />
                   </Border>
                 </StackPanel>
               </HierarchicalDataTemplate>
@@ -413,6 +471,7 @@
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch">
                   <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Badge" CellTemplate="{StaticResource PermissionBadgesTemplate}" Width="70" />
                     <DataGridTextColumn Header="Risorsa" Binding="{Binding ResourceType}" Width="90" />
                     <DataGridTextColumn Header="Gruppo" Binding="{Binding PrincipalName}" Width="200" />
                     <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" Width="240" />
@@ -452,6 +511,7 @@
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch">
                   <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Badge" CellTemplate="{StaticResource PermissionBadgesTemplate}" Width="70" />
                     <DataGridTextColumn Header="Risorsa" Binding="{Binding ResourceType}" Width="90" />
                     <DataGridTextColumn Header="Utente" Binding="{Binding PrincipalName}" Width="200" />
                     <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" Width="240" />
@@ -490,6 +550,7 @@
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch">
                   <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Badge" CellTemplate="{StaticResource PermissionBadgesTemplate}" Width="70" />
                     <DataGridTextColumn Header="Risorsa" Binding="{Binding ResourceType}" Width="90" />
                     <DataGridTextColumn Header="Principal" Binding="{Binding PrincipalName}" Width="200" />
                     <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" Width="240" />
@@ -511,6 +572,60 @@
                     <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" Width="90" />
                     <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" Width="120" />
                     <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" Width="120" />
+                  </DataGrid.Columns>
+                </DataGrid>
+              </TabItem>
+              <TabItem Header="Share">
+                <DataGrid ItemsSource="{Binding FilteredShareEntries}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True"
+                          ScrollViewer.CanContentScroll="True"
+                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          ColumnWidth="SizeToHeader"
+                          MinColumnWidth="80"
+                          RowStyle="{StaticResource RightsRowStyle}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch">
+                  <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Badge" CellTemplate="{StaticResource PermissionBadgesTemplate}" Width="70" />
+                    <DataGridTextColumn Header="Server" Binding="{Binding ShareServer}" Width="160" />
+                    <DataGridTextColumn Header="Share" Binding="{Binding ShareName}" Width="160" />
+                    <DataGridTextColumn Header="Principal" Binding="{Binding PrincipalName}" Width="200" />
+                    <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" Width="240" />
+                    <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" Width="100" />
+                    <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" Width="160" />
+                    <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" Width="70" />
+                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="160" />
+                    <DataGridTextColumn Header="SACL/Audit" Binding="{Binding AuditSummary}" Width="220" />
+                  </DataGrid.Columns>
+                </DataGrid>
+              </TabItem>
+              <TabItem Header="Effective Access">
+                <DataGrid ItemsSource="{Binding FilteredEffectiveEntries}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True"
+                          ScrollViewer.CanContentScroll="True"
+                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          ColumnWidth="SizeToHeader"
+                          MinColumnWidth="80"
+                          RowStyle="{StaticResource RightsRowStyle}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch">
+                  <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Badge" CellTemplate="{StaticResource PermissionBadgesTemplate}" Width="70" />
+                    <DataGridTextColumn Header="Principal" Binding="{Binding PrincipalName}" Width="200" />
+                    <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" Width="240" />
+                    <DataGridTextColumn Header="Effective" Binding="{Binding EffectiveRightsSummary}" Width="160" />
+                    <DataGridTextColumn Header="NTFS Mask" Binding="{Binding NtfsRightsMask}" Width="120" />
+                    <DataGridTextColumn Header="Share Mask" Binding="{Binding ShareRightsMask}" Width="120" />
+                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="160" />
+                    <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" Width="70" />
                   </DataGrid.Columns>
                 </DataGrid>
               </TabItem>

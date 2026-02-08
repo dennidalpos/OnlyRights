@@ -90,6 +90,10 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    .badge-added { background: #2e7d32; }");
             builder.AppendLine("    .badge-removed { background: #f57c00; }");
             builder.AppendLine("    .badge-deny { background: #6a1b9a; }");
+            builder.AppendLine("    .badge-baseline-added { background: #455a64; }");
+            builder.AppendLine("    .badge-baseline-removed { background: #78909c; }");
+            builder.AppendLine("    .badge-ntfs { background: #00897b; }");
+            builder.AppendLine("    .badge-share { background: #5e35b1; }");
             builder.AppendLine("    .legend { display: grid; grid-auto-flow: row; grid-auto-rows: max-content; gap: 6px; font-size: 12px; margin-bottom: 8px; align-items: start; }");
             builder.AppendLine("    .legend-title { font-weight: 600; }");
             builder.AppendLine("    .legend-item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }");
@@ -129,6 +133,10 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-added\">+N</span>ACE esplicite aggiunte</div>");
             builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-removed\">-N</span>ACE rimosse rispetto al padre</div>");
             builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-deny\">D</span>Deny espliciti</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-baseline-added\">B+N</span>Aggiunte vs baseline</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-baseline-removed\">B-N</span>Rimozioni vs baseline</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-ntfs\">N</span>ACE NTFS esplicite</div>");
+            builder.AppendLine("        <div class=\"legend-item\"><span class=\"badge badge-share\">S</span>Permessi Share presenti</div>");
             builder.AppendLine("      </div>");
             builder.AppendLine("      <div id=\"treeContainer\"></div>");
             builder.AppendLine("    </aside>");
@@ -145,6 +153,8 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("        <button class=\"tab-button active\" data-tab=\"groups\">Permessi Gruppi</button>");
             builder.AppendLine("        <button class=\"tab-button\" data-tab=\"users\">Permessi Utenti</button>");
             builder.AppendLine("        <button class=\"tab-button\" data-tab=\"acl\">Dettaglio ACL</button>");
+            builder.AppendLine("        <button class=\"tab-button\" data-tab=\"share\">Share</button>");
+            builder.AppendLine("        <button class=\"tab-button\" data-tab=\"effective\">Effective Access</button>");
             builder.AppendLine("        <button class=\"tab-button\" data-tab=\"errors\">Errori</button>");
             builder.AppendLine("      </div>");
             builder.AppendLine("      <section id=\"tab-groups\" class=\"tab-panel active\">");
@@ -155,6 +165,12 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      </section>");
             builder.AppendLine("      <section id=\"tab-acl\" class=\"tab-panel\">");
             builder.AppendLine("        <table id=\"aclTable\"></table>");
+            builder.AppendLine("      </section>");
+            builder.AppendLine("      <section id=\"tab-share\" class=\"tab-panel\">");
+            builder.AppendLine("        <table id=\"shareTable\"></table>");
+            builder.AppendLine("      </section>");
+            builder.AppendLine("      <section id=\"tab-effective\" class=\"tab-panel\">");
+            builder.AppendLine("        <table id=\"effectiveTable\"></table>");
             builder.AppendLine("      </section>");
             builder.AppendLine("      <section id=\"tab-errors\" class=\"tab-panel\">");
             builder.AppendLine("        <table id=\"errorsTable\"></table>");
@@ -242,6 +258,25 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      { key: 'InheritanceFlags', label: 'Inheritance' },");
             builder.AppendLine("      { key: 'PropagationFlags', label: 'Propagation' }");
             builder.AppendLine("    ];");
+            builder.AppendLine("    const shareColumns = [");
+            builder.AppendLine("      { key: 'ShareServer', label: 'Server' },");
+            builder.AppendLine("      { key: 'ShareName', label: 'Share' },");
+            builder.AppendLine("      { key: 'PrincipalName', label: 'Principal' },");
+            builder.AppendLine("      { key: 'PrincipalSid', label: 'SID' },");
+            builder.AppendLine("      { key: 'AllowDeny', label: 'Allow/Deny' },");
+            builder.AppendLine("      { key: 'RightsSummary', label: 'Diritti' },");
+            builder.AppendLine("      { key: 'Depth', label: 'Depth' },");
+            builder.AppendLine("      { key: 'Owner', label: 'Owner' },");
+            builder.AppendLine("      { key: 'AuditSummary', label: 'SACL/Audit' }");
+            builder.AppendLine("    ];");
+            builder.AppendLine("    const effectiveColumns = [");
+            builder.AppendLine("      { key: 'PrincipalName', label: 'Principal' },");
+            builder.AppendLine("      { key: 'PrincipalSid', label: 'SID' },");
+            builder.AppendLine("      { key: 'EffectiveRightsSummary', label: 'Effective' },");
+            builder.AppendLine("      { key: 'NtfsRightsMask', label: 'NTFS Mask' },");
+            builder.AppendLine("      { key: 'ShareRightsMask', label: 'Share Mask' },");
+            builder.AppendLine("      { key: 'Depth', label: 'Depth' }");
+            builder.AppendLine("    ];");
             builder.AppendLine("    const errorColumns = [");
             builder.AppendLine("      { key: 'Path', label: 'Path' },");
             builder.AppendLine("      { key: 'ErrorType', label: 'Tipo' },");
@@ -297,6 +332,30 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("        const badge = document.createElement('span');");
             builder.AppendLine("        badge.className = 'badge badge-deny';");
             builder.AppendLine("        badge.textContent = 'D';");
+            builder.AppendLine("        label.appendChild(badge);");
+            builder.AppendLine("      }");
+            builder.AppendLine("      if ((flags.BaselineAddedCount || 0) > 0) {");
+            builder.AppendLine("        const badge = document.createElement('span');");
+            builder.AppendLine("        badge.className = 'badge badge-baseline-added';");
+            builder.AppendLine("        badge.textContent = `B+${flags.BaselineAddedCount}`;");
+            builder.AppendLine("        label.appendChild(badge);");
+            builder.AppendLine("      }");
+            builder.AppendLine("      if ((flags.BaselineRemovedCount || 0) > 0) {");
+            builder.AppendLine("        const badge = document.createElement('span');");
+            builder.AppendLine("        badge.className = 'badge badge-baseline-removed';");
+            builder.AppendLine("        badge.textContent = `B-${flags.BaselineRemovedCount}`;");
+            builder.AppendLine("        label.appendChild(badge);");
+            builder.AppendLine("      }");
+            builder.AppendLine("      if (flags.HasExplicitNtfs) {");
+            builder.AppendLine("        const badge = document.createElement('span');");
+            builder.AppendLine("        badge.className = 'badge badge-ntfs';");
+            builder.AppendLine("        badge.textContent = 'N';");
+            builder.AppendLine("        label.appendChild(badge);");
+            builder.AppendLine("      }");
+            builder.AppendLine("      if (flags.HasExplicitShare) {");
+            builder.AppendLine("        const badge = document.createElement('span');");
+            builder.AppendLine("        badge.className = 'badge badge-share';");
+            builder.AppendLine("        badge.textContent = 'S';");
             builder.AppendLine("        label.appendChild(badge);");
             builder.AppendLine("      }");
             builder.AppendLine("      label.addEventListener('click', (event) => {" );
@@ -370,6 +429,7 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      const term = filter.toLowerCase().trim();");
             builder.AppendLine("      return (entry.PrincipalName || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.PrincipalSid || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        String(entry.PermissionLayer || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.AllowDeny || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.RightsSummary || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.EffectiveRightsSummary || '').toLowerCase().includes(term) ||");
@@ -377,6 +437,8 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("        (entry.ResourceType || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.TargetPath || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.Owner || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.ShareName || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.ShareServer || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.RiskLevel || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.Source || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        matchesMemberFilter(entry.MemberNames, term);");
@@ -440,14 +502,18 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    }");
 
             builder.AppendLine("    function renderTables() {");
-            builder.AppendLine("      const detail = detailsData[selectedPath] || { GroupEntries: [], UserEntries: [], AllEntries: [] };" );
+            builder.AppendLine("      const detail = detailsData[selectedPath] || { GroupEntries: [], UserEntries: [], AllEntries: [], ShareEntries: [], EffectiveEntries: [] };" );
             builder.AppendLine("      const aclFilterValue = aclFilterInput.value || '';");
             builder.AppendLine("      const groupEntries = (detail.GroupEntries || []).filter(entry => passesToggleFilters(entry) && matchesAclFilter(entry, aclFilterValue));");
             builder.AppendLine("      const userEntries = (detail.UserEntries || []).filter(entry => passesToggleFilters(entry) && matchesAclFilter(entry, aclFilterValue));");
             builder.AppendLine("      const aclEntries = (detail.AllEntries || []).filter(entry => passesToggleFilters(entry) && matchesAclFilter(entry, aclFilterValue));");
+            builder.AppendLine("      const shareEntries = (detail.ShareEntries || []).filter(entry => passesToggleFilters(entry) && matchesAclFilter(entry, aclFilterValue));");
+            builder.AppendLine("      const effectiveEntries = (detail.EffectiveEntries || []).filter(entry => passesToggleFilters(entry) && matchesAclFilter(entry, aclFilterValue));");
             builder.AppendLine("      renderTable('groupsTable', groupEntries, groupColumns, true);" );
             builder.AppendLine("      renderTable('usersTable', userEntries, userColumns, true);" );
             builder.AppendLine("      renderTable('aclTable', aclEntries, aclColumns, true);" );
+            builder.AppendLine("      renderTable('shareTable', shareEntries, shareColumns, true);" );
+            builder.AppendLine("      renderTable('effectiveTable', effectiveEntries, effectiveColumns, true);" );
             builder.AppendLine("      renderErrors();" );
             builder.AppendLine("    }");
 
@@ -542,7 +608,11 @@ namespace NtfsAudit.App.Export
                     GroupEntries = entry.Value.GroupEntries ?? new List<AceEntry>(),
                     UserEntries = entry.Value.UserEntries ?? new List<AceEntry>(),
                     AllEntries = entry.Value.AllEntries ?? new List<AceEntry>(),
+                    ShareEntries = entry.Value.ShareEntries ?? new List<AceEntry>(),
+                    EffectiveEntries = entry.Value.EffectiveEntries ?? new List<AceEntry>(),
                     HasExplicitPermissions = entry.Value.HasExplicitPermissions,
+                    HasExplicitNtfs = entry.Value.HasExplicitNtfs,
+                    HasExplicitShare = entry.Value.HasExplicitShare,
                     IsInheritanceDisabled = entry.Value.IsInheritanceDisabled,
                     IsProtected = summary != null ? summary.IsProtected : entry.Value.IsInheritanceDisabled,
                     ExplicitAddedCount = added,

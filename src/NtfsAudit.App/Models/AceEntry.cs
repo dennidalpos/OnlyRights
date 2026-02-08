@@ -8,12 +8,18 @@ namespace NtfsAudit.App.Models
         public string PrincipalName { get; set; }
         public string PrincipalSid { get; set; }
         public string PrincipalType { get; set; }
+        public PermissionLayer PermissionLayer { get; set; }
         public string AllowDeny { get; set; }
         public string RightsSummary { get; set; }
         public int RightsMask { get; set; }
         public string EffectiveRightsSummary { get; set; }
         public int EffectiveRightsMask { get; set; }
+        public int ShareRightsMask { get; set; }
+        public int NtfsRightsMask { get; set; }
         public bool IsInherited { get; set; }
+        public bool AppliesToThisFolder { get; set; }
+        public bool AppliesToSubfolders { get; set; }
+        public bool AppliesToFiles { get; set; }
         public string InheritanceFlags { get; set; }
         public string PropagationFlags { get; set; }
         public string Source { get; set; }
@@ -21,6 +27,8 @@ namespace NtfsAudit.App.Models
         public string ResourceType { get; set; }
         public string TargetPath { get; set; }
         public string Owner { get; set; }
+        public string ShareName { get; set; }
+        public string ShareServer { get; set; }
         public string AuditSummary { get; set; }
         public string RiskLevel { get; set; }
         public bool IsDisabled { get; set; }
@@ -40,6 +48,13 @@ namespace NtfsAudit.App.Models
         public bool HasList { get { return HasRight("List"); } }
         public bool HasRead { get { return HasRight("Read"); } }
         public bool HasWrite { get { return HasRight("Write"); } }
+        public bool IsExplicitDeny
+        {
+            get
+            {
+                return !IsInherited && string.Equals(AllowDeny, "Deny", System.StringComparison.OrdinalIgnoreCase);
+            }
+        }
 
         private bool HasRight(string right)
         {

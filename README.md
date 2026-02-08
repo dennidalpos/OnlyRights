@@ -97,6 +97,7 @@ Le opzioni principali influenzano prestazioni e dettaglio dei risultati:
 - **Abilita audit avanzato**: abilita funzioni di audit estese.
 - L’audit avanzato è **attivo di default**; le opzioni figlie (Effective Access, Owner/SACL, baseline) sono attivate di default, mentre **“Scansiona file” resta disattivo** per limitare i tempi di scansione.
 - **Calcola Effective Access**: calcolo base con merge Allow/Deny (non considera ordine ACE o membership avanzata).
+- **Leggi permessi Share (SMB)**: interroga le ACL del share SMB e le combina con le ACL NTFS per ottenere l’Effective Access reale (intersezione).
 - **Scansiona file**: include i file oltre alle cartelle.
 - **Leggi Owner e SACL**: arricchisce le ACE con owner e policy di audit.
 - **Confronta con baseline/policy attese**: calcola differenze rispetto alla baseline del percorso root.
@@ -127,13 +128,15 @@ Genera un file con quattro fogli:
 Colonne tipiche:
 
 - `FolderPath`, `PrincipalName`, `PrincipalSid`, `PrincipalType`
+- `PermissionLayer`, `ShareName`, `ShareServer`
 - `AllowDeny`, `RightsSummary`, `RightsMask`, `EffectiveRightsSummary`, `EffectiveRightsMask`
+- `ShareRightsMask`, `NtfsRightsMask`, `AppliesToThisFolder`, `AppliesToSubfolders`, `AppliesToFiles`
 - `InheritanceFlags`, `PropagationFlags`, `Source`, `Depth`
 - `ResourceType`, `TargetPath`, `Owner`, `AuditSummary`, `RiskLevel`
 - `IsDisabled`, `IsServiceAccount`, `IsAdminAccount`
 - `HasExplicitPermissions`, `IsInheritanceDisabled`
 - `IncludeInherited`, `ResolveIdentities`, `ExcludeServiceAccounts`, `ExcludeAdminAccounts`
-- `EnableAdvancedAudit`, `ComputeEffectiveAccess`, `IncludeFiles`, `ReadOwnerAndSacl`, `CompareBaseline`
+- `EnableAdvancedAudit`, `ComputeEffectiveAccess`, `IncludeSharePermissions`, `IncludeFiles`, `ReadOwnerAndSacl`, `CompareBaseline`
 - `ScanAllDepths`, `MaxDepth`, `ExpandGroups`, `UsePowerShell`
 
 Formato nome file:
@@ -184,11 +187,20 @@ Un archivio `.ntaudit` è uno ZIP con le seguenti entry:
 - `data.jsonl`: righe ACL.
 - `errors.jsonl`: errori di accesso.
 - `tree.json`: mappa albero cartelle.
-- `meta.json`: metadati (root/timestamp).
+- `meta.json`: metadati (root/timestamp/versione schema).
 - `folderflags.json`: flag aggiuntivi per folder.
 
 Se `errors.jsonl` manca, l’import procede con un set vuoto. In fase di import, i flag `IsServiceAccount` e `IsAdminAccount` vengono ricalcolati da SID per garantire coerenza con le regole correnti.
 Le opzioni di scansione vengono lette dal record `SCAN_OPTIONS` presente in `data.jsonl`.
+
+### Migrazione archivi legacy
+
+Gli archivi creati con versioni precedenti non includono le informazioni sul layer Share/Effective e la versione di schema.
+Per migrare:
+
+1. Apri l’archivio `.ntaudit` in **NtfsAudit.Viewer**.
+2. Esporta nuovamente l’analisi con **Export Analisi**: il file rigenera `meta.json` con versione e serializza i layer Share/Effective.
+3. Per ottenere dati Share/Effective aggiornati, riesegui una scansione con **Leggi permessi Share (SMB)** attivo.
 
 ## Viewer
 

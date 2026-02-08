@@ -39,7 +39,11 @@ namespace NtfsAudit.App.Services
                     flags.explicitAddedCount,
                     flags.explicitRemovedCount,
                     flags.denyExplicitCount,
-                    flags.isProtected);
+                    flags.isProtected,
+                    flags.baselineAddedCount,
+                    flags.baselineRemovedCount,
+                    flags.hasExplicitNtfs,
+                    flags.hasExplicitShare);
             }
         }
 
@@ -49,17 +53,17 @@ namespace NtfsAudit.App.Services
             return _childrenMap.TryGetValue(parentPath, out children) && children.Count > 0;
         }
 
-        private (bool hasExplicitPermissions, bool isInheritanceDisabled, int explicitAddedCount, int explicitRemovedCount, int denyExplicitCount, bool isProtected) GetFlags(string path)
+        private (bool hasExplicitPermissions, bool isInheritanceDisabled, int explicitAddedCount, int explicitRemovedCount, int denyExplicitCount, bool isProtected, int baselineAddedCount, int baselineRemovedCount, bool hasExplicitNtfs, bool hasExplicitShare) GetFlags(string path)
         {
             if (_details == null || string.IsNullOrWhiteSpace(path))
             {
-                return (false, false, 0, 0, 0, false);
+                return (false, false, 0, 0, 0, false, 0, 0, false, false);
             }
 
             FolderDetail detail;
             if (!_details.TryGetValue(path, out detail) || detail == null)
             {
-                return (false, false, 0, 0, 0, false);
+                return (false, false, 0, 0, 0, false, 0, 0, false, false);
             }
 
             var summary = detail.DiffSummary;
@@ -67,7 +71,9 @@ namespace NtfsAudit.App.Services
             var removed = summary == null ? 0 : summary.Removed.Count;
             var deny = summary == null ? 0 : summary.DenyExplicitCount;
             var isProtected = summary != null ? summary.IsProtected : detail.IsInheritanceDisabled;
-            return (detail.HasExplicitPermissions, detail.IsInheritanceDisabled, added, removed, deny, isProtected);
+            var baselineAdded = detail.BaselineSummary == null ? 0 : detail.BaselineSummary.Added.Count;
+            var baselineRemoved = detail.BaselineSummary == null ? 0 : detail.BaselineSummary.Removed.Count;
+            return (detail.HasExplicitPermissions, detail.IsInheritanceDisabled, added, removed, deny, isProtected, baselineAdded, baselineRemoved, detail.HasExplicitNtfs, detail.HasExplicitShare);
         }
     }
 }

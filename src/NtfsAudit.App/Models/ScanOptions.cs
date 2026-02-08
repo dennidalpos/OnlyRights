@@ -13,6 +13,7 @@ namespace NtfsAudit.App.Models
         public bool UsePowerShell { get; set; }
         public bool EnableAdvancedAudit { get; set; }
         public bool ComputeEffectiveAccess { get; set; }
+        public bool IncludeSharePermissions { get; set; }
         public bool IncludeFiles { get; set; }
         public bool ReadOwnerAndSacl { get; set; }
         public bool CompareBaseline { get; set; }
