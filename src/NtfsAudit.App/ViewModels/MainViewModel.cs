@@ -1001,6 +1001,7 @@ namespace NtfsAudit.App.ViewModels
                 provider,
                 rootDetail != null && rootDetail.HasExplicitPermissions,
                 rootDetail != null && rootDetail.IsInheritanceDisabled,
+                rootSummary == null ? 0 : rootSummary.ExplicitCount,
                 rootSummary == null ? 0 : rootSummary.Added.Count(key => !key.IsInherited),
                 rootSummary == null ? 0 : rootSummary.Removed.Count,
                 rootSummary == null ? 0 : rootSummary.DenyExplicitCount,

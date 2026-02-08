@@ -36,6 +36,7 @@ namespace NtfsAudit.App.Services
                     this,
                     flags.hasExplicitPermissions,
                     flags.isInheritanceDisabled,
+                    flags.explicitCount,
                     flags.explicitAddedCount,
                     flags.explicitRemovedCount,
                     flags.denyExplicitCount,
@@ -49,25 +50,26 @@ namespace NtfsAudit.App.Services
             return _childrenMap.TryGetValue(parentPath, out children) && children.Count > 0;
         }
 
-        private (bool hasExplicitPermissions, bool isInheritanceDisabled, int explicitAddedCount, int explicitRemovedCount, int denyExplicitCount, bool isProtected) GetFlags(string path)
+        private (bool hasExplicitPermissions, bool isInheritanceDisabled, int explicitCount, int explicitAddedCount, int explicitRemovedCount, int denyExplicitCount, bool isProtected) GetFlags(string path)
         {
             if (_details == null || string.IsNullOrWhiteSpace(path))
             {
-                return (false, false, 0, 0, 0, false);
+                return (false, false, 0, 0, 0, 0, false);
             }
 
             FolderDetail detail;
             if (!_details.TryGetValue(path, out detail) || detail == null)
             {
-                return (false, false, 0, 0, 0, false);
+                return (false, false, 0, 0, 0, 0, false);
             }
 
             var summary = detail.DiffSummary;
+            var explicitCount = summary == null ? 0 : summary.ExplicitCount;
             var added = summary == null ? 0 : summary.Added.Count(key => !key.IsInherited);
             var removed = summary == null ? 0 : summary.Removed.Count;
             var deny = summary == null ? 0 : summary.DenyExplicitCount;
             var isProtected = summary != null ? summary.IsProtected : detail.IsInheritanceDisabled;
-            return (detail.HasExplicitPermissions, detail.IsInheritanceDisabled, added, removed, deny, isProtected);
+            return (detail.HasExplicitPermissions, detail.IsInheritanceDisabled, explicitCount, added, removed, deny, isProtected);
         }
     }
 }
