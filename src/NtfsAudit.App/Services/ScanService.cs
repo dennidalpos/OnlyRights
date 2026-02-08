@@ -783,7 +783,22 @@ namespace NtfsAudit.App.Services
                 foreach (var rule in rules)
                 {
                     var sid = rule.IdentityReference.Value;
-                    var principal = options.ResolveIdentities ? _identityResolver.Resolve(sid).Name : sid;
+                    var principal = sid;
+                    if (options.ResolveIdentities)
+                    {
+                        try
+                        {
+                            var resolved = _identityResolver.Resolve(sid);
+                            if (resolved != null && !string.IsNullOrWhiteSpace(resolved.Name))
+                            {
+                                principal = resolved.Name;
+                            }
+                        }
+                        catch
+                        {
+                            principal = sid;
+                        }
+                    }
                     var rights = RightsNormalizer.Normalize(rule.FileSystemRights);
                     summaries.Add(string.Format("{0}:{1}:{2}", principal, rule.AuditFlags, rights));
                 }

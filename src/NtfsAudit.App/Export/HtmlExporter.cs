@@ -373,10 +373,12 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("        (entry.AllowDeny || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.RightsSummary || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.EffectiveRightsSummary || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.AuditSummary || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.ResourceType || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.TargetPath || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.Owner || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.RiskLevel || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.Source || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        matchesMemberFilter(entry.MemberNames, term);");
             builder.AppendLine("    }");
 

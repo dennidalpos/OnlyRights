@@ -1123,9 +1123,15 @@ namespace NtfsAudit.App.ViewModels
                 };
             }
 
+            var normalizedRoot = NormalizeTreePath(fallbackRoot);
             var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
             foreach (var path in details.Keys.Where(key => !string.IsNullOrWhiteSpace(key)))
             {
+                var normalizedPath = NormalizeTreePath(path);
+                if (!IsWithinRoot(normalizedPath, normalizedRoot))
+                {
+                    continue;
+                }
                 var current = path;
                 if (!map.ContainsKey(current))
                 {
@@ -1139,6 +1145,11 @@ namespace NtfsAudit.App.ViewModels
                     {
                         break;
                     }
+                    var normalizedParent = NormalizeTreePath(parent);
+                    if (!IsWithinRoot(normalizedParent, normalizedRoot))
+                    {
+                        break;
+                    }
                     if (!map.ContainsKey(parent))
                     {
                         map[parent] = new List<string>();
@@ -1146,6 +1157,11 @@ namespace NtfsAudit.App.ViewModels
                     if (!map[parent].Contains(current, StringComparer.OrdinalIgnoreCase))
                     {
                         map[parent].Add(current);
+                    }
+                    if (!string.IsNullOrWhiteSpace(normalizedRoot)
+                        && string.Equals(normalizedParent, normalizedRoot, StringComparison.OrdinalIgnoreCase))
+                    {
+                        break;
                     }
                     current = parent;
                 }
@@ -1171,6 +1187,7 @@ namespace NtfsAudit.App.ViewModels
                 return null;
             }
 
+            var normalizedRoot = NormalizeTreePath(fallbackRoot);
             var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
             try
             {
@@ -1189,7 +1206,7 @@ namespace NtfsAudit.App.ViewModels
                     if (record == null) continue;
                     var path = string.IsNullOrWhiteSpace(record.TargetPath) ? record.FolderPath : record.TargetPath;
                     if (string.IsNullOrWhiteSpace(path)) continue;
-                    AddPathWithAncestors(map, path);
+                    AddPathWithAncestors(map, path, normalizedRoot);
                 }
             }
             catch
@@ -1206,7 +1223,14 @@ namespace NtfsAudit.App.ViewModels
         }
 
         private void AddPathWithAncestors(Dictionary<string, List<string>> map, string path)
+            => AddPathWithAncestors(map, path, NormalizeTreePath(RootPath));
+
+        private void AddPathWithAncestors(Dictionary<string, List<string>> map, string path, string normalizedRoot)
         {
+            if (!IsWithinRoot(NormalizeTreePath(path), normalizedRoot))
+            {
+                return;
+            }
             var current = path;
             if (!map.ContainsKey(current))
             {
@@ -1220,6 +1244,11 @@ namespace NtfsAudit.App.ViewModels
                 {
                     break;
                 }
+                var normalizedParent = NormalizeTreePath(parent);
+                if (!IsWithinRoot(normalizedParent, normalizedRoot))
+                {
+                    break;
+                }
                 if (!map.ContainsKey(parent))
                 {
                     map[parent] = new List<string>();
@@ -1227,6 +1256,11 @@ namespace NtfsAudit.App.ViewModels
                 if (!map[parent].Contains(current, StringComparer.OrdinalIgnoreCase))
                 {
                     map[parent].Add(current);
+                }
+                if (!string.IsNullOrWhiteSpace(normalizedRoot)
+                    && string.Equals(normalizedParent, normalizedRoot, StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
                 }
                 current = parent;
             }
@@ -1243,6 +1277,33 @@ namespace NtfsAudit.App.ViewModels
             {
                 return null;
             }
+        }
+
+        private static string NormalizeTreePath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return string.Empty;
+            var normalized = PathResolver.FromExtendedPath(path);
+            return normalized.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        }
+
+        private static bool IsWithinRoot(string candidate, string root)
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(root))
+            {
+                return true;
+            }
+            if (string.Equals(candidate, root, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            var rootWithSeparator = root.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal)
+                ? root
+                : root + Path.DirectorySeparatorChar;
+            return candidate.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase);
         }
 
         private void ApplyDiffs(ScanResult result)
@@ -1319,10 +1380,12 @@ namespace NtfsAudit.App.ViewModels
                 || MatchesFilter(entry.AllowDeny, term)
                 || MatchesFilter(entry.RightsSummary, term)
                 || MatchesFilter(entry.EffectiveRightsSummary, term)
+                || MatchesFilter(entry.AuditSummary, term)
                 || MatchesFilter(entry.ResourceType, term)
                 || MatchesFilter(entry.TargetPath, term)
                 || MatchesFilter(entry.Owner, term)
                 || MatchesFilter(entry.RiskLevel, term)
+                || MatchesFilter(entry.Source, term)
                 || MatchesMemberFilter(entry.MemberNames, term);
         }
 
