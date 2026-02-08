@@ -3,11 +3,13 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Diagnostics;
 using Newtonsoft.Json;
 using NtfsAudit.App.Export;
 using NtfsAudit.App.Models;
@@ -28,6 +30,10 @@ namespace NtfsAudit.App.Services
 
         public ScanResult Run(ScanOptions options, IProgress<ScanProgress> progress, CancellationToken token)
         {
+            if (options.ReadOwnerAndSacl)
+            {
+                TryEnableSecurityPrivilege();
+            }
             var tempDir = Path.Combine(Path.GetTempPath(), "NtfsAudit");
             Directory.CreateDirectory(tempDir);
             var timestamp = DateTime.Now.ToString("dd-MM-yyyy-HH-mm");
@@ -871,6 +877,91 @@ namespace NtfsAudit.App.Services
             }
 
             return false;
+        }
+
+        private static bool TryEnableSecurityPrivilege()
+        {
+            try
+            {
+                IntPtr tokenHandle;
+                if (!OpenProcessToken(Process.GetCurrentProcess().Handle, TokenAdjustPrivileges | TokenQuery, out tokenHandle))
+                {
+                    return false;
+                }
+
+                try
+                {
+                    Luid luid;
+                    if (!LookupPrivilegeValue(null, "SeSecurityPrivilege", out luid))
+                    {
+                        return false;
+                    }
+
+                    var tokenPrivileges = new TokenPrivileges
+                    {
+                        PrivilegeCount = 1,
+                        Privileges = new LuidAndAttributes
+                        {
+                            Luid = luid,
+                            Attributes = SePrivilegeEnabled
+                        }
+                    };
+
+                    AdjustTokenPrivileges(tokenHandle, false, ref tokenPrivileges, 0, IntPtr.Zero, IntPtr.Zero);
+                    return Marshal.GetLastWin32Error() == 0;
+                }
+                finally
+                {
+                    CloseHandle(tokenHandle);
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private const int TokenAdjustPrivileges = 0x20;
+        private const int TokenQuery = 0x8;
+        private const int SePrivilegeEnabled = 0x2;
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        private static extern bool OpenProcessToken(IntPtr processHandle, int desiredAccess, out IntPtr tokenHandle);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern bool LookupPrivilegeValue(string systemName, string name, out Luid luid);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        private static extern bool AdjustTokenPrivileges(
+            IntPtr tokenHandle,
+            bool disableAllPrivileges,
+            ref TokenPrivileges newState,
+            int bufferLength,
+            IntPtr previousState,
+            IntPtr returnLength);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool CloseHandle(IntPtr handle);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct Luid
+        {
+            public uint LowPart;
+            public int HighPart;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct LuidAndAttributes
+        {
+            public Luid Luid;
+            public int Attributes;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct TokenPrivileges
+        {
+            public int PrivilegeCount;
+            public LuidAndAttributes Privileges;
         }
 
         private class EffectiveAccessAccumulator

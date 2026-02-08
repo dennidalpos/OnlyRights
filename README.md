@@ -263,6 +263,7 @@ Gli import di analisi usano `%TEMP%\NtfsAudit\\imports` e possono essere elimina
 ## Troubleshooting
 
 - **Accesso negato**: gli errori vengono registrati, la scansione continua.
+- **SACL/Audit vuote**: verifica che “Leggi Owner e SACL” sia attivo e che l’app sia eseguita come amministratore (richiede la privilege `SeSecurityPrivilege`).
 - **TreeView vuota o senza marker**:
   - Se la mappa albero non è disponibile, la UI ricostruisce l’albero dai dettagli ACL o dai record di export; una scansione con molti errori o percorsi non accessibili può produrre pochi nodi.
   - Se il percorso root è una share/DFS profonda, l’import prova a limitare l’albero alle sottocartelle del root per evitare nodi “sopra” il root.
