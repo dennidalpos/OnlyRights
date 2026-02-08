@@ -1038,11 +1038,7 @@ namespace NtfsAudit.App.ViewModels
             }
 
             var provider = new FolderTreeProvider(treeMap, result.Details);
-            var rootPath = RootPath;
-            if (string.IsNullOrWhiteSpace(rootPath) || !treeMap.ContainsKey(rootPath))
-            {
-                rootPath = treeMap.Keys.First();
-            }
+            var rootPath = ResolveTreeRoot(treeMap, RootPath);
             if (string.IsNullOrWhiteSpace(rootPath)) return;
 
             var rootName = Path.GetFileName(rootPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
@@ -1062,6 +1058,41 @@ namespace NtfsAudit.App.ViewModels
             rootNode.IsExpanded = true;
             rootNode.IsSelected = true;
             FolderTree.Add(rootNode);
+        }
+
+        private string ResolveTreeRoot(Dictionary<string, List<string>> treeMap, string preferredRoot)
+        {
+            if (treeMap == null || treeMap.Count == 0)
+            {
+                return preferredRoot;
+            }
+            if (!string.IsNullOrWhiteSpace(preferredRoot) && treeMap.ContainsKey(preferredRoot))
+            {
+                return preferredRoot;
+            }
+
+            var childSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var entry in treeMap)
+            {
+                foreach (var child in entry.Value)
+                {
+                    if (!string.IsNullOrWhiteSpace(child))
+                    {
+                        childSet.Add(child);
+                    }
+                }
+            }
+
+            var roots = treeMap.Keys
+                .Where(key => !childSet.Contains(key))
+                .OrderBy(key => key.Length)
+                .ToList();
+            if (roots.Count > 0)
+            {
+                return roots[0];
+            }
+
+            return treeMap.Keys.First();
         }
 
         private Dictionary<string, List<string>> BuildTreeMapFromDetails(
