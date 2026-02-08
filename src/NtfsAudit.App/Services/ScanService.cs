@@ -589,6 +589,10 @@ namespace NtfsAudit.App.Services
                     options.RootPath,
                     errorQueue,
                     null);
+                if (security == null)
+                {
+                    return null;
+                }
                 var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
                 return BuildAclKeysFromRules(rules, options);
             }
@@ -646,11 +650,26 @@ namespace NtfsAudit.App.Services
                 {
                     errorQueue.Add(BuildErrorEntry(path, ex));
                 }
-                if (accessSections == AccessControlSections.Access)
+                try
                 {
-                    throw;
+                    if (accessSections == AccessControlSections.Access)
+                    {
+                        return null;
+                    }
+                    return accessControlFetcher(AccessControlSections.Access);
                 }
-                return accessControlFetcher(AccessControlSections.Access);
+                catch (Exception accessEx)
+                {
+                    if (incrementError != null)
+                    {
+                        incrementError();
+                    }
+                    if (errorQueue != null)
+                    {
+                        errorQueue.Add(BuildErrorEntry(path, accessEx));
+                    }
+                    return null;
+                }
             }
         }
 
