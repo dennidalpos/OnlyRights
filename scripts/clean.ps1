@@ -6,6 +6,7 @@ param(
     [switch]$KeepDist,
     [switch]$KeepArtifacts,
     [switch]$KeepTemp,
+    [switch]$KeepImportTemp,
     [switch]$KeepCache
 )
 
@@ -48,6 +49,11 @@ if (-not $KeepTemp) {
     $baseTemp = if ($TempRoot) { $TempRoot } else { $env:TEMP }
     $temp = Join-Path $baseTemp "NtfsAudit"
     if (Test-Path $temp) { Remove-Item $temp -Recurse -Force }
+}
+elseif (-not $KeepImportTemp) {
+    $baseTemp = if ($TempRoot) { $TempRoot } else { $env:TEMP }
+    $importTemp = Join-Path $baseTemp "NtfsAudit\\imports"
+    if (Test-Path $importTemp) { Remove-Item $importTemp -Recurse -Force }
 }
 
 if (-not $KeepCache) {

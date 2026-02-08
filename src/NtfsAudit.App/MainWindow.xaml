@@ -94,36 +94,46 @@
 
         <Grid Grid.Row="1" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
           <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*" />
-            <ColumnDefinition Width="2*" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="340" />
+            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="260" />
           </Grid.ColumnDefinitions>
           <GroupBox Grid.Column="0" Header="Scansione" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0" IsEnabled="{Binding IsScanConfigEnabled}">
-            <StackPanel>
-              <Grid Margin="0,0,0,8">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+              <Grid Grid.Row="0" Margin="0,0,0,8">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="Auto" />
                   <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Button Grid.Column="0" Margin="0,0,8,0" Padding="10,4" Content="Sfoglia..." Command="{Binding BrowseCommand}" />
-                <TextBox Grid.Column="1" Height="26" VerticalAlignment="Center" Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Grid.Column="1" Height="26" VerticalAlignment="Center" MinWidth="160" Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}" />
               </Grid>
-              <WrapPanel Margin="0,0,0,6" VerticalAlignment="Center">
-                <TextBlock Text="Profondità" VerticalAlignment="Center" Margin="0,0,6,0" />
-                <TextBox Width="60" Height="24" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0,0,12,0" />
-                <CheckBox Content="Analizza tutte le sottocartelle" IsChecked="{Binding ScanAllDepths}" />
-              </WrapPanel>
-              <CheckBox Content="Includi permessi ereditati" IsChecked="{Binding IncludeInherited}" />
-            </StackPanel>
+              <Grid Grid.Row="1" Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Profondità" VerticalAlignment="Center" Margin="0,0,6,0" />
+                <TextBox Grid.Column="1" Width="60" Height="24" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0,0,12,0" />
+                <CheckBox Grid.Column="2" Content="Analizza tutte le sottocartelle" IsChecked="{Binding ScanAllDepths}" />
+              </Grid>
+              <CheckBox Grid.Row="2" Content="Includi permessi ereditati" IsChecked="{Binding IncludeInherited}" />
+            </Grid>
           </GroupBox>
           <GroupBox Grid.Column="1" Header="Identità" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0" IsEnabled="{Binding IsScanConfigEnabled}">
-            <WrapPanel>
-              <CheckBox Margin="0,0,12,6" Content="Risolvi identità (più lento)" IsChecked="{Binding ResolveIdentities}" />
-              <CheckBox Margin="0,0,12,6" Content="Espandi gruppi annidati" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
-              <CheckBox Margin="0,0,12,6" Content="Usa PowerShell per AD" IsChecked="{Binding UsePowerShell}" />
-              <CheckBox Margin="0,0,12,6" Content="Escludi utenti di servizio" IsChecked="{Binding ExcludeServiceAccounts}" />
-              <CheckBox Margin="0,0,12,6" Content="Escludi utenti admin" IsChecked="{Binding ExcludeAdminAccounts}" />
-            </WrapPanel>
+            <StackPanel>
+              <CheckBox Margin="0,0,0,6" Content="Risolvi identità (più lento)" IsChecked="{Binding ResolveIdentities}" />
+              <CheckBox Margin="0,0,0,6" Content="Espandi gruppi annidati" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
+              <CheckBox Margin="0,0,0,6" Content="Usa PowerShell per AD" IsChecked="{Binding UsePowerShell}" />
+              <CheckBox Margin="0,0,0,6" Content="Escludi utenti di servizio" IsChecked="{Binding ExcludeServiceAccounts}" />
+              <CheckBox Content="Escludi utenti admin" IsChecked="{Binding ExcludeAdminAccounts}" />
+            </StackPanel>
           </GroupBox>
           <GroupBox Grid.Column="2" Header="Audit avanzato" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" IsEnabled="{Binding IsScanConfigEnabled}">
             <StackPanel>
@@ -340,14 +350,22 @@
             </GroupBox>
             <GroupBox Grid.Row="2" Header="Filtri risultati" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8">
               <StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                  <TextBlock Text="Filtro ACL:" VerticalAlignment="Center" Margin="0,0,6,0" />
-                  <TextBox Width="260" Height="24" Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                  <TextBlock Text="Filtro errori:" VerticalAlignment="Center" Margin="0,0,6,0" />
-                  <TextBox Width="260" Height="24" Text="{Binding ErrorFilter, UpdateSourceTrigger=PropertyChanged}" />
-                </StackPanel>
+                <Grid Margin="0,0,0,6">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Grid.Column="0" Text="Filtro ACL:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                  <TextBox Grid.Column="1" Height="24" MinWidth="220" Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
+                </Grid>
+                <Grid Margin="0,0,0,6">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Grid.Column="0" Text="Filtro errori:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                  <TextBox Grid.Column="1" Height="24" MinWidth="220" Text="{Binding ErrorFilter, UpdateSourceTrigger=PropertyChanged}" />
+                </Grid>
                 <WrapPanel>
                   <CheckBox Margin="0,0,12,6" Content="Colora per diritto" IsChecked="{Binding ColorizeRights}" />
                   <CheckBox Margin="0,0,12,6" Content="Everyone" IsChecked="{Binding FilterEveryone}" />
