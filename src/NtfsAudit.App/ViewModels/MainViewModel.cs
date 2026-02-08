@@ -696,11 +696,14 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_isViewerMode) return;
             var inputRoot = string.IsNullOrWhiteSpace(SelectedDfsTarget) ? RootPath : SelectedDfsTarget;
-            var normalizedRoot = PathResolver.NormalizeRootPath(inputRoot, string.IsNullOrWhiteSpace(SelectedDfsTarget));
-            if (!string.IsNullOrWhiteSpace(normalizedRoot) &&
-                !string.Equals(normalizedRoot, inputRoot, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(inputRoot) && inputRoot.StartsWith(@"\\", StringComparison.Ordinal))
             {
-                inputRoot = normalizedRoot;
+                var normalizedRoot = PathResolver.NormalizeRootPath(inputRoot, string.IsNullOrWhiteSpace(SelectedDfsTarget));
+                if (!string.IsNullOrWhiteSpace(normalizedRoot) &&
+                    !string.Equals(normalizedRoot, inputRoot, StringComparison.OrdinalIgnoreCase))
+                {
+                    inputRoot = normalizedRoot;
+                }
             }
 
             var ioRootPath = PathResolver.ToExtendedPath(inputRoot);
