@@ -354,7 +354,12 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      return (entry.PrincipalName || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.PrincipalSid || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.AllowDeny || '').toLowerCase().includes(term) ||");
-            builder.AppendLine("        (entry.RightsSummary || '').toLowerCase().includes(term);");
+            builder.AppendLine("        (entry.RightsSummary || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.EffectiveRightsSummary || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.ResourceType || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.TargetPath || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.Owner || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.RiskLevel || '').toLowerCase().includes(term);");
             builder.AppendLine("    }");
 
             builder.AppendLine("    function renderTable(tableId, entries, columns, useRightsClass) {");

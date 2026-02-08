@@ -291,9 +291,15 @@ namespace NtfsAudit.App.Services
 
         private static void DrainQueue<T>(BlockingCollection<T> queue, StreamWriter writer, CancellationToken token)
         {
-            foreach (var item in queue.GetConsumingEnumerable(token))
+            try
             {
-                writer.WriteLine(JsonConvert.SerializeObject(item));
+                foreach (var item in queue.GetConsumingEnumerable(token))
+                {
+                    writer.WriteLine(JsonConvert.SerializeObject(item));
+                }
+            }
+            catch (OperationCanceledException)
+            {
             }
         }
 
@@ -702,7 +708,8 @@ namespace NtfsAudit.App.Services
                 foreach (var rule in rules)
                 {
                     var sid = rule.IdentityReference.Value;
-                    var principal = options.ResolveIdentities ? _identityResolver.Resolve(sid).Name : sid;
+                    var resolved = options.ResolveIdentities ? _identityResolver.Resolve(sid) : null;
+                    var principal = resolved == null ? sid : resolved.Name;
                     var rights = RightsNormalizer.Normalize(rule.FileSystemRights);
                     summaries.Add(string.Format("{0}:{1}:{2}", principal, rule.AuditFlags, rights));
                 }
