@@ -111,10 +111,27 @@ I filtri nella vista risultati funzionano in combinazione:
 
 - **Filtro ACL**: ricerca per nome, SID, allow/deny, diritti, effective access, SACL/audit, source, resource type, target path, owner, risk level e membri espansi.
 - **Everyone / Authenticated Users**: mostra solo le ACE con i rispettivi SID o nome equivalente.
+- **Utenti di servizio**: mostra solo le ACE marcate come account di servizio.
+- **Admin**: mostra solo le ACE marcate come account amministrativi.
 - **Solo Deny**: mostra solo ACE di tipo deny.
 - **Ereditarietà disabilitata**: filtra le ACE con ereditarietà disabilitata.
 
 ## Export
+
+### Processo comune di export
+
+Gli export partono sempre dai risultati correnti della scansione/import:
+
+1. Seleziona la cartella root e applica i filtri desiderati.
+2. Verifica il tab attivo (ACL gruppi/utenti, ACL completo, errori, share, effective).
+3. Avvia l’export dalla toolbar.
+4. Scegli nome e percorso tramite dialog di salvataggio (il default usa la root e l’ultima cartella usata).
+
+Il file generato riflette:
+
+- filtro ACL e filtri booleani (Everyone, Authenticated Users, Solo Deny, Ereditarietà disabilitata),
+- tab e contenuti correnti (per HTML),
+- opzioni di scansione e metadati (per `.ntaudit`).
 
 ### Export Excel (.xlsx)
 
@@ -145,6 +162,8 @@ Formato nome file:
 <NomeCartellaRoot>_<dd-MM-yyyy-HH-mm>.xlsx
 ```
 
+Il dialog di export propone automaticamente questo nome e ricorda l’ultima cartella di salvataggio.
+
 ### Export HTML (.html)
 
 Produce un file HTML autoconclusivo che replica la vista corrente:
@@ -164,6 +183,8 @@ Formato nome file:
 <NomeCartellaRoot>_<dd-MM-yyyy-HH-mm>.html
 ```
 
+Il dialog di export usa lo stesso naming e mantiene l’ultima cartella scelta.
+
 ### Export Analisi (.ntaudit)
 
 Archivia i dati della scansione in un singolo file `.ntaudit`:
@@ -179,6 +200,24 @@ Formato nome file consigliato:
 ```
 <NomeCartellaRoot>_<dd-MM-yyyy-HH-mm>.ntaudit
 ```
+
+Il file esportato è riutilizzabile in **NtfsAudit.App** e **NtfsAudit.Viewer**.
+
+## Import Analisi
+
+L’import può essere eseguito da entrambi gli eseguibili:
+
+- **NtfsAudit.App**: importa un archivio `.ntaudit`, ripristina opzioni di scansione, ricostruisce albero e risultati.
+- **NtfsAudit.Viewer**: importa lo stesso archivio ma blocca le funzioni di scansione.
+
+Flusso consigliato:
+
+1. Apri **Import Analisi** dalla toolbar.
+2. Seleziona il file `.ntaudit` (il dialog ricorda l’ultima cartella usata).
+3. Conferma eventuali avvisi di compatibilità.
+4. Verifica che la cartella root importata sia corretta e seleziona il nodo principale.
+
+Nota: l’import ricalcola i flag di servizio/admin a partire dai SID correnti.
 
 ## Formato archivi .ntaudit
 
@@ -233,6 +272,8 @@ Parametri principali:
 - `-CleanTemp` (rimuove `%TEMP%\NtfsAudit` prima della build/publish)
 - `-CleanImports` (pulisce `%TEMP%\NtfsAudit\\imports`)
 - `-CleanCache` (pulisce `%LOCALAPPDATA%\NtfsAudit\Cache`)
+- `-CleanDist` (rimuove la cartella `dist` di output prima di build/publish)
+- `-CleanArtifacts` (rimuove la cartella `artifacts`)
 - `-TempRoot <path>` (override di `%TEMP%`/`%TMP%` per le pulizie)
 - `-Framework <tfm>` (es. `net8.0-windows`)
 - `-OutputPath <cartella>` (supporta percorsi relativi alla root del repo)
@@ -263,6 +304,8 @@ Parametri:
 - `-KeepTemp`
 - `-KeepImportTemp` (mantiene `NtfsAudit\\imports`; se `-KeepTemp` non è impostato, vengono rimossi gli altri sotto-percorsi)
 - `-KeepCache`
+- `-ImportsOnly` (pulisce solo `%TEMP%\\NtfsAudit\\imports`)
+- `-CacheOnly` (pulisce solo `%LOCALAPPDATA%\\NtfsAudit\\Cache`)
 
 ## File temporanei
 

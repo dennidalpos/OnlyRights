@@ -65,6 +65,8 @@ namespace NtfsAudit.App.ViewModels
         private bool _filterAuthenticatedUsers;
         private bool _filterDenyOnly;
         private bool _filterInheritanceDisabled;
+        private bool _filterServiceAccounts;
+        private bool _filterAdminAccounts;
         private string _currentPathBackground = "Transparent";
         private int _summaryTotalEntries;
         private int _summaryHighRisk;
@@ -77,6 +79,8 @@ namespace NtfsAudit.App.ViewModels
         private int _summaryBaselineAdded;
         private int _summaryBaselineRemoved;
         private bool _isElevated;
+        private string _lastExportDirectory;
+        private string _lastImportDirectory;
 
         public MainViewModel(bool viewerMode = false)
         {
@@ -505,6 +509,28 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
+        public bool FilterServiceAccounts
+        {
+            get { return _filterServiceAccounts; }
+            set
+            {
+                _filterServiceAccounts = value;
+                OnPropertyChanged("FilterServiceAccounts");
+                RefreshAclFilters();
+            }
+        }
+
+        public bool FilterAdminAccounts
+        {
+            get { return _filterAdminAccounts; }
+            set
+            {
+                _filterAdminAccounts = value;
+                OnPropertyChanged("FilterAdminAccounts");
+                RefreshAclFilters();
+            }
+        }
+
         public int SummaryTotalEntries
         {
             get { return _summaryTotalEntries; }
@@ -927,19 +953,20 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_isViewerMode) return;
             if (_scanResult == null) return;
-            using (var dialog = new FolderBrowserDialog())
+            var dialog = new Win32.SaveFileDialog
             {
-                dialog.ShowNewFolderButton = true;
-                var result = dialog.ShowDialog();
-                if (result != DialogResult.OK) return;
-                var outputPath = BuildExportPath(dialog.SelectedPath, RootPath, "xlsx");
-                await RunExportActionAsync(
-                    () => _excelExporter.Export(_scanResult.TempDataPath, _scanResult.ErrorPath, outputPath),
-                    string.Format("Export completato: {0}", outputPath),
-                    string.Format("Export completato:\n{0}", outputPath),
-                    "Errore export",
-                    outputPath);
-            }
+                Filter = "Excel (*.xlsx)|*.xlsx",
+                FileName = BuildExportFileName(RootPath, "xlsx"),
+                InitialDirectory = ResolveInitialDirectory(_lastExportDirectory, RootPath)
+            };
+            if (dialog.ShowDialog() != true) return;
+            var outputPath = dialog.FileName;
+            await RunExportActionAsync(
+                () => _excelExporter.Export(_scanResult.TempDataPath, _scanResult.ErrorPath, outputPath),
+                string.Format("Export completato: {0}", outputPath),
+                string.Format("Export completato:\n{0}", outputPath),
+                "Errore export",
+                outputPath);
         }
 
         private async void ExportAnalysis()
@@ -949,7 +976,8 @@ namespace NtfsAudit.App.ViewModels
             var dialog = new Win32.SaveFileDialog
             {
                 Filter = "Analisi NtfsAudit (*.ntaudit)|*.ntaudit",
-                FileName = BuildExportFileName(RootPath, "ntaudit")
+                FileName = BuildExportFileName(RootPath, "ntaudit"),
+                InitialDirectory = ResolveInitialDirectory(_lastExportDirectory, RootPath)
             };
             if (dialog.ShowDialog() != true) return;
             await RunExportActionAsync(
@@ -967,7 +995,8 @@ namespace NtfsAudit.App.ViewModels
             var dialog = new Win32.SaveFileDialog
             {
                 Filter = "HTML (*.html)|*.html",
-                FileName = BuildExportFileName(RootPath, "html")
+                FileName = BuildExportFileName(RootPath, "html"),
+                InitialDirectory = ResolveInitialDirectory(_lastExportDirectory, RootPath)
             };
             if (dialog.ShowDialog() != true) return;
             var expandedPaths = GetExpandedPaths();
@@ -995,7 +1024,8 @@ namespace NtfsAudit.App.ViewModels
         {
             var dialog = new Win32.OpenFileDialog
             {
-                Filter = "Analisi NtfsAudit (*.ntaudit)|*.ntaudit"
+                Filter = "Analisi NtfsAudit (*.ntaudit)|*.ntaudit",
+                InitialDirectory = ResolveInitialDirectory(_lastImportDirectory, RootPath)
             };
             if (dialog.ShowDialog() != true) return;
             try
@@ -1040,6 +1070,7 @@ namespace NtfsAudit.App.ViewModels
                     RootPath = root;
                 }
                 SelectFolder(root);
+                UpdateLastDirectory(ref _lastImportDirectory, dialog.FileName);
                 ProgressText = string.Format("Analisi importata: {0}", dialog.FileName);
                 WpfMessageBox.Show(string.Format("Analisi importata:\n{0}", dialog.FileName), "Import completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 UpdateCommands();
@@ -1063,6 +1094,7 @@ namespace NtfsAudit.App.ViewModels
                 await Task.Run(exportAction);
                 EnsureExportOutput(outputPath);
                 _hasExported = true;
+                UpdateLastDirectory(ref _lastExportDirectory, outputPath);
                 ProgressText = progressMessage;
                 WpfMessageBox.Show(dialogMessage, "Export completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
@@ -1535,11 +1567,13 @@ namespace NtfsAudit.App.ViewModels
             {
                 return false;
             }
-            if (FilterEveryone || FilterAuthenticatedUsers)
+            if (FilterEveryone || FilterAuthenticatedUsers || FilterServiceAccounts || FilterAdminAccounts)
             {
                 var matchesPrincipal =
                     (FilterEveryone && IsEveryone(entry.PrincipalSid, entry.PrincipalName)) ||
-                    (FilterAuthenticatedUsers && IsAuthenticatedUsers(entry.PrincipalSid, entry.PrincipalName));
+                    (FilterAuthenticatedUsers && IsAuthenticatedUsers(entry.PrincipalSid, entry.PrincipalName)) ||
+                    (FilterServiceAccounts && entry.IsServiceAccount) ||
+                    (FilterAdminAccounts && entry.IsAdminAccount);
                 if (!matchesPrincipal)
                 {
                     return false;
@@ -1611,6 +1645,8 @@ namespace NtfsAudit.App.ViewModels
             FilterAuthenticatedUsers = false;
             FilterDenyOnly = false;
             FilterInheritanceDisabled = false;
+            FilterServiceAccounts = false;
+            FilterAdminAccounts = false;
             UpdateSummary(null);
         }
 
@@ -1778,6 +1814,40 @@ namespace NtfsAudit.App.ViewModels
             if (string.IsNullOrWhiteSpace(baseName)) baseName = "Root";
             var timestamp = DateTime.Now.ToString("dd-MM-yyyy-HH-mm");
             return string.Format("{0}_{1}.{2}", baseName, timestamp, extension);
+        }
+
+        private string ResolveInitialDirectory(string preferredDirectory, string rootPath)
+        {
+            if (!string.IsNullOrWhiteSpace(preferredDirectory) && Directory.Exists(preferredDirectory))
+            {
+                return preferredDirectory;
+            }
+
+            if (!string.IsNullOrWhiteSpace(rootPath))
+            {
+                var candidate = rootPath;
+                if (!Directory.Exists(candidate))
+                {
+                    candidate = Path.GetDirectoryName(rootPath);
+                }
+
+                if (!string.IsNullOrWhiteSpace(candidate) && Directory.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            return Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+        }
+
+        private void UpdateLastDirectory(ref string targetDirectory, string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath)) return;
+            var directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
+                targetDirectory = directory;
+            }
         }
 
         private int ClampMaxDepth(int value)
