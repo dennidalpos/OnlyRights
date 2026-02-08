@@ -72,11 +72,12 @@ if (-not $KeepTemp) {
 }
 elseif (-not $KeepImportTemp) {
     $baseTemp = Get-TempRoot $TempRoot
-    $importTemp = Join-Path $baseTemp "NtfsAudit\\imports"
+    $importTemp = Join-Path (Join-Path $baseTemp "NtfsAudit") "imports"
     if (Test-Path $importTemp) { Remove-Item $importTemp -Recurse -Force }
 }
 
 if (-not $KeepCache) {
-    $cache = Join-Path $env:LOCALAPPDATA "NtfsAudit\Cache"
+    $localAppData = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [Environment]::GetFolderPath("LocalApplicationData") }
+    $cache = Join-Path $localAppData "NtfsAudit\Cache"
     if (Test-Path $cache) { Remove-Item $cache -Recurse -Force }
 }

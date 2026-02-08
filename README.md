@@ -95,12 +95,14 @@ Le opzioni principali influenzano prestazioni e dettaglio dei risultati:
 - Quando “Risolvi identità” viene disattivato, le opzioni dipendenti (espansione gruppi, PowerShell, esclusioni) vengono automaticamente disabilitate.
 - **Colora per diritto**: evidenzia visivamente le ACL.
 - **Abilita audit avanzato**: abilita funzioni di audit estese.
+- L’audit avanzato è **attivo di default**; le opzioni figlie (Effective Access, Owner/SACL, baseline) sono attivate di default, mentre **“Scansiona file” resta disattivo** per limitare i tempi di scansione.
 - **Calcola Effective Access**: calcolo base con merge Allow/Deny (non considera ordine ACE o membership avanzata).
 - **Scansiona file**: include i file oltre alle cartelle.
 - **Leggi Owner e SACL**: arricchisce le ACE con owner e policy di audit.
 - **Confronta con baseline/policy attese**: calcola differenze rispetto alla baseline del percorso root.
 - Le opzioni avanzate sono attive solo quando è selezionato “Abilita audit avanzato”.
 - Disattivando l’audit avanzato, le opzioni figlie (Effective Access, file, owner/SACL, baseline) vengono azzerate per mantenere coerenza con la scansione.
+- La lettura SACL richiede il privilegio `SeSecurityPrivilege`: se non disponibile o negata, la colonna SACL/Audit riporta un messaggio esplicativo.
 
 ### Filtri risultati
 
@@ -221,7 +223,7 @@ Parametri principali:
 - `-CleanCache` (pulisce `%LOCALAPPDATA%\NtfsAudit\Cache`)
 - `-TempRoot <path>` (override di `%TEMP%`/`%TMP%` per le pulizie)
 - `-Framework <tfm>` (es. `net8.0-windows`)
-- `-OutputPath <cartella>`
+- `-OutputPath <cartella>` (supporta percorsi relativi alla root del repo)
 - `-Runtime <rid>` (es. `win-x64`)
 - `-SelfContained`
 - `-PublishSingleFile`
@@ -272,4 +274,5 @@ Gli import di analisi usano `%TEMP%\NtfsAudit\\imports` e possono essere elimina
 - **Unità di rete non visibili nel dialog**: inserisci manualmente il percorso UNC (es. `\\server\share`) nel campo percorso o verifica la mappatura da Esplora file.
 - **AD non disponibile**: disattiva “Usa PowerShell per AD” o installa RSAT.
 - **Prestazioni**: riduci la profondità o disattiva risoluzione identità/espansione gruppi.
+- **SACL sempre vuote**: verifica che “Leggi Owner e SACL” sia attivo e che l’app sia eseguita come amministratore. In caso di privilegi mancanti o accesso negato, la UI mostra “SACL non disponibile (privilegi/accesso negato)”; se non esistono regole di audit, viene indicato “Nessuna voce SACL”.
 - **Compatibilità 2012 R2**: usa `net6.0-windows` per server legacy.

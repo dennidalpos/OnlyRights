@@ -45,11 +45,11 @@ namespace NtfsAudit.App.ViewModels
         private bool _excludeAdminAccounts;
         private bool _expandGroups = true;
         private bool _usePowerShell = true;
-        private bool _enableAdvancedAudit;
-        private bool _computeEffectiveAccess;
+        private bool _enableAdvancedAudit = true;
+        private bool _computeEffectiveAccess = true;
         private bool _includeFiles;
-        private bool _readOwnerAndSacl;
-        private bool _compareBaseline;
+        private bool _readOwnerAndSacl = true;
+        private bool _compareBaseline = true;
         private string _progressText = "Pronto";
         private string _currentPathText;
         private int _processedCount;
@@ -701,6 +701,7 @@ namespace NtfsAudit.App.ViewModels
                     | FileDialogOptions.PathMustExist
                     | FileDialogOptions.NoChangeDirectory);
                 dialog.SetOptions(options);
+                AddNetworkPlaces(dialog);
 
                 if (!string.IsNullOrWhiteSpace(RootPath))
                 {
@@ -731,6 +732,65 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
+        private void AddNetworkPlaces(IFileDialog dialog)
+        {
+            var mappedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            using (var networkKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("Network"))
+            {
+                if (networkKey != null)
+                {
+                    foreach (var driveLetter in networkKey.GetSubKeyNames())
+                    {
+                        using (var driveKey = networkKey.OpenSubKey(driveLetter))
+                        {
+                            var remotePath = driveKey?.GetValue("RemotePath") as string;
+                            if (!string.IsNullOrWhiteSpace(remotePath))
+                            {
+                                mappedPaths.Add(remotePath);
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach (var remotePath in mappedPaths)
+            {
+                TryAddPlace(dialog, remotePath);
+            }
+
+            foreach (var drive in DriveInfo.GetDrives())
+            {
+                if (drive.DriveType != DriveType.Network)
+                {
+                    continue;
+                }
+
+                var uncPath = PathResolver.NormalizeRootPath(drive.Name, false);
+                if (TryAddPlace(dialog, uncPath))
+                {
+                    continue;
+                }
+
+                TryAddPlace(dialog, drive.Name);
+            }
+        }
+
+        private bool TryAddPlace(IFileDialog dialog, string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return false;
+            }
+
+            if (SHCreateItemFromParsingName(path, IntPtr.Zero, typeof(IShellItem).GUID, out var place) == 0)
+            {
+                dialog.AddPlace(place, (int)FileDialogAddPlace.Bottom);
+                return true;
+            }
+
+            return false;
+        }
+
         private const int HResultCanceled = unchecked((int)0x800704C7);
 
         [Flags]
@@ -740,6 +800,12 @@ namespace NtfsAudit.App.ViewModels
             ForceFileSystem = 0x00000040,
             NoChangeDirectory = 0x00000008,
             PathMustExist = 0x00000800
+        }
+
+        private enum FileDialogAddPlace
+        {
+            Top = 0,
+            Bottom = 1
         }
 
         private enum ShellItemDisplayName : uint

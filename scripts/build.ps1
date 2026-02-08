@@ -23,7 +23,11 @@ $root = Resolve-Path ".."
 $solution = Join-Path $root "NtfsAudit.sln"
 $project = Join-Path $root "src\NtfsAudit.App\NtfsAudit.App.csproj"
 $viewerProject = Join-Path $root "src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj"
-$distRoot = if ($OutputPath) { $OutputPath } else { Join-Path $root "dist\$Configuration" }
+$distRoot = if ($OutputPath) {
+    if ([System.IO.Path]::IsPathRooted($OutputPath)) { $OutputPath } else { Join-Path $root $OutputPath }
+} else {
+    Join-Path $root "dist\$Configuration"
+}
 $dist = $distRoot
 if ($Runtime) {
     $dist = Join-Path $distRoot $Runtime
@@ -60,12 +64,13 @@ if ($CleanTemp) {
 
 if ($CleanImports) {
     $baseTemp = Get-TempRoot $TempRoot
-    $importTemp = Join-Path $baseTemp "NtfsAudit\\imports"
+    $importTemp = Join-Path (Join-Path $baseTemp "NtfsAudit") "imports"
     if (Test-Path $importTemp) { Remove-Item $importTemp -Recurse -Force }
 }
 
 if ($CleanCache) {
-    $cache = Join-Path $env:LOCALAPPDATA "NtfsAudit\Cache"
+    $localAppData = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [Environment]::GetFolderPath("LocalApplicationData") }
+    $cache = Join-Path $localAppData "NtfsAudit\Cache"
     if (Test-Path $cache) { Remove-Item $cache -Recurse -Force }
 }
 

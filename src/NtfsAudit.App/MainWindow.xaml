@@ -106,7 +106,6 @@
             <ColumnDefinition Width="300" />
             <ColumnDefinition Width="300" />
             <ColumnDefinition Width="260" />
-            <ColumnDefinition Width="*" />
           </Grid.ColumnDefinitions>
           <GroupBox Grid.Column="0" Header="Scansione" BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Margin="0,0,6,0" IsEnabled="{Binding IsScanConfigEnabled}">
             <Grid>
@@ -157,7 +156,7 @@
               <CheckBox Content="Escludi utenti admin" IsChecked="{Binding ExcludeAdminAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
             </StackPanel>
           </GroupBox>
-          <GroupBox Grid.Column="2" Header="Audit avanzato" BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Margin="0,0,6,0" IsEnabled="{Binding IsScanConfigEnabled}">
+          <GroupBox Grid.Column="2" Header="Audit avanzato" BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" IsEnabled="{Binding IsScanConfigEnabled}">
             <StackPanel>
               <CheckBox Margin="0,0,0,6" Content="Abilita audit avanzato" IsChecked="{Binding EnableAdvancedAudit}" />
               <StackPanel IsEnabled="{Binding IsAdvancedAuditEnabled}">
@@ -166,74 +165,6 @@
                 <CheckBox Margin="0,0,0,6" Content="Leggi Owner e SACL" IsChecked="{Binding ReadOwnerAndSacl}" />
                 <CheckBox Content="Confronta con baseline/policy attese" IsChecked="{Binding CompareBaseline}" />
               </StackPanel>
-            </StackPanel>
-          </GroupBox>
-          <GroupBox Grid.Column="3" Header="Dashboard" BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" IsEnabled="{Binding IsScanConfigEnabled}">
-            <StackPanel>
-              <WrapPanel Margin="0,0,0,4">
-                <Border Background="#FFE3F2FD" Padding="4" CornerRadius="4" Margin="0,0,6,4">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Totale ACE: " />
-                    <TextBlock Text="{Binding SummaryTotalEntries}" FontWeight="SemiBold" />
-                  </StackPanel>
-                </Border>
-                <Border Background="#FFFFCDD2" Padding="4" CornerRadius="4" Margin="0,0,6,4">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Rischio alto: " />
-                    <TextBlock Text="{Binding SummaryHighRisk}" FontWeight="SemiBold" />
-                  </StackPanel>
-                </Border>
-                <Border Background="#FFFFF9C4" Padding="4" CornerRadius="4" Margin="0,0,6,4">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Rischio medio: " />
-                    <TextBlock Text="{Binding SummaryMediumRisk}" FontWeight="SemiBold" />
-                  </StackPanel>
-                </Border>
-                <Border Background="#FFE8F5E9" Padding="4" CornerRadius="4" Margin="0,0,6,4">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Rischio basso: " />
-                    <TextBlock Text="{Binding SummaryLowRisk}" FontWeight="SemiBold" />
-                  </StackPanel>
-                </Border>
-              </WrapPanel>
-              <WrapPanel>
-                <Border Background="#FFF3E5F5" Padding="4" CornerRadius="4" Margin="0,0,6,4">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Deny espliciti: " />
-                    <TextBlock Text="{Binding SummaryDenyCount}" FontWeight="SemiBold" />
-                  </StackPanel>
-                </Border>
-                <Border Background="#FFE3F2FD" Padding="4" CornerRadius="4" Margin="0,0,6,4">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Everyone: " />
-                    <TextBlock Text="{Binding SummaryEveryoneCount}" FontWeight="SemiBold" />
-                  </StackPanel>
-                </Border>
-                <Border Background="#FFE3F2FD" Padding="4" CornerRadius="4" Margin="0,0,6,4">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Authenticated Users: " />
-                    <TextBlock Text="{Binding SummaryAuthUsersCount}" FontWeight="SemiBold" />
-                  </StackPanel>
-                </Border>
-                <Border Background="#FFE0F7FA" Padding="4" CornerRadius="4" Margin="0,0,6,4">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="File analizzati: " />
-                    <TextBlock Text="{Binding SummaryFilesCount}" FontWeight="SemiBold" />
-                  </StackPanel>
-                </Border>
-                <Border Background="#FFF3E5F5" Padding="4" CornerRadius="4" Margin="0,0,6,4">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Baseline +: " />
-                    <TextBlock Text="{Binding SummaryBaselineAdded}" FontWeight="SemiBold" />
-                  </StackPanel>
-                </Border>
-                <Border Background="#FFF3E5F5" Padding="4" CornerRadius="4" Margin="0,0,6,4">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Baseline -: " />
-                    <TextBlock Text="{Binding SummaryBaselineRemoved}" FontWeight="SemiBold" />
-                  </StackPanel>
-                </Border>
-              </WrapPanel>
             </StackPanel>
           </GroupBox>
         </Grid>
@@ -254,22 +185,84 @@
                 <TextBlock Text="{Binding CurrentPathText}" TextTrimming="CharacterEllipsis" />
               </Border>
               <WrapPanel>
-                <Border Background="#FFC8E6C9" Padding="4" CornerRadius="4" Margin="0,0,8,0">
+                <Border Padding="4" CornerRadius="4" Margin="0,0,8,0" BorderBrush="#DDDDDD" BorderThickness="1">
                   <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Analizzate: " VerticalAlignment="Center" />
                     <TextBlock Text="{Binding ProcessedCount}" VerticalAlignment="Center" />
                   </StackPanel>
                 </Border>
-                <Border Background="#FFFFCDD2" Padding="4" CornerRadius="4" Margin="0,0,8,0">
+                <Border Padding="4" CornerRadius="4" Margin="0,0,8,0" BorderBrush="#DDDDDD" BorderThickness="1">
                   <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Errori: " VerticalAlignment="Center" />
                     <TextBlock Text="{Binding ErrorCount}" VerticalAlignment="Center" />
                   </StackPanel>
                 </Border>
-                <Border Background="#FFE3F2FD" Padding="4" CornerRadius="4">
+                <Border Padding="4" CornerRadius="4" BorderBrush="#DDDDDD" BorderThickness="1">
                   <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Tempo: " VerticalAlignment="Center" />
                     <TextBlock Text="{Binding ElapsedText}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+              </WrapPanel>
+              <WrapPanel Margin="0,6,0,0">
+                <Border Padding="4" CornerRadius="4" Margin="0,0,8,0" BorderBrush="#DDDDDD" BorderThickness="1">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Totale ACE: " VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding SummaryTotalEntries}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+                <Border Padding="4" CornerRadius="4" Margin="0,0,8,0" BorderBrush="#DDDDDD" BorderThickness="1">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Rischio alto: " VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding SummaryHighRisk}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+                <Border Padding="4" CornerRadius="4" Margin="0,0,8,0" BorderBrush="#DDDDDD" BorderThickness="1">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Rischio medio: " VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding SummaryMediumRisk}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+                <Border Padding="4" CornerRadius="4" Margin="0,0,8,0" BorderBrush="#DDDDDD" BorderThickness="1">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Rischio basso: " VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding SummaryLowRisk}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+                <Border Padding="4" CornerRadius="4" Margin="0,0,8,0" BorderBrush="#DDDDDD" BorderThickness="1">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Deny espliciti: " VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding SummaryDenyCount}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+                <Border Padding="4" CornerRadius="4" Margin="0,0,8,0" BorderBrush="#DDDDDD" BorderThickness="1">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Everyone: " VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding SummaryEveryoneCount}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+                <Border Padding="4" CornerRadius="4" Margin="0,0,8,0" BorderBrush="#DDDDDD" BorderThickness="1">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Authenticated Users: " VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding SummaryAuthUsersCount}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+                <Border Padding="4" CornerRadius="4" Margin="0,0,8,0" BorderBrush="#DDDDDD" BorderThickness="1">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="File analizzati: " VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding SummaryFilesCount}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+                <Border Padding="4" CornerRadius="4" Margin="0,0,8,0" BorderBrush="#DDDDDD" BorderThickness="1">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Baseline +: " VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding SummaryBaselineAdded}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+                <Border Padding="4" CornerRadius="4" BorderBrush="#DDDDDD" BorderThickness="1">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Baseline -: " VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding SummaryBaselineRemoved}" VerticalAlignment="Center" />
                   </StackPanel>
                 </Border>
               </WrapPanel>
@@ -302,7 +295,7 @@
             </StackPanel>
             <StackPanel>
               <TextBlock Text="Legenda:" FontWeight="SemiBold" Margin="0,0,0,4" />
-              <Border Background="#FFEBEE" CornerRadius="4" Padding="4" Margin="0,0,0,4">
+              <Border CornerRadius="4" Padding="4" Margin="0,0,0,4" BorderBrush="#DDDDDD" BorderThickness="1">
                 <StackPanel Orientation="Horizontal">
                   <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
                     <TextBlock Text="P" Foreground="White" FontSize="10" />
@@ -310,7 +303,7 @@
                   <TextBlock Text="Protetto (ereditarietà disabilitata)" VerticalAlignment="Center" />
                 </StackPanel>
               </Border>
-              <Border Background="#E8F5E9" CornerRadius="4" Padding="4" Margin="0,0,0,4">
+              <Border CornerRadius="4" Padding="4" Margin="0,0,0,4" BorderBrush="#DDDDDD" BorderThickness="1">
                 <StackPanel Orientation="Horizontal">
                   <Border Background="#FF2E7D32" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
                     <TextBlock Text="+N" Foreground="White" FontSize="10" />
@@ -318,7 +311,7 @@
                   <TextBlock Text="ACE esplicite aggiunte" VerticalAlignment="Center" />
                 </StackPanel>
               </Border>
-              <Border Background="#FFF3E0" CornerRadius="4" Padding="4" Margin="0,0,0,4">
+              <Border CornerRadius="4" Padding="4" Margin="0,0,0,4" BorderBrush="#DDDDDD" BorderThickness="1">
                 <StackPanel Orientation="Horizontal">
                   <Border Background="#FFF57C00" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
                     <TextBlock Text="-N" Foreground="White" FontSize="10" />
@@ -326,7 +319,7 @@
                   <TextBlock Text="ACE rimosse rispetto al padre" VerticalAlignment="Center" />
                 </StackPanel>
               </Border>
-              <Border Background="#F3E5F5" CornerRadius="4" Padding="4">
+              <Border CornerRadius="4" Padding="4" BorderBrush="#DDDDDD" BorderThickness="1">
                 <StackPanel Orientation="Horizontal">
                   <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
                     <TextBlock Text="D" Foreground="White" FontSize="10" />

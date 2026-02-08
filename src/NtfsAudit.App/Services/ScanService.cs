@@ -181,7 +181,8 @@ namespace NtfsAudit.App.Services
                                     accessSections,
                                     current,
                                     errorQueue,
-                                    () => Interlocked.Increment(ref errorCount));
+                                    () => Interlocked.Increment(ref errorCount),
+                                    out var auditFailureReason);
                                 ProcessAccessControl(
                                     security,
                                     current,
@@ -193,7 +194,8 @@ namespace NtfsAudit.App.Services
                                     baselineKeys,
                                     dataQueue,
                                     errorQueue,
-                                    token);
+                                    token,
+                                    auditFailureReason);
 
                                 if (options.IncludeFiles)
                                 {
@@ -226,7 +228,8 @@ namespace NtfsAudit.App.Services
                                                 accessSections,
                                                 filePath,
                                                 errorQueue,
-                                                () => Interlocked.Increment(ref errorCount));
+                                                () => Interlocked.Increment(ref errorCount),
+                                                out var fileAuditFailureReason);
                                             ProcessAccessControl(
                                                 fileSecurity,
                                                 current,
@@ -238,7 +241,8 @@ namespace NtfsAudit.App.Services
                                                 null,
                                                 dataQueue,
                                                 errorQueue,
-                                                token);
+                                                token,
+                                                fileAuditFailureReason);
                                         }
                                         catch (Exception ex)
                                         {
@@ -411,7 +415,8 @@ namespace NtfsAudit.App.Services
             List<AclDiffKey> baselineKeys,
             BlockingCollection<ExportRecord> dataQueue,
             BlockingCollection<ErrorEntry> errorQueue,
-            CancellationToken token)
+            CancellationToken token,
+            string auditFailureReason)
         {
             if (security == null) return;
             var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
@@ -421,7 +426,7 @@ namespace NtfsAudit.App.Services
                 ? BuildEffectiveAccessMap(rules, options)
                 : new Dictionary<string, EffectiveAccessAccumulator>(StringComparer.OrdinalIgnoreCase);
             var owner = options.ReadOwnerAndSacl ? ResolveOwner(security, options) : string.Empty;
-            var auditSummary = options.ReadOwnerAndSacl ? BuildAuditSummary(security, options) : string.Empty;
+            var auditSummary = options.ReadOwnerAndSacl ? ResolveAuditSummary(security, options, auditFailureReason) : string.Empty;
 
             foreach (var rule in rules)
             {
@@ -605,7 +610,8 @@ namespace NtfsAudit.App.Services
                     accessSections,
                     options.RootPath,
                     errorQueue,
-                    null);
+                    null,
+                    out var _);
                 if (security == null)
                 {
                     return null;
@@ -651,14 +657,55 @@ namespace NtfsAudit.App.Services
             AccessControlSections accessSections,
             string path,
             BlockingCollection<ErrorEntry> errorQueue,
-            Action incrementError)
+            Action incrementError,
+            out string auditFailureReason)
         {
+            auditFailureReason = null;
             try
             {
                 return accessControlFetcher(accessSections);
             }
             catch (PrivilegeNotHeldException ex)
             {
+                if (accessSections.HasFlag(AccessControlSections.Audit))
+                {
+                    auditFailureReason = "SACL non disponibile (privilegi)";
+                }
+                if (incrementError != null)
+                {
+                    incrementError();
+                }
+                if (errorQueue != null)
+                {
+                    errorQueue.Add(BuildErrorEntry(path, ex));
+                }
+                try
+                {
+                    if (accessSections == AccessControlSections.Access)
+                    {
+                        return null;
+                    }
+                    return accessControlFetcher(AccessControlSections.Access);
+                }
+                catch (Exception accessEx)
+                {
+                    if (incrementError != null)
+                    {
+                        incrementError();
+                    }
+                    if (errorQueue != null)
+                    {
+                        errorQueue.Add(BuildErrorEntry(path, accessEx));
+                    }
+                    return null;
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                if (accessSections.HasFlag(AccessControlSections.Audit))
+                {
+                    auditFailureReason = "SACL non disponibile (accesso negato)";
+                }
                 if (incrementError != null)
                 {
                     incrementError();
@@ -817,10 +864,25 @@ namespace NtfsAudit.App.Services
             {
                 return "SACL non disponibile (accesso negato)";
             }
+            catch (InvalidOperationException)
+            {
+                return "SACL non disponibile (sezione audit mancante)";
+            }
             catch
             {
                 return string.Empty;
             }
+        }
+
+        private string ResolveAuditSummary(FileSystemSecurity security, ScanOptions options, string auditFailureReason)
+        {
+            if (!string.IsNullOrWhiteSpace(auditFailureReason))
+            {
+                return auditFailureReason;
+            }
+
+            var summary = BuildAuditSummary(security, options);
+            return string.IsNullOrWhiteSpace(summary) ? "Nessuna voce SACL" : summary;
         }
 
         private static string EvaluateRisk(AceEntry entry)
