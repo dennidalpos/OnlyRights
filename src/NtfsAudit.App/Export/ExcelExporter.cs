@@ -40,11 +40,18 @@ namespace NtfsAudit.App.Export
                 "AllowDeny",
                 "RightsSummary",
                 "RightsMask",
+                "EffectiveRightsSummary",
+                "EffectiveRightsMask",
                 "IsInherited",
                 "InheritanceFlags",
                 "PropagationFlags",
                 "Source",
                 "Depth",
+                "ResourceType",
+                "TargetPath",
+                "Owner",
+                "AuditSummary",
+                "RiskLevel",
                 "Disabilitato",
                 "IsServiceAccount",
                 "IsAdminAccount",
@@ -53,7 +60,12 @@ namespace NtfsAudit.App.Export
                 "IncludeInherited",
                 "ResolveIdentities",
                 "ExcludeServiceAccounts",
-                "ExcludeAdminAccounts"
+                "ExcludeAdminAccounts",
+                "EnableAdvancedAudit",
+                "ComputeEffectiveAccess",
+                "IncludeFiles",
+                "ReadOwnerAndSacl",
+                "CompareBaseline"
             };
 
             using (var document = SpreadsheetDocument.Create(outputPath, SpreadsheetDocumentType.Workbook))
@@ -160,12 +172,16 @@ namespace NtfsAudit.App.Export
             foreach (var record in records)
             {
                 UpdateColumnWidths(columnWidths, record.FolderPath, record.PrincipalName, record.PrincipalSid, record.PrincipalType,
-                    record.AllowDeny, record.RightsSummary, record.RightsMask.ToString(CultureInfo.InvariantCulture), record.IsInherited.ToString(), record.InheritanceFlags,
+                    record.AllowDeny, record.RightsSummary, record.RightsMask.ToString(CultureInfo.InvariantCulture),
+                    record.EffectiveRightsSummary, record.EffectiveRightsMask.ToString(CultureInfo.InvariantCulture), record.IsInherited.ToString(), record.InheritanceFlags,
                     record.PropagationFlags, record.Source, record.Depth.ToString(CultureInfo.InvariantCulture),
+                    record.ResourceType, record.TargetPath, record.Owner, record.AuditSummary, record.RiskLevel,
                     record.IsDisabled.ToString(), record.IsServiceAccount.ToString(), record.IsAdminAccount.ToString(),
                     record.HasExplicitPermissions.ToString(), record.IsInheritanceDisabled.ToString(),
                     record.IncludeInherited.ToString(), record.ResolveIdentities.ToString(),
-                    record.ExcludeServiceAccounts.ToString(), record.ExcludeAdminAccounts.ToString());
+                    record.ExcludeServiceAccounts.ToString(), record.ExcludeAdminAccounts.ToString(),
+                    record.EnableAdvancedAudit.ToString(), record.ComputeEffectiveAccess.ToString(),
+                    record.IncludeFiles.ToString(), record.ReadOwnerAndSacl.ToString(), record.CompareBaseline.ToString());
             }
             var rowCount = records.Count + 1;
 
@@ -186,11 +202,18 @@ namespace NtfsAudit.App.Export
                         record.AllowDeny,
                         record.RightsSummary,
                         record.RightsMask.ToString(CultureInfo.InvariantCulture),
+                        record.EffectiveRightsSummary,
+                        record.EffectiveRightsMask.ToString(CultureInfo.InvariantCulture),
                         record.IsInherited.ToString(),
                         record.InheritanceFlags,
                         record.PropagationFlags,
                         record.Source,
                         record.Depth.ToString(CultureInfo.InvariantCulture),
+                        record.ResourceType,
+                        record.TargetPath,
+                        record.Owner,
+                        record.AuditSummary,
+                        record.RiskLevel,
                         record.IsDisabled.ToString(),
                         record.IsServiceAccount.ToString(),
                         record.IsAdminAccount.ToString(),
@@ -199,7 +222,12 @@ namespace NtfsAudit.App.Export
                         record.IncludeInherited.ToString(),
                         record.ResolveIdentities.ToString(),
                         record.ExcludeServiceAccounts.ToString(),
-                        record.ExcludeAdminAccounts.ToString());
+                        record.ExcludeAdminAccounts.ToString(),
+                        record.EnableAdvancedAudit.ToString(),
+                        record.ComputeEffectiveAccess.ToString(),
+                        record.IncludeFiles.ToString(),
+                        record.ReadOwnerAndSacl.ToString(),
+                        record.CompareBaseline.ToString());
                 }
 
                 writer.WriteEndElement();

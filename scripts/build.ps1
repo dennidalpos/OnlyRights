@@ -6,6 +6,7 @@ param(
     [switch]$SkipViewerPublish,
     [switch]$SkipPublishClean,
     [switch]$CleanTemp,
+    [switch]$CleanCache,
     [string]$Framework,
     [string]$OutputPath,
     [string]$Runtime,
@@ -37,6 +38,11 @@ if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) { throw "dotnet SDK not
 if ($CleanTemp) {
     $temp = Join-Path $env:TEMP "NtfsAudit"
     if (Test-Path $temp) { Remove-Item $temp -Recurse -Force }
+}
+
+if ($CleanCache) {
+    $cache = Join-Path $env:LOCALAPPDATA "NtfsAudit\Cache"
+    if (Test-Path $cache) { Remove-Item $cache -Recurse -Force }
 }
 
 if (-not $SkipRestore) {

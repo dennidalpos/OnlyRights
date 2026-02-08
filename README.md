@@ -40,6 +40,7 @@ L’interfaccia mostra:
 - albero cartelle con caricamento lazy,
 - griglie ACL separate per utenti/gruppi e vista completa,
 - filtri per utente/SID/diritti/allow-deny,
+- dashboard riassuntiva con indicatori rischio e baseline,
 - contatori e progressi della scansione,
 - pannello errori.
 
@@ -90,6 +91,11 @@ Le opzioni principali influenzano prestazioni e dettaglio dei risultati:
 - **Escludi utenti di servizio**: filtra account di servizio/built-in del sistema tramite SID noti (LocalSystem, LocalService, NetworkService, NT SERVICE).
 - **Escludi utenti admin**: filtra account/gruppi privilegiati tramite SID noti (es. Domain Admins, Schema Admins, Builtin Administrators).
 - **Colora per diritto**: evidenzia visivamente le ACL.
+- **Abilita audit avanzato**: abilita funzioni di audit estese.
+- **Calcola Effective Access**: calcolo base con merge Allow/Deny (non considera ordine ACE o membership avanzata).
+- **Scansiona file**: include i file oltre alle cartelle.
+- **Leggi Owner e SACL**: arricchisce le ACE con owner e policy di audit.
+- **Confronta con baseline/policy attese**: calcola differenze rispetto alla baseline del percorso root.
 
 ## Export
 
@@ -105,11 +111,13 @@ Genera un file con quattro fogli:
 Colonne tipiche:
 
 - `FolderPath`, `PrincipalName`, `PrincipalSid`, `PrincipalType`
-- `AllowDeny`, `RightsSummary`, `RightsMask`, `IsInherited`
+- `AllowDeny`, `RightsSummary`, `RightsMask`, `EffectiveRightsSummary`, `EffectiveRightsMask`
 - `InheritanceFlags`, `PropagationFlags`, `Source`, `Depth`
+- `ResourceType`, `TargetPath`, `Owner`, `AuditSummary`, `RiskLevel`
 - `IsDisabled`, `IsServiceAccount`, `IsAdminAccount`
 - `HasExplicitPermissions`, `IsInheritanceDisabled`
 - `IncludeInherited`, `ResolveIdentities`, `ExcludeServiceAccounts`, `ExcludeAdminAccounts`
+- `EnableAdvancedAudit`, `ComputeEffectiveAccess`, `IncludeFiles`, `ReadOwnerAndSacl`, `CompareBaseline`
 
 Formato nome file:
 
@@ -189,6 +197,7 @@ Parametri principali:
 - `-SkipViewerPublish`
 - `-SkipPublishClean`
 - `-CleanTemp` (rimuove `%TEMP%\NtfsAudit` prima della build/publish)
+- `-CleanCache` (pulisce `%LOCALAPPDATA%\NtfsAudit\Cache`)
 - `-Framework <tfm>` (es. `net8.0-windows`)
 - `-OutputPath <cartella>`
 - `-Runtime <rid>` (es. `win-x64`)
@@ -215,6 +224,7 @@ Parametri:
 - `-KeepDist`
 - `-KeepArtifacts`
 - `-KeepTemp`
+- `-KeepImportTemp` (mantiene solo `NtfsAudit\\imports` anche con `-KeepTemp`)
 - `-KeepCache`
 
 ## File temporanei

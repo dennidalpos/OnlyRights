@@ -43,6 +43,11 @@ namespace NtfsAudit.App.ViewModels
         private bool _excludeAdminAccounts;
         private bool _expandGroups = true;
         private bool _usePowerShell = true;
+        private bool _enableAdvancedAudit;
+        private bool _computeEffectiveAccess;
+        private bool _includeFiles;
+        private bool _readOwnerAndSacl;
+        private bool _compareBaseline;
         private string _progressText = "Pronto";
         private string _currentPathText;
         private int _processedCount;
@@ -52,7 +57,23 @@ namespace NtfsAudit.App.ViewModels
         private string _errorFilter;
         private string _aclFilter;
         private bool _colorizeRights = true;
+        private ObservableCollection<string> _dfsTargets = new ObservableCollection<string>();
+        private string _selectedDfsTarget;
+        private bool _filterEveryone;
+        private bool _filterAuthenticatedUsers;
+        private bool _filterDenyOnly;
+        private bool _filterInheritanceDisabled;
         private string _currentPathBackground = "Transparent";
+        private int _summaryTotalEntries;
+        private int _summaryHighRisk;
+        private int _summaryMediumRisk;
+        private int _summaryLowRisk;
+        private int _summaryDenyCount;
+        private int _summaryEveryoneCount;
+        private int _summaryAuthUsersCount;
+        private int _summaryFilesCount;
+        private int _summaryBaselineAdded;
+        private int _summaryBaselineRemoved;
 
         public MainViewModel(bool viewerMode = false)
         {
@@ -116,6 +137,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _rootPath = value;
                 OnPropertyChanged("RootPath");
+                UpdateDfsTargets();
                 OnPropertyChanged("CanStart");
                 StartCommand.RaiseCanExecuteChanged();
             }
@@ -213,6 +235,62 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
+        public bool EnableAdvancedAudit
+        {
+            get { return _enableAdvancedAudit; }
+            set
+            {
+                _enableAdvancedAudit = value;
+                OnPropertyChanged("EnableAdvancedAudit");
+                OnPropertyChanged("IsAdvancedAuditEnabled");
+            }
+        }
+
+        public bool IsAdvancedAuditEnabled
+        {
+            get { return _enableAdvancedAudit; }
+        }
+
+        public bool ComputeEffectiveAccess
+        {
+            get { return _computeEffectiveAccess; }
+            set
+            {
+                _computeEffectiveAccess = value;
+                OnPropertyChanged("ComputeEffectiveAccess");
+            }
+        }
+
+        public bool IncludeFiles
+        {
+            get { return _includeFiles; }
+            set
+            {
+                _includeFiles = value;
+                OnPropertyChanged("IncludeFiles");
+            }
+        }
+
+        public bool ReadOwnerAndSacl
+        {
+            get { return _readOwnerAndSacl; }
+            set
+            {
+                _readOwnerAndSacl = value;
+                OnPropertyChanged("ReadOwnerAndSacl");
+            }
+        }
+
+        public bool CompareBaseline
+        {
+            get { return _compareBaseline; }
+            set
+            {
+                _compareBaseline = value;
+                OnPropertyChanged("CompareBaseline");
+            }
+        }
+
         public string ProgressText
         {
             get { return _progressText; }
@@ -301,9 +379,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _aclFilter = value;
                 OnPropertyChanged("AclFilter");
-                FilteredGroupEntries.Refresh();
-                FilteredUserEntries.Refresh();
-                FilteredAllEntries.Refresh();
+                RefreshAclFilters();
             }
         }
 
@@ -314,6 +390,176 @@ namespace NtfsAudit.App.ViewModels
             {
                 _colorizeRights = value;
                 OnPropertyChanged("ColorizeRights");
+            }
+        }
+
+        public ObservableCollection<string> DfsTargets
+        {
+            get { return _dfsTargets; }
+            private set
+            {
+                _dfsTargets = value ?? new ObservableCollection<string>();
+                OnPropertyChanged("DfsTargets");
+                OnPropertyChanged("HasDfsTargets");
+            }
+        }
+
+        public bool HasDfsTargets
+        {
+            get { return _dfsTargets != null && _dfsTargets.Count > 0; }
+        }
+
+        public string SelectedDfsTarget
+        {
+            get { return _selectedDfsTarget; }
+            set
+            {
+                _selectedDfsTarget = value;
+                OnPropertyChanged("SelectedDfsTarget");
+            }
+        }
+
+        public bool FilterEveryone
+        {
+            get { return _filterEveryone; }
+            set
+            {
+                _filterEveryone = value;
+                OnPropertyChanged("FilterEveryone");
+                RefreshAclFilters();
+            }
+        }
+
+        public bool FilterAuthenticatedUsers
+        {
+            get { return _filterAuthenticatedUsers; }
+            set
+            {
+                _filterAuthenticatedUsers = value;
+                OnPropertyChanged("FilterAuthenticatedUsers");
+                RefreshAclFilters();
+            }
+        }
+
+        public bool FilterDenyOnly
+        {
+            get { return _filterDenyOnly; }
+            set
+            {
+                _filterDenyOnly = value;
+                OnPropertyChanged("FilterDenyOnly");
+                RefreshAclFilters();
+            }
+        }
+
+        public bool FilterInheritanceDisabled
+        {
+            get { return _filterInheritanceDisabled; }
+            set
+            {
+                _filterInheritanceDisabled = value;
+                OnPropertyChanged("FilterInheritanceDisabled");
+                RefreshAclFilters();
+            }
+        }
+
+        public int SummaryTotalEntries
+        {
+            get { return _summaryTotalEntries; }
+            set
+            {
+                _summaryTotalEntries = value;
+                OnPropertyChanged("SummaryTotalEntries");
+            }
+        }
+
+        public int SummaryHighRisk
+        {
+            get { return _summaryHighRisk; }
+            set
+            {
+                _summaryHighRisk = value;
+                OnPropertyChanged("SummaryHighRisk");
+            }
+        }
+
+        public int SummaryMediumRisk
+        {
+            get { return _summaryMediumRisk; }
+            set
+            {
+                _summaryMediumRisk = value;
+                OnPropertyChanged("SummaryMediumRisk");
+            }
+        }
+
+        public int SummaryLowRisk
+        {
+            get { return _summaryLowRisk; }
+            set
+            {
+                _summaryLowRisk = value;
+                OnPropertyChanged("SummaryLowRisk");
+            }
+        }
+
+        public int SummaryDenyCount
+        {
+            get { return _summaryDenyCount; }
+            set
+            {
+                _summaryDenyCount = value;
+                OnPropertyChanged("SummaryDenyCount");
+            }
+        }
+
+        public int SummaryEveryoneCount
+        {
+            get { return _summaryEveryoneCount; }
+            set
+            {
+                _summaryEveryoneCount = value;
+                OnPropertyChanged("SummaryEveryoneCount");
+            }
+        }
+
+        public int SummaryAuthUsersCount
+        {
+            get { return _summaryAuthUsersCount; }
+            set
+            {
+                _summaryAuthUsersCount = value;
+                OnPropertyChanged("SummaryAuthUsersCount");
+            }
+        }
+
+        public int SummaryFilesCount
+        {
+            get { return _summaryFilesCount; }
+            set
+            {
+                _summaryFilesCount = value;
+                OnPropertyChanged("SummaryFilesCount");
+            }
+        }
+
+        public int SummaryBaselineAdded
+        {
+            get { return _summaryBaselineAdded; }
+            set
+            {
+                _summaryBaselineAdded = value;
+                OnPropertyChanged("SummaryBaselineAdded");
+            }
+        }
+
+        public int SummaryBaselineRemoved
+        {
+            get { return _summaryBaselineRemoved; }
+            set
+            {
+                _summaryBaselineRemoved = value;
+                OnPropertyChanged("SummaryBaselineRemoved");
             }
         }
 
@@ -365,6 +611,37 @@ namespace NtfsAudit.App.ViewModels
             foreach (var entry in detail.GroupEntries) GroupEntries.Add(entry);
             foreach (var entry in detail.UserEntries) UserEntries.Add(entry);
             foreach (var entry in detail.AllEntries) AllEntries.Add(entry);
+            UpdateSummary(detail);
+        }
+
+        private void UpdateSummary(FolderDetail detail)
+        {
+            if (detail == null || detail.AllEntries == null)
+            {
+                SummaryTotalEntries = 0;
+                SummaryHighRisk = 0;
+                SummaryMediumRisk = 0;
+                SummaryLowRisk = 0;
+                SummaryDenyCount = 0;
+                SummaryEveryoneCount = 0;
+                SummaryAuthUsersCount = 0;
+                SummaryFilesCount = 0;
+                SummaryBaselineAdded = 0;
+                SummaryBaselineRemoved = 0;
+                return;
+            }
+
+            var entries = detail.AllEntries;
+            SummaryTotalEntries = entries.Count;
+            SummaryHighRisk = entries.Count(entry => string.Equals(entry.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase));
+            SummaryMediumRisk = entries.Count(entry => string.Equals(entry.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase));
+            SummaryLowRisk = entries.Count(entry => string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase));
+            SummaryDenyCount = entries.Count(entry => string.Equals(entry.AllowDeny, "Deny", StringComparison.OrdinalIgnoreCase));
+            SummaryEveryoneCount = entries.Count(entry => IsEveryone(entry.PrincipalSid, entry.PrincipalName));
+            SummaryAuthUsersCount = entries.Count(entry => IsAuthenticatedUsers(entry.PrincipalSid, entry.PrincipalName));
+            SummaryFilesCount = entries.Count(entry => string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase));
+            SummaryBaselineAdded = detail.BaselineSummary == null ? 0 : detail.BaselineSummary.Added.Count;
+            SummaryBaselineRemoved = detail.BaselineSummary == null ? 0 : detail.BaselineSummary.Removed.Count;
         }
 
         public Task<ResolvedPrincipal[]> GetGroupMembersAsync(string groupSid)
@@ -404,14 +681,15 @@ namespace NtfsAudit.App.ViewModels
         private void StartScan()
         {
             if (_isViewerMode) return;
-            var normalizedRoot = PathResolver.NormalizeRootPath(RootPath);
+            var inputRoot = string.IsNullOrWhiteSpace(SelectedDfsTarget) ? RootPath : SelectedDfsTarget;
+            var normalizedRoot = PathResolver.NormalizeRootPath(inputRoot);
             if (!string.IsNullOrWhiteSpace(normalizedRoot) &&
-                !string.Equals(normalizedRoot, RootPath, StringComparison.OrdinalIgnoreCase))
+                !string.Equals(normalizedRoot, inputRoot, StringComparison.OrdinalIgnoreCase))
             {
-                RootPath = normalizedRoot;
+                inputRoot = normalizedRoot;
             }
 
-            var ioRootPath = PathResolver.ToExtendedPath(RootPath);
+            var ioRootPath = PathResolver.ToExtendedPath(inputRoot);
             if (!Directory.Exists(ioRootPath))
             {
                 ProgressText = "Percorso non valido";
@@ -428,7 +706,7 @@ namespace NtfsAudit.App.ViewModels
             _cts = new CancellationTokenSource();
             var options = new ScanOptions
             {
-                RootPath = RootPath,
+                RootPath = inputRoot,
                 MaxDepth = ScanAllDepths ? int.MaxValue : MaxDepth,
                 ScanAllDepths = ScanAllDepths,
                 IncludeInherited = IncludeInherited,
@@ -436,7 +714,12 @@ namespace NtfsAudit.App.ViewModels
                 ExcludeServiceAccounts = ExcludeServiceAccounts,
                 ExcludeAdminAccounts = ExcludeAdminAccounts,
                 ExpandGroups = ResolveIdentities && ExpandGroups,
-                UsePowerShell = UsePowerShell
+                UsePowerShell = UsePowerShell,
+                EnableAdvancedAudit = EnableAdvancedAudit,
+                ComputeEffectiveAccess = EnableAdvancedAudit && ComputeEffectiveAccess,
+                IncludeFiles = EnableAdvancedAudit && IncludeFiles,
+                ReadOwnerAndSacl = EnableAdvancedAudit && ReadOwnerAndSacl,
+                CompareBaseline = EnableAdvancedAudit && CompareBaseline
             };
 
             Task.Run(() => ExecuteScan(options, _cts.Token));
@@ -751,6 +1034,13 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
+        private void RefreshAclFilters()
+        {
+            FilteredGroupEntries.Refresh();
+            FilteredUserEntries.Refresh();
+            FilteredAllEntries.Refresh();
+        }
+
         private bool FilterErrors(object item)
         {
             if (string.IsNullOrWhiteSpace(ErrorFilter)) return true;
@@ -764,20 +1054,57 @@ namespace NtfsAudit.App.ViewModels
 
         private bool FilterAclEntries(object item)
         {
-            if (string.IsNullOrWhiteSpace(AclFilter)) return true;
             var entry = item as AceEntry;
             if (entry == null) return false;
+            if (FilterDenyOnly && !string.Equals(entry.AllowDeny, "Deny", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+            if (FilterInheritanceDisabled && !entry.IsInheritanceDisabled)
+            {
+                return false;
+            }
+            if (FilterEveryone || FilterAuthenticatedUsers)
+            {
+                var matchesPrincipal =
+                    (FilterEveryone && IsEveryone(entry.PrincipalSid, entry.PrincipalName)) ||
+                    (FilterAuthenticatedUsers && IsAuthenticatedUsers(entry.PrincipalSid, entry.PrincipalName));
+                if (!matchesPrincipal)
+                {
+                    return false;
+                }
+            }
+            if (string.IsNullOrWhiteSpace(AclFilter)) return true;
             var term = AclFilter;
             return MatchesFilter(entry.PrincipalName, term)
                 || MatchesFilter(entry.PrincipalSid, term)
                 || MatchesFilter(entry.AllowDeny, term)
-                || MatchesFilter(entry.RightsSummary, term);
+                || MatchesFilter(entry.RightsSummary, term)
+                || MatchesFilter(entry.EffectiveRightsSummary, term)
+                || MatchesFilter(entry.ResourceType, term)
+                || MatchesFilter(entry.TargetPath, term)
+                || MatchesFilter(entry.Owner, term)
+                || MatchesFilter(entry.RiskLevel, term);
         }
 
         private bool MatchesFilter(string value, string filter)
         {
             return !string.IsNullOrWhiteSpace(value)
                 && value.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private bool IsEveryone(string sid, string name)
+        {
+            return string.Equals(sid, "S-1-1-0", StringComparison.OrdinalIgnoreCase)
+                || MatchesFilter(name, "Everyone")
+                || MatchesFilter(name, "Tutti");
+        }
+
+        private bool IsAuthenticatedUsers(string sid, string name)
+        {
+            return string.Equals(sid, "S-1-5-11", StringComparison.OrdinalIgnoreCase)
+                || MatchesFilter(name, "Authenticated Users")
+                || MatchesFilter(name, "Utenti autenticati");
         }
 
         private void ClearResults()
@@ -794,6 +1121,20 @@ namespace NtfsAudit.App.ViewModels
             CurrentPathText = string.Empty;
             CurrentPathBackground = "Transparent";
             AclFilter = string.Empty;
+            ErrorFilter = string.Empty;
+            FilterEveryone = false;
+            FilterAuthenticatedUsers = false;
+            FilterDenyOnly = false;
+            FilterInheritanceDisabled = false;
+            UpdateSummary(null);
+        }
+
+        private void UpdateDfsTargets()
+        {
+            var targets = PathResolver.GetDfsTargets(RootPath);
+            DfsTargets = new ObservableCollection<string>(targets ?? new List<string>());
+            SelectedDfsTarget = DfsTargets.Count > 0 ? DfsTargets[0] : string.Empty;
+            OnPropertyChanged("HasDfsTargets");
         }
 
         private void UpdateCommands()

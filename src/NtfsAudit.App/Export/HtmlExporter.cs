@@ -159,10 +159,16 @@ namespace NtfsAudit.App.Export
             builder.AppendLine(string.Format("    const initialAclFilter = {0};", JsonConvert.SerializeObject(aclFilter ?? string.Empty, jsonSettings)));
             builder.AppendLine(string.Format("    const initialErrorFilter = {0};", JsonConvert.SerializeObject(errorFilter ?? string.Empty, jsonSettings)));
             builder.AppendLine("\n    const groupColumns = [");
+            builder.AppendLine("      { key: 'ResourceType', label: 'Risorsa' },");
+            builder.AppendLine("      { key: 'TargetPath', label: 'Percorso' },");
             builder.AppendLine("      { key: 'PrincipalName', label: 'Gruppo' },");
             builder.AppendLine("      { key: 'PrincipalSid', label: 'SID' },");
             builder.AppendLine("      { key: 'AllowDeny', label: 'Allow/Deny' },");
             builder.AppendLine("      { key: 'RightsSummary', label: 'Diritti' },");
+            builder.AppendLine("      { key: 'EffectiveRightsSummary', label: 'Effective Access' },");
+            builder.AppendLine("      { key: 'RiskLevel', label: 'Rischio' },");
+            builder.AppendLine("      { key: 'Owner', label: 'Owner' },");
+            builder.AppendLine("      { key: 'AuditSummary', label: 'SACL/Audit' },");
             builder.AppendLine("      { key: 'Depth', label: 'Depth' },");
             builder.AppendLine("      { key: 'IsDisabled', label: 'Disabilitato', type: 'bool' },");
             builder.AppendLine("      { key: 'HasFullControl', label: 'Full', type: 'bool' },");
@@ -176,10 +182,16 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      { key: 'PropagationFlags', label: 'Propagation' }");
             builder.AppendLine("    ];");
             builder.AppendLine("    const userColumns = [");
+            builder.AppendLine("      { key: 'ResourceType', label: 'Risorsa' },");
+            builder.AppendLine("      { key: 'TargetPath', label: 'Percorso' },");
             builder.AppendLine("      { key: 'PrincipalName', label: 'Utente' },");
             builder.AppendLine("      { key: 'PrincipalSid', label: 'SID' },");
             builder.AppendLine("      { key: 'AllowDeny', label: 'Allow/Deny' },");
             builder.AppendLine("      { key: 'RightsSummary', label: 'Diritti' },");
+            builder.AppendLine("      { key: 'EffectiveRightsSummary', label: 'Effective Access' },");
+            builder.AppendLine("      { key: 'RiskLevel', label: 'Rischio' },");
+            builder.AppendLine("      { key: 'Owner', label: 'Owner' },");
+            builder.AppendLine("      { key: 'AuditSummary', label: 'SACL/Audit' },");
             builder.AppendLine("      { key: 'Depth', label: 'Depth' },");
             builder.AppendLine("      { key: 'IsDisabled', label: 'Disabilitato', type: 'bool' },");
             builder.AppendLine("      { key: 'HasFullControl', label: 'Full', type: 'bool' },");
@@ -193,11 +205,17 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      { key: 'PropagationFlags', label: 'Propagation' }");
             builder.AppendLine("    ];");
             builder.AppendLine("    const aclColumns = [");
+            builder.AppendLine("      { key: 'ResourceType', label: 'Risorsa' },");
+            builder.AppendLine("      { key: 'TargetPath', label: 'Percorso' },");
             builder.AppendLine("      { key: 'PrincipalName', label: 'Principal' },");
             builder.AppendLine("      { key: 'PrincipalSid', label: 'SID' },");
             builder.AppendLine("      { key: 'PrincipalType', label: 'Tipo' },");
             builder.AppendLine("      { key: 'AllowDeny', label: 'Allow/Deny' },");
             builder.AppendLine("      { key: 'RightsSummary', label: 'Diritti' },");
+            builder.AppendLine("      { key: 'EffectiveRightsSummary', label: 'Effective Access' },");
+            builder.AppendLine("      { key: 'RiskLevel', label: 'Rischio' },");
+            builder.AppendLine("      { key: 'Owner', label: 'Owner' },");
+            builder.AppendLine("      { key: 'AuditSummary', label: 'SACL/Audit' },");
             builder.AppendLine("      { key: 'Depth', label: 'Depth' },");
             builder.AppendLine("      { key: 'IsDisabled', label: 'Disabilitato', type: 'bool' },");
             builder.AppendLine("      { key: 'HasFullControl', label: 'Full', type: 'bool' },");
@@ -451,9 +469,12 @@ namespace NtfsAudit.App.Export
             foreach (var entry in details)
             {
                 var summary = entry.Value.DiffSummary;
+                var baselineSummary = entry.Value.BaselineSummary;
                 var added = summary == null ? 0 : summary.Added.Count(key => !key.IsInherited);
                 var removed = summary == null ? 0 : summary.Removed.Count;
                 var deny = summary == null ? 0 : summary.DenyExplicitCount;
+                var baselineAdded = baselineSummary == null ? 0 : baselineSummary.Added.Count;
+                var baselineRemoved = baselineSummary == null ? 0 : baselineSummary.Removed.Count;
                 payload[entry.Key] = new
                 {
                     GroupEntries = entry.Value.GroupEntries ?? new List<AceEntry>(),
@@ -464,7 +485,9 @@ namespace NtfsAudit.App.Export
                     IsProtected = summary != null ? summary.IsProtected : entry.Value.IsInheritanceDisabled,
                     ExplicitAddedCount = added,
                     ExplicitRemovedCount = removed,
-                    DenyExplicitCount = deny
+                    DenyExplicitCount = deny,
+                    BaselineAddedCount = baselineAdded,
+                    BaselineRemovedCount = baselineRemoved
                 };
             }
             return payload;
