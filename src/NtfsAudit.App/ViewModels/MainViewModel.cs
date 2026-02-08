@@ -741,11 +741,30 @@ namespace NtfsAudit.App.ViewModels
                     continue;
                 }
 
-                if (SHCreateItemFromParsingName(drive.Name, IntPtr.Zero, typeof(IShellItem).GUID, out var place) == 0)
+                var uncPath = PathResolver.NormalizeRootPath(drive.Name, false);
+                if (TryAddPlace(dialog, uncPath))
                 {
-                    dialog.AddPlace(place, (int)FileDialogAddPlace.Bottom);
+                    continue;
                 }
+
+                TryAddPlace(dialog, drive.Name);
             }
+        }
+
+        private bool TryAddPlace(IFileDialog dialog, string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return false;
+            }
+
+            if (SHCreateItemFromParsingName(path, IntPtr.Zero, typeof(IShellItem).GUID, out var place) == 0)
+            {
+                dialog.AddPlace(place, (int)FileDialogAddPlace.Bottom);
+                return true;
+            }
+
+            return false;
         }
 
         private const int HResultCanceled = unchecked((int)0x800704C7);
