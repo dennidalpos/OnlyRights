@@ -14,7 +14,8 @@ param(
 $ErrorActionPreference = "Stop"
 $root = Resolve-Path ".."
 $distRoot = if ($OutputPath) {
-    if ([System.IO.Path]::IsPathRooted($OutputPath)) { $OutputPath } else { Join-Path $root $OutputPath }
+    $resolved = if ([System.IO.Path]::IsPathRooted($OutputPath)) { $OutputPath } else { Join-Path $root $OutputPath }
+    [System.IO.Path]::GetFullPath($resolved)
 } else {
     Join-Path $root "dist"
 }

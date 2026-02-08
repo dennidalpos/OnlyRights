@@ -187,6 +187,7 @@ namespace NtfsAudit.App.ViewModels
                 _resolveIdentities = value;
                 OnPropertyChanged("ResolveIdentities");
                 OnPropertyChanged("IsExpandGroupsEnabled");
+                NormalizeIdentityOptions();
             }
         }
 
@@ -243,6 +244,7 @@ namespace NtfsAudit.App.ViewModels
                 _enableAdvancedAudit = value;
                 OnPropertyChanged("EnableAdvancedAudit");
                 OnPropertyChanged("IsAdvancedAuditEnabled");
+                NormalizeAdvancedAuditOptions();
             }
         }
 
@@ -742,6 +744,7 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_isViewerMode) return;
             if (_scanResult == null) return;
+            if (!EnsureScanDataAvailable("Export")) return;
             using (var dialog = new FolderBrowserDialog())
             {
                 dialog.ShowNewFolderButton = true;
@@ -760,6 +763,7 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_isViewerMode) return;
             if (_scanResult == null) return;
+            if (!EnsureScanDataAvailable("Export analisi")) return;
             var dialog = new Win32.SaveFileDialog
             {
                 Filter = "Analisi NtfsAudit (*.ntaudit)|*.ntaudit",
@@ -777,6 +781,7 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_isViewerMode) return;
             if (_scanResult == null) return;
+            if (!EnsureScanDataAvailable("Export HTML")) return;
             var dialog = new Win32.SaveFileDialog
             {
                 Filter = "HTML (*.html)|*.html",
@@ -807,6 +812,12 @@ namespace NtfsAudit.App.ViewModels
                 Filter = "Analisi NtfsAudit (*.ntaudit)|*.ntaudit"
             };
             if (dialog.ShowDialog() != true) return;
+            if (!File.Exists(dialog.FileName))
+            {
+                ProgressText = "File analisi non trovato.";
+                WpfMessageBox.Show(ProgressText, "Errore import", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
             try
             {
                 SetBusy(true);
@@ -1044,6 +1055,84 @@ namespace NtfsAudit.App.ViewModels
             FilteredGroupEntries.Refresh();
             FilteredUserEntries.Refresh();
             FilteredAllEntries.Refresh();
+        }
+
+        private void NormalizeIdentityOptions()
+        {
+            if (_resolveIdentities) return;
+
+            if (_expandGroups)
+            {
+                _expandGroups = false;
+                OnPropertyChanged("ExpandGroups");
+            }
+
+            if (_excludeServiceAccounts)
+            {
+                _excludeServiceAccounts = false;
+                OnPropertyChanged("ExcludeServiceAccounts");
+            }
+
+            if (_excludeAdminAccounts)
+            {
+                _excludeAdminAccounts = false;
+                OnPropertyChanged("ExcludeAdminAccounts");
+            }
+
+            if (_usePowerShell)
+            {
+                _usePowerShell = false;
+                OnPropertyChanged("UsePowerShell");
+            }
+        }
+
+        private void NormalizeAdvancedAuditOptions()
+        {
+            if (_enableAdvancedAudit) return;
+
+            if (_computeEffectiveAccess)
+            {
+                _computeEffectiveAccess = false;
+                OnPropertyChanged("ComputeEffectiveAccess");
+            }
+
+            if (_includeFiles)
+            {
+                _includeFiles = false;
+                OnPropertyChanged("IncludeFiles");
+            }
+
+            if (_readOwnerAndSacl)
+            {
+                _readOwnerAndSacl = false;
+                OnPropertyChanged("ReadOwnerAndSacl");
+            }
+
+            if (_compareBaseline)
+            {
+                _compareBaseline = false;
+                OnPropertyChanged("CompareBaseline");
+            }
+        }
+
+        private bool EnsureScanDataAvailable(string actionLabel)
+        {
+            if (_scanResult == null || string.IsNullOrWhiteSpace(_scanResult.TempDataPath))
+            {
+                ProgressText = string.Format("{0}: dati scansione mancanti.", actionLabel);
+                WpfMessageBox.Show(ProgressText, actionLabel, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return false;
+            }
+
+            var dataPath = PathResolver.ToExtendedPath(_scanResult.TempDataPath);
+            if (!File.Exists(dataPath))
+            {
+                ProgressText = string.Format("{0}: file dati scansione non trovato.", actionLabel);
+                WpfMessageBox.Show(ProgressText, actionLabel, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return false;
+            }
+
+            return true;
         }
 
         private bool FilterErrors(object item)

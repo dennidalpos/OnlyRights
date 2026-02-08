@@ -96,6 +96,8 @@ Le opzioni principali influenzano prestazioni e dettaglio dei risultati:
 - **Scansiona file**: include i file oltre alle cartelle.
 - **Leggi Owner e SACL**: arricchisce le ACE con owner e policy di audit.
 - **Confronta con baseline/policy attese**: calcola differenze rispetto alla baseline del percorso root.
+- **Nota**: quando “Risolvi identità” è disattivato, le opzioni AD e filtro account vengono automaticamente disabilitate. Se “Abilita audit avanzato” è disattivato, le opzioni avanzate vengono azzerate.
+- **Nota DFS**: le cartelle di cache DFS come `DfsrPrivate`/`DFSCache` non vengono scansionate.
 
 ## Export
 
