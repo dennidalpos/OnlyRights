@@ -809,6 +809,14 @@ namespace NtfsAudit.App.Services
                 }
                 return string.Join(" | ", summaries);
             }
+            catch (PrivilegeNotHeldException)
+            {
+                return "SACL non disponibile (privilegi)";
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return "SACL non disponibile (accesso negato)";
+            }
             catch
             {
                 return string.Empty;
