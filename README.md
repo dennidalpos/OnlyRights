@@ -106,7 +106,7 @@ Le opzioni principali influenzano prestazioni e dettaglio dei risultati:
 
 I filtri nella vista risultati funzionano in combinazione:
 
-- **Filtro ACL**: ricerca per nome, SID, allow/deny, diritti, effective access, resource type, target path, owner, risk level e membri espansi.
+- **Filtro ACL**: ricerca per nome, SID, allow/deny, diritti, effective access, SACL/audit, source, resource type, target path, owner, risk level e membri espansi.
 - **Everyone / Authenticated Users**: mostra solo le ACE con i rispettivi SID o nome equivalente.
 - **Solo Deny**: mostra solo ACE di tipo deny.
 - **Ereditarietà disabilitata**: filtra le ACE con ereditarietà disabilitata.
@@ -151,7 +151,7 @@ Produce un file HTML autoconclusivo che replica la vista corrente:
 - filtri applicati,
 - filtri avanzati (Everyone, Authenticated Users, Solo Deny, Ereditarietà disabilitata),
 - colori per diritto.
-- Il filtro ACL nell’HTML applica gli stessi criteri della UI (nome/SID/diritti/resource/target/owner/rischio/membri).
+- Il filtro ACL nell’HTML applica gli stessi criteri della UI (nome/SID/diritti/SACL/source/resource/target/owner/rischio/membri).
 
 Formato nome file:
 
@@ -219,7 +219,7 @@ Parametri principali:
 - `-CleanTemp` (rimuove `%TEMP%\NtfsAudit` prima della build/publish)
 - `-CleanImports` (pulisce `%TEMP%\NtfsAudit\\imports`)
 - `-CleanCache` (pulisce `%LOCALAPPDATA%\NtfsAudit\Cache`)
-- `-TempRoot <path>` (override di `%TEMP%` per le pulizie)
+- `-TempRoot <path>` (override di `%TEMP%`/`%TMP%` per le pulizie)
 - `-Framework <tfm>` (es. `net8.0-windows`)
 - `-OutputPath <cartella>`
 - `-Runtime <rid>` (es. `win-x64`)
@@ -242,7 +242,7 @@ Parametri:
 - `-Configuration <Release|Debug>`
 - `-Framework <tfm>`
 - `-Runtime <rid>`
-- `-TempRoot <path>` (override di `%TEMP%` per i file temporanei)
+- `-TempRoot <path>` (override di `%TEMP%`/`%TMP%` per i file temporanei)
 - `-DistRoot <path>` (pulisce una cartella dist custom)
 - `-KeepDist`
 - `-KeepArtifacts`
@@ -263,10 +263,13 @@ Gli import di analisi usano `%TEMP%\NtfsAudit\\imports` e possono essere elimina
 ## Troubleshooting
 
 - **Accesso negato**: gli errori vengono registrati, la scansione continua.
+- **SACL/Audit vuote**: verifica che “Leggi Owner e SACL” sia attivo e che l’app sia eseguita come amministratore (richiede la privilege `SeSecurityPrivilege`).
 - **TreeView vuota o senza marker**:
   - Se la mappa albero non è disponibile, la UI ricostruisce l’albero dai dettagli ACL o dai record di export; una scansione con molti errori o percorsi non accessibili può produrre pochi nodi.
+  - Se il percorso root è una share/DFS profonda, l’import prova a limitare l’albero alle sottocartelle del root per evitare nodi “sopra” il root.
   - Verifica che il percorso root sia corretto e raggiungibile (UNC/DFS) e, se possibile, avvia l’app come amministratore per leggere Owner/SACL e ottenere più dettagli.
   - In ambienti con ACL particolarmente restrittive, abilita “Analizza tutte le sottocartelle” per massimizzare la copertura e riduci l’uso di filtri che escludono molte ACE.
+- **Unità di rete non visibili nel dialog**: inserisci manualmente il percorso UNC (es. `\\server\share`) nel campo percorso o verifica la mappatura da Esplora file.
 - **AD non disponibile**: disattiva “Usa PowerShell per AD” o installa RSAT.
 - **Prestazioni**: riduci la profondità o disattiva risoluzione identità/espansione gruppi.
 - **Compatibilità 2012 R2**: usa `net6.0-windows` per server legacy.

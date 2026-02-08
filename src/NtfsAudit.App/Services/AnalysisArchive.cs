@@ -85,8 +85,8 @@ namespace NtfsAudit.App.Services
                 File.WriteAllText(errorPath, string.Empty);
             }
 
-            var treeMap = LoadTreeMap(treePath, dataPath);
             var meta = LoadMeta(metaPath);
+            var treeMap = LoadTreeMap(treePath, dataPath, meta.RootPath);
 
             var details = BuildDetailsFromExport(dataPath);
             ApplyFolderFlags(details, LoadFolderFlags(folderFlagsPath));
@@ -108,7 +108,7 @@ namespace NtfsAudit.App.Services
             };
         }
 
-        private Dictionary<string, List<string>> LoadTreeMap(string treePath, string dataPath)
+        private Dictionary<string, List<string>> LoadTreeMap(string treePath, string dataPath, string rootPath)
         {
             if (File.Exists(treePath))
             {
@@ -125,7 +125,7 @@ namespace NtfsAudit.App.Services
                 }
             }
 
-            return BuildTreeFromExport(dataPath);
+            return BuildTreeFromExport(dataPath, rootPath);
         }
 
         private ArchiveMeta LoadMeta(string metaPath)
@@ -363,11 +363,12 @@ namespace NtfsAudit.App.Services
                 record.IsInheritanceDisabled);
         }
 
-        private Dictionary<string, List<string>> BuildTreeFromExport(string dataPath)
+        private Dictionary<string, List<string>> BuildTreeFromExport(string dataPath, string rootPath)
         {
             var treeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
             if (!File.Exists(dataPath)) return treeMap;
 
+            var normalizedRoot = NormalizeTreePath(rootPath);
             var folders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var line in File.ReadLines(dataPath))
             {
@@ -387,6 +388,10 @@ namespace NtfsAudit.App.Services
                 {
                     continue;
                 }
+                if (!IsWithinRoot(NormalizeTreePath(record.FolderPath), normalizedRoot))
+                {
+                    continue;
+                }
                 folders.Add(record.FolderPath);
             }
 
@@ -397,12 +402,27 @@ namespace NtfsAudit.App.Services
                 var parent = SafeGetParent(folder, parentCache);
                 while (!string.IsNullOrWhiteSpace(parent))
                 {
+                    var normalizedParent = NormalizeTreePath(parent);
+                    if (!IsWithinRoot(normalizedParent, normalizedRoot))
+                    {
+                        break;
+                    }
                     if (!folders.Add(parent))
+                    {
+                        break;
+                    }
+                    if (!string.IsNullOrWhiteSpace(normalizedRoot)
+                        && string.Equals(normalizedParent, normalizedRoot, StringComparison.OrdinalIgnoreCase))
                     {
                         break;
                     }
                     parent = SafeGetParent(parent, parentCache);
                 }
+            }
+
+            if (!string.IsNullOrWhiteSpace(rootPath))
+            {
+                folders.Add(rootPath);
             }
 
             var treeSets = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
@@ -419,6 +439,11 @@ namespace NtfsAudit.App.Services
                 var parent = SafeGetParent(folder, parentCache);
                 if (parent != null)
                 {
+                    var normalizedParent = NormalizeTreePath(parent);
+                    if (!IsWithinRoot(normalizedParent, normalizedRoot))
+                    {
+                        continue;
+                    }
                     HashSet<string> children;
                     if (!treeSets.TryGetValue(parent, out children))
                     {
@@ -435,6 +460,33 @@ namespace NtfsAudit.App.Services
             }
 
             return treeMap;
+        }
+
+        private static string NormalizeTreePath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return string.Empty;
+            var normalized = PathResolver.FromExtendedPath(path);
+            return normalized.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        }
+
+        private static bool IsWithinRoot(string candidate, string root)
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(root))
+            {
+                return true;
+            }
+            if (string.Equals(candidate, root, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            var rootWithSeparator = root.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal)
+                ? root
+                : root + Path.DirectorySeparatorChar;
+            return candidate.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase);
         }
 
         private string SafeGetParent(string path, Dictionary<string, string> cache)

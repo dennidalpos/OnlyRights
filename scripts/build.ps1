@@ -38,6 +38,14 @@ if (!(Test-Path $viewerProject)) { throw "Viewer project not found" }
 
 if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) { throw "dotnet SDK not found." }
 
+function Get-TempRoot {
+    param([string]$PreferredRoot)
+    if ($PreferredRoot) { return $PreferredRoot }
+    if ($env:TEMP) { return $env:TEMP }
+    if ($env:TMP) { return $env:TMP }
+    return [System.IO.Path]::GetTempPath()
+}
+
 if ($CleanAllTemp) {
     $CleanTemp = $true
     $CleanImports = $true
@@ -45,13 +53,13 @@ if ($CleanAllTemp) {
 }
 
 if ($CleanTemp) {
-    $baseTemp = if ($TempRoot) { $TempRoot } else { $env:TEMP }
+    $baseTemp = Get-TempRoot $TempRoot
     $temp = Join-Path $baseTemp "NtfsAudit"
     if (Test-Path $temp) { Remove-Item $temp -Recurse -Force }
 }
 
 if ($CleanImports) {
-    $baseTemp = if ($TempRoot) { $TempRoot } else { $env:TEMP }
+    $baseTemp = Get-TempRoot $TempRoot
     $importTemp = Join-Path $baseTemp "NtfsAudit\\imports"
     if (Test-Path $importTemp) { Remove-Item $importTemp -Recurse -Force }
 }

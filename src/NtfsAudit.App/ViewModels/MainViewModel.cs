@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
@@ -681,21 +682,127 @@ namespace NtfsAudit.App.ViewModels
         private void Browse()
         {
             if (_isViewerMode) return;
-            using (var dialog = new FolderBrowserDialog())
+            if (TryPickFolder(out var selectedPath))
             {
-                dialog.ShowNewFolderButton = false;
-                dialog.RootFolder = Environment.SpecialFolder.MyComputer;
-                if (!string.IsNullOrWhiteSpace(RootPath))
-                {
-                    dialog.SelectedPath = RootPath;
-                }
-                var result = dialog.ShowDialog();
-                if (result == DialogResult.OK)
-                {
-                    RootPath = dialog.SelectedPath;
-                }
+                RootPath = selectedPath;
             }
         }
+
+        private bool TryPickFolder(out string selectedPath)
+        {
+            selectedPath = null;
+            try
+            {
+                var dialog = (IFileDialog)new FileOpenDialog();
+                dialog.SetTitle("Seleziona cartella");
+                dialog.GetOptions(out var options);
+                options |= (uint)(FileDialogOptions.PickFolders
+                    | FileDialogOptions.ForceFileSystem
+                    | FileDialogOptions.PathMustExist
+                    | FileDialogOptions.NoChangeDirectory);
+                dialog.SetOptions(options);
+
+                if (!string.IsNullOrWhiteSpace(RootPath))
+                {
+                    if (SHCreateItemFromParsingName(RootPath, IntPtr.Zero, typeof(IShellItem).GUID, out var folder) == 0)
+                    {
+                        dialog.SetFolder(folder);
+                    }
+                }
+
+                var result = dialog.Show(IntPtr.Zero);
+                if (result == HResultCanceled)
+                {
+                    return false;
+                }
+                if (result != 0)
+                {
+                    return false;
+                }
+                dialog.GetResult(out var item);
+                item.GetDisplayName(ShellItemDisplayName.FileSystemPath, out var pszString);
+                selectedPath = Marshal.PtrToStringUni(pszString);
+                Marshal.FreeCoTaskMem(pszString);
+                return !string.IsNullOrWhiteSpace(selectedPath);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private const int HResultCanceled = unchecked((int)0x800704C7);
+
+        [Flags]
+        private enum FileDialogOptions : uint
+        {
+            PickFolders = 0x00000020,
+            ForceFileSystem = 0x00000040,
+            NoChangeDirectory = 0x00000008,
+            PathMustExist = 0x00000800
+        }
+
+        private enum ShellItemDisplayName : uint
+        {
+            FileSystemPath = 0x80058000
+        }
+
+        [ComImport]
+        [Guid("DC1C5A9C-E88A-4DDE-A5A1-60F82A20AEF7")]
+        private class FileOpenDialog
+        {
+        }
+
+        [ComImport]
+        [Guid("42F85136-DB7E-439C-85F1-E4075D135FC8")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        private interface IFileDialog
+        {
+            [PreserveSig]
+            int Show(IntPtr parent);
+            void SetFileTypes(uint cFileTypes, IntPtr rgFilterSpec);
+            void SetFileTypeIndex(uint iFileType);
+            void GetFileTypeIndex(out uint piFileType);
+            void Advise(IntPtr pfde, out uint pdwCookie);
+            void Unadvise(uint dwCookie);
+            void SetOptions(uint fos);
+            void GetOptions(out uint pfos);
+            void SetDefaultFolder(IShellItem psi);
+            void SetFolder(IShellItem psi);
+            void GetFolder(out IShellItem ppsi);
+            void GetCurrentSelection(out IShellItem ppsi);
+            void SetFileName([MarshalAs(UnmanagedType.LPWStr)] string pszName);
+            void GetFileName([MarshalAs(UnmanagedType.LPWStr)] out string pszName);
+            void SetTitle([MarshalAs(UnmanagedType.LPWStr)] string pszTitle);
+            void SetOkButtonLabel([MarshalAs(UnmanagedType.LPWStr)] string pszText);
+            void SetFileNameLabel([MarshalAs(UnmanagedType.LPWStr)] string pszLabel);
+            void GetResult(out IShellItem ppsi);
+            void AddPlace(IShellItem psi, int fdap);
+            void SetDefaultExtension([MarshalAs(UnmanagedType.LPWStr)] string pszDefaultExtension);
+            void Close(int hr);
+            void SetClientGuid(ref Guid guid);
+            void ClearClientData();
+            void SetFilter(IntPtr pFilter);
+        }
+
+        [ComImport]
+        [Guid("43826D1E-E718-42EE-BC55-A1E261C37BFE")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        private interface IShellItem
+        {
+            void BindToHandler(IntPtr pbc, ref Guid bhid, ref Guid riid, out IntPtr ppv);
+            void GetParent(out IShellItem ppsi);
+            void GetDisplayName(ShellItemDisplayName sigdnName, out IntPtr ppszName);
+            void GetAttributes(uint sfgaoMask, out uint psfgaoAttribs);
+            void Compare(IShellItem psi, uint hint, out int piOrder);
+        }
+
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern int SHCreateItemFromParsingName(
+            [MarshalAs(UnmanagedType.LPWStr)] string pszPath,
+            IntPtr pbc,
+            [MarshalAs(UnmanagedType.LPStruct)] Guid riid,
+            out IShellItem ppv);
 
         private void StartScan()
         {
@@ -1123,9 +1230,15 @@ namespace NtfsAudit.App.ViewModels
                 };
             }
 
+            var normalizedRoot = NormalizeTreePath(fallbackRoot);
             var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
             foreach (var path in details.Keys.Where(key => !string.IsNullOrWhiteSpace(key)))
             {
+                var normalizedPath = NormalizeTreePath(path);
+                if (!IsWithinRoot(normalizedPath, normalizedRoot))
+                {
+                    continue;
+                }
                 var current = path;
                 if (!map.ContainsKey(current))
                 {
@@ -1139,6 +1252,11 @@ namespace NtfsAudit.App.ViewModels
                     {
                         break;
                     }
+                    var normalizedParent = NormalizeTreePath(parent);
+                    if (!IsWithinRoot(normalizedParent, normalizedRoot))
+                    {
+                        break;
+                    }
                     if (!map.ContainsKey(parent))
                     {
                         map[parent] = new List<string>();
@@ -1146,6 +1264,11 @@ namespace NtfsAudit.App.ViewModels
                     if (!map[parent].Contains(current, StringComparer.OrdinalIgnoreCase))
                     {
                         map[parent].Add(current);
+                    }
+                    if (!string.IsNullOrWhiteSpace(normalizedRoot)
+                        && string.Equals(normalizedParent, normalizedRoot, StringComparison.OrdinalIgnoreCase))
+                    {
+                        break;
                     }
                     current = parent;
                 }
@@ -1171,6 +1294,7 @@ namespace NtfsAudit.App.ViewModels
                 return null;
             }
 
+            var normalizedRoot = NormalizeTreePath(fallbackRoot);
             var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
             try
             {
@@ -1189,7 +1313,7 @@ namespace NtfsAudit.App.ViewModels
                     if (record == null) continue;
                     var path = string.IsNullOrWhiteSpace(record.TargetPath) ? record.FolderPath : record.TargetPath;
                     if (string.IsNullOrWhiteSpace(path)) continue;
-                    AddPathWithAncestors(map, path);
+                    AddPathWithAncestors(map, path, normalizedRoot);
                 }
             }
             catch
@@ -1206,7 +1330,14 @@ namespace NtfsAudit.App.ViewModels
         }
 
         private void AddPathWithAncestors(Dictionary<string, List<string>> map, string path)
+            => AddPathWithAncestors(map, path, NormalizeTreePath(RootPath));
+
+        private void AddPathWithAncestors(Dictionary<string, List<string>> map, string path, string normalizedRoot)
         {
+            if (!IsWithinRoot(NormalizeTreePath(path), normalizedRoot))
+            {
+                return;
+            }
             var current = path;
             if (!map.ContainsKey(current))
             {
@@ -1220,6 +1351,11 @@ namespace NtfsAudit.App.ViewModels
                 {
                     break;
                 }
+                var normalizedParent = NormalizeTreePath(parent);
+                if (!IsWithinRoot(normalizedParent, normalizedRoot))
+                {
+                    break;
+                }
                 if (!map.ContainsKey(parent))
                 {
                     map[parent] = new List<string>();
@@ -1227,6 +1363,11 @@ namespace NtfsAudit.App.ViewModels
                 if (!map[parent].Contains(current, StringComparer.OrdinalIgnoreCase))
                 {
                     map[parent].Add(current);
+                }
+                if (!string.IsNullOrWhiteSpace(normalizedRoot)
+                    && string.Equals(normalizedParent, normalizedRoot, StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
                 }
                 current = parent;
             }
@@ -1243,6 +1384,33 @@ namespace NtfsAudit.App.ViewModels
             {
                 return null;
             }
+        }
+
+        private static string NormalizeTreePath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return string.Empty;
+            var normalized = PathResolver.FromExtendedPath(path);
+            return normalized.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        }
+
+        private static bool IsWithinRoot(string candidate, string root)
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(root))
+            {
+                return true;
+            }
+            if (string.Equals(candidate, root, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            var rootWithSeparator = root.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal)
+                ? root
+                : root + Path.DirectorySeparatorChar;
+            return candidate.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase);
         }
 
         private void ApplyDiffs(ScanResult result)
@@ -1319,10 +1487,12 @@ namespace NtfsAudit.App.ViewModels
                 || MatchesFilter(entry.AllowDeny, term)
                 || MatchesFilter(entry.RightsSummary, term)
                 || MatchesFilter(entry.EffectiveRightsSummary, term)
+                || MatchesFilter(entry.AuditSummary, term)
                 || MatchesFilter(entry.ResourceType, term)
                 || MatchesFilter(entry.TargetPath, term)
                 || MatchesFilter(entry.Owner, term)
                 || MatchesFilter(entry.RiskLevel, term)
+                || MatchesFilter(entry.Source, term)
                 || MatchesMemberFilter(entry.MemberNames, term);
         }
 
