@@ -1083,20 +1083,28 @@ namespace NtfsAudit.App.ViewModels
             var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
             foreach (var path in details.Keys.Where(key => !string.IsNullOrWhiteSpace(key)))
             {
-                if (!map.ContainsKey(path))
+                var current = path;
+                if (!map.ContainsKey(current))
                 {
-                    map[path] = new List<string>();
+                    map[current] = new List<string>();
                 }
 
-                var parent = SafeGetParentPath(path);
-                if (string.IsNullOrWhiteSpace(parent)) continue;
-                if (!map.ContainsKey(parent))
+                while (true)
                 {
-                    map[parent] = new List<string>();
-                }
-                if (!map[parent].Contains(path, StringComparer.OrdinalIgnoreCase))
-                {
-                    map[parent].Add(path);
+                    var parent = SafeGetParentPath(current);
+                    if (string.IsNullOrWhiteSpace(parent))
+                    {
+                        break;
+                    }
+                    if (!map.ContainsKey(parent))
+                    {
+                        map[parent] = new List<string>();
+                    }
+                    if (!map[parent].Contains(current, StringComparer.OrdinalIgnoreCase))
+                    {
+                        map[parent].Add(current);
+                    }
+                    current = parent;
                 }
             }
 
