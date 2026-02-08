@@ -62,13 +62,13 @@
     </Style>
     <DataTemplate x:Key="PermissionBadgesTemplate">
       <StackPanel Orientation="Horizontal">
-        <Border Background="#FF1976D2" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInherited, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Border Background="#FF1976D2" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInherited, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Ereditato">
           <TextBlock Text="I" Foreground="White" FontSize="10" />
         </Border>
-        <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Protetto (ereditarietà disabilitata)">
           <TextBlock Text="P" Foreground="White" FontSize="10" />
         </Border>
-        <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Deny esplicito">
           <TextBlock Text="D" Foreground="White" FontSize="10" />
         </Border>
       </StackPanel>
@@ -304,77 +304,39 @@
             <RowDefinition Height="*" />
           </Grid.RowDefinitions>
           <TextBlock Grid.Row="0" Text="Albero cartelle" FontWeight="SemiBold" Margin="2,0,0,6" />
-          <StackPanel Grid.Row="1" Margin="0,0,0,6">
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-              <Button Margin="0,0,6,0" Padding="8,2" Content="Espandi" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
-              <Button Padding="8,2" Content="Comprimi" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
-            </StackPanel>
+            <StackPanel Grid.Row="1" Margin="0,0,0,6">
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                <Button Margin="0,0,6,0" Padding="8,2" Content="Espandi" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
+                <Button Padding="8,2" Content="Comprimi" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
+              </StackPanel>
             <StackPanel>
               <TextBlock Text="Legenda:" FontWeight="SemiBold" Margin="0,0,0,4" />
-              <Border CornerRadius="4" Padding="4" Margin="0,0,0,4" BorderBrush="#DDDDDD" BorderThickness="1">
-                <StackPanel Orientation="Horizontal">
-                  <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
-                    <TextBlock Text="P" Foreground="White" FontSize="10" />
-                  </Border>
-                  <TextBlock Text="Protetto (ereditarietà disabilitata)" VerticalAlignment="Center" />
-                </StackPanel>
-              </Border>
-              <Border CornerRadius="4" Padding="4" Margin="0,0,0,4" BorderBrush="#DDDDDD" BorderThickness="1">
-                <StackPanel Orientation="Horizontal">
-                  <Border Background="#FF2E7D32" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
-                    <TextBlock Text="+N" Foreground="White" FontSize="10" />
-                  </Border>
-                  <TextBlock Text="ACE esplicite aggiunte" VerticalAlignment="Center" />
-                </StackPanel>
-              </Border>
-              <Border CornerRadius="4" Padding="4" Margin="0,0,0,4" BorderBrush="#DDDDDD" BorderThickness="1">
-                <StackPanel Orientation="Horizontal">
-                  <Border Background="#FFF57C00" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
-                    <TextBlock Text="-N" Foreground="White" FontSize="10" />
-                  </Border>
-                  <TextBlock Text="ACE rimosse rispetto al padre" VerticalAlignment="Center" />
-                </StackPanel>
-              </Border>
-              <Border CornerRadius="4" Padding="4" BorderBrush="#DDDDDD" BorderThickness="1">
-                <StackPanel Orientation="Horizontal">
-                  <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
-                    <TextBlock Text="D" Foreground="White" FontSize="10" />
-                  </Border>
-                  <TextBlock Text="Deny espliciti" VerticalAlignment="Center" />
-                </StackPanel>
-              </Border>
-              <Border CornerRadius="4" Padding="4" Margin="0,4,0,0" BorderBrush="#DDDDDD" BorderThickness="1">
-                <StackPanel Orientation="Horizontal">
-                  <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
-                    <TextBlock Text="B+N" Foreground="White" FontSize="10" />
-                  </Border>
-                  <TextBlock Text="Aggiunte vs baseline" VerticalAlignment="Center" />
-                </StackPanel>
-              </Border>
-              <Border CornerRadius="4" Padding="4" BorderBrush="#DDDDDD" BorderThickness="1">
-                <StackPanel Orientation="Horizontal">
-                  <Border Background="#FF78909C" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
-                    <TextBlock Text="B-N" Foreground="White" FontSize="10" />
-                  </Border>
-                  <TextBlock Text="Rimozioni vs baseline" VerticalAlignment="Center" />
-                </StackPanel>
-              </Border>
-              <Border CornerRadius="4" Padding="4" BorderBrush="#DDDDDD" BorderThickness="1">
-                <StackPanel Orientation="Horizontal">
-                  <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
-                    <TextBlock Text="N" Foreground="White" FontSize="10" />
-                  </Border>
-                  <TextBlock Text="ACE NTFS esplicite" VerticalAlignment="Center" />
-                </StackPanel>
-              </Border>
-              <Border CornerRadius="4" Padding="4" BorderBrush="#DDDDDD" BorderThickness="1">
-                <StackPanel Orientation="Horizontal">
-                  <Border Background="#FF5E35B1" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
-                    <TextBlock Text="S" Foreground="White" FontSize="10" />
-                  </Border>
-                  <TextBlock Text="Permessi Share presenti" VerticalAlignment="Center" />
-                </StackPanel>
-              </Border>
+              <WrapPanel>
+                <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Protetto (ereditarietà disabilitata)">
+                  <TextBlock Text="P" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FF2E7D32" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="ACE esplicite aggiunte">
+                  <TextBlock Text="A" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FFF57C00" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="ACE rimosse rispetto al padre">
+                  <TextBlock Text="R" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Deny espliciti">
+                  <TextBlock Text="D" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Aggiunte vs baseline">
+                  <TextBlock Text="BA" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FF78909C" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Rimozioni vs baseline">
+                  <TextBlock Text="BR" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="ACE NTFS esplicite">
+                  <TextBlock Text="N" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FF5E35B1" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Permessi Share presenti">
+                  <TextBlock Text="S" Foreground="White" FontSize="10" />
+                </Border>
+              </WrapPanel>
             </StackPanel>
           </StackPanel>
           <TreeView x:Name="FolderTreeView" Grid.Row="2" ItemsSource="{Binding FolderTree}" SelectedItemChanged="TreeView_OnSelectedItemChanged" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling">
@@ -453,6 +415,17 @@
                   <CheckBox Margin="0,0,12,6" Content="Authenticated Users" IsChecked="{Binding FilterAuthenticatedUsers}" />
                   <CheckBox Margin="0,0,12,6" Content="Solo Deny" IsChecked="{Binding FilterDenyOnly}" />
                   <CheckBox Margin="0,0,12,6" Content="Ereditarietà disabilitata" IsChecked="{Binding FilterInheritanceDisabled}" />
+                </WrapPanel>
+                <WrapPanel>
+                  <Border Background="#FF1976D2" Padding="2,0" CornerRadius="2" Margin="0,0,6,0" ToolTip="Ereditato">
+                    <TextBlock Text="I" Foreground="White" FontSize="10" />
+                  </Border>
+                  <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,6,0" ToolTip="Protetto (ereditarietà disabilitata)">
+                    <TextBlock Text="P" Foreground="White" FontSize="10" />
+                  </Border>
+                  <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,6,0" ToolTip="Deny esplicito">
+                    <TextBlock Text="D" Foreground="White" FontSize="10" />
+                  </Border>
                 </WrapPanel>
               </StackPanel>
             </GroupBox>
