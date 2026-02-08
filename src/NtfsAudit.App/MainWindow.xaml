@@ -74,6 +74,7 @@
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
           <StackPanel Orientation="Horizontal">
