@@ -290,6 +290,8 @@
                 <WrapPanel Margin="0,0,0,4">
                   <CheckBox Margin="0,0,12,6" Content="Everyone" IsChecked="{Binding FilterEveryone}" />
                   <CheckBox Margin="0,0,12,6" Content="Authenticated Users" IsChecked="{Binding FilterAuthenticatedUsers}" />
+                  <CheckBox Margin="0,0,12,6" Content="Utenti di servizio" IsChecked="{Binding FilterServiceAccounts}" />
+                  <CheckBox Margin="0,0,12,6" Content="Admin" IsChecked="{Binding FilterAdminAccounts}" />
                 </WrapPanel>
                 <TextBlock Text="Legenda diritti" Style="{StaticResource SubsectionHeaderText}" />
                 <WrapPanel>

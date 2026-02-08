@@ -505,6 +505,10 @@ namespace NtfsAudit.App.Services
                 var effectiveMask = options.ComputeEffectiveAccess
                     ? PermissionCalculator.IntersectMasks(ntfsMask, shareMask, shareAccessMap != null && shareAccessMap.Count > 0)
                     : (int)rule.FileSystemRights;
+                if (options.ComputeEffectiveAccess && effectiveMask == 0 && rule.AccessControlType == AccessControlType.Allow)
+                {
+                    effectiveMask = (int)rule.FileSystemRights;
+                }
                 var effectiveSummary = options.ComputeEffectiveAccess
                     ? RightsNormalizer.Normalize((FileSystemRights)effectiveMask)
                     : rightsSummary;

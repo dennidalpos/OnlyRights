@@ -111,6 +111,8 @@ I filtri nella vista risultati funzionano in combinazione:
 
 - **Filtro ACL**: ricerca per nome, SID, allow/deny, diritti, effective access, SACL/audit, source, resource type, target path, owner, risk level e membri espansi.
 - **Everyone / Authenticated Users**: mostra solo le ACE con i rispettivi SID o nome equivalente.
+- **Utenti di servizio**: mostra solo le ACE marcate come account di servizio.
+- **Admin**: mostra solo le ACE marcate come account amministrativi.
 - **Solo Deny**: mostra solo ACE di tipo deny.
 - **Ereditarietà disabilitata**: filtra le ACE con ereditarietà disabilitata.
 

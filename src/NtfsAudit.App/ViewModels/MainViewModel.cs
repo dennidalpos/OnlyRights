@@ -65,6 +65,8 @@ namespace NtfsAudit.App.ViewModels
         private bool _filterAuthenticatedUsers;
         private bool _filterDenyOnly;
         private bool _filterInheritanceDisabled;
+        private bool _filterServiceAccounts;
+        private bool _filterAdminAccounts;
         private string _currentPathBackground = "Transparent";
         private int _summaryTotalEntries;
         private int _summaryHighRisk;
@@ -503,6 +505,28 @@ namespace NtfsAudit.App.ViewModels
             {
                 _filterInheritanceDisabled = value;
                 OnPropertyChanged("FilterInheritanceDisabled");
+                RefreshAclFilters();
+            }
+        }
+
+        public bool FilterServiceAccounts
+        {
+            get { return _filterServiceAccounts; }
+            set
+            {
+                _filterServiceAccounts = value;
+                OnPropertyChanged("FilterServiceAccounts");
+                RefreshAclFilters();
+            }
+        }
+
+        public bool FilterAdminAccounts
+        {
+            get { return _filterAdminAccounts; }
+            set
+            {
+                _filterAdminAccounts = value;
+                OnPropertyChanged("FilterAdminAccounts");
                 RefreshAclFilters();
             }
         }
@@ -1543,11 +1567,13 @@ namespace NtfsAudit.App.ViewModels
             {
                 return false;
             }
-            if (FilterEveryone || FilterAuthenticatedUsers)
+            if (FilterEveryone || FilterAuthenticatedUsers || FilterServiceAccounts || FilterAdminAccounts)
             {
                 var matchesPrincipal =
                     (FilterEveryone && IsEveryone(entry.PrincipalSid, entry.PrincipalName)) ||
-                    (FilterAuthenticatedUsers && IsAuthenticatedUsers(entry.PrincipalSid, entry.PrincipalName));
+                    (FilterAuthenticatedUsers && IsAuthenticatedUsers(entry.PrincipalSid, entry.PrincipalName)) ||
+                    (FilterServiceAccounts && entry.IsServiceAccount) ||
+                    (FilterAdminAccounts && entry.IsAdminAccount);
                 if (!matchesPrincipal)
                 {
                     return false;
@@ -1619,6 +1645,8 @@ namespace NtfsAudit.App.ViewModels
             FilterAuthenticatedUsers = false;
             FilterDenyOnly = false;
             FilterInheritanceDisabled = false;
+            FilterServiceAccounts = false;
+            FilterAdminAccounts = false;
             UpdateSummary(null);
         }
 
