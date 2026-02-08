@@ -45,11 +45,11 @@ namespace NtfsAudit.App.ViewModels
         private bool _excludeAdminAccounts;
         private bool _expandGroups = true;
         private bool _usePowerShell = true;
-        private bool _enableAdvancedAudit;
-        private bool _computeEffectiveAccess;
+        private bool _enableAdvancedAudit = true;
+        private bool _computeEffectiveAccess = true;
         private bool _includeFiles;
-        private bool _readOwnerAndSacl;
-        private bool _compareBaseline;
+        private bool _readOwnerAndSacl = true;
+        private bool _compareBaseline = true;
         private string _progressText = "Pronto";
         private string _currentPathText;
         private int _processedCount;
