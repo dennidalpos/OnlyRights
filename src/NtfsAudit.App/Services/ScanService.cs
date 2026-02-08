@@ -110,7 +110,8 @@ namespace NtfsAudit.App.Services
                                     children = new List<string>();
                                     foreach (var child in Directory.EnumerateDirectories(ioPath, "*", SearchOption.TopDirectoryOnly))
                                     {
-                                        children.Add(PathResolver.FromExtendedPath(child));
+                                        var childPath = PathResolver.FromExtendedPath(child);
+                                        children.Add(childPath);
                                     }
                                 }
                                 catch (Exception ex)
@@ -138,6 +139,7 @@ namespace NtfsAudit.App.Services
                                 {
                                     parentBag.Add(child);
                                     treeMap.GetOrAdd(child, _ => new ConcurrentBag<string>());
+                                    if (IsDfsCachePath(child)) continue;
                                     Enqueue(new WorkItem(child, depth + 1));
                                 }
                             }
@@ -334,7 +336,11 @@ namespace NtfsAudit.App.Services
                 ComputeEffectiveAccess = options.ComputeEffectiveAccess,
                 IncludeFiles = options.IncludeFiles,
                 ReadOwnerAndSacl = options.ReadOwnerAndSacl,
-                CompareBaseline = options.CompareBaseline
+                CompareBaseline = options.CompareBaseline,
+                ScanAllDepths = options.ScanAllDepths,
+                MaxDepth = options.MaxDepth,
+                ExpandGroups = options.ExpandGroups,
+                UsePowerShell = options.UsePowerShell
             };
         }
 
@@ -754,6 +760,27 @@ namespace NtfsAudit.App.Services
         private static bool IsAuthenticatedUsers(string sidOrName)
         {
             return string.Equals(sidOrName, AuthenticatedUsersSid, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsDfsCachePath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return false;
+            var trimmed = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var folderName = Path.GetFileName(trimmed);
+            if (string.IsNullOrWhiteSpace(folderName)) return false;
+            if (string.Equals(folderName, "DfsrPrivate", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (string.Equals(folderName, "DFSR", StringComparison.OrdinalIgnoreCase))
+            {
+                var parent = Path.GetDirectoryName(trimmed);
+                var parentName = string.IsNullOrWhiteSpace(parent) ? string.Empty : Path.GetFileName(parent.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                return string.Equals(parentName, "System Volume Information", StringComparison.OrdinalIgnoreCase);
+            }
+
+            return false;
         }
 
         private class EffectiveAccessAccumulator

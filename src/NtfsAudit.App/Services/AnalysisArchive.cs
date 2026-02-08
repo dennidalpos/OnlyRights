@@ -88,6 +88,7 @@ namespace NtfsAudit.App.Services
 
             var details = BuildDetailsFromExport(dataPath);
             ApplyFolderFlags(details, LoadFolderFlags(folderFlagsPath));
+            var scanOptions = LoadScanOptions(dataPath);
 
             var result = new ScanResult
             {
@@ -100,7 +101,8 @@ namespace NtfsAudit.App.Services
             return new AnalysisArchiveResult
             {
                 ScanResult = result,
-                RootPath = meta.RootPath
+                RootPath = meta.RootPath,
+                ScanOptions = scanOptions
             };
         }
 
@@ -235,6 +237,50 @@ namespace NtfsAudit.App.Services
             }
 
             return details;
+        }
+
+        private ScanOptions LoadScanOptions(string dataPath)
+        {
+            if (!File.Exists(dataPath)) return null;
+            foreach (var line in File.ReadLines(dataPath))
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                ExportRecord record;
+                try
+                {
+                    record = JsonConvert.DeserializeObject<ExportRecord>(line);
+                }
+                catch
+                {
+                    continue;
+                }
+                if (record == null) continue;
+                if (!string.Equals(record.PrincipalType, "Meta", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(record.PrincipalName, "SCAN_OPTIONS", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                return new ScanOptions
+                {
+                    RootPath = record.FolderPath,
+                    IncludeInherited = record.IncludeInherited,
+                    ResolveIdentities = record.ResolveIdentities,
+                    ExcludeServiceAccounts = record.ExcludeServiceAccounts,
+                    ExcludeAdminAccounts = record.ExcludeAdminAccounts,
+                    EnableAdvancedAudit = record.EnableAdvancedAudit,
+                    ComputeEffectiveAccess = record.ComputeEffectiveAccess,
+                    IncludeFiles = record.IncludeFiles,
+                    ReadOwnerAndSacl = record.ReadOwnerAndSacl,
+                    CompareBaseline = record.CompareBaseline,
+                    ScanAllDepths = record.ScanAllDepths,
+                    MaxDepth = record.MaxDepth,
+                    ExpandGroups = record.ExpandGroups,
+                    UsePowerShell = record.UsePowerShell
+                };
+            }
+
+            return null;
         }
 
         private Dictionary<string, FolderFlagsPayload> BuildFolderFlags(Dictionary<string, FolderDetail> details)
@@ -469,5 +515,6 @@ namespace NtfsAudit.App.Services
     {
         public ScanResult ScanResult { get; set; }
         public string RootPath { get; set; }
+        public ScanOptions ScanOptions { get; set; }
     }
 }

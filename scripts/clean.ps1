@@ -3,6 +3,7 @@ param(
     [string]$Framework,
     [string]$Runtime,
     [string]$TempRoot,
+    [string]$DistRoot,
     [switch]$KeepDist,
     [switch]$KeepArtifacts,
     [switch]$KeepTemp,
@@ -22,7 +23,10 @@ $paths = @(
 )
 
 if (-not $KeepDist) {
-    if ($Configuration) {
+    if ($DistRoot) {
+        $distPath = if ([System.IO.Path]::IsPathRooted($DistRoot)) { $DistRoot } else { Join-Path $root $DistRoot }
+        $paths += $distPath
+    } elseif ($Configuration) {
         if ($Runtime -and $Framework) {
             $paths += (Join-Path $root "dist\$Configuration\$Runtime\$Framework")
         } elseif ($Runtime) {

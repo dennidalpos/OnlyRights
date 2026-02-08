@@ -65,7 +65,11 @@ namespace NtfsAudit.App.Export
                 "ComputeEffectiveAccess",
                 "IncludeFiles",
                 "ReadOwnerAndSacl",
-                "CompareBaseline"
+                "CompareBaseline",
+                "ScanAllDepths",
+                "MaxDepth",
+                "ExpandGroups",
+                "UsePowerShell"
             };
 
             using (var document = SpreadsheetDocument.Create(outputPath, SpreadsheetDocumentType.Workbook))
@@ -181,7 +185,9 @@ namespace NtfsAudit.App.Export
                     record.IncludeInherited.ToString(), record.ResolveIdentities.ToString(),
                     record.ExcludeServiceAccounts.ToString(), record.ExcludeAdminAccounts.ToString(),
                     record.EnableAdvancedAudit.ToString(), record.ComputeEffectiveAccess.ToString(),
-                    record.IncludeFiles.ToString(), record.ReadOwnerAndSacl.ToString(), record.CompareBaseline.ToString());
+                    record.IncludeFiles.ToString(), record.ReadOwnerAndSacl.ToString(), record.CompareBaseline.ToString(),
+                    record.ScanAllDepths.ToString(), record.MaxDepth.ToString(CultureInfo.InvariantCulture),
+                    record.ExpandGroups.ToString(), record.UsePowerShell.ToString());
             }
             var rowCount = records.Count + 1;
 
@@ -227,7 +233,11 @@ namespace NtfsAudit.App.Export
                         record.ComputeEffectiveAccess.ToString(),
                         record.IncludeFiles.ToString(),
                         record.ReadOwnerAndSacl.ToString(),
-                        record.CompareBaseline.ToString());
+                        record.CompareBaseline.ToString(),
+                        record.ScanAllDepths.ToString(),
+                        record.MaxDepth.ToString(CultureInfo.InvariantCulture),
+                        record.ExpandGroups.ToString(),
+                        record.UsePowerShell.ToString());
                 }
 
                 writer.WriteEndElement();
