@@ -684,7 +684,8 @@ namespace NtfsAudit.App.ViewModels
             using (var dialog = new FolderBrowserDialog())
             {
                 dialog.ShowNewFolderButton = false;
-                dialog.RootFolder = Environment.SpecialFolder.MyComputer;
+                dialog.RootFolder = Environment.SpecialFolder.Desktop;
+                dialog.Description = "Seleziona la cartella da analizzare (unità locali o di rete).";
                 if (!string.IsNullOrWhiteSpace(RootPath))
                 {
                     dialog.SelectedPath = RootPath;

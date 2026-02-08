@@ -268,6 +268,7 @@ Gli import di analisi usano `%TEMP%\NtfsAudit\\imports` e possono essere elimina
   - Se il percorso root è una share/DFS profonda, l’import prova a limitare l’albero alle sottocartelle del root per evitare nodi “sopra” il root.
   - Verifica che il percorso root sia corretto e raggiungibile (UNC/DFS) e, se possibile, avvia l’app come amministratore per leggere Owner/SACL e ottenere più dettagli.
   - In ambienti con ACL particolarmente restrittive, abilita “Analizza tutte le sottocartelle” per massimizzare la copertura e riduci l’uso di filtri che escludono molte ACE.
+- **Unità di rete non visibili nel dialog**: inserisci manualmente il percorso UNC (es. `\\server\share`) nel campo percorso o verifica la mappatura da Esplora file.
 - **AD non disponibile**: disattiva “Usa PowerShell per AD” o installa RSAT.
 - **Prestazioni**: riduci la profondità o disattiva risoluzione identità/espansione gruppi.
 - **Compatibilità 2012 R2**: usa `net6.0-windows` per server legacy.
