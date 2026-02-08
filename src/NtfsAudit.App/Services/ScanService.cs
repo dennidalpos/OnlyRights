@@ -21,10 +21,12 @@ namespace NtfsAudit.App.Services
         private const string AuthenticatedUsersSid = "S-1-5-11";
         private readonly IdentityResolver _identityResolver;
         private readonly GroupExpansionService _groupExpansion;
+        private readonly SharePermissionService _sharePermissionService;
         public ScanService(IdentityResolver identityResolver, GroupExpansionService groupExpansion)
         {
             _identityResolver = identityResolver;
             _groupExpansion = groupExpansion;
+            _sharePermissionService = new SharePermissionService();
         }
 
         public ScanResult Run(ScanOptions options, IProgress<ScanProgress> progress, CancellationToken token)
@@ -64,6 +66,10 @@ namespace NtfsAudit.App.Services
                 var dataQueue = new BlockingCollection<ExportRecord>(new ConcurrentQueue<ExportRecord>());
                 var errorQueue = new BlockingCollection<ErrorEntry>(new ConcurrentQueue<ErrorEntry>());
                 var baselineKeys = options.CompareBaseline ? BuildBaselineKeys(options, errorQueue) : null;
+                var shareContext = options.IncludeSharePermissions ? LoadSharePermissions(options, errorQueue) : null;
+                var shareAccessMap = shareContext == null
+                    ? new Dictionary<string, PermissionCalculator.AccessAccumulator>(StringComparer.OrdinalIgnoreCase)
+                    : PermissionCalculator.BuildAccessMap(shareContext.Permissions, true);
                 var dataWriterTask = Task.Run(() => DrainQueue(dataQueue, dataWriter, token), token);
                 var errorWriterTask = Task.Run(() => DrainQueue(errorQueue, errorWriter, token), token);
 
@@ -192,6 +198,8 @@ namespace NtfsAudit.App.Services
                                     options,
                                     currentDetail,
                                     baselineKeys,
+                                    shareContext,
+                                    shareAccessMap,
                                     dataQueue,
                                     errorQueue,
                                     token,
@@ -239,6 +247,8 @@ namespace NtfsAudit.App.Services
                                                 options,
                                                 currentDetail,
                                                 null,
+                                                shareContext,
+                                                shareAccessMap,
                                                 dataQueue,
                                                 errorQueue,
                                                 token,
@@ -338,12 +348,18 @@ namespace NtfsAudit.App.Services
                 PrincipalName = entry.PrincipalName,
                 PrincipalSid = entry.PrincipalSid,
                 PrincipalType = entry.PrincipalType,
+                PermissionLayer = entry.PermissionLayer,
                 AllowDeny = entry.AllowDeny,
                 RightsSummary = entry.RightsSummary,
                 RightsMask = entry.RightsMask,
                 EffectiveRightsSummary = entry.EffectiveRightsSummary,
                 EffectiveRightsMask = entry.EffectiveRightsMask,
+                ShareRightsMask = entry.ShareRightsMask,
+                NtfsRightsMask = entry.NtfsRightsMask,
                 IsInherited = entry.IsInherited,
+                AppliesToThisFolder = entry.AppliesToThisFolder,
+                AppliesToSubfolders = entry.AppliesToSubfolders,
+                AppliesToFiles = entry.AppliesToFiles,
                 InheritanceFlags = entry.InheritanceFlags,
                 PropagationFlags = entry.PropagationFlags,
                 Source = entry.Source,
@@ -351,6 +367,8 @@ namespace NtfsAudit.App.Services
                 ResourceType = entry.ResourceType,
                 TargetPath = entry.TargetPath,
                 Owner = entry.Owner,
+                ShareName = entry.ShareName,
+                ShareServer = entry.ShareServer,
                 AuditSummary = entry.AuditSummary,
                 RiskLevel = entry.RiskLevel,
                 IsDisabled = entry.IsDisabled,
@@ -365,6 +383,7 @@ namespace NtfsAudit.App.Services
                 ExcludeAdminAccounts = options.ExcludeAdminAccounts,
                 EnableAdvancedAudit = options.EnableAdvancedAudit,
                 ComputeEffectiveAccess = options.ComputeEffectiveAccess,
+                IncludeSharePermissions = options.IncludeSharePermissions,
                 IncludeFiles = options.IncludeFiles,
                 ReadOwnerAndSacl = options.ReadOwnerAndSacl,
                 CompareBaseline = options.CompareBaseline,
@@ -393,6 +412,7 @@ namespace NtfsAudit.App.Services
                 PrincipalName = "SCAN_OPTIONS",
                 PrincipalSid = string.Empty,
                 PrincipalType = "Meta",
+                PermissionLayer = PermissionLayer.Ntfs,
                 AllowDeny = string.Empty,
                 RightsSummary = string.Empty,
                 IsInherited = false,
@@ -413,6 +433,8 @@ namespace NtfsAudit.App.Services
             ScanOptions options,
             FolderDetail currentDetail,
             List<AclDiffKey> baselineKeys,
+            SharePermissionContext shareContext,
+            Dictionary<string, PermissionCalculator.AccessAccumulator> shareAccessMap,
             BlockingCollection<ExportRecord> dataQueue,
             BlockingCollection<ErrorEntry> errorQueue,
             CancellationToken token,
@@ -422,9 +444,10 @@ namespace NtfsAudit.App.Services
             var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
             var isInheritanceDisabled = security.AreAccessRulesProtected;
             var hasExplicitPermissions = false;
+            var ntfsPermissions = BuildNtfsPermissions(rules, options, folderKey, targetPath);
             var effectiveAccess = options.ComputeEffectiveAccess
-                ? BuildEffectiveAccessMap(rules, options)
-                : new Dictionary<string, EffectiveAccessAccumulator>(StringComparer.OrdinalIgnoreCase);
+                ? PermissionCalculator.BuildAccessMap(ntfsPermissions, options.IncludeInherited)
+                : new Dictionary<string, PermissionCalculator.AccessAccumulator>(StringComparer.OrdinalIgnoreCase);
             var owner = options.ReadOwnerAndSacl ? ResolveOwner(security, options) : string.Empty;
             var auditSummary = options.ReadOwnerAndSacl ? ResolveAuditSummary(security, options, auditFailureReason) : string.Empty;
 
@@ -473,12 +496,19 @@ namespace NtfsAudit.App.Services
                     continue;
                 }
                 var rightsSummary = RightsNormalizer.Normalize(rule.FileSystemRights);
+                var ntfsMask = options.ComputeEffectiveAccess
+                    ? PermissionCalculator.GetEffectiveMask(effectiveAccess, sid)
+                    : (int)rule.FileSystemRights;
+                var shareMask = shareAccessMap != null && shareAccessMap.Count > 0
+                    ? PermissionCalculator.GetEffectiveMask(shareAccessMap, sid)
+                    : PermissionCalculator.FullControlMask;
                 var effectiveMask = options.ComputeEffectiveAccess
-                    ? GetEffectiveMask(effectiveAccess, sid)
+                    ? PermissionCalculator.IntersectMasks(ntfsMask, shareMask, shareAccessMap != null && shareAccessMap.Count > 0)
                     : (int)rule.FileSystemRights;
                 var effectiveSummary = options.ComputeEffectiveAccess
                     ? RightsNormalizer.Normalize((FileSystemRights)effectiveMask)
                     : rightsSummary;
+                var scope = PermissionCalculator.ResolveScope(rule.InheritanceFlags, rule.PropagationFlags);
                 var entry = new AceEntry
                 {
                     FolderPath = folderKey,
@@ -489,12 +519,18 @@ namespace NtfsAudit.App.Services
                     PrincipalName = resolved.Name,
                     PrincipalSid = sid,
                     PrincipalType = resolved.Type,
+                    PermissionLayer = PermissionLayer.Ntfs,
                     AllowDeny = rule.AccessControlType.ToString(),
                     RightsSummary = rightsSummary,
                     RightsMask = (int)rule.FileSystemRights,
                     EffectiveRightsSummary = effectiveSummary,
                     EffectiveRightsMask = effectiveMask,
+                    ShareRightsMask = shareMask,
+                    NtfsRightsMask = ntfsMask,
                     IsInherited = rule.IsInherited,
+                    AppliesToThisFolder = scope.AppliesToThisFolder,
+                    AppliesToSubfolders = scope.AppliesToSubfolders,
+                    AppliesToFiles = scope.AppliesToFiles,
                     InheritanceFlags = rule.InheritanceFlags.ToString(),
                     PropagationFlags = rule.PropagationFlags.ToString(),
                     Source = isFile ? "File" : "Diretto",
@@ -556,12 +592,18 @@ namespace NtfsAudit.App.Services
                             PrincipalName = member.Name,
                             PrincipalSid = member.Sid,
                             PrincipalType = "User",
+                            PermissionLayer = PermissionLayer.Ntfs,
                             AllowDeny = rule.AccessControlType.ToString(),
                             RightsSummary = rightsSummary,
                             RightsMask = (int)rule.FileSystemRights,
                             EffectiveRightsSummary = effectiveSummary,
                             EffectiveRightsMask = effectiveMask,
+                            ShareRightsMask = shareMask,
+                            NtfsRightsMask = ntfsMask,
                             IsInherited = rule.IsInherited,
+                            AppliesToThisFolder = scope.AppliesToThisFolder,
+                            AppliesToSubfolders = scope.AppliesToSubfolders,
+                            AppliesToFiles = scope.AppliesToFiles,
                             InheritanceFlags = rule.InheritanceFlags.ToString(),
                             PropagationFlags = rule.PropagationFlags.ToString(),
                             Source = source,
@@ -586,12 +628,295 @@ namespace NtfsAudit.App.Services
             lock (currentDetail)
             {
                 currentDetail.HasExplicitPermissions = currentDetail.HasExplicitPermissions || hasExplicitPermissions;
+                currentDetail.HasExplicitNtfs = currentDetail.HasExplicitNtfs || hasExplicitPermissions;
                 currentDetail.IsInheritanceDisabled = currentDetail.IsInheritanceDisabled || isInheritanceDisabled;
                 if (baselineKeys != null)
                 {
                     var currentKeys = BuildAclKeysFromRules(rules, options);
-                    currentDetail.BaselineSummary = BuildBaselineDiff(baselineKeys, currentKeys);
+                    currentDetail.BaselineSummary = AclBaselineComparer.BuildBaselineDiff(baselineKeys, currentKeys);
                 }
+            }
+
+            AddShareAndEffectiveEntries(
+                currentDetail,
+                shareContext,
+                shareAccessMap,
+                effectiveAccess,
+                options,
+                folderKey,
+                targetPath,
+                isFile,
+                depth,
+                dataQueue,
+                owner,
+                auditSummary,
+                isInheritanceDisabled);
+        }
+
+        private List<NtfsPermission> BuildNtfsPermissions(IEnumerable<FileSystemAccessRule> rules, ScanOptions options, string folderKey, string targetPath)
+        {
+            var permissions = new List<NtfsPermission>();
+            foreach (var rule in rules)
+            {
+                if (!options.IncludeInherited && rule.IsInherited)
+                {
+                    continue;
+                }
+                var scope = PermissionCalculator.ResolveScope(rule.InheritanceFlags, rule.PropagationFlags);
+                permissions.Add(new NtfsPermission
+                {
+                    FolderPath = folderKey,
+                    TargetPath = targetPath,
+                    PrincipalSid = rule.IdentityReference.Value,
+                    AccessType = rule.AccessControlType == AccessControlType.Allow ? PermissionDecision.Allow : PermissionDecision.Deny,
+                    RightsMask = (int)rule.FileSystemRights,
+                    RightsSummary = RightsNormalizer.Normalize(rule.FileSystemRights),
+                    IsInherited = rule.IsInherited,
+                    AppliesToThisFolder = scope.AppliesToThisFolder,
+                    AppliesToSubfolders = scope.AppliesToSubfolders,
+                    AppliesToFiles = scope.AppliesToFiles,
+                    InheritanceFlags = rule.InheritanceFlags.ToString(),
+                    PropagationFlags = rule.PropagationFlags.ToString()
+                });
+            }
+            return permissions;
+        }
+
+        private void AddShareAndEffectiveEntries(
+            FolderDetail currentDetail,
+            SharePermissionContext shareContext,
+            Dictionary<string, PermissionCalculator.AccessAccumulator> shareAccessMap,
+            Dictionary<string, PermissionCalculator.AccessAccumulator> ntfsAccessMap,
+            ScanOptions options,
+            string folderKey,
+            string targetPath,
+            bool isFile,
+            int depth,
+            BlockingCollection<ExportRecord> dataQueue,
+            string owner,
+            string auditSummary,
+            bool isInheritanceDisabled)
+        {
+            var shareEntries = shareContext == null || shareContext.Permissions == null || shareContext.Permissions.Count == 0
+                ? new List<AceEntry>()
+                : BuildShareEntries(shareContext, options, folderKey, targetPath, isFile, depth, owner, auditSummary, isInheritanceDisabled);
+            var effectiveEntries = BuildEffectiveEntries(shareContext, shareAccessMap, ntfsAccessMap, options, folderKey, targetPath, isFile, depth, owner, auditSummary, isInheritanceDisabled);
+
+            lock (currentDetail)
+            {
+                foreach (var entry in shareEntries)
+                {
+                    currentDetail.ShareEntries.Add(entry);
+                }
+                foreach (var entry in effectiveEntries)
+                {
+                    currentDetail.EffectiveEntries.Add(entry);
+                }
+
+                currentDetail.HasExplicitShare = currentDetail.HasExplicitShare || shareEntries.Count > 0;
+            }
+
+            foreach (var entry in shareEntries)
+            {
+                dataQueue.Add(BuildExportRecord(entry, options));
+            }
+            foreach (var entry in effectiveEntries)
+            {
+                dataQueue.Add(BuildExportRecord(entry, options));
+            }
+        }
+
+        private List<AceEntry> BuildShareEntries(
+            SharePermissionContext shareContext,
+            ScanOptions options,
+            string folderKey,
+            string targetPath,
+            bool isFile,
+            int depth,
+            string owner,
+            string auditSummary,
+            bool isInheritanceDisabled)
+        {
+            var entries = new List<AceEntry>();
+            foreach (var permission in shareContext.Permissions)
+            {
+                if (!options.IncludeInherited && permission.IsInherited)
+                {
+                    continue;
+                }
+                var resolved = ResolvePrincipal(permission.PrincipalSid, permission.PrincipalName, options);
+                if (resolved == null) continue;
+                if (options.ResolveIdentities && options.ExcludeServiceAccounts && resolved.IsServiceAccount)
+                {
+                    continue;
+                }
+                if (options.ResolveIdentities && options.ExcludeAdminAccounts && resolved.IsAdminAccount)
+                {
+                    continue;
+                }
+
+                entries.Add(new AceEntry
+                {
+                    FolderPath = folderKey,
+                    TargetPath = targetPath,
+                    ResourceType = isFile ? "File" : "Cartella",
+                    Owner = owner,
+                    AuditSummary = auditSummary,
+                    PrincipalName = resolved.Name,
+                    PrincipalSid = resolved.Sid,
+                    PrincipalType = resolved.Type,
+                    PermissionLayer = PermissionLayer.Share,
+                    AllowDeny = permission.AccessType.ToString(),
+                    RightsSummary = permission.RightsSummary,
+                    RightsMask = permission.RightsMask,
+                    EffectiveRightsSummary = permission.RightsSummary,
+                    EffectiveRightsMask = permission.RightsMask,
+                    ShareRightsMask = permission.RightsMask,
+                    NtfsRightsMask = 0,
+                    IsInherited = permission.IsInherited,
+                    AppliesToThisFolder = permission.AppliesToThisFolder,
+                    AppliesToSubfolders = permission.AppliesToSubfolders,
+                    AppliesToFiles = permission.AppliesToFiles,
+                    InheritanceFlags = string.Empty,
+                    PropagationFlags = string.Empty,
+                    Source = "Share",
+                    Depth = depth,
+                    IsDisabled = resolved.IsDisabled,
+                    IsServiceAccount = resolved.IsServiceAccount,
+                    IsAdminAccount = resolved.IsAdminAccount,
+                    HasExplicitPermissions = true,
+                    IsInheritanceDisabled = isInheritanceDisabled,
+                    ShareName = shareContext.ShareName,
+                    ShareServer = shareContext.Server
+                });
+            }
+            return entries;
+        }
+
+        private List<AceEntry> BuildEffectiveEntries(
+            SharePermissionContext shareContext,
+            Dictionary<string, PermissionCalculator.AccessAccumulator> shareAccessMap,
+            Dictionary<string, PermissionCalculator.AccessAccumulator> ntfsAccessMap,
+            ScanOptions options,
+            string folderKey,
+            string targetPath,
+            bool isFile,
+            int depth,
+            string owner,
+            string auditSummary,
+            bool isInheritanceDisabled)
+        {
+            var entries = new List<AceEntry>();
+            if (!options.ComputeEffectiveAccess) return entries;
+
+            var sids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (shareAccessMap != null)
+            {
+                foreach (var sid in shareAccessMap.Keys)
+                {
+                    sids.Add(sid);
+                }
+            }
+            if (ntfsAccessMap != null)
+            {
+                foreach (var sid in ntfsAccessMap.Keys)
+                {
+                    sids.Add(sid);
+                }
+            }
+
+            foreach (var sid in sids)
+            {
+                var ntfsMask = PermissionCalculator.GetEffectiveMask(ntfsAccessMap, sid);
+                var shareMask = PermissionCalculator.GetEffectiveMask(shareAccessMap, sid);
+                var effectiveMask = PermissionCalculator.IntersectMasks(ntfsMask, shareMask, shareAccessMap != null && shareAccessMap.Count > 0);
+                if (effectiveMask == 0) continue;
+
+                var resolved = ResolvePrincipal(sid, sid, options);
+                if (resolved == null) continue;
+                if (options.ResolveIdentities && options.ExcludeServiceAccounts && resolved.IsServiceAccount)
+                {
+                    continue;
+                }
+                if (options.ResolveIdentities && options.ExcludeAdminAccounts && resolved.IsAdminAccount)
+                {
+                    continue;
+                }
+
+                entries.Add(new AceEntry
+                {
+                    FolderPath = folderKey,
+                    TargetPath = targetPath,
+                    ResourceType = isFile ? "File" : "Cartella",
+                    Owner = owner,
+                    AuditSummary = auditSummary,
+                    PrincipalName = resolved.Name,
+                    PrincipalSid = resolved.Sid,
+                    PrincipalType = resolved.Type,
+                    PermissionLayer = PermissionLayer.Effective,
+                    AllowDeny = PermissionDecision.Allow.ToString(),
+                    RightsSummary = RightsNormalizer.Normalize((FileSystemRights)effectiveMask),
+                    RightsMask = effectiveMask,
+                    EffectiveRightsSummary = RightsNormalizer.Normalize((FileSystemRights)effectiveMask),
+                    EffectiveRightsMask = effectiveMask,
+                    ShareRightsMask = shareMask,
+                    NtfsRightsMask = ntfsMask,
+                    IsInherited = false,
+                    AppliesToThisFolder = true,
+                    AppliesToSubfolders = true,
+                    AppliesToFiles = true,
+                    InheritanceFlags = string.Empty,
+                    PropagationFlags = string.Empty,
+                    Source = "Effective",
+                    Depth = depth,
+                    IsDisabled = resolved.IsDisabled,
+                    IsServiceAccount = resolved.IsServiceAccount,
+                    IsAdminAccount = resolved.IsAdminAccount,
+                    HasExplicitPermissions = false,
+                    IsInheritanceDisabled = isInheritanceDisabled,
+                    ShareName = shareContext == null ? string.Empty : shareContext.ShareName,
+                    ShareServer = shareContext == null ? string.Empty : shareContext.Server
+                });
+            }
+
+            return entries;
+        }
+
+        private ResolvedPrincipal ResolvePrincipal(string sid, string fallbackName, ScanOptions options)
+        {
+            if (string.IsNullOrWhiteSpace(sid)) return null;
+            if (options.ResolveIdentities)
+            {
+                var resolved = _identityResolver.Resolve(sid);
+                if (resolved != null)
+                {
+                    return resolved;
+                }
+            }
+            return new ResolvedPrincipal
+            {
+                Sid = sid,
+                Name = string.IsNullOrWhiteSpace(fallbackName) ? sid : fallbackName,
+                IsGroup = false,
+                IsDisabled = false,
+                IsServiceAccount = false,
+                IsAdminAccount = false
+            };
+        }
+
+        private SharePermissionContext LoadSharePermissions(ScanOptions options, BlockingCollection<ErrorEntry> errorQueue)
+        {
+            try
+            {
+                return _sharePermissionService.TryGetSharePermissions(options.RootPath);
+            }
+            catch (Exception ex)
+            {
+                if (errorQueue != null)
+                {
+                    errorQueue.Add(BuildErrorEntry(options.RootPath, ex));
+                }
+                return null;
             }
         }
 
@@ -735,78 +1060,6 @@ namespace NtfsAudit.App.Services
                     return null;
                 }
             }
-        }
-
-        private static AclDiffSummary BuildBaselineDiff(IEnumerable<AclDiffKey> baseline, IEnumerable<AclDiffKey> current)
-        {
-            var summary = new AclDiffSummary();
-            if (baseline == null || current == null) return summary;
-
-            var baselineList = baseline.ToList();
-            var currentList = current.ToList();
-            var baselineSet = new HashSet<AclDiffKey>(baselineList);
-            var currentSet = new HashSet<AclDiffKey>(currentList);
-
-            foreach (var ace in currentSet)
-            {
-                if (!baselineSet.Contains(ace))
-                {
-                    summary.Added.Add(ace);
-                }
-            }
-
-            foreach (var ace in baselineSet)
-            {
-                if (!currentSet.Contains(ace))
-                {
-                    summary.Removed.Add(ace);
-                }
-            }
-
-            summary.ExplicitCount = currentList.Count(entry => !entry.IsInherited);
-            summary.DenyExplicitCount = currentList.Count(entry =>
-                !entry.IsInherited && string.Equals(entry.AllowDeny, "Deny", StringComparison.OrdinalIgnoreCase));
-            return summary;
-        }
-
-        private Dictionary<string, EffectiveAccessAccumulator> BuildEffectiveAccessMap(IEnumerable<FileSystemAccessRule> rules, ScanOptions options)
-        {
-            var map = new Dictionary<string, EffectiveAccessAccumulator>(StringComparer.OrdinalIgnoreCase);
-            foreach (var rule in rules)
-            {
-                if (!options.IncludeInherited && rule.IsInherited)
-                {
-                    continue;
-                }
-                var sid = rule.IdentityReference.Value;
-                EffectiveAccessAccumulator accumulator;
-                if (!map.TryGetValue(sid, out accumulator))
-                {
-                    accumulator = new EffectiveAccessAccumulator();
-                    map[sid] = accumulator;
-                }
-                if (rule.AccessControlType == AccessControlType.Allow)
-                {
-                    accumulator.Allow |= (int)rule.FileSystemRights;
-                }
-                else
-                {
-                    accumulator.Deny |= (int)rule.FileSystemRights;
-                }
-            }
-            return map;
-        }
-
-        private static int GetEffectiveMask(Dictionary<string, EffectiveAccessAccumulator> map, string sid)
-        {
-            if (map == null || string.IsNullOrWhiteSpace(sid)) return 0;
-            EffectiveAccessAccumulator accumulator;
-            if (!map.TryGetValue(sid, out accumulator))
-            {
-                return 0;
-            }
-            // Calcolo semplificato: Allow - Deny. Non considera ordine ACE, deny specifici o membership avanzata.
-            return accumulator.Allow & ~accumulator.Deny;
         }
 
         private string ResolveOwner(FileSystemSecurity security, ScanOptions options)
@@ -1031,12 +1284,6 @@ namespace NtfsAudit.App.Services
         {
             public int PrivilegeCount;
             public LuidAndAttributes Privileges;
-        }
-
-        private class EffectiveAccessAccumulator
-        {
-            public int Allow { get; set; }
-            public int Deny { get; set; }
         }
 
         private class WorkItem

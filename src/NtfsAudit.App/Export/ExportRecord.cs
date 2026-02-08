@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NtfsAudit.App.Models;
 
 namespace NtfsAudit.App.Export
 {
@@ -8,12 +9,18 @@ namespace NtfsAudit.App.Export
         public string PrincipalName { get; set; }
         public string PrincipalSid { get; set; }
         public string PrincipalType { get; set; }
+        public PermissionLayer PermissionLayer { get; set; }
         public string AllowDeny { get; set; }
         public string RightsSummary { get; set; }
         public int RightsMask { get; set; }
         public string EffectiveRightsSummary { get; set; }
         public int EffectiveRightsMask { get; set; }
+        public int ShareRightsMask { get; set; }
+        public int NtfsRightsMask { get; set; }
         public bool IsInherited { get; set; }
+        public bool AppliesToThisFolder { get; set; }
+        public bool AppliesToSubfolders { get; set; }
+        public bool AppliesToFiles { get; set; }
         public string InheritanceFlags { get; set; }
         public string PropagationFlags { get; set; }
         public string Source { get; set; }
@@ -21,6 +28,8 @@ namespace NtfsAudit.App.Export
         public string ResourceType { get; set; }
         public string TargetPath { get; set; }
         public string Owner { get; set; }
+        public string ShareName { get; set; }
+        public string ShareServer { get; set; }
         public string AuditSummary { get; set; }
         public string RiskLevel { get; set; }
         public bool IsDisabled { get; set; }
@@ -35,6 +44,7 @@ namespace NtfsAudit.App.Export
         public bool ExcludeAdminAccounts { get; set; }
         public bool EnableAdvancedAudit { get; set; }
         public bool ComputeEffectiveAccess { get; set; }
+        public bool IncludeSharePermissions { get; set; }
         public bool IncludeFiles { get; set; }
         public bool ReadOwnerAndSacl { get; set; }
         public bool CompareBaseline { get; set; }

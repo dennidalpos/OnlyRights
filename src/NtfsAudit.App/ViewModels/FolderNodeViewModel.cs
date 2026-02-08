@@ -22,7 +22,11 @@ namespace NtfsAudit.App.ViewModels
             int explicitAddedCount,
             int explicitRemovedCount,
             int denyExplicitCount,
-            bool isProtected)
+            bool isProtected,
+            int baselineAddedCount,
+            int baselineRemovedCount,
+            bool hasExplicitNtfs,
+            bool hasExplicitShare)
         {
             Path = path;
             DisplayName = displayName;
@@ -33,6 +37,10 @@ namespace NtfsAudit.App.ViewModels
             ExplicitRemovedCount = explicitRemovedCount;
             DenyExplicitCount = denyExplicitCount;
             IsProtected = isProtected;
+            BaselineAddedCount = baselineAddedCount;
+            BaselineRemovedCount = baselineRemovedCount;
+            HasExplicitNtfs = hasExplicitNtfs;
+            HasExplicitShare = hasExplicitShare;
             Children = new ObservableCollection<FolderNodeViewModel>();
             if (_treeProvider != null && _treeProvider.HasChildren(path))
             {
@@ -57,12 +65,22 @@ namespace NtfsAudit.App.ViewModels
         public int ExplicitRemovedCount { get; private set; }
         public int DenyExplicitCount { get; private set; }
         public bool IsProtected { get; private set; }
+        public int BaselineAddedCount { get; private set; }
+        public int BaselineRemovedCount { get; private set; }
+        public bool HasExplicitNtfs { get; private set; }
+        public bool HasExplicitShare { get; private set; }
         public bool HasExplicitAdded { get { return ExplicitAddedCount > 0; } }
         public bool HasExplicitRemoved { get { return ExplicitRemovedCount > 0; } }
         public bool HasDenyExplicit { get { return DenyExplicitCount > 0; } }
+        public bool HasBaselineAdded { get { return BaselineAddedCount > 0; } }
+        public bool HasBaselineRemoved { get { return BaselineRemovedCount > 0; } }
         public string ExplicitAddedLabel { get { return string.Format("+{0}", ExplicitAddedCount); } }
         public string ExplicitRemovedLabel { get { return string.Format("-{0}", ExplicitRemovedCount); } }
         public string DenyExplicitLabel { get { return "D"; } }
+        public string BaselineAddedLabel { get { return string.Format("B+{0}", BaselineAddedCount); } }
+        public string BaselineRemovedLabel { get { return string.Format("B-{0}", BaselineRemovedCount); } }
+        public string ExplicitNtfsLabel { get { return "N"; } }
+        public string ExplicitShareLabel { get { return "S"; } }
 
         public bool IsExpanded
         {

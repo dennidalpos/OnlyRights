@@ -47,6 +47,7 @@ namespace NtfsAudit.App.ViewModels
         private bool _usePowerShell = true;
         private bool _enableAdvancedAudit = true;
         private bool _computeEffectiveAccess = true;
+        private bool _includeSharePermissions = true;
         private bool _includeFiles;
         private bool _readOwnerAndSacl = true;
         private bool _compareBaseline = true;
@@ -91,6 +92,8 @@ namespace NtfsAudit.App.ViewModels
             GroupEntries = new ObservableCollection<AceEntry>();
             UserEntries = new ObservableCollection<AceEntry>();
             AllEntries = new ObservableCollection<AceEntry>();
+            ShareEntries = new ObservableCollection<AceEntry>();
+            EffectiveEntries = new ObservableCollection<AceEntry>();
             Errors = new ObservableCollection<ErrorEntry>();
             Errors.CollectionChanged += (_, __) => ErrorCount = Errors.Count;
             FilteredErrors = CollectionViewSource.GetDefaultView(Errors);
@@ -101,6 +104,10 @@ namespace NtfsAudit.App.ViewModels
             FilteredUserEntries.Filter = FilterAclEntries;
             FilteredAllEntries = CollectionViewSource.GetDefaultView(AllEntries);
             FilteredAllEntries.Filter = FilterAclEntries;
+            FilteredShareEntries = CollectionViewSource.GetDefaultView(ShareEntries);
+            FilteredShareEntries.Filter = FilterAclEntries;
+            FilteredEffectiveEntries = CollectionViewSource.GetDefaultView(EffectiveEntries);
+            FilteredEffectiveEntries.Filter = FilterAclEntries;
 
             _isElevated = IsProcessElevated();
 
@@ -130,11 +137,15 @@ namespace NtfsAudit.App.ViewModels
         public ObservableCollection<AceEntry> GroupEntries { get; private set; }
         public ObservableCollection<AceEntry> UserEntries { get; private set; }
         public ObservableCollection<AceEntry> AllEntries { get; private set; }
+        public ObservableCollection<AceEntry> ShareEntries { get; private set; }
+        public ObservableCollection<AceEntry> EffectiveEntries { get; private set; }
         public ObservableCollection<ErrorEntry> Errors { get; private set; }
         public ICollectionView FilteredErrors { get; private set; }
         public ICollectionView FilteredGroupEntries { get; private set; }
         public ICollectionView FilteredUserEntries { get; private set; }
         public ICollectionView FilteredAllEntries { get; private set; }
+        public ICollectionView FilteredShareEntries { get; private set; }
+        public ICollectionView FilteredEffectiveEntries { get; private set; }
 
         public RelayCommand BrowseCommand { get; private set; }
         public RelayCommand StartCommand { get; private set; }
@@ -287,6 +298,16 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
+        public bool IncludeSharePermissions
+        {
+            get { return _includeSharePermissions; }
+            set
+            {
+                _includeSharePermissions = value;
+                OnPropertyChanged("IncludeSharePermissions");
+            }
+        }
+
         public bool IncludeFiles
         {
             get { return _includeFiles; }
@@ -416,12 +437,18 @@ namespace NtfsAudit.App.ViewModels
                 _dfsTargets = value ?? new ObservableCollection<string>();
                 OnPropertyChanged("DfsTargets");
                 OnPropertyChanged("HasDfsTargets");
+                OnPropertyChanged("DfsTargetBackground");
             }
         }
 
         public bool HasDfsTargets
         {
             get { return _dfsTargets != null && _dfsTargets.Count > 0; }
+        }
+
+        public string DfsTargetBackground
+        {
+            get { return HasDfsTargets ? "#FFE3F2FD" : "White"; }
         }
 
         public string SelectedDfsTarget
@@ -622,10 +649,14 @@ namespace NtfsAudit.App.ViewModels
             GroupEntries.Clear();
             UserEntries.Clear();
             AllEntries.Clear();
+            ShareEntries.Clear();
+            EffectiveEntries.Clear();
 
             foreach (var entry in detail.GroupEntries) GroupEntries.Add(entry);
             foreach (var entry in detail.UserEntries) UserEntries.Add(entry);
             foreach (var entry in detail.AllEntries) AllEntries.Add(entry);
+            foreach (var entry in detail.ShareEntries) ShareEntries.Add(entry);
+            foreach (var entry in detail.EffectiveEntries) EffectiveEntries.Add(entry);
             UpdateSummary(detail);
         }
 
@@ -734,45 +765,7 @@ namespace NtfsAudit.App.ViewModels
 
         private void AddNetworkPlaces(IFileDialog dialog)
         {
-            var mappedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            using (var networkKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("Network"))
-            {
-                if (networkKey != null)
-                {
-                    foreach (var driveLetter in networkKey.GetSubKeyNames())
-                    {
-                        using (var driveKey = networkKey.OpenSubKey(driveLetter))
-                        {
-                            var remotePath = driveKey?.GetValue("RemotePath") as string;
-                            if (!string.IsNullOrWhiteSpace(remotePath))
-                            {
-                                mappedPaths.Add(remotePath);
-                            }
-                        }
-                    }
-                }
-            }
-
-            foreach (var remotePath in mappedPaths)
-            {
-                TryAddPlace(dialog, remotePath);
-            }
-
-            foreach (var drive in DriveInfo.GetDrives())
-            {
-                if (drive.DriveType != DriveType.Network)
-                {
-                    continue;
-                }
-
-                var uncPath = PathResolver.NormalizeRootPath(drive.Name, false);
-                if (TryAddPlace(dialog, uncPath))
-                {
-                    continue;
-                }
-
-                TryAddPlace(dialog, drive.Name);
-            }
+            return;
         }
 
         private bool TryAddPlace(IFileDialog dialog, string path)
@@ -912,6 +905,7 @@ namespace NtfsAudit.App.ViewModels
                 UsePowerShell = ResolveIdentities && UsePowerShell,
                 EnableAdvancedAudit = EnableAdvancedAudit,
                 ComputeEffectiveAccess = EnableAdvancedAudit && ComputeEffectiveAccess,
+                IncludeSharePermissions = EnableAdvancedAudit && IncludeSharePermissions,
                 IncludeFiles = EnableAdvancedAudit && IncludeFiles,
                 ReadOwnerAndSacl = EnableAdvancedAudit && ReadOwnerAndSacl,
                 CompareBaseline = EnableAdvancedAudit && CompareBaseline
@@ -1239,7 +1233,11 @@ namespace NtfsAudit.App.ViewModels
                 rootSummary == null ? 0 : rootSummary.Added.Count(key => !key.IsInherited),
                 rootSummary == null ? 0 : rootSummary.Removed.Count,
                 rootSummary == null ? 0 : rootSummary.DenyExplicitCount,
-                rootSummary != null && rootSummary.IsProtected);
+                rootSummary != null && rootSummary.IsProtected,
+                rootDetail == null || rootDetail.BaselineSummary == null ? 0 : rootDetail.BaselineSummary.Added.Count,
+                rootDetail == null || rootDetail.BaselineSummary == null ? 0 : rootDetail.BaselineSummary.Removed.Count,
+                rootDetail != null && rootDetail.HasExplicitNtfs,
+                rootDetail != null && rootDetail.HasExplicitShare);
             rootNode.IsExpanded = true;
             rootNode.IsSelected = true;
             FolderTree.Add(rootNode);
@@ -1514,6 +1512,8 @@ namespace NtfsAudit.App.ViewModels
             FilteredGroupEntries.Refresh();
             FilteredUserEntries.Refresh();
             FilteredAllEntries.Refresh();
+            FilteredShareEntries.Refresh();
+            FilteredEffectiveEntries.Refresh();
         }
 
         private bool FilterErrors(object item)
@@ -1550,6 +1550,7 @@ namespace NtfsAudit.App.ViewModels
             if (string.IsNullOrWhiteSpace(term)) return true;
             return MatchesFilter(entry.PrincipalName, term)
                 || MatchesFilter(entry.PrincipalSid, term)
+                || MatchesFilter(entry.PermissionLayer.ToString(), term)
                 || MatchesFilter(entry.AllowDeny, term)
                 || MatchesFilter(entry.RightsSummary, term)
                 || MatchesFilter(entry.EffectiveRightsSummary, term)
@@ -1557,6 +1558,8 @@ namespace NtfsAudit.App.ViewModels
                 || MatchesFilter(entry.ResourceType, term)
                 || MatchesFilter(entry.TargetPath, term)
                 || MatchesFilter(entry.Owner, term)
+                || MatchesFilter(entry.ShareName, term)
+                || MatchesFilter(entry.ShareServer, term)
                 || MatchesFilter(entry.RiskLevel, term)
                 || MatchesFilter(entry.Source, term)
                 || MatchesMemberFilter(entry.MemberNames, term);
@@ -1594,6 +1597,8 @@ namespace NtfsAudit.App.ViewModels
             GroupEntries.Clear();
             UserEntries.Clear();
             AllEntries.Clear();
+            ShareEntries.Clear();
+            EffectiveEntries.Clear();
             Errors.Clear();
             SelectedFolderPath = string.Empty;
             ProcessedCount = 0;
@@ -1625,6 +1630,7 @@ namespace NtfsAudit.App.ViewModels
                 : DfsTargets.FirstOrDefault(target => string.Equals(target, previousSelection, StringComparison.OrdinalIgnoreCase));
             SelectedDfsTarget = selected ?? DfsTargets[0];
             OnPropertyChanged("HasDfsTargets");
+            OnPropertyChanged("DfsTargetBackground");
         }
 
         private void ApplyIdentityDependencies()
@@ -1660,6 +1666,11 @@ namespace NtfsAudit.App.ViewModels
                 _computeEffectiveAccess = false;
                 OnPropertyChanged("ComputeEffectiveAccess");
             }
+            if (_includeSharePermissions)
+            {
+                _includeSharePermissions = false;
+                OnPropertyChanged("IncludeSharePermissions");
+            }
             if (_includeFiles)
             {
                 _includeFiles = false;
@@ -1693,6 +1704,7 @@ namespace NtfsAudit.App.ViewModels
             UsePowerShell = options.ResolveIdentities && options.UsePowerShell;
             EnableAdvancedAudit = options.EnableAdvancedAudit;
             ComputeEffectiveAccess = options.EnableAdvancedAudit && options.ComputeEffectiveAccess;
+            IncludeSharePermissions = options.EnableAdvancedAudit && options.IncludeSharePermissions;
             IncludeFiles = options.EnableAdvancedAudit && options.IncludeFiles;
             ReadOwnerAndSacl = options.EnableAdvancedAudit && options.ReadOwnerAndSacl;
             CompareBaseline = options.EnableAdvancedAudit && options.CompareBaseline;

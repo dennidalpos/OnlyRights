@@ -90,6 +90,20 @@ namespace NtfsAudit.App.Services
             return TryResolveDfsTargets(uncPath);
         }
 
+        public static bool TryGetShareInfo(string path, out string server, out string share)
+        {
+            server = null;
+            share = null;
+            if (string.IsNullOrWhiteSpace(path)) return false;
+            var normalized = FromExtendedPath(path).Trim();
+            if (!normalized.StartsWith("\\\\", StringComparison.Ordinal)) return false;
+            var parts = normalized.TrimStart('\\').Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 2) return false;
+            server = parts[0];
+            share = parts[1];
+            return !string.IsNullOrWhiteSpace(server) && !string.IsNullOrWhiteSpace(share);
+        }
+
         private static string TryGetUncPath(string drive)
         {
             var length = 512;
