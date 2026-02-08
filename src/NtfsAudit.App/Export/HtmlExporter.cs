@@ -6,6 +6,7 @@ using System.Net;
 using System.Text;
 using Newtonsoft.Json;
 using NtfsAudit.App.Models;
+using NtfsAudit.App.Services;
 
 namespace NtfsAudit.App.Export
 {
@@ -27,6 +28,13 @@ namespace NtfsAudit.App.Export
         {
             if (result == null) throw new ArgumentNullException("result");
             if (string.IsNullOrWhiteSpace(outputPath)) throw new ArgumentException("Percorso output non valido.");
+
+            var ioOutputPath = PathResolver.ToExtendedPath(outputPath);
+            var outputDir = Path.GetDirectoryName(ioOutputPath);
+            if (!string.IsNullOrWhiteSpace(outputDir))
+            {
+                Directory.CreateDirectory(outputDir);
+            }
 
             var treeMap = result.TreeMap ?? new Dictionary<string, List<string>>();
             var root = ResolveRootPath(rootPath, treeMap);
@@ -359,13 +367,22 @@ namespace NtfsAudit.App.Export
 
             builder.AppendLine("    function matchesAclFilter(entry, filter) {");
             builder.AppendLine("      if (!filter) return true;");
-            builder.AppendLine("      const term = filter.toLowerCase();");
+            builder.AppendLine("      const term = filter.toLowerCase().trim();");
             builder.AppendLine("      return (entry.PrincipalName || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.PrincipalSid || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.AllowDeny || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.RightsSummary || '').toLowerCase().includes(term) ||");
             builder.AppendLine("        (entry.EffectiveRightsSummary || '').toLowerCase().includes(term) ||");
-            builder.AppendLine("        (entry.RiskLevel || '').toLowerCase().includes(term);");
+            builder.AppendLine("        (entry.ResourceType || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.TargetPath || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.Owner || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        (entry.RiskLevel || '').toLowerCase().includes(term) ||");
+            builder.AppendLine("        matchesMemberFilter(entry.MemberNames, term);");
+            builder.AppendLine("    }");
+
+            builder.AppendLine("    function matchesMemberFilter(members, term) {");
+            builder.AppendLine("      if (!members || !members.length) return false;");
+            builder.AppendLine("      return members.some(member => (member || '').toLowerCase().includes(term));");
             builder.AppendLine("    }");
 
             builder.AppendLine("    function isEveryone(entry) {");
@@ -503,7 +520,7 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("</body>");
             builder.AppendLine("</html>");
 
-            File.WriteAllText(outputPath, builder.ToString(), Encoding.UTF8);
+            File.WriteAllText(ioOutputPath, builder.ToString(), Encoding.UTF8);
         }
 
         private static Dictionary<string, object> BuildDetailsPayload(Dictionary<string, FolderDetail> details)

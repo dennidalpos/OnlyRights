@@ -92,6 +92,7 @@ Le opzioni principali influenzano prestazioni e dettaglio dei risultati:
 - **Escludi utenti di servizio**: filtra account di servizio/built-in del sistema tramite SID noti (LocalSystem, LocalService, NetworkService, NT SERVICE).
 - **Escludi utenti admin**: filtra account/gruppi privilegiati tramite SID noti (es. Domain Admins, Schema Admins, Builtin Administrators).
 - Le opzioni legate all’identità (PowerShell/Esclusioni/Espansione) sono disponibili solo quando la risoluzione identità è attiva.
+- Quando “Risolvi identità” viene disattivato, le opzioni dipendenti (espansione gruppi, PowerShell, esclusioni) vengono automaticamente disabilitate.
 - **Colora per diritto**: evidenzia visivamente le ACL.
 - **Abilita audit avanzato**: abilita funzioni di audit estese.
 - **Calcola Effective Access**: calcolo base con merge Allow/Deny (non considera ordine ACE o membership avanzata).
@@ -99,6 +100,16 @@ Le opzioni principali influenzano prestazioni e dettaglio dei risultati:
 - **Leggi Owner e SACL**: arricchisce le ACE con owner e policy di audit.
 - **Confronta con baseline/policy attese**: calcola differenze rispetto alla baseline del percorso root.
 - Le opzioni avanzate sono attive solo quando è selezionato “Abilita audit avanzato”.
+- Disattivando l’audit avanzato, le opzioni figlie (Effective Access, file, owner/SACL, baseline) vengono azzerate per mantenere coerenza con la scansione.
+
+### Filtri risultati
+
+I filtri nella vista risultati funzionano in combinazione:
+
+- **Filtro ACL**: ricerca per nome, SID, allow/deny, diritti, effective access, resource type, target path, owner, risk level e membri espansi.
+- **Everyone / Authenticated Users**: mostra solo le ACE con i rispettivi SID o nome equivalente.
+- **Solo Deny**: mostra solo ACE di tipo deny.
+- **Ereditarietà disabilitata**: filtra le ACE con ereditarietà disabilitata.
 
 ## Export
 
@@ -140,6 +151,7 @@ Produce un file HTML autoconclusivo che replica la vista corrente:
 - filtri applicati,
 - filtri avanzati (Everyone, Authenticated Users, Solo Deny, Ereditarietà disabilitata),
 - colori per diritto.
+- Il filtro ACL nell’HTML applica gli stessi criteri della UI (nome/SID/diritti/resource/target/owner/rischio/membri).
 
 Formato nome file:
 
@@ -203,6 +215,7 @@ Parametri principali:
 - `-SkipPublish`
 - `-SkipViewerPublish`
 - `-SkipPublishClean`
+- `-CleanAllTemp` (pulisce temp, import e cache in un’unica operazione)
 - `-CleanTemp` (rimuove `%TEMP%\NtfsAudit` prima della build/publish)
 - `-CleanImports` (pulisce `%TEMP%\NtfsAudit\\imports`)
 - `-CleanCache` (pulisce `%LOCALAPPDATA%\NtfsAudit\Cache`)
@@ -234,7 +247,7 @@ Parametri:
 - `-KeepDist`
 - `-KeepArtifacts`
 - `-KeepTemp`
-- `-KeepImportTemp` (mantiene solo `NtfsAudit\\imports` anche con `-KeepTemp`)
+- `-KeepImportTemp` (mantiene `NtfsAudit\\imports`; se `-KeepTemp` non è impostato, vengono rimossi gli altri sotto-percorsi)
 - `-KeepCache`
 
 ## File temporanei

@@ -147,7 +147,7 @@ namespace NtfsAudit.App.ViewModels
             get { return _maxDepth; }
             set
             {
-                _maxDepth = value;
+                _maxDepth = ClampMaxDepth(value);
                 OnPropertyChanged("MaxDepth");
             }
         }
@@ -158,6 +158,10 @@ namespace NtfsAudit.App.ViewModels
             set
             {
                 _scanAllDepths = value;
+                if (!_scanAllDepths)
+                {
+                    MaxDepth = ClampMaxDepth(_maxDepth);
+                }
                 OnPropertyChanged("ScanAllDepths");
                 OnPropertyChanged("IsMaxDepthEnabled");
             }
@@ -1036,8 +1040,10 @@ namespace NtfsAudit.App.ViewModels
         private void LoadErrors(string path)
         {
             Errors.Clear();
-            if (!File.Exists(path)) return;
-            foreach (var line in File.ReadLines(path))
+            if (string.IsNullOrWhiteSpace(path)) return;
+            var ioPath = PathResolver.ToExtendedPath(path);
+            if (!File.Exists(ioPath)) return;
+            foreach (var line in File.ReadLines(ioPath))
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
                 try
@@ -1091,7 +1097,8 @@ namespace NtfsAudit.App.ViewModels
                 }
             }
             if (string.IsNullOrWhiteSpace(AclFilter)) return true;
-            var term = AclFilter;
+            var term = AclFilter.Trim();
+            if (string.IsNullOrWhiteSpace(term)) return true;
             return MatchesFilter(entry.PrincipalName, term)
                 || MatchesFilter(entry.PrincipalSid, term)
                 || MatchesFilter(entry.AllowDeny, term)
@@ -1225,7 +1232,7 @@ namespace NtfsAudit.App.ViewModels
             ScanAllDepths = options.ScanAllDepths;
             if (!options.ScanAllDepths && options.MaxDepth > 0)
             {
-                MaxDepth = options.MaxDepth;
+                MaxDepth = ClampMaxDepth(options.MaxDepth);
             }
             IncludeInherited = options.IncludeInherited;
             ResolveIdentities = options.ResolveIdentities;
@@ -1308,6 +1315,11 @@ namespace NtfsAudit.App.ViewModels
             if (string.IsNullOrWhiteSpace(baseName)) baseName = "Root";
             var timestamp = DateTime.Now.ToString("dd-MM-yyyy-HH-mm");
             return string.Format("{0}_{1}.{2}", baseName, timestamp, extension);
+        }
+
+        private int ClampMaxDepth(int value)
+        {
+            return value < 1 ? 1 : value;
         }
 
         private void InitializeScanTimer()

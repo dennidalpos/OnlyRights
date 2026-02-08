@@ -52,7 +52,15 @@ foreach ($path in $paths) {
 if (-not $KeepTemp) {
     $baseTemp = if ($TempRoot) { $TempRoot } else { $env:TEMP }
     $temp = Join-Path $baseTemp "NtfsAudit"
-    if (Test-Path $temp) { Remove-Item $temp -Recurse -Force }
+    if (Test-Path $temp) {
+        if ($KeepImportTemp) {
+            Get-ChildItem $temp | Where-Object { $_.Name -ne "imports" } | ForEach-Object {
+                Remove-Item $_.FullName -Recurse -Force
+            }
+        } else {
+            Remove-Item $temp -Recurse -Force
+        }
+    }
 }
 elseif (-not $KeepImportTemp) {
     $baseTemp = if ($TempRoot) { $TempRoot } else { $env:TEMP }
