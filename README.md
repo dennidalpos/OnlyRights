@@ -29,6 +29,7 @@ Durante una scansione, NTFS Audit:
 1. Normalizza il percorso (locale o UNC).
    - Per i namespace DFS seleziona prima il target con priorità più alta e, se non disponibile, usa i fallback.
 2. Costruisce la struttura ad albero delle cartelle.
+   - Esclude le cartelle cache DFS (`DfsrPrivate`, `System Volume Information\\DFSR`).
 3. Legge le ACE (Allow/Deny) per ogni cartella.
 4. Normalizza i diritti (Full, Modify, Read, ecc.).
 5. (Opzionale) Risolve i SID in nomi e stato (utente/gruppo/disabled).
@@ -90,12 +91,14 @@ Le opzioni principali influenzano prestazioni e dettaglio dei risultati:
 - **Usa PowerShell per AD**: preferisce l’AD via PowerShell se disponibile.
 - **Escludi utenti di servizio**: filtra account di servizio/built-in del sistema tramite SID noti (LocalSystem, LocalService, NetworkService, NT SERVICE).
 - **Escludi utenti admin**: filtra account/gruppi privilegiati tramite SID noti (es. Domain Admins, Schema Admins, Builtin Administrators).
+- Le opzioni legate all’identità (PowerShell/Esclusioni/Espansione) sono disponibili solo quando la risoluzione identità è attiva.
 - **Colora per diritto**: evidenzia visivamente le ACL.
 - **Abilita audit avanzato**: abilita funzioni di audit estese.
 - **Calcola Effective Access**: calcolo base con merge Allow/Deny (non considera ordine ACE o membership avanzata).
 - **Scansiona file**: include i file oltre alle cartelle.
 - **Leggi Owner e SACL**: arricchisce le ACE con owner e policy di audit.
 - **Confronta con baseline/policy attese**: calcola differenze rispetto alla baseline del percorso root.
+- Le opzioni avanzate sono attive solo quando è selezionato “Abilita audit avanzato”.
 
 ## Export
 
@@ -118,6 +121,7 @@ Colonne tipiche:
 - `HasExplicitPermissions`, `IsInheritanceDisabled`
 - `IncludeInherited`, `ResolveIdentities`, `ExcludeServiceAccounts`, `ExcludeAdminAccounts`
 - `EnableAdvancedAudit`, `ComputeEffectiveAccess`, `IncludeFiles`, `ReadOwnerAndSacl`, `CompareBaseline`
+- `ScanAllDepths`, `MaxDepth`, `ExpandGroups`, `UsePowerShell`
 
 Formato nome file:
 
@@ -134,6 +138,7 @@ Produce un file HTML autoconclusivo che replica la vista corrente:
 - tab con ACL utenti/gruppi/complete,
 - tab errori con filtri applicati,
 - filtri applicati,
+- filtri avanzati (Everyone, Authenticated Users, Solo Deny, Ereditarietà disabilitata),
 - colori per diritto.
 
 Formato nome file:
@@ -150,6 +155,7 @@ Archivia i dati della scansione in un singolo file `.ntaudit`:
 - errori in JSONL,
 - mappa dell’albero,
 - metadati (root e timestamp).
+- opzioni di scansione (ripristinate all’import).
 
 Formato nome file consigliato:
 
@@ -168,6 +174,7 @@ Un archivio `.ntaudit` è uno ZIP con le seguenti entry:
 - `folderflags.json`: flag aggiuntivi per folder.
 
 Se `errors.jsonl` manca, l’import procede con un set vuoto. In fase di import, i flag `IsServiceAccount` e `IsAdminAccount` vengono ricalcolati da SID per garantire coerenza con le regole correnti.
+Le opzioni di scansione vengono lette dal record `SCAN_OPTIONS` presente in `data.jsonl`.
 
 ## Viewer
 
@@ -197,7 +204,9 @@ Parametri principali:
 - `-SkipViewerPublish`
 - `-SkipPublishClean`
 - `-CleanTemp` (rimuove `%TEMP%\NtfsAudit` prima della build/publish)
+- `-CleanImports` (pulisce `%TEMP%\NtfsAudit\\imports`)
 - `-CleanCache` (pulisce `%LOCALAPPDATA%\NtfsAudit\Cache`)
+- `-TempRoot <path>` (override di `%TEMP%` per le pulizie)
 - `-Framework <tfm>` (es. `net8.0-windows`)
 - `-OutputPath <cartella>`
 - `-Runtime <rid>` (es. `win-x64`)
@@ -221,6 +230,7 @@ Parametri:
 - `-Framework <tfm>`
 - `-Runtime <rid>`
 - `-TempRoot <path>` (override di `%TEMP%` per i file temporanei)
+- `-DistRoot <path>` (pulisce una cartella dist custom)
 - `-KeepDist`
 - `-KeepArtifacts`
 - `-KeepTemp`
@@ -235,6 +245,7 @@ Durante la scansione vengono creati file in `%TEMP%\NtfsAudit`:
 - `errors_*.jsonl`: errori di accesso.
 
 Questi file sono riutilizzati per gli export e possono essere rimossi tramite `clean.ps1`.
+Gli import di analisi usano `%TEMP%\NtfsAudit\\imports` e possono essere eliminati separatamente.
 
 ## Troubleshooting
 

@@ -336,7 +336,11 @@ namespace NtfsAudit.App.Services
                 ComputeEffectiveAccess = options.ComputeEffectiveAccess,
                 IncludeFiles = options.IncludeFiles,
                 ReadOwnerAndSacl = options.ReadOwnerAndSacl,
-                CompareBaseline = options.CompareBaseline
+                CompareBaseline = options.CompareBaseline,
+                ScanAllDepths = options.ScanAllDepths,
+                MaxDepth = options.MaxDepth,
+                ExpandGroups = options.ExpandGroups,
+                UsePowerShell = options.UsePowerShell
             };
         }
 

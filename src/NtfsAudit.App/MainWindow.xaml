@@ -144,9 +144,9 @@
             <StackPanel>
               <CheckBox Margin="0,0,0,6" Content="Risolvi identità (più lento)" IsChecked="{Binding ResolveIdentities}" />
               <CheckBox Margin="0,0,0,6" Content="Espandi gruppi annidati" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
-              <CheckBox Margin="0,0,0,6" Content="Usa PowerShell per AD" IsChecked="{Binding UsePowerShell}" />
-              <CheckBox Margin="0,0,0,6" Content="Escludi utenti di servizio" IsChecked="{Binding ExcludeServiceAccounts}" />
-              <CheckBox Content="Escludi utenti admin" IsChecked="{Binding ExcludeAdminAccounts}" />
+              <CheckBox Margin="0,0,0,6" Content="Usa PowerShell per AD" IsChecked="{Binding UsePowerShell}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
+              <CheckBox Margin="0,0,0,6" Content="Escludi utenti di servizio" IsChecked="{Binding ExcludeServiceAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
+              <CheckBox Content="Escludi utenti admin" IsChecked="{Binding ExcludeAdminAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
             </StackPanel>
           </GroupBox>
           <GroupBox Grid.Column="2" Header="Audit avanzato" BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Margin="0,0,6,0" IsEnabled="{Binding IsScanConfigEnabled}">
@@ -376,7 +376,7 @@
               <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" FontWeight="Bold" Text="{Binding SelectedFolderPath}" Margin="0,0,0,8" />
-            <GroupBox Grid.Row="1" Header="Filtri risultati" BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Margin="0,0,0,6">
+            <GroupBox Grid.Row="1" Header="Filtri risultati" BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Margin="0,0,0,6" IsEnabled="{Binding HasScanResult}">
               <StackPanel>
                 <Grid Margin="0,0,0,6">
                   <Grid.ColumnDefinitions>

@@ -187,10 +187,17 @@ namespace NtfsAudit.App.ViewModels
                 _resolveIdentities = value;
                 OnPropertyChanged("ResolveIdentities");
                 OnPropertyChanged("IsExpandGroupsEnabled");
+                OnPropertyChanged("IsIdentityOptionsEnabled");
+                ApplyIdentityDependencies();
             }
         }
 
         public bool IsExpandGroupsEnabled
+        {
+            get { return _resolveIdentities; }
+        }
+
+        public bool IsIdentityOptionsEnabled
         {
             get { return _resolveIdentities; }
         }
@@ -243,6 +250,7 @@ namespace NtfsAudit.App.ViewModels
                 _enableAdvancedAudit = value;
                 OnPropertyChanged("EnableAdvancedAudit");
                 OnPropertyChanged("IsAdvancedAuditEnabled");
+                ApplyAdvancedAuditDependencies();
             }
         }
 
@@ -748,7 +756,8 @@ namespace NtfsAudit.App.ViewModels
                     () => _excelExporter.Export(_scanResult.TempDataPath, _scanResult.ErrorPath, outputPath),
                     string.Format("Export completato: {0}", outputPath),
                     string.Format("Export completato:\n{0}", outputPath),
-                    "Errore export");
+                    "Errore export",
+                    outputPath);
             }
         }
 
@@ -766,7 +775,8 @@ namespace NtfsAudit.App.ViewModels
                 () => _analysisArchive.Export(_scanResult, RootPath, dialog.FileName),
                 string.Format("Analisi esportata: {0}", dialog.FileName),
                 string.Format("Analisi esportata:\n{0}", dialog.FileName),
-                "Errore export analisi");
+                "Errore export analisi",
+                dialog.FileName);
         }
 
         private async void ExportHtml()
@@ -788,12 +798,17 @@ namespace NtfsAudit.App.ViewModels
                     ColorizeRights,
                     AclFilter,
                     ErrorFilter,
+                    FilterEveryone,
+                    FilterAuthenticatedUsers,
+                    FilterDenyOnly,
+                    FilterInheritanceDisabled,
                     expandedPaths,
                     Errors,
                     dialog.FileName),
                 string.Format("Export HTML completato: {0}", dialog.FileName),
                 string.Format("Export HTML completato:\n{0}", dialog.FileName),
-                "Errore export HTML");
+                "Errore export HTML",
+                dialog.FileName);
         }
 
         private async void ImportAnalysis()
@@ -807,10 +822,14 @@ namespace NtfsAudit.App.ViewModels
             {
                 SetBusy(true);
                 var imported = await Task.Run(() => _analysisArchive.Import(dialog.FileName));
-                _scanResult = imported.ScanResult;
-                _hasExported = false;
-                ApplyDiffs(_scanResult);
-                if (!ValidateImportedResult(_scanResult, out var validationMessage))
+                var importedResult = imported.ScanResult;
+                if (importedResult == null)
+                {
+                    ProgressText = "Analisi importata non valida.";
+                    return;
+                }
+                ApplyDiffs(importedResult);
+                if (!ValidateImportedResult(importedResult, out var validationMessage))
                 {
                     var confirm = WpfMessageBox.Show(
                         string.Format("{0}\n\nVuoi procedere comunque?", validationMessage),
@@ -823,6 +842,9 @@ namespace NtfsAudit.App.ViewModels
                         return;
                     }
                 }
+                _scanResult = importedResult;
+                _hasExported = false;
+                ApplyImportedOptions(imported.ScanOptions);
                 RootPath = string.IsNullOrWhiteSpace(imported.RootPath) ? RootPath : imported.RootPath;
                 ClearResults();
                 LoadTree(_scanResult);
@@ -853,12 +875,13 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        private async Task RunExportActionAsync(Action exportAction, string progressMessage, string dialogMessage, string errorLabel)
+        private async Task RunExportActionAsync(Action exportAction, string progressMessage, string dialogMessage, string errorLabel, string outputPath = null)
         {
             try
             {
                 SetBusy(true);
                 await Task.Run(exportAction);
+                EnsureExportOutput(outputPath);
                 _hasExported = true;
                 ProgressText = progressMessage;
                 WpfMessageBox.Show(dialogMessage, "Export completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
@@ -871,6 +894,16 @@ namespace NtfsAudit.App.ViewModels
             finally
             {
                 SetBusy(false);
+            }
+        }
+
+        private void EnsureExportOutput(string outputPath)
+        {
+            if (string.IsNullOrWhiteSpace(outputPath)) return;
+            var ioPath = PathResolver.ToExtendedPath(outputPath);
+            if (!File.Exists(ioPath))
+            {
+                throw new IOException("Il file export non è stato creato.");
             }
         }
 
@@ -1084,7 +1117,14 @@ namespace NtfsAudit.App.ViewModels
                 || MatchesFilter(entry.ResourceType, term)
                 || MatchesFilter(entry.TargetPath, term)
                 || MatchesFilter(entry.Owner, term)
-                || MatchesFilter(entry.RiskLevel, term);
+                || MatchesFilter(entry.RiskLevel, term)
+                || MatchesMemberFilter(entry.MemberNames, term);
+        }
+
+        private bool MatchesMemberFilter(IEnumerable<string> members, string filter)
+        {
+            if (members == null) return false;
+            return members.Any(member => MatchesFilter(member, filter));
         }
 
         private bool MatchesFilter(string value, string filter)
@@ -1132,9 +1172,90 @@ namespace NtfsAudit.App.ViewModels
         private void UpdateDfsTargets()
         {
             var targets = PathResolver.GetDfsTargets(RootPath);
-            DfsTargets = new ObservableCollection<string>(targets ?? new List<string>());
-            SelectedDfsTarget = DfsTargets.Count > 0 ? DfsTargets[0] : string.Empty;
+            var nextTargets = new ObservableCollection<string>(targets ?? new List<string>());
+            var previousSelection = SelectedDfsTarget;
+            DfsTargets = nextTargets;
+            if (DfsTargets.Count == 0)
+            {
+                SelectedDfsTarget = string.Empty;
+                return;
+            }
+            var selected = string.IsNullOrWhiteSpace(previousSelection)
+                ? null
+                : DfsTargets.FirstOrDefault(target => string.Equals(target, previousSelection, StringComparison.OrdinalIgnoreCase));
+            SelectedDfsTarget = selected ?? DfsTargets[0];
             OnPropertyChanged("HasDfsTargets");
+        }
+
+        private void ApplyIdentityDependencies()
+        {
+            if (_resolveIdentities) return;
+            if (_expandGroups)
+            {
+                _expandGroups = false;
+                OnPropertyChanged("ExpandGroups");
+            }
+            if (_usePowerShell)
+            {
+                _usePowerShell = false;
+                OnPropertyChanged("UsePowerShell");
+            }
+            if (_excludeServiceAccounts)
+            {
+                _excludeServiceAccounts = false;
+                OnPropertyChanged("ExcludeServiceAccounts");
+            }
+            if (_excludeAdminAccounts)
+            {
+                _excludeAdminAccounts = false;
+                OnPropertyChanged("ExcludeAdminAccounts");
+            }
+        }
+
+        private void ApplyAdvancedAuditDependencies()
+        {
+            if (_enableAdvancedAudit) return;
+            if (_computeEffectiveAccess)
+            {
+                _computeEffectiveAccess = false;
+                OnPropertyChanged("ComputeEffectiveAccess");
+            }
+            if (_includeFiles)
+            {
+                _includeFiles = false;
+                OnPropertyChanged("IncludeFiles");
+            }
+            if (_readOwnerAndSacl)
+            {
+                _readOwnerAndSacl = false;
+                OnPropertyChanged("ReadOwnerAndSacl");
+            }
+            if (_compareBaseline)
+            {
+                _compareBaseline = false;
+                OnPropertyChanged("CompareBaseline");
+            }
+        }
+
+        private void ApplyImportedOptions(ScanOptions options)
+        {
+            if (options == null) return;
+            ScanAllDepths = options.ScanAllDepths;
+            if (!options.ScanAllDepths && options.MaxDepth > 0)
+            {
+                MaxDepth = options.MaxDepth;
+            }
+            IncludeInherited = options.IncludeInherited;
+            ResolveIdentities = options.ResolveIdentities;
+            ExcludeServiceAccounts = options.ResolveIdentities && options.ExcludeServiceAccounts;
+            ExcludeAdminAccounts = options.ResolveIdentities && options.ExcludeAdminAccounts;
+            ExpandGroups = options.ResolveIdentities && options.ExpandGroups;
+            UsePowerShell = options.ResolveIdentities && options.UsePowerShell;
+            EnableAdvancedAudit = options.EnableAdvancedAudit;
+            ComputeEffectiveAccess = options.EnableAdvancedAudit && options.ComputeEffectiveAccess;
+            IncludeFiles = options.EnableAdvancedAudit && options.IncludeFiles;
+            ReadOwnerAndSacl = options.EnableAdvancedAudit && options.ReadOwnerAndSacl;
+            CompareBaseline = options.EnableAdvancedAudit && options.CompareBaseline;
         }
 
         private void UpdateCommands()

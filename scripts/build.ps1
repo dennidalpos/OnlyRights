@@ -6,7 +6,9 @@ param(
     [switch]$SkipViewerPublish,
     [switch]$SkipPublishClean,
     [switch]$CleanTemp,
+    [switch]$CleanImports,
     [switch]$CleanCache,
+    [string]$TempRoot,
     [string]$Framework,
     [string]$OutputPath,
     [string]$Runtime,
@@ -36,8 +38,15 @@ if (!(Test-Path $viewerProject)) { throw "Viewer project not found" }
 if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) { throw "dotnet SDK not found." }
 
 if ($CleanTemp) {
-    $temp = Join-Path $env:TEMP "NtfsAudit"
+    $baseTemp = if ($TempRoot) { $TempRoot } else { $env:TEMP }
+    $temp = Join-Path $baseTemp "NtfsAudit"
     if (Test-Path $temp) { Remove-Item $temp -Recurse -Force }
+}
+
+if ($CleanImports) {
+    $baseTemp = if ($TempRoot) { $TempRoot } else { $env:TEMP }
+    $importTemp = Join-Path $baseTemp "NtfsAudit\\imports"
+    if (Test-Path $importTemp) { Remove-Item $importTemp -Recurse -Force }
 }
 
 if ($CleanCache) {
