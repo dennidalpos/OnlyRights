@@ -74,21 +74,8 @@
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" IsEnabled="{Binding IsScanConfigEnabled}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
-          <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Margin="0,0,8,0" Padding="12,4" Content="Sfoglia..." Command="{Binding BrowseCommand}" />
-            <TextBox Grid.Column="1" Height="26" VerticalAlignment="Center" Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}" />
-          </Grid>
-        </Border>
-
-        <Border Grid.Row="1" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
           <StackPanel Orientation="Horizontal">
             <Button Margin="0,0,8,0" Padding="12,4" Content="Start" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" Background="#FF2E7D32" Foreground="White" />
             <Button Margin="0,0,8,0" Padding="12,4" Content="Stop" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" Background="#FFC62828" Foreground="White" />
@@ -99,38 +86,59 @@
           </StackPanel>
         </Border>
 
-        <Border Grid.Row="1" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
           <StackPanel Orientation="Horizontal">
             <Button Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding IsNotScanning}" Background="#FF616161" Foreground="White" />
           </StackPanel>
         </Border>
 
-        <Grid Grid.Row="2" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Grid Grid.Row="1" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
           <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="2*" />
             <ColumnDefinition Width="*" />
           </Grid.ColumnDefinitions>
-          <Border Grid.Column="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0" IsEnabled="{Binding IsScanConfigEnabled}">
-            <WrapPanel VerticalAlignment="Center">
-              <TextBlock Text="MaxDepth" VerticalAlignment="Center" Margin="0,0,6,0" />
-              <TextBox Width="60" Height="24" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0,0,12,0" />
-              <CheckBox Content="Analizza tutte le sottocartelle" IsChecked="{Binding ScanAllDepths}" />
+          <GroupBox Grid.Column="0" Header="Scansione" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0" IsEnabled="{Binding IsScanConfigEnabled}">
+            <StackPanel>
+              <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Margin="0,0,8,0" Padding="10,4" Content="Sfoglia..." Command="{Binding BrowseCommand}" />
+                <TextBox Grid.Column="1" Height="26" VerticalAlignment="Center" Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}" />
+              </Grid>
+              <WrapPanel Margin="0,0,0,6" VerticalAlignment="Center">
+                <TextBlock Text="Profondità" VerticalAlignment="Center" Margin="0,0,6,0" />
+                <TextBox Width="60" Height="24" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0,0,12,0" />
+                <CheckBox Content="Analizza tutte le sottocartelle" IsChecked="{Binding ScanAllDepths}" />
+              </WrapPanel>
+              <CheckBox Content="Includi permessi ereditati" IsChecked="{Binding IncludeInherited}" />
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Grid.Column="1" Header="Identità" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0" IsEnabled="{Binding IsScanConfigEnabled}">
+            <WrapPanel>
+              <CheckBox Margin="0,0,12,6" Content="Risolvi identità (più lento)" IsChecked="{Binding ResolveIdentities}" />
+              <CheckBox Margin="0,0,12,6" Content="Espandi gruppi annidati" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
+              <CheckBox Margin="0,0,12,6" Content="Usa PowerShell per AD" IsChecked="{Binding UsePowerShell}" />
+              <CheckBox Margin="0,0,12,6" Content="Escludi utenti di servizio" IsChecked="{Binding ExcludeServiceAccounts}" />
+              <CheckBox Margin="0,0,12,6" Content="Escludi utenti admin" IsChecked="{Binding ExcludeAdminAccounts}" />
             </WrapPanel>
-          </Border>
-          <Border Grid.Column="1" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" IsEnabled="{Binding IsScanConfigEnabled}">
-            <WrapPanel VerticalAlignment="Center">
-              <CheckBox Margin="0,0,12,0" Content="Includi permessi ereditati" IsChecked="{Binding IncludeInherited}" />
-              <CheckBox Margin="0,0,12,0" Content="Risolvi identità (più lento)" IsChecked="{Binding ResolveIdentities}" />
-              <CheckBox Margin="0,0,12,0" Content="Espandi gruppi annidati" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
-              <CheckBox Margin="0,0,12,0" Content="Usa PowerShell per AD" IsChecked="{Binding UsePowerShell}" />
-              <CheckBox Margin="0,0,12,0" Content="Escludi utenti di servizio" IsChecked="{Binding ExcludeServiceAccounts}" />
-              <CheckBox Margin="0,0,12,0" Content="Escludi utenti admin" IsChecked="{Binding ExcludeAdminAccounts}" />
-              <CheckBox Content="Colora per diritto" IsChecked="{Binding ColorizeRights}" />
-            </WrapPanel>
-          </Border>
+          </GroupBox>
+          <GroupBox Grid.Column="2" Header="Audit avanzato" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" IsEnabled="{Binding IsScanConfigEnabled}">
+            <StackPanel>
+              <CheckBox Margin="0,0,0,6" Content="Abilita audit avanzato" IsChecked="{Binding EnableAdvancedAudit}" />
+              <StackPanel IsEnabled="{Binding IsAdvancedAuditEnabled}">
+                <CheckBox Margin="0,0,0,6" Content="Calcola Effective Access" IsChecked="{Binding ComputeEffectiveAccess}" />
+                <CheckBox Margin="0,0,0,6" Content="Scansiona file" IsChecked="{Binding IncludeFiles}" />
+                <CheckBox Margin="0,0,0,6" Content="Leggi Owner e SACL" IsChecked="{Binding ReadOwnerAndSacl}" />
+                <CheckBox Content="Confronta con baseline/policy attese" IsChecked="{Binding CompareBaseline}" />
+              </StackPanel>
+            </StackPanel>
+          </GroupBox>
         </Grid>
 
-        <Border Grid.Row="3" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Border Grid.Row="2" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
           <Grid>
             <StackPanel Margin="0,0,12,0" VerticalAlignment="Center" HorizontalAlignment="Left">
               <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
@@ -258,16 +266,98 @@
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
               <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" FontWeight="Bold" Text="{Binding SelectedFolderPath}" Margin="0,0,0,8" />
-            <Border Grid.Row="1" Margin="0,0,0,8">
-              <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Filtro ACL:" VerticalAlignment="Center" Margin="0,0,6,0" />
-                <TextBox Width="260" Height="24" Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
+            <GroupBox Grid.Row="1" Header="Dashboard" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8">
+              <StackPanel>
+                <WrapPanel Margin="0,0,0,6">
+                  <Border Background="#FFE3F2FD" Padding="4" CornerRadius="4" Margin="0,0,8,6">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Totale ACE: " />
+                      <TextBlock Text="{Binding SummaryTotalEntries}" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Border>
+                  <Border Background="#FFFFCDD2" Padding="4" CornerRadius="4" Margin="0,0,8,6">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Rischio alto: " />
+                      <TextBlock Text="{Binding SummaryHighRisk}" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Border>
+                  <Border Background="#FFFFF9C4" Padding="4" CornerRadius="4" Margin="0,0,8,6">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Rischio medio: " />
+                      <TextBlock Text="{Binding SummaryMediumRisk}" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Border>
+                  <Border Background="#FFE8F5E9" Padding="4" CornerRadius="4" Margin="0,0,8,6">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Rischio basso: " />
+                      <TextBlock Text="{Binding SummaryLowRisk}" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Border>
+                </WrapPanel>
+                <WrapPanel>
+                  <Border Background="#FFE0F7FA" Padding="4" CornerRadius="4" Margin="0,0,8,6">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Deny: " />
+                      <TextBlock Text="{Binding SummaryDenyCount}" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Border>
+                  <Border Background="#FFE3F2FD" Padding="4" CornerRadius="4" Margin="0,0,8,6">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Everyone: " />
+                      <TextBlock Text="{Binding SummaryEveryoneCount}" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Border>
+                  <Border Background="#FFE3F2FD" Padding="4" CornerRadius="4" Margin="0,0,8,6">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Authenticated Users: " />
+                      <TextBlock Text="{Binding SummaryAuthUsersCount}" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Border>
+                  <Border Background="#FFE0F7FA" Padding="4" CornerRadius="4" Margin="0,0,8,6">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="File analizzati: " />
+                      <TextBlock Text="{Binding SummaryFilesCount}" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Border>
+                  <Border Background="#FFF3E5F5" Padding="4" CornerRadius="4" Margin="0,0,8,6">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Baseline +: " />
+                      <TextBlock Text="{Binding SummaryBaselineAdded}" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Border>
+                  <Border Background="#FFF3E5F5" Padding="4" CornerRadius="4" Margin="0,0,8,6">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Baseline -: " />
+                      <TextBlock Text="{Binding SummaryBaselineRemoved}" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Border>
+                </WrapPanel>
               </StackPanel>
-            </Border>
-            <TabControl Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            </GroupBox>
+            <GroupBox Grid.Row="2" Header="Filtri risultati" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8">
+              <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                  <TextBlock Text="Filtro ACL:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                  <TextBox Width="260" Height="24" Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                  <TextBlock Text="Filtro errori:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                  <TextBox Width="260" Height="24" Text="{Binding ErrorFilter, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+                <WrapPanel>
+                  <CheckBox Margin="0,0,12,6" Content="Colora per diritto" IsChecked="{Binding ColorizeRights}" />
+                  <CheckBox Margin="0,0,12,6" Content="Everyone" IsChecked="{Binding FilterEveryone}" />
+                  <CheckBox Margin="0,0,12,6" Content="Authenticated Users" IsChecked="{Binding FilterAuthenticatedUsers}" />
+                  <CheckBox Margin="0,0,12,6" Content="Solo Deny" IsChecked="{Binding FilterDenyOnly}" />
+                  <CheckBox Margin="0,0,12,6" Content="Ereditarietà disabilitata" IsChecked="{Binding FilterInheritanceDisabled}" />
+                </WrapPanel>
+              </StackPanel>
+            </GroupBox>
+            <TabControl Grid.Row="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
               <TabItem Header="Permessi Gruppi">
                 <DataGrid ItemsSource="{Binding FilteredGroupEntries}"
                           AutoGenerateColumns="False"
@@ -284,10 +374,16 @@
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch">
                   <DataGrid.Columns>
+                    <DataGridTextColumn Header="Risorsa" Binding="{Binding ResourceType}" Width="90" />
+                    <DataGridTextColumn Header="Percorso" Binding="{Binding TargetPath}" Width="260" />
                     <DataGridTextColumn Header="Gruppo" Binding="{Binding PrincipalName}" Width="200" />
                     <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" Width="240" />
                     <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" Width="100" />
                     <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" Width="160" />
+                    <DataGridTextColumn Header="Effective Access" Binding="{Binding EffectiveRightsSummary}" Width="160" />
+                    <DataGridTextColumn Header="Rischio" Binding="{Binding RiskLevel}" Width="90" />
+                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="160" />
+                    <DataGridTextColumn Header="SACL/Audit" Binding="{Binding AuditSummary}" Width="220" />
                     <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" Width="70" />
                     <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" Width="90" />
                     <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" Width="60" />
@@ -318,10 +414,16 @@
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch">
                   <DataGrid.Columns>
+                    <DataGridTextColumn Header="Risorsa" Binding="{Binding ResourceType}" Width="90" />
+                    <DataGridTextColumn Header="Percorso" Binding="{Binding TargetPath}" Width="260" />
                     <DataGridTextColumn Header="Utente" Binding="{Binding PrincipalName}" Width="200" />
                     <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" Width="240" />
                     <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" Width="100" />
                     <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" Width="160" />
+                    <DataGridTextColumn Header="Effective Access" Binding="{Binding EffectiveRightsSummary}" Width="160" />
+                    <DataGridTextColumn Header="Rischio" Binding="{Binding RiskLevel}" Width="90" />
+                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="160" />
+                    <DataGridTextColumn Header="SACL/Audit" Binding="{Binding AuditSummary}" Width="220" />
                     <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" Width="70" />
                     <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" Width="90" />
                     <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" Width="60" />
@@ -351,11 +453,17 @@
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch">
                   <DataGrid.Columns>
+                    <DataGridTextColumn Header="Risorsa" Binding="{Binding ResourceType}" Width="90" />
+                    <DataGridTextColumn Header="Percorso" Binding="{Binding TargetPath}" Width="260" />
                     <DataGridTextColumn Header="Principal" Binding="{Binding PrincipalName}" Width="200" />
                     <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" Width="240" />
                     <DataGridTextColumn Header="Tipo" Binding="{Binding PrincipalType}" Width="100" />
                     <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" Width="100" />
                     <DataGridTextColumn Header="Diritti" Binding="{Binding RightsSummary}" Width="160" />
+                    <DataGridTextColumn Header="Effective Access" Binding="{Binding EffectiveRightsSummary}" Width="160" />
+                    <DataGridTextColumn Header="Rischio" Binding="{Binding RiskLevel}" Width="90" />
+                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" Width="160" />
+                    <DataGridTextColumn Header="SACL/Audit" Binding="{Binding AuditSummary}" Width="220" />
                     <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" Width="70" />
                     <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" Width="90" />
                     <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" Width="60" />
@@ -372,13 +480,7 @@
               </TabItem>
               <TabItem Header="Errori">
                 <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                  <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                  </Grid.RowDefinitions>
-                  <TextBox Margin="0,0,0,6" Text="{Binding ErrorFilter, UpdateSourceTrigger=PropertyChanged}" />
-                  <DataGrid Grid.Row="1"
-                            ItemsSource="{Binding FilteredErrors}"
+                  <DataGrid ItemsSource="{Binding FilteredErrors}"
                             AutoGenerateColumns="False"
                             IsReadOnly="True"
                             EnableRowVirtualization="True"

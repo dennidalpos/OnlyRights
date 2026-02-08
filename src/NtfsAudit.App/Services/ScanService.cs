@@ -16,6 +16,8 @@ namespace NtfsAudit.App.Services
 {
     public class ScanService
     {
+        private const string EveryoneSid = "S-1-1-0";
+        private const string AuthenticatedUsersSid = "S-1-5-11";
         private readonly IdentityResolver _identityResolver;
         private readonly GroupExpansionService _groupExpansion;
         public ScanService(IdentityResolver identityResolver, GroupExpansionService groupExpansion)
@@ -56,6 +58,7 @@ namespace NtfsAudit.App.Services
             {
                 var dataQueue = new BlockingCollection<ExportRecord>(new ConcurrentQueue<ExportRecord>());
                 var errorQueue = new BlockingCollection<ErrorEntry>(new ConcurrentQueue<ErrorEntry>());
+                var baselineKeys = options.CompareBaseline ? BuildBaselineKeys(options, errorQueue) : null;
                 var dataWriterTask = Task.Run(() => DrainQueue(dataQueue, dataWriter, token), token);
                 var errorWriterTask = Task.Run(() => DrainQueue(errorQueue, errorWriter, token), token);
 
@@ -154,149 +157,66 @@ namespace NtfsAudit.App.Services
                             try
                             {
                                 var ioPath = PathResolver.ToExtendedPath(current);
-                                var security = new DirectoryInfo(ioPath).GetAccessControl(AccessControlSections.Access);
-                                var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier));
-                                var isInheritanceDisabled = security.AreAccessRulesProtected;
-                                var hasExplicitPermissions = false;
-
-                                foreach (FileSystemAccessRule rule in rules)
+                                var directoryInfo = new DirectoryInfo(ioPath);
+                                var accessSections = AccessControlSections.Access;
+                                if (options.ReadOwnerAndSacl)
                                 {
-                                    token.ThrowIfCancellationRequested();
-                                    if (!rule.IsInherited)
-                                    {
-                                        hasExplicitPermissions = true;
-                                    }
-                                    if (!options.IncludeInherited && rule.IsInherited)
-                                    {
-                                        continue;
-                                    }
-                                    var sid = rule.IdentityReference.Value;
-                                    ResolvedPrincipal resolved;
-                                    if (options.ResolveIdentities)
-                                    {
-                                        resolved = _identityResolver.Resolve(sid);
-                                    }
-                                    else
-                                    {
-                                        resolved = new ResolvedPrincipal
-                                        {
-                                            Sid = sid,
-                                            Name = sid,
-                                            IsGroup = false,
-                                            IsDisabled = false,
-                                            IsServiceAccount = false,
-                                            IsAdminAccount = false
-                                        };
-                                    }
-                                    if (options.ResolveIdentities && options.ExcludeAdminAccounts && !resolved.IsGroup && !resolved.IsAdminAccount)
-                                    {
-                                        if (_groupExpansion != null && _groupExpansion.IsPrivilegedUser(sid))
-                                        {
-                                            resolved.IsAdminAccount = true;
-                                        }
-                                    }
-                                    if (options.ResolveIdentities && options.ExcludeServiceAccounts && resolved.IsServiceAccount)
-                                    {
-                                        continue;
-                                    }
-                                    if (options.ResolveIdentities && options.ExcludeAdminAccounts && resolved.IsAdminAccount)
-                                    {
-                                        continue;
-                                    }
-                                    var rightsSummary = RightsNormalizer.Normalize(rule.FileSystemRights);
-                                    var entry = new AceEntry
-                                    {
-                                        FolderPath = current,
-                                        PrincipalName = resolved.Name,
-                                        PrincipalSid = sid,
-                                        PrincipalType = resolved.Type,
-                                        AllowDeny = rule.AccessControlType.ToString(),
-                                        RightsSummary = rightsSummary,
-                                        RightsMask = (int)rule.FileSystemRights,
-                                        IsInherited = rule.IsInherited,
-                                        InheritanceFlags = rule.InheritanceFlags.ToString(),
-                                        PropagationFlags = rule.PropagationFlags.ToString(),
-                                        Source = "Diretto",
-                                        Depth = depth,
-                                        IsDisabled = resolved.IsDisabled,
-                                        IsServiceAccount = resolved.IsServiceAccount,
-                                        IsAdminAccount = resolved.IsAdminAccount,
-                                        HasExplicitPermissions = !rule.IsInherited,
-                                        IsInheritanceDisabled = isInheritanceDisabled
-                                    };
-
-                                    lock (currentDetail)
-                                    {
-                                        currentDetail.AllEntries.Add(entry);
-                                        if (resolved.IsGroup)
-                                        {
-                                            currentDetail.GroupEntries.Add(entry);
-                                        }
-                                        else
-                                        {
-                                            currentDetail.UserEntries.Add(entry);
-                                        }
-                                    }
-
-                                    List<ResolvedPrincipal> members = null;
-                                    if (resolved.IsGroup && options.ExpandGroups && options.ResolveIdentities)
-                                    {
-                                        members = _groupExpansion.ExpandGroup(sid, token);
-                                        entry.MemberNames = members.Select(m =>
-                                            string.IsNullOrWhiteSpace(m.Sid)
-                                                ? m.Name
-                                                : string.Format("{0} ({1})", m.Name, m.Sid)).ToList();
-                                    }
-
-                                    dataQueue.Add(BuildExportRecord(entry, options));
-
-                                    if (members != null)
-                                    {
-                                        foreach (var member in members)
-                                        {
-                                            var source = string.Format("Gruppo:{0}", resolved.Name);
-                                            if (options.ResolveIdentities && options.ExcludeServiceAccounts && member.IsServiceAccount)
-                                            {
-                                                continue;
-                                            }
-                                            if (options.ResolveIdentities && options.ExcludeAdminAccounts && member.IsAdminAccount)
-                                            {
-                                                continue;
-                                            }
-                                            var memberEntry = new AceEntry
-                                            {
-                                                FolderPath = current,
-                                                PrincipalName = member.Name,
-                                                PrincipalSid = member.Sid,
-                                                PrincipalType = "User",
-                                                AllowDeny = rule.AccessControlType.ToString(),
-                                                RightsSummary = rightsSummary,
-                                                RightsMask = (int)rule.FileSystemRights,
-                                                IsInherited = rule.IsInherited,
-                                                InheritanceFlags = rule.InheritanceFlags.ToString(),
-                                                PropagationFlags = rule.PropagationFlags.ToString(),
-                                                Source = source,
-                                                Depth = depth,
-                                                IsDisabled = member.IsDisabled,
-                                                IsServiceAccount = member.IsServiceAccount,
-                                                IsAdminAccount = member.IsAdminAccount,
-                                                HasExplicitPermissions = !rule.IsInherited,
-                                                IsInheritanceDisabled = isInheritanceDisabled
-                                            };
-                                            lock (currentDetail)
-                                            {
-                                                currentDetail.UserEntries.Add(memberEntry);
-                                                currentDetail.AllEntries.Add(memberEntry);
-                                            }
-                                            dataQueue.Add(BuildExportRecord(memberEntry, options));
-                                        }
-                                    }
+                                    accessSections |= AccessControlSections.Owner | AccessControlSections.Audit;
                                 }
+                                var security = directoryInfo.GetAccessControl(accessSections);
+                                ProcessAccessControl(
+                                    security,
+                                    current,
+                                    current,
+                                    false,
+                                    depth,
+                                    options,
+                                    currentDetail,
+                                    baselineKeys,
+                                    dataQueue,
+                                    errorQueue,
+                                    token);
 
-                                lock (currentDetail)
+                                if (options.IncludeFiles)
                                 {
-                                    currentDetail.HasExplicitPermissions = hasExplicitPermissions;
-                                    currentDetail.IsInheritanceDisabled = isInheritanceDisabled;
+                                    if (progress != null)
+                                    {
+                                        progress.Report(new ScanProgress
+                                        {
+                                            Processed = processedCount,
+                                            Errors = Volatile.Read(ref errorCount),
+                                            Elapsed = stopwatch.Elapsed,
+                                            Stage = "Lettura ACL file",
+                                            CurrentPath = current
+                                        });
+                                    }
+                                    foreach (var file in Directory.EnumerateFiles(ioPath, "*", SearchOption.TopDirectoryOnly))
+                                    {
+                                        token.ThrowIfCancellationRequested();
+                                        try
+                                        {
+                                            var filePath = PathResolver.FromExtendedPath(file);
+                                            var fileInfo = new FileInfo(file);
+                                            var fileSecurity = fileInfo.GetAccessControl(accessSections);
+                                            ProcessAccessControl(
+                                                fileSecurity,
+                                                current,
+                                                filePath,
+                                                true,
+                                                depth,
+                                                options,
+                                                currentDetail,
+                                                null,
+                                                dataQueue,
+                                                errorQueue,
+                                                token);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Interlocked.Increment(ref errorCount);
+                                            errorQueue.Add(BuildErrorEntry(PathResolver.FromExtendedPath(file), ex));
+                                        }
+                                    }
                                 }
                             }
                             catch (Exception ex)
@@ -388,11 +308,18 @@ namespace NtfsAudit.App.Services
                 AllowDeny = entry.AllowDeny,
                 RightsSummary = entry.RightsSummary,
                 RightsMask = entry.RightsMask,
+                EffectiveRightsSummary = entry.EffectiveRightsSummary,
+                EffectiveRightsMask = entry.EffectiveRightsMask,
                 IsInherited = entry.IsInherited,
                 InheritanceFlags = entry.InheritanceFlags,
                 PropagationFlags = entry.PropagationFlags,
                 Source = entry.Source,
                 Depth = entry.Depth,
+                ResourceType = entry.ResourceType,
+                TargetPath = entry.TargetPath,
+                Owner = entry.Owner,
+                AuditSummary = entry.AuditSummary,
+                RiskLevel = entry.RiskLevel,
                 IsDisabled = entry.IsDisabled,
                 IsServiceAccount = entry.IsServiceAccount,
                 IsAdminAccount = entry.IsAdminAccount,
@@ -402,7 +329,12 @@ namespace NtfsAudit.App.Services
                 IncludeInherited = options.IncludeInherited,
                 ResolveIdentities = options.ResolveIdentities,
                 ExcludeServiceAccounts = options.ExcludeServiceAccounts,
-                ExcludeAdminAccounts = options.ExcludeAdminAccounts
+                ExcludeAdminAccounts = options.ExcludeAdminAccounts,
+                EnableAdvancedAudit = options.EnableAdvancedAudit,
+                ComputeEffectiveAccess = options.ComputeEffectiveAccess,
+                IncludeFiles = options.IncludeFiles,
+                ReadOwnerAndSacl = options.ReadOwnerAndSacl,
+                CompareBaseline = options.CompareBaseline
             };
         }
 
@@ -433,6 +365,401 @@ namespace NtfsAudit.App.Services
                 Depth = 0,
                 IsDisabled = false
             };
+        }
+
+        private void ProcessAccessControl(
+            FileSystemSecurity security,
+            string folderKey,
+            string targetPath,
+            bool isFile,
+            int depth,
+            ScanOptions options,
+            FolderDetail currentDetail,
+            List<AclDiffKey> baselineKeys,
+            BlockingCollection<ExportRecord> dataQueue,
+            BlockingCollection<ErrorEntry> errorQueue,
+            CancellationToken token)
+        {
+            if (security == null) return;
+            var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
+            var isInheritanceDisabled = security.AreAccessRulesProtected;
+            var hasExplicitPermissions = false;
+            var effectiveAccess = options.ComputeEffectiveAccess
+                ? BuildEffectiveAccessMap(rules, options)
+                : new Dictionary<string, EffectiveAccessAccumulator>(StringComparer.OrdinalIgnoreCase);
+            var owner = options.ReadOwnerAndSacl ? ResolveOwner(security, options) : string.Empty;
+            var auditSummary = options.ReadOwnerAndSacl ? BuildAuditSummary(security, options) : string.Empty;
+
+            foreach (var rule in rules)
+            {
+                token.ThrowIfCancellationRequested();
+                if (!rule.IsInherited)
+                {
+                    hasExplicitPermissions = true;
+                }
+                if (!options.IncludeInherited && rule.IsInherited)
+                {
+                    continue;
+                }
+                var sid = rule.IdentityReference.Value;
+                ResolvedPrincipal resolved;
+                if (options.ResolveIdentities)
+                {
+                    resolved = _identityResolver.Resolve(sid);
+                }
+                else
+                {
+                    resolved = new ResolvedPrincipal
+                    {
+                        Sid = sid,
+                        Name = sid,
+                        IsGroup = false,
+                        IsDisabled = false,
+                        IsServiceAccount = false,
+                        IsAdminAccount = false
+                    };
+                }
+                if (options.ResolveIdentities && options.ExcludeAdminAccounts && !resolved.IsGroup && !resolved.IsAdminAccount)
+                {
+                    if (_groupExpansion != null && _groupExpansion.IsPrivilegedUser(sid))
+                    {
+                        resolved.IsAdminAccount = true;
+                    }
+                }
+                if (options.ResolveIdentities && options.ExcludeServiceAccounts && resolved.IsServiceAccount)
+                {
+                    continue;
+                }
+                if (options.ResolveIdentities && options.ExcludeAdminAccounts && resolved.IsAdminAccount)
+                {
+                    continue;
+                }
+                var rightsSummary = RightsNormalizer.Normalize(rule.FileSystemRights);
+                var effectiveMask = options.ComputeEffectiveAccess
+                    ? GetEffectiveMask(effectiveAccess, sid)
+                    : (int)rule.FileSystemRights;
+                var effectiveSummary = options.ComputeEffectiveAccess
+                    ? RightsNormalizer.Normalize((FileSystemRights)effectiveMask)
+                    : rightsSummary;
+                var entry = new AceEntry
+                {
+                    FolderPath = folderKey,
+                    TargetPath = targetPath,
+                    ResourceType = isFile ? "File" : "Cartella",
+                    Owner = owner,
+                    AuditSummary = auditSummary,
+                    PrincipalName = resolved.Name,
+                    PrincipalSid = sid,
+                    PrincipalType = resolved.Type,
+                    AllowDeny = rule.AccessControlType.ToString(),
+                    RightsSummary = rightsSummary,
+                    RightsMask = (int)rule.FileSystemRights,
+                    EffectiveRightsSummary = effectiveSummary,
+                    EffectiveRightsMask = effectiveMask,
+                    IsInherited = rule.IsInherited,
+                    InheritanceFlags = rule.InheritanceFlags.ToString(),
+                    PropagationFlags = rule.PropagationFlags.ToString(),
+                    Source = isFile ? "File" : "Diretto",
+                    Depth = depth,
+                    IsDisabled = resolved.IsDisabled,
+                    IsServiceAccount = resolved.IsServiceAccount,
+                    IsAdminAccount = resolved.IsAdminAccount,
+                    HasExplicitPermissions = !rule.IsInherited,
+                    IsInheritanceDisabled = isInheritanceDisabled
+                };
+
+                entry.RiskLevel = EvaluateRisk(entry);
+
+                lock (currentDetail)
+                {
+                    currentDetail.AllEntries.Add(entry);
+                    if (resolved.IsGroup)
+                    {
+                        currentDetail.GroupEntries.Add(entry);
+                    }
+                    else
+                    {
+                        currentDetail.UserEntries.Add(entry);
+                    }
+                }
+
+                List<ResolvedPrincipal> members = null;
+                if (resolved.IsGroup && options.ExpandGroups && options.ResolveIdentities)
+                {
+                    members = _groupExpansion.ExpandGroup(sid, token);
+                    entry.MemberNames = members.Select(m =>
+                        string.IsNullOrWhiteSpace(m.Sid)
+                            ? m.Name
+                            : string.Format("{0} ({1})", m.Name, m.Sid)).ToList();
+                }
+
+                dataQueue.Add(BuildExportRecord(entry, options));
+
+                if (members != null)
+                {
+                    foreach (var member in members)
+                    {
+                        var source = string.Format("Gruppo:{0}", resolved.Name);
+                        if (options.ResolveIdentities && options.ExcludeServiceAccounts && member.IsServiceAccount)
+                        {
+                            continue;
+                        }
+                        if (options.ResolveIdentities && options.ExcludeAdminAccounts && member.IsAdminAccount)
+                        {
+                            continue;
+                        }
+                        var memberEntry = new AceEntry
+                        {
+                            FolderPath = folderKey,
+                            TargetPath = targetPath,
+                            ResourceType = isFile ? "File" : "Cartella",
+                            Owner = owner,
+                            AuditSummary = auditSummary,
+                            PrincipalName = member.Name,
+                            PrincipalSid = member.Sid,
+                            PrincipalType = "User",
+                            AllowDeny = rule.AccessControlType.ToString(),
+                            RightsSummary = rightsSummary,
+                            RightsMask = (int)rule.FileSystemRights,
+                            EffectiveRightsSummary = effectiveSummary,
+                            EffectiveRightsMask = effectiveMask,
+                            IsInherited = rule.IsInherited,
+                            InheritanceFlags = rule.InheritanceFlags.ToString(),
+                            PropagationFlags = rule.PropagationFlags.ToString(),
+                            Source = source,
+                            Depth = depth,
+                            IsDisabled = member.IsDisabled,
+                            IsServiceAccount = member.IsServiceAccount,
+                            IsAdminAccount = member.IsAdminAccount,
+                            HasExplicitPermissions = !rule.IsInherited,
+                            IsInheritanceDisabled = isInheritanceDisabled
+                        };
+                        memberEntry.RiskLevel = EvaluateRisk(memberEntry);
+                        lock (currentDetail)
+                        {
+                            currentDetail.UserEntries.Add(memberEntry);
+                            currentDetail.AllEntries.Add(memberEntry);
+                        }
+                        dataQueue.Add(BuildExportRecord(memberEntry, options));
+                    }
+                }
+            }
+
+            lock (currentDetail)
+            {
+                currentDetail.HasExplicitPermissions = currentDetail.HasExplicitPermissions || hasExplicitPermissions;
+                currentDetail.IsInheritanceDisabled = currentDetail.IsInheritanceDisabled || isInheritanceDisabled;
+                if (baselineKeys != null)
+                {
+                    var currentKeys = BuildAclKeysFromRules(rules, options);
+                    currentDetail.BaselineSummary = BuildBaselineDiff(baselineKeys, currentKeys);
+                }
+            }
+        }
+
+        private List<AclDiffKey> BuildBaselineKeys(ScanOptions options, BlockingCollection<ErrorEntry> errorQueue)
+        {
+            try
+            {
+                var ioRootPath = PathResolver.ToExtendedPath(options.RootPath);
+                var accessSections = AccessControlSections.Access;
+                if (options.ReadOwnerAndSacl)
+                {
+                    accessSections |= AccessControlSections.Owner | AccessControlSections.Audit;
+                }
+                var security = new DirectoryInfo(ioRootPath).GetAccessControl(accessSections);
+                var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
+                return BuildAclKeysFromRules(rules, options);
+            }
+            catch (Exception ex)
+            {
+                if (errorQueue != null)
+                {
+                    errorQueue.Add(BuildErrorEntry(options.RootPath, ex));
+                }
+                return null;
+            }
+        }
+
+        private static List<AclDiffKey> BuildAclKeysFromRules(IEnumerable<FileSystemAccessRule> rules, ScanOptions options)
+        {
+            var keys = new List<AclDiffKey>();
+            foreach (var rule in rules)
+            {
+                if (!options.IncludeInherited && rule.IsInherited)
+                {
+                    continue;
+                }
+                var sid = rule.IdentityReference.Value;
+                keys.Add(new AclDiffKey
+                {
+                    Sid = sid,
+                    AllowDeny = rule.AccessControlType.ToString(),
+                    RightsMask = (int)rule.FileSystemRights,
+                    InheritanceFlags = rule.InheritanceFlags.ToString(),
+                    PropagationFlags = rule.PropagationFlags.ToString(),
+                    IsInherited = rule.IsInherited
+                });
+            }
+            return keys;
+        }
+
+        private static AclDiffSummary BuildBaselineDiff(IEnumerable<AclDiffKey> baseline, IEnumerable<AclDiffKey> current)
+        {
+            var summary = new AclDiffSummary();
+            if (baseline == null || current == null) return summary;
+
+            var baselineList = baseline.ToList();
+            var currentList = current.ToList();
+            var baselineSet = new HashSet<AclDiffKey>(baselineList);
+            var currentSet = new HashSet<AclDiffKey>(currentList);
+
+            foreach (var ace in currentSet)
+            {
+                if (!baselineSet.Contains(ace))
+                {
+                    summary.Added.Add(ace);
+                }
+            }
+
+            foreach (var ace in baselineSet)
+            {
+                if (!currentSet.Contains(ace))
+                {
+                    summary.Removed.Add(ace);
+                }
+            }
+
+            summary.ExplicitCount = currentList.Count(entry => !entry.IsInherited);
+            summary.DenyExplicitCount = currentList.Count(entry =>
+                !entry.IsInherited && string.Equals(entry.AllowDeny, "Deny", StringComparison.OrdinalIgnoreCase));
+            return summary;
+        }
+
+        private Dictionary<string, EffectiveAccessAccumulator> BuildEffectiveAccessMap(IEnumerable<FileSystemAccessRule> rules, ScanOptions options)
+        {
+            var map = new Dictionary<string, EffectiveAccessAccumulator>(StringComparer.OrdinalIgnoreCase);
+            foreach (var rule in rules)
+            {
+                if (!options.IncludeInherited && rule.IsInherited)
+                {
+                    continue;
+                }
+                var sid = rule.IdentityReference.Value;
+                EffectiveAccessAccumulator accumulator;
+                if (!map.TryGetValue(sid, out accumulator))
+                {
+                    accumulator = new EffectiveAccessAccumulator();
+                    map[sid] = accumulator;
+                }
+                if (rule.AccessControlType == AccessControlType.Allow)
+                {
+                    accumulator.Allow |= (int)rule.FileSystemRights;
+                }
+                else
+                {
+                    accumulator.Deny |= (int)rule.FileSystemRights;
+                }
+            }
+            return map;
+        }
+
+        private static int GetEffectiveMask(Dictionary<string, EffectiveAccessAccumulator> map, string sid)
+        {
+            if (map == null || string.IsNullOrWhiteSpace(sid)) return 0;
+            EffectiveAccessAccumulator accumulator;
+            if (!map.TryGetValue(sid, out accumulator))
+            {
+                return 0;
+            }
+            // Calcolo semplificato: Allow - Deny. Non considera ordine ACE, deny specifici o membership avanzata.
+            return accumulator.Allow & ~accumulator.Deny;
+        }
+
+        private string ResolveOwner(FileSystemSecurity security, ScanOptions options)
+        {
+            try
+            {
+                var sid = security.GetOwner(typeof(SecurityIdentifier)) as SecurityIdentifier;
+                if (sid == null) return string.Empty;
+                if (!options.ResolveIdentities) return sid.Value;
+                var resolved = _identityResolver.Resolve(sid.Value);
+                return resolved == null ? sid.Value : resolved.Name;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        private string BuildAuditSummary(FileSystemSecurity security, ScanOptions options)
+        {
+            try
+            {
+                var rules = security.GetAuditRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAuditRule>().ToList();
+                if (rules.Count == 0) return string.Empty;
+                var summaries = new List<string>();
+                foreach (var rule in rules)
+                {
+                    var sid = rule.IdentityReference.Value;
+                    var principal = options.ResolveIdentities ? _identityResolver.Resolve(sid).Name : sid;
+                    var rights = RightsNormalizer.Normalize(rule.FileSystemRights);
+                    summaries.Add(string.Format("{0}:{1}:{2}", principal, rule.AuditFlags, rights));
+                }
+                return string.Join(" | ", summaries);
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        private static string EvaluateRisk(AceEntry entry)
+        {
+            if (entry == null) return "Basso";
+            var allow = string.Equals(entry.AllowDeny, "Allow", StringComparison.OrdinalIgnoreCase);
+            var principal = entry.PrincipalSid ?? entry.PrincipalName ?? string.Empty;
+            var rightsSummary = string.IsNullOrWhiteSpace(entry.EffectiveRightsSummary)
+                ? entry.RightsSummary ?? string.Empty
+                : entry.EffectiveRightsSummary;
+            var rank = RightsNormalizer.Rank(rightsSummary);
+            var isBroadPrincipal = IsEveryone(principal) || IsAuthenticatedUsers(principal)
+                || principal.IndexOf("Everyone", StringComparison.OrdinalIgnoreCase) >= 0
+                || principal.IndexOf("Authenticated Users", StringComparison.OrdinalIgnoreCase) >= 0;
+
+            if (allow && isBroadPrincipal && rank >= 4)
+            {
+                return "Alto";
+            }
+            if (allow && (isBroadPrincipal && rank >= 2))
+            {
+                return "Medio";
+            }
+            if (!allow)
+            {
+                return "Medio";
+            }
+            if (entry.IsInheritanceDisabled)
+            {
+                return "Medio";
+            }
+            return "Basso";
+        }
+
+        private static bool IsEveryone(string sidOrName)
+        {
+            return string.Equals(sidOrName, EveryoneSid, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsAuthenticatedUsers(string sidOrName)
+        {
+            return string.Equals(sidOrName, AuthenticatedUsersSid, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private class EffectiveAccessAccumulator
+        {
+            public int Allow { get; set; }
+            public int Deny { get; set; }
         }
 
         private class WorkItem

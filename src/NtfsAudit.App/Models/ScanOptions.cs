@@ -11,5 +11,10 @@ namespace NtfsAudit.App.Models
         public bool ExcludeAdminAccounts { get; set; }
         public bool ExpandGroups { get; set; }
         public bool UsePowerShell { get; set; }
+        public bool EnableAdvancedAudit { get; set; }
+        public bool ComputeEffectiveAccess { get; set; }
+        public bool IncludeFiles { get; set; }
+        public bool ReadOwnerAndSacl { get; set; }
+        public bool CompareBaseline { get; set; }
     }
 }

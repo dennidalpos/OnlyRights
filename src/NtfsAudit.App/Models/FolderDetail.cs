@@ -17,5 +17,6 @@ namespace NtfsAudit.App.Models
         public bool HasExplicitPermissions { get; set; }
         public bool IsInheritanceDisabled { get; set; }
         public AclDiffSummary DiffSummary { get; set; }
+        public AclDiffSummary BaselineSummary { get; set; }
     }
 }

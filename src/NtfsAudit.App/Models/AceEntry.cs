@@ -11,11 +11,18 @@ namespace NtfsAudit.App.Models
         public string AllowDeny { get; set; }
         public string RightsSummary { get; set; }
         public int RightsMask { get; set; }
+        public string EffectiveRightsSummary { get; set; }
+        public int EffectiveRightsMask { get; set; }
         public bool IsInherited { get; set; }
         public string InheritanceFlags { get; set; }
         public string PropagationFlags { get; set; }
         public string Source { get; set; }
         public int Depth { get; set; }
+        public string ResourceType { get; set; }
+        public string TargetPath { get; set; }
+        public string Owner { get; set; }
+        public string AuditSummary { get; set; }
+        public string RiskLevel { get; set; }
         public bool IsDisabled { get; set; }
         public bool IsServiceAccount { get; set; }
         public bool IsAdminAccount { get; set; }
