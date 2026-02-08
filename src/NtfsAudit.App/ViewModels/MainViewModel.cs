@@ -734,6 +734,30 @@ namespace NtfsAudit.App.ViewModels
 
         private void AddNetworkPlaces(IFileDialog dialog)
         {
+            var mappedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            using (var networkKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("Network"))
+            {
+                if (networkKey != null)
+                {
+                    foreach (var driveLetter in networkKey.GetSubKeyNames())
+                    {
+                        using (var driveKey = networkKey.OpenSubKey(driveLetter))
+                        {
+                            var remotePath = driveKey?.GetValue("RemotePath") as string;
+                            if (!string.IsNullOrWhiteSpace(remotePath))
+                            {
+                                mappedPaths.Add(remotePath);
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach (var remotePath in mappedPaths)
+            {
+                TryAddPlace(dialog, remotePath);
+            }
+
             foreach (var drive in DriveInfo.GetDrives())
             {
                 if (drive.DriveType != DriveType.Network)
