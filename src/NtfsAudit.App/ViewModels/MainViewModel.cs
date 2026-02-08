@@ -1034,6 +1034,10 @@ namespace NtfsAudit.App.ViewModels
             }
             if (treeMap == null || treeMap.Count == 0)
             {
+                treeMap = BuildTreeMapFromExportRecords(result.TempDataPath, RootPath);
+            }
+            if (treeMap == null || treeMap.Count == 0)
+            {
                 return;
             }
 
@@ -1145,6 +1149,79 @@ namespace NtfsAudit.App.ViewModels
             }
 
             return map;
+        }
+
+        private Dictionary<string, List<string>> BuildTreeMapFromExportRecords(string dataPath, string fallbackRoot)
+        {
+            if (string.IsNullOrWhiteSpace(dataPath))
+            {
+                return null;
+            }
+            var ioPath = PathResolver.ToExtendedPath(dataPath);
+            if (!File.Exists(ioPath))
+            {
+                return null;
+            }
+
+            var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                foreach (var line in File.ReadLines(ioPath))
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    ExportRecord record;
+                    try
+                    {
+                        record = Newtonsoft.Json.JsonConvert.DeserializeObject<ExportRecord>(line);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                    if (record == null) continue;
+                    var path = string.IsNullOrWhiteSpace(record.TargetPath) ? record.FolderPath : record.TargetPath;
+                    if (string.IsNullOrWhiteSpace(path)) continue;
+                    AddPathWithAncestors(map, path);
+                }
+            }
+            catch
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(fallbackRoot) && !map.ContainsKey(fallbackRoot))
+            {
+                map[fallbackRoot] = new List<string>();
+            }
+
+            return map.Count == 0 ? null : map;
+        }
+
+        private void AddPathWithAncestors(Dictionary<string, List<string>> map, string path)
+        {
+            var current = path;
+            if (!map.ContainsKey(current))
+            {
+                map[current] = new List<string>();
+            }
+
+            while (true)
+            {
+                var parent = SafeGetParentPath(current);
+                if (string.IsNullOrWhiteSpace(parent))
+                {
+                    break;
+                }
+                if (!map.ContainsKey(parent))
+                {
+                    map[parent] = new List<string>();
+                }
+                if (!map[parent].Contains(current, StringComparer.OrdinalIgnoreCase))
+                {
+                    map[parent].Add(current);
+                }
+                current = parent;
+            }
         }
 
         private string SafeGetParentPath(string path)
