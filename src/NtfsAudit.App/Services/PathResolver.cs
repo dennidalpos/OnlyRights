@@ -42,15 +42,19 @@ namespace NtfsAudit.App.Services
             return path;
         }
 
-        public static string NormalizeRootPath(string input)
+        public static string NormalizeRootPath(string input, bool resolveDfs = true)
         {
             if (string.IsNullOrWhiteSpace(input)) return input;
             var trimmed = input.Trim();
             var normalized = FromExtendedPath(trimmed);
             if (normalized.StartsWith("\\\\"))
             {
-                var dfsResolved = TryResolveDfsPath(normalized);
-                return dfsResolved ?? normalized;
+                if (resolveDfs)
+                {
+                    var dfsResolved = TryResolveDfsPath(normalized);
+                    return dfsResolved ?? normalized;
+                }
+                return normalized;
             }
 
             if (normalized.Length < 2 || normalized[1] != ':') return normalized;
@@ -62,8 +66,12 @@ namespace NtfsAudit.App.Services
             var suffix = normalized.Length > 2 ? normalized.Substring(2) : string.Empty;
             var relative = suffix.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             var combined = string.IsNullOrEmpty(relative) ? uncRoot : Path.Combine(uncRoot, relative);
-            var dfsResolvedCombined = TryResolveDfsPath(combined);
-            return dfsResolvedCombined ?? combined;
+            if (resolveDfs)
+            {
+                var dfsResolvedCombined = TryResolveDfsPath(combined);
+                return dfsResolvedCombined ?? combined;
+            }
+            return combined;
         }
 
         public static List<string> GetDfsTargets(string input)

@@ -93,13 +93,14 @@
           </StackPanel>
         </Border>
 
-        <Grid Grid.Row="1" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Grid Grid.Row="1" Margin="0,0,0,6" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
           <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="340" />
-            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="300" />
             <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="*" />
           </Grid.ColumnDefinitions>
-          <GroupBox Grid.Column="0" Header="Scansione" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0" IsEnabled="{Binding IsScanConfigEnabled}">
+          <GroupBox Grid.Column="0" Header="Scansione" BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Margin="0,0,6,0" IsEnabled="{Binding IsScanConfigEnabled}">
             <Grid>
               <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -139,7 +140,7 @@
               <CheckBox Grid.Row="3" Content="Includi permessi ereditati" IsChecked="{Binding IncludeInherited}" />
             </Grid>
           </GroupBox>
-          <GroupBox Grid.Column="1" Header="Identità" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0" IsEnabled="{Binding IsScanConfigEnabled}">
+          <GroupBox Grid.Column="1" Header="Identità" BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Margin="0,0,6,0" IsEnabled="{Binding IsScanConfigEnabled}">
             <StackPanel>
               <CheckBox Margin="0,0,0,6" Content="Risolvi identità (più lento)" IsChecked="{Binding ResolveIdentities}" />
               <CheckBox Margin="0,0,0,6" Content="Espandi gruppi annidati" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
@@ -148,7 +149,7 @@
               <CheckBox Content="Escludi utenti admin" IsChecked="{Binding ExcludeAdminAccounts}" />
             </StackPanel>
           </GroupBox>
-          <GroupBox Grid.Column="2" Header="Audit avanzato" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" IsEnabled="{Binding IsScanConfigEnabled}">
+          <GroupBox Grid.Column="2" Header="Audit avanzato" BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Margin="0,0,6,0" IsEnabled="{Binding IsScanConfigEnabled}">
             <StackPanel>
               <CheckBox Margin="0,0,0,6" Content="Abilita audit avanzato" IsChecked="{Binding EnableAdvancedAudit}" />
               <StackPanel IsEnabled="{Binding IsAdvancedAuditEnabled}">
@@ -159,9 +160,77 @@
               </StackPanel>
             </StackPanel>
           </GroupBox>
+          <GroupBox Grid.Column="3" Header="Dashboard" BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" IsEnabled="{Binding IsScanConfigEnabled}">
+            <StackPanel>
+              <WrapPanel Margin="0,0,0,4">
+                <Border Background="#FFE3F2FD" Padding="4" CornerRadius="4" Margin="0,0,6,4">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Totale ACE: " />
+                    <TextBlock Text="{Binding SummaryTotalEntries}" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Border>
+                <Border Background="#FFFFCDD2" Padding="4" CornerRadius="4" Margin="0,0,6,4">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Rischio alto: " />
+                    <TextBlock Text="{Binding SummaryHighRisk}" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Border>
+                <Border Background="#FFFFF9C4" Padding="4" CornerRadius="4" Margin="0,0,6,4">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Rischio medio: " />
+                    <TextBlock Text="{Binding SummaryMediumRisk}" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Border>
+                <Border Background="#FFE8F5E9" Padding="4" CornerRadius="4" Margin="0,0,6,4">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Rischio basso: " />
+                    <TextBlock Text="{Binding SummaryLowRisk}" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Border>
+              </WrapPanel>
+              <WrapPanel>
+                <Border Background="#FFF3E5F5" Padding="4" CornerRadius="4" Margin="0,0,6,4">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Deny espliciti: " />
+                    <TextBlock Text="{Binding SummaryDenyCount}" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Border>
+                <Border Background="#FFE3F2FD" Padding="4" CornerRadius="4" Margin="0,0,6,4">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Everyone: " />
+                    <TextBlock Text="{Binding SummaryEveryoneCount}" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Border>
+                <Border Background="#FFE3F2FD" Padding="4" CornerRadius="4" Margin="0,0,6,4">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Authenticated Users: " />
+                    <TextBlock Text="{Binding SummaryAuthUsersCount}" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Border>
+                <Border Background="#FFE0F7FA" Padding="4" CornerRadius="4" Margin="0,0,6,4">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="File analizzati: " />
+                    <TextBlock Text="{Binding SummaryFilesCount}" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Border>
+                <Border Background="#FFF3E5F5" Padding="4" CornerRadius="4" Margin="0,0,6,4">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Baseline +: " />
+                    <TextBlock Text="{Binding SummaryBaselineAdded}" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Border>
+                <Border Background="#FFF3E5F5" Padding="4" CornerRadius="4" Margin="0,0,6,4">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Baseline -: " />
+                    <TextBlock Text="{Binding SummaryBaselineRemoved}" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Border>
+              </WrapPanel>
+            </StackPanel>
+          </GroupBox>
         </Grid>
 
-        <Border Grid.Row="2" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Border Grid.Row="2" BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
@@ -210,7 +279,7 @@
         <ColumnDefinition Width="6" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
-      <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Margin="8,8,4,8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Margin="6,6,4,6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -299,84 +368,15 @@
       </Border>
       <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FFE0E0E0" />
       <Grid Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-        <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="4,8,8,8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Margin="4,6,6,6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
           <Grid>
             <Grid.RowDefinitions>
-              <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" FontWeight="Bold" Text="{Binding SelectedFolderPath}" Margin="0,0,0,8" />
-            <GroupBox Grid.Row="1" Header="Dashboard" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8">
-              <StackPanel>
-                <WrapPanel Margin="0,0,0,6">
-                  <Border Background="#FFE3F2FD" Padding="4" CornerRadius="4" Margin="0,0,8,6">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="Totale ACE: " />
-                      <TextBlock Text="{Binding SummaryTotalEntries}" FontWeight="SemiBold" />
-                    </StackPanel>
-                  </Border>
-                  <Border Background="#FFFFCDD2" Padding="4" CornerRadius="4" Margin="0,0,8,6">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="Rischio alto: " />
-                      <TextBlock Text="{Binding SummaryHighRisk}" FontWeight="SemiBold" />
-                    </StackPanel>
-                  </Border>
-                  <Border Background="#FFFFF9C4" Padding="4" CornerRadius="4" Margin="0,0,8,6">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="Rischio medio: " />
-                      <TextBlock Text="{Binding SummaryMediumRisk}" FontWeight="SemiBold" />
-                    </StackPanel>
-                  </Border>
-                  <Border Background="#FFE8F5E9" Padding="4" CornerRadius="4" Margin="0,0,8,6">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="Rischio basso: " />
-                      <TextBlock Text="{Binding SummaryLowRisk}" FontWeight="SemiBold" />
-                    </StackPanel>
-                  </Border>
-                </WrapPanel>
-                <WrapPanel>
-                  <Border Background="#FFE0F7FA" Padding="4" CornerRadius="4" Margin="0,0,8,6">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="Deny: " />
-                      <TextBlock Text="{Binding SummaryDenyCount}" FontWeight="SemiBold" />
-                    </StackPanel>
-                  </Border>
-                  <Border Background="#FFE3F2FD" Padding="4" CornerRadius="4" Margin="0,0,8,6">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="Everyone: " />
-                      <TextBlock Text="{Binding SummaryEveryoneCount}" FontWeight="SemiBold" />
-                    </StackPanel>
-                  </Border>
-                  <Border Background="#FFE3F2FD" Padding="4" CornerRadius="4" Margin="0,0,8,6">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="Authenticated Users: " />
-                      <TextBlock Text="{Binding SummaryAuthUsersCount}" FontWeight="SemiBold" />
-                    </StackPanel>
-                  </Border>
-                  <Border Background="#FFE0F7FA" Padding="4" CornerRadius="4" Margin="0,0,8,6">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="File analizzati: " />
-                      <TextBlock Text="{Binding SummaryFilesCount}" FontWeight="SemiBold" />
-                    </StackPanel>
-                  </Border>
-                  <Border Background="#FFF3E5F5" Padding="4" CornerRadius="4" Margin="0,0,8,6">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="Baseline +: " />
-                      <TextBlock Text="{Binding SummaryBaselineAdded}" FontWeight="SemiBold" />
-                    </StackPanel>
-                  </Border>
-                  <Border Background="#FFF3E5F5" Padding="4" CornerRadius="4" Margin="0,0,8,6">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="Baseline -: " />
-                      <TextBlock Text="{Binding SummaryBaselineRemoved}" FontWeight="SemiBold" />
-                    </StackPanel>
-                  </Border>
-                </WrapPanel>
-              </StackPanel>
-            </GroupBox>
-            <GroupBox Grid.Row="2" Header="Filtri risultati" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8">
+            <GroupBox Grid.Row="1" Header="Filtri risultati" BorderBrush="#DDDDDD" BorderThickness="1" Padding="6" Margin="0,0,0,6">
               <StackPanel>
                 <Grid Margin="0,0,0,6">
                   <Grid.ColumnDefinitions>
@@ -403,7 +403,7 @@
                 </WrapPanel>
               </StackPanel>
             </GroupBox>
-            <TabControl Grid.Row="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <TabControl Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
               <TabItem Header="Permessi Gruppi">
                 <DataGrid ItemsSource="{Binding FilteredGroupEntries}"
                           AutoGenerateColumns="False"
