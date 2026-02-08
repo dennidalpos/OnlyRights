@@ -1016,8 +1016,9 @@ namespace NtfsAudit.App.ViewModels
                 rootSummary == null ? 0 : rootSummary.Added.Count(key => !key.IsInherited),
                 rootSummary == null ? 0 : rootSummary.Removed.Count,
                 rootSummary == null ? 0 : rootSummary.DenyExplicitCount,
+                rootSummary == null ? 0 : rootSummary.Modified.Count,
                 rootSummary != null && rootSummary.IsProtected);
-            rootNode.IsExpanded = true;
+            rootNode.ExpandAll();
             rootNode.IsSelected = true;
             FolderTree.Add(rootNode);
         }

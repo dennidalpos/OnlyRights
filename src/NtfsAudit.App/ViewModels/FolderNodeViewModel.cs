@@ -23,6 +23,7 @@ namespace NtfsAudit.App.ViewModels
             int explicitAddedCount,
             int explicitRemovedCount,
             int denyExplicitCount,
+            int modifiedCount,
             bool isProtected)
         {
             Path = path;
@@ -34,6 +35,7 @@ namespace NtfsAudit.App.ViewModels
             ExplicitAddedCount = explicitAddedCount;
             ExplicitRemovedCount = explicitRemovedCount;
             DenyExplicitCount = denyExplicitCount;
+            ModifiedCount = modifiedCount;
             IsProtected = isProtected;
             Children = new ObservableCollection<FolderNodeViewModel>();
             if (_treeProvider != null && _treeProvider.HasChildren(path))
@@ -59,15 +61,18 @@ namespace NtfsAudit.App.ViewModels
         public int ExplicitAddedCount { get; private set; }
         public int ExplicitRemovedCount { get; private set; }
         public int DenyExplicitCount { get; private set; }
+        public int ModifiedCount { get; private set; }
         public bool IsProtected { get; private set; }
         public bool HasExplicitAce { get { return ExplicitCount > 0; } }
         public bool HasExplicitAdded { get { return ExplicitAddedCount > 0; } }
         public bool HasExplicitRemoved { get { return ExplicitRemovedCount > 0; } }
         public bool HasDenyExplicit { get { return DenyExplicitCount > 0; } }
+        public bool HasModified { get { return ModifiedCount > 0; } }
         public string ExplicitCountLabel { get { return string.Format("E{0}", ExplicitCount); } }
         public string ExplicitAddedLabel { get { return string.Format("+{0}", ExplicitAddedCount); } }
         public string ExplicitRemovedLabel { get { return string.Format("-{0}", ExplicitRemovedCount); } }
         public string DenyExplicitLabel { get { return "D"; } }
+        public string ModifiedLabel { get { return "M"; } }
 
         public bool IsExpanded
         {
@@ -110,6 +115,20 @@ namespace NtfsAudit.App.ViewModels
             foreach (var child in _treeProvider.GetChildren(Path))
             {
                 Children.Add(child);
+            }
+        }
+
+        public void ExpandAll()
+        {
+            if (_isPlaceholder) return;
+            if (!_childrenLoaded)
+            {
+                LoadChildren();
+            }
+            IsExpanded = true;
+            foreach (var child in Children)
+            {
+                child.ExpandAll();
             }
         }
 

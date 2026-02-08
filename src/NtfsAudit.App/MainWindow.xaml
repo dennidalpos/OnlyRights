@@ -328,6 +328,9 @@
                   <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasDenyExplicit, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <TextBlock Text="{Binding DenyExplicitLabel}" Foreground="White" FontSize="10" />
                   </Border>
+                  <Border Background="#FF512DA8" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasModified, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ModifiedLabel}" Foreground="White" FontSize="10" />
+                  </Border>
                 </StackPanel>
               </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
