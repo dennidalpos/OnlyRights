@@ -86,6 +86,10 @@ namespace NtfsAudit.App.Services
                             Interlocked.Decrement(ref pendingCount);
                             var current = workItem.Path;
                             var depth = workItem.Depth;
+                            if (IsDfsCachePath(current))
+                            {
+                                continue;
+                            }
                             var currentDetail = details.GetOrAdd(current, _ => new FolderDetail());
                             var processedCount = Interlocked.Increment(ref processed);
 
@@ -110,7 +114,12 @@ namespace NtfsAudit.App.Services
                                     children = new List<string>();
                                     foreach (var child in Directory.EnumerateDirectories(ioPath, "*", SearchOption.TopDirectoryOnly))
                                     {
-                                        children.Add(PathResolver.FromExtendedPath(child));
+                                        var normalizedChild = PathResolver.FromExtendedPath(child);
+                                        if (IsDfsCachePath(normalizedChild))
+                                        {
+                                            continue;
+                                        }
+                                        children.Add(normalizedChild);
                                     }
                                 }
                                 catch (Exception ex)
@@ -761,6 +770,14 @@ namespace NtfsAudit.App.Services
         private static bool IsAuthenticatedUsers(string sidOrName)
         {
             return string.Equals(sidOrName, AuthenticatedUsersSid, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsDfsCachePath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return false;
+            var name = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            return string.Equals(name, "DfsrPrivate", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(name, "DFSCache", StringComparison.OrdinalIgnoreCase);
         }
 
         private class EffectiveAccessAccumulator
