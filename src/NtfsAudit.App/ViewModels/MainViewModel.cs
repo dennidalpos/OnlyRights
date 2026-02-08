@@ -701,6 +701,7 @@ namespace NtfsAudit.App.ViewModels
                     | FileDialogOptions.PathMustExist
                     | FileDialogOptions.NoChangeDirectory);
                 dialog.SetOptions(options);
+                AddNetworkPlaces(dialog);
 
                 if (!string.IsNullOrWhiteSpace(RootPath))
                 {
@@ -731,6 +732,22 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
+        private void AddNetworkPlaces(IFileDialog dialog)
+        {
+            foreach (var drive in DriveInfo.GetDrives())
+            {
+                if (drive.DriveType != DriveType.Network)
+                {
+                    continue;
+                }
+
+                if (SHCreateItemFromParsingName(drive.Name, IntPtr.Zero, typeof(IShellItem).GUID, out var place) == 0)
+                {
+                    dialog.AddPlace(place, (int)FileDialogAddPlace.Bottom);
+                }
+            }
+        }
+
         private const int HResultCanceled = unchecked((int)0x800704C7);
 
         [Flags]
@@ -740,6 +757,12 @@ namespace NtfsAudit.App.ViewModels
             ForceFileSystem = 0x00000040,
             NoChangeDirectory = 0x00000008,
             PathMustExist = 0x00000800
+        }
+
+        private enum FileDialogAddPlace
+        {
+            Top = 0,
+            Bottom = 1
         }
 
         private enum ShellItemDisplayName : uint
