@@ -60,15 +60,20 @@
         </MultiDataTrigger>
       </Style.Triggers>
     </Style>
+    <Style x:Key="BadgeToolTipBorder" TargetType="Border">
+      <Setter Property="ToolTipService.InitialShowDelay" Value="200" />
+      <Setter Property="ToolTipService.ShowDuration" Value="6000" />
+      <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+    </Style>
     <DataTemplate x:Key="PermissionBadgesTemplate">
       <StackPanel Orientation="Horizontal">
-        <Border Background="#FF1976D2" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInherited, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Ereditato">
+        <Border Background="#FF1976D2" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInherited, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Ereditato" Style="{StaticResource BadgeToolTipBorder}">
           <TextBlock Text="I" Foreground="White" FontSize="10" />
         </Border>
-        <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Protetto (ereditarietà disabilitata)">
+        <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Protetto (ereditarietà disabilitata)" Style="{StaticResource BadgeToolTipBorder}">
           <TextBlock Text="P" Foreground="White" FontSize="10" />
         </Border>
-        <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Deny esplicito">
+        <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Deny esplicito" Style="{StaticResource BadgeToolTipBorder}">
           <TextBlock Text="D" Foreground="White" FontSize="10" />
         </Border>
       </StackPanel>
@@ -312,28 +317,28 @@
             <StackPanel>
               <TextBlock Text="Legenda:" FontWeight="SemiBold" Margin="0,0,0,4" />
               <WrapPanel>
-                <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Protetto (ereditarietà disabilitata)">
+                <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Protetto (ereditarietà disabilitata)" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="P" Foreground="White" FontSize="10" />
                 </Border>
-                <Border Background="#FF2E7D32" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="ACE esplicite aggiunte">
+                <Border Background="#FF2E7D32" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="ACE esplicite aggiunte" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="A" Foreground="White" FontSize="10" />
                 </Border>
-                <Border Background="#FFF57C00" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="ACE rimosse rispetto al padre">
+                <Border Background="#FFF57C00" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="ACE rimosse rispetto al padre" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="R" Foreground="White" FontSize="10" />
                 </Border>
-                <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Deny espliciti">
+                <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Deny espliciti" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="D" Foreground="White" FontSize="10" />
                 </Border>
-                <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Aggiunte vs baseline">
+                <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Aggiunte vs baseline" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="BA" Foreground="White" FontSize="10" />
                 </Border>
-                <Border Background="#FF78909C" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Rimozioni vs baseline">
+                <Border Background="#FF78909C" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Rimozioni vs baseline" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="BR" Foreground="White" FontSize="10" />
                 </Border>
-                <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="ACE NTFS esplicite">
+                <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="ACE NTFS esplicite" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="N" Foreground="White" FontSize="10" />
                 </Border>
-                <Border Background="#FF5E35B1" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Permessi Share presenti">
+                <Border Background="#FF5E35B1" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Permessi Share presenti" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="S" Foreground="White" FontSize="10" />
                 </Border>
               </WrapPanel>
@@ -417,13 +422,13 @@
                   <CheckBox Margin="0,0,12,6" Content="Ereditarietà disabilitata" IsChecked="{Binding FilterInheritanceDisabled}" />
                 </WrapPanel>
                 <WrapPanel>
-                  <Border Background="#FF1976D2" Padding="2,0" CornerRadius="2" Margin="0,0,6,0" ToolTip="Ereditato">
+                  <Border Background="#FF1976D2" Padding="2,0" CornerRadius="2" Margin="0,0,6,0" ToolTip="Ereditato" Style="{StaticResource BadgeToolTipBorder}">
                     <TextBlock Text="I" Foreground="White" FontSize="10" />
                   </Border>
-                  <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,6,0" ToolTip="Protetto (ereditarietà disabilitata)">
+                  <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,6,0" ToolTip="Protetto (ereditarietà disabilitata)" Style="{StaticResource BadgeToolTipBorder}">
                     <TextBlock Text="P" Foreground="White" FontSize="10" />
                   </Border>
-                  <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,6,0" ToolTip="Deny esplicito">
+                  <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,6,0" ToolTip="Deny esplicito" Style="{StaticResource BadgeToolTipBorder}">
                     <TextBlock Text="D" Foreground="White" FontSize="10" />
                   </Border>
                 </WrapPanel>
