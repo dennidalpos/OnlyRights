@@ -205,30 +205,38 @@
             </StackPanel>
             <StackPanel>
               <TextBlock Text="Legenda:" FontWeight="SemiBold" Margin="0,0,0,4" />
-              <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
-                  <TextBlock Text="P" Foreground="White" FontSize="10" />
-                </Border>
-                <TextBlock Text="Protetto (ereditarietà disabilitata)" VerticalAlignment="Center" />
-              </StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                <Border Background="#FF2E7D32" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
-                  <TextBlock Text="+N" Foreground="White" FontSize="10" />
-                </Border>
-                <TextBlock Text="ACE esplicite aggiunte" VerticalAlignment="Center" />
-              </StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                <Border Background="#FFF57C00" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
-                  <TextBlock Text="-N" Foreground="White" FontSize="10" />
-                </Border>
-                <TextBlock Text="ACE rimosse rispetto al padre" VerticalAlignment="Center" />
-              </StackPanel>
-              <StackPanel Orientation="Horizontal">
-                <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
-                  <TextBlock Text="D" Foreground="White" FontSize="10" />
-                </Border>
-                <TextBlock Text="Deny espliciti" VerticalAlignment="Center" />
-              </StackPanel>
+              <Border Background="#FFEBEE" CornerRadius="4" Padding="4" Margin="0,0,0,4">
+                <StackPanel Orientation="Horizontal">
+                  <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
+                    <TextBlock Text="P" Foreground="White" FontSize="10" />
+                  </Border>
+                  <TextBlock Text="Protetto (ereditarietà disabilitata)" VerticalAlignment="Center" />
+                </StackPanel>
+              </Border>
+              <Border Background="#E8F5E9" CornerRadius="4" Padding="4" Margin="0,0,0,4">
+                <StackPanel Orientation="Horizontal">
+                  <Border Background="#FF2E7D32" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
+                    <TextBlock Text="+N" Foreground="White" FontSize="10" />
+                  </Border>
+                  <TextBlock Text="ACE esplicite aggiunte" VerticalAlignment="Center" />
+                </StackPanel>
+              </Border>
+              <Border Background="#FFF3E0" CornerRadius="4" Padding="4" Margin="0,0,0,4">
+                <StackPanel Orientation="Horizontal">
+                  <Border Background="#FFF57C00" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
+                    <TextBlock Text="-N" Foreground="White" FontSize="10" />
+                  </Border>
+                  <TextBlock Text="ACE rimosse rispetto al padre" VerticalAlignment="Center" />
+                </StackPanel>
+              </Border>
+              <Border Background="#F3E5F5" CornerRadius="4" Padding="4">
+                <StackPanel Orientation="Horizontal">
+                  <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,6,0">
+                    <TextBlock Text="D" Foreground="White" FontSize="10" />
+                  </Border>
+                  <TextBlock Text="Deny espliciti" VerticalAlignment="Center" />
+                </StackPanel>
+              </Border>
             </StackPanel>
           </StackPanel>
           <TreeView x:Name="FolderTreeView" Grid.Row="1" ItemsSource="{Binding FolderTree}" SelectedItemChanged="TreeView_OnSelectedItemChanged" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling">
