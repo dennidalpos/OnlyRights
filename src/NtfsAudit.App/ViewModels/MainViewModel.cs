@@ -54,7 +54,6 @@ namespace NtfsAudit.App.ViewModels
         private int _errorCount;
         private string _elapsedText = "00:00:00";
         private string _selectedFolderPath;
-        private string _errorFilter;
         private string _aclFilter;
         private bool _colorizeRights = true;
         private ObservableCollection<string> _dfsTargets = new ObservableCollection<string>();
@@ -366,17 +365,6 @@ namespace NtfsAudit.App.ViewModels
             {
                 _selectedFolderPath = value;
                 OnPropertyChanged("SelectedFolderPath");
-            }
-        }
-
-        public string ErrorFilter
-        {
-            get { return _errorFilter; }
-            set
-            {
-                _errorFilter = value;
-                OnPropertyChanged("ErrorFilter");
-                FilteredErrors.Refresh();
             }
         }
 
@@ -797,7 +785,6 @@ namespace NtfsAudit.App.ViewModels
                     SelectedFolderPath,
                     ColorizeRights,
                     AclFilter,
-                    ErrorFilter,
                     FilterEveryone,
                     FilterAuthenticatedUsers,
                     FilterDenyOnly,
@@ -1076,13 +1063,9 @@ namespace NtfsAudit.App.ViewModels
 
         private bool FilterErrors(object item)
         {
-            if (string.IsNullOrWhiteSpace(ErrorFilter)) return true;
             var error = item as ErrorEntry;
             if (error == null) return false;
-            var pathMatch = !string.IsNullOrEmpty(error.Path) && error.Path.IndexOf(ErrorFilter, StringComparison.OrdinalIgnoreCase) >= 0;
-            var messageMatch = !string.IsNullOrEmpty(error.Message) && error.Message.IndexOf(ErrorFilter, StringComparison.OrdinalIgnoreCase) >= 0;
-            var typeMatch = !string.IsNullOrEmpty(error.ErrorType) && error.ErrorType.IndexOf(ErrorFilter, StringComparison.OrdinalIgnoreCase) >= 0;
-            return pathMatch || messageMatch || typeMatch;
+            return true;
         }
 
         private bool FilterAclEntries(object item)
@@ -1161,7 +1144,6 @@ namespace NtfsAudit.App.ViewModels
             CurrentPathText = string.Empty;
             CurrentPathBackground = "Transparent";
             AclFilter = string.Empty;
-            ErrorFilter = string.Empty;
             FilterEveryone = false;
             FilterAuthenticatedUsers = false;
             FilterDenyOnly = false;

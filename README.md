@@ -136,7 +136,7 @@ Produce un file HTML autoconclusivo che replica la vista corrente:
 - albero cartelle e stato di espansione,
 - cartella selezionata,
 - tab con ACL utenti/gruppi/complete,
-- tab errori con filtri applicati,
+- tab errori,
 - filtri applicati,
 - filtri avanzati (Everyone, Authenticated Users, Solo Deny, Ereditarietà disabilitata),
 - colori per diritto.

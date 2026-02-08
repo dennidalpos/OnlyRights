@@ -386,14 +386,6 @@
                   <TextBlock Grid.Column="0" Text="Filtro ACL:" VerticalAlignment="Center" Margin="0,0,6,0" />
                   <TextBox Grid.Column="1" Height="24" MinWidth="220" Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
                 </Grid>
-                <Grid Margin="0,0,0,6">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                  </Grid.ColumnDefinitions>
-                  <TextBlock Grid.Column="0" Text="Filtro errori:" VerticalAlignment="Center" Margin="0,0,6,0" />
-                  <TextBox Grid.Column="1" Height="24" MinWidth="220" Text="{Binding ErrorFilter, UpdateSourceTrigger=PropertyChanged}" />
-                </Grid>
                 <WrapPanel>
                   <CheckBox Margin="0,0,12,6" Content="Colora per diritto" IsChecked="{Binding ColorizeRights}" />
                   <CheckBox Margin="0,0,12,6" Content="Everyone" IsChecked="{Binding FilterEveryone}" />
@@ -421,7 +413,6 @@
                           VerticalAlignment="Stretch">
                   <DataGrid.Columns>
                     <DataGridTextColumn Header="Risorsa" Binding="{Binding ResourceType}" Width="90" />
-                    <DataGridTextColumn Header="Percorso" Binding="{Binding TargetPath}" Width="260" />
                     <DataGridTextColumn Header="Gruppo" Binding="{Binding PrincipalName}" Width="200" />
                     <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" Width="240" />
                     <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" Width="100" />
@@ -461,7 +452,6 @@
                           VerticalAlignment="Stretch">
                   <DataGrid.Columns>
                     <DataGridTextColumn Header="Risorsa" Binding="{Binding ResourceType}" Width="90" />
-                    <DataGridTextColumn Header="Percorso" Binding="{Binding TargetPath}" Width="260" />
                     <DataGridTextColumn Header="Utente" Binding="{Binding PrincipalName}" Width="200" />
                     <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" Width="240" />
                     <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" Width="100" />
@@ -500,7 +490,6 @@
                           VerticalAlignment="Stretch">
                   <DataGrid.Columns>
                     <DataGridTextColumn Header="Risorsa" Binding="{Binding ResourceType}" Width="90" />
-                    <DataGridTextColumn Header="Percorso" Binding="{Binding TargetPath}" Width="260" />
                     <DataGridTextColumn Header="Principal" Binding="{Binding PrincipalName}" Width="200" />
                     <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" Width="240" />
                     <DataGridTextColumn Header="Tipo" Binding="{Binding PrincipalType}" Width="100" />

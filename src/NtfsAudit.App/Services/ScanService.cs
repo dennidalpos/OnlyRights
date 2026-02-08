@@ -111,7 +111,6 @@ namespace NtfsAudit.App.Services
                                     foreach (var child in Directory.EnumerateDirectories(ioPath, "*", SearchOption.TopDirectoryOnly))
                                     {
                                         var childPath = PathResolver.FromExtendedPath(child);
-                                        if (IsDfsCachePath(childPath)) continue;
                                         children.Add(childPath);
                                     }
                                 }
@@ -140,6 +139,7 @@ namespace NtfsAudit.App.Services
                                 {
                                     parentBag.Add(child);
                                     treeMap.GetOrAdd(child, _ => new ConcurrentBag<string>());
+                                    if (IsDfsCachePath(child)) continue;
                                     Enqueue(new WorkItem(child, depth + 1));
                                 }
                             }

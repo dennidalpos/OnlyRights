@@ -17,7 +17,6 @@ namespace NtfsAudit.App.Export
             string selectedFolderPath,
             bool colorizeRights,
             string aclFilter,
-            string errorFilter,
             bool filterEveryone,
             bool filterAuthenticatedUsers,
             bool filterDenyOnly,
@@ -150,7 +149,6 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("        <table id=\"aclTable\"></table>");
             builder.AppendLine("      </section>");
             builder.AppendLine("      <section id=\"tab-errors\" class=\"tab-panel\">");
-            builder.AppendLine("        <input id=\"errorFilter\" class=\"filter-input\" type=\"text\" placeholder=\"Filtra errori...\" />");
             builder.AppendLine("        <table id=\"errorsTable\"></table>");
             builder.AppendLine("      </section>");
             builder.AppendLine("    </main>");
@@ -165,14 +163,12 @@ namespace NtfsAudit.App.Export
             builder.AppendLine(string.Format("    let selectedPath = {0};", JsonConvert.SerializeObject(selectedPath, jsonSettings)));
             builder.AppendLine(string.Format("    let colorizeRights = {0};", colorizeRights.ToString().ToLowerInvariant()));
             builder.AppendLine(string.Format("    const initialAclFilter = {0};", JsonConvert.SerializeObject(aclFilter ?? string.Empty, jsonSettings)));
-            builder.AppendLine(string.Format("    const initialErrorFilter = {0};", JsonConvert.SerializeObject(errorFilter ?? string.Empty, jsonSettings)));
             builder.AppendLine(string.Format("    let filterEveryone = {0};", filterEveryone.ToString().ToLowerInvariant()));
             builder.AppendLine(string.Format("    let filterAuthenticatedUsers = {0};", filterAuthenticatedUsers.ToString().ToLowerInvariant()));
             builder.AppendLine(string.Format("    let filterDenyOnly = {0};", filterDenyOnly.ToString().ToLowerInvariant()));
             builder.AppendLine(string.Format("    let filterInheritanceDisabled = {0};", filterInheritanceDisabled.ToString().ToLowerInvariant()));
             builder.AppendLine("\n    const groupColumns = [");
             builder.AppendLine("      { key: 'ResourceType', label: 'Risorsa' },");
-            builder.AppendLine("      { key: 'TargetPath', label: 'Percorso' },");
             builder.AppendLine("      { key: 'PrincipalName', label: 'Gruppo' },");
             builder.AppendLine("      { key: 'PrincipalSid', label: 'SID' },");
             builder.AppendLine("      { key: 'AllowDeny', label: 'Allow/Deny' },");
@@ -195,7 +191,6 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    ];");
             builder.AppendLine("    const userColumns = [");
             builder.AppendLine("      { key: 'ResourceType', label: 'Risorsa' },");
-            builder.AppendLine("      { key: 'TargetPath', label: 'Percorso' },");
             builder.AppendLine("      { key: 'PrincipalName', label: 'Utente' },");
             builder.AppendLine("      { key: 'PrincipalSid', label: 'SID' },");
             builder.AppendLine("      { key: 'AllowDeny', label: 'Allow/Deny' },");
@@ -218,7 +213,6 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    ];");
             builder.AppendLine("    const aclColumns = [");
             builder.AppendLine("      { key: 'ResourceType', label: 'Risorsa' },");
-            builder.AppendLine("      { key: 'TargetPath', label: 'Percorso' },");
             builder.AppendLine("      { key: 'PrincipalName', label: 'Principal' },");
             builder.AppendLine("      { key: 'PrincipalSid', label: 'SID' },");
             builder.AppendLine("      { key: 'PrincipalType', label: 'Tipo' },");
@@ -250,7 +244,6 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("    const selectedPathElement = document.getElementById('selectedPath');");
             builder.AppendLine("    const colorizeToggle = document.getElementById('colorizeToggle');");
             builder.AppendLine("    const aclFilterInput = document.getElementById('aclFilter');");
-            builder.AppendLine("    const errorFilterInput = document.getElementById('errorFilter');");
             builder.AppendLine("    const filterEveryoneToggle = document.getElementById('filterEveryone');");
             builder.AppendLine("    const filterAuthUsersToggle = document.getElementById('filterAuthUsers');");
             builder.AppendLine("    const filterDenyToggle = document.getElementById('filterDeny');");
@@ -439,18 +432,8 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      renderErrors();" );
             builder.AppendLine("    }");
 
-            builder.AppendLine("    function matchesErrorFilter(error, filter) {");
-            builder.AppendLine("      if (!filter) return true;" );
-            builder.AppendLine("      const term = filter.toLowerCase();" );
-            builder.AppendLine("      return (error.Path || '').toLowerCase().includes(term) ||" );
-            builder.AppendLine("        (error.Message || '').toLowerCase().includes(term) ||" );
-            builder.AppendLine("        (error.ErrorType || '').toLowerCase().includes(term);" );
-            builder.AppendLine("    }");
-
             builder.AppendLine("    function renderErrors() {");
-            builder.AppendLine("      const filter = errorFilterInput.value || '';" );
-            builder.AppendLine("      const filtered = errorsData.filter(error => matchesErrorFilter(error, filter));" );
-            builder.AppendLine("      renderTable('errorsTable', filtered, errorColumns, false);" );
+            builder.AppendLine("      renderTable('errorsTable', errorsData, errorColumns, false);" );
             builder.AppendLine("    }");
 
             builder.AppendLine("    function wireTabs() {");
@@ -506,13 +489,8 @@ namespace NtfsAudit.App.Export
             builder.AppendLine("      renderTables();" );
             builder.AppendLine("    });");
 
-            builder.AppendLine("    errorFilterInput.addEventListener('input', () => {" );
-            builder.AppendLine("      renderErrors();" );
-            builder.AppendLine("    });");
-
             builder.AppendLine("    colorizeToggle.checked = colorizeRights;");
             builder.AppendLine("    aclFilterInput.value = initialAclFilter;");
-            builder.AppendLine("    errorFilterInput.value = initialErrorFilter;");
             builder.AppendLine("    filterEveryoneToggle.checked = filterEveryone;");
             builder.AppendLine("    filterAuthUsersToggle.checked = filterAuthenticatedUsers;");
             builder.AppendLine("    filterDenyToggle.checked = filterDenyOnly;");
