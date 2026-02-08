@@ -684,6 +684,11 @@ namespace NtfsAudit.App.ViewModels
             using (var dialog = new FolderBrowserDialog())
             {
                 dialog.ShowNewFolderButton = false;
+                dialog.RootFolder = Environment.SpecialFolder.MyComputer;
+                if (!string.IsNullOrWhiteSpace(RootPath))
+                {
+                    dialog.SelectedPath = RootPath;
+                }
                 var result = dialog.ShowDialog();
                 if (result == DialogResult.OK)
                 {
