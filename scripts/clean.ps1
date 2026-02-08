@@ -8,7 +8,9 @@ param(
     [switch]$KeepArtifacts,
     [switch]$KeepTemp,
     [switch]$KeepImportTemp,
-    [switch]$KeepCache
+    [switch]$KeepCache,
+    [switch]$ImportsOnly,
+    [switch]$CacheOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -29,6 +31,15 @@ $paths = @(
     (Join-Path $root "src\NtfsAudit.Viewer\bin"),
     (Join-Path $root "src\NtfsAudit.Viewer\obj")
 )
+
+if ($ImportsOnly -or $CacheOnly) {
+    $paths = @()
+    $KeepDist = $true
+    $KeepArtifacts = $true
+    $KeepTemp = $true
+    $KeepImportTemp = -not $ImportsOnly
+    $KeepCache = -not $CacheOnly
+}
 
 if (-not $KeepDist) {
     if ($DistRoot) {

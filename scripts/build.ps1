@@ -9,6 +9,8 @@ param(
     [switch]$CleanTemp,
     [switch]$CleanImports,
     [switch]$CleanCache,
+    [switch]$CleanDist,
+    [switch]$CleanArtifacts,
     [string]$TempRoot,
     [string]$Framework,
     [string]$OutputPath,
@@ -72,6 +74,15 @@ if ($CleanCache) {
     $localAppData = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [Environment]::GetFolderPath("LocalApplicationData") }
     $cache = Join-Path $localAppData "NtfsAudit\Cache"
     if (Test-Path $cache) { Remove-Item $cache -Recurse -Force }
+}
+
+if ($CleanArtifacts) {
+    $artifactsPath = Join-Path $root "artifacts"
+    if (Test-Path $artifactsPath) { Remove-Item $artifactsPath -Recurse -Force }
+}
+
+if ($CleanDist) {
+    if (Test-Path $distRoot) { Remove-Item $distRoot -Recurse -Force }
 }
 
 if (-not $SkipRestore) {
