@@ -57,6 +57,8 @@ namespace NtfsAudit.App.ViewModels
         private string _errorFilter;
         private string _aclFilter;
         private bool _colorizeRights = true;
+        private ObservableCollection<string> _dfsTargets = new ObservableCollection<string>();
+        private string _selectedDfsTarget;
         private bool _filterEveryone;
         private bool _filterAuthenticatedUsers;
         private bool _filterDenyOnly;
@@ -135,6 +137,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _rootPath = value;
                 OnPropertyChanged("RootPath");
+                UpdateDfsTargets();
                 OnPropertyChanged("CanStart");
                 StartCommand.RaiseCanExecuteChanged();
             }
@@ -387,6 +390,32 @@ namespace NtfsAudit.App.ViewModels
             {
                 _colorizeRights = value;
                 OnPropertyChanged("ColorizeRights");
+            }
+        }
+
+        public ObservableCollection<string> DfsTargets
+        {
+            get { return _dfsTargets; }
+            private set
+            {
+                _dfsTargets = value ?? new ObservableCollection<string>();
+                OnPropertyChanged("DfsTargets");
+                OnPropertyChanged("HasDfsTargets");
+            }
+        }
+
+        public bool HasDfsTargets
+        {
+            get { return _dfsTargets != null && _dfsTargets.Count > 0; }
+        }
+
+        public string SelectedDfsTarget
+        {
+            get { return _selectedDfsTarget; }
+            set
+            {
+                _selectedDfsTarget = value;
+                OnPropertyChanged("SelectedDfsTarget");
             }
         }
 
@@ -652,14 +681,15 @@ namespace NtfsAudit.App.ViewModels
         private void StartScan()
         {
             if (_isViewerMode) return;
-            var normalizedRoot = PathResolver.NormalizeRootPath(RootPath);
+            var inputRoot = string.IsNullOrWhiteSpace(SelectedDfsTarget) ? RootPath : SelectedDfsTarget;
+            var normalizedRoot = PathResolver.NormalizeRootPath(inputRoot);
             if (!string.IsNullOrWhiteSpace(normalizedRoot) &&
-                !string.Equals(normalizedRoot, RootPath, StringComparison.OrdinalIgnoreCase))
+                !string.Equals(normalizedRoot, inputRoot, StringComparison.OrdinalIgnoreCase))
             {
-                RootPath = normalizedRoot;
+                inputRoot = normalizedRoot;
             }
 
-            var ioRootPath = PathResolver.ToExtendedPath(RootPath);
+            var ioRootPath = PathResolver.ToExtendedPath(inputRoot);
             if (!Directory.Exists(ioRootPath))
             {
                 ProgressText = "Percorso non valido";
@@ -676,7 +706,7 @@ namespace NtfsAudit.App.ViewModels
             _cts = new CancellationTokenSource();
             var options = new ScanOptions
             {
-                RootPath = RootPath,
+                RootPath = inputRoot,
                 MaxDepth = ScanAllDepths ? int.MaxValue : MaxDepth,
                 ScanAllDepths = ScanAllDepths,
                 IncludeInherited = IncludeInherited,
@@ -1097,6 +1127,14 @@ namespace NtfsAudit.App.ViewModels
             FilterDenyOnly = false;
             FilterInheritanceDisabled = false;
             UpdateSummary(null);
+        }
+
+        private void UpdateDfsTargets()
+        {
+            var targets = PathResolver.GetDfsTargets(RootPath);
+            DfsTargets = new ObservableCollection<string>(targets ?? new List<string>());
+            SelectedDfsTarget = DfsTargets.Count > 0 ? DfsTargets[0] : string.Empty;
+            OnPropertyChanged("HasDfsTargets");
         }
 
         private void UpdateCommands()

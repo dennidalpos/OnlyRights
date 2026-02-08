@@ -105,6 +105,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
               </Grid.RowDefinitions>
               <Grid Grid.Row="0" Margin="0,0,0,8">
                 <Grid.ColumnDefinitions>
@@ -114,7 +115,18 @@
                 <Button Grid.Column="0" Margin="0,0,8,0" Padding="10,4" Content="Sfoglia..." Command="{Binding BrowseCommand}" />
                 <TextBox Grid.Column="1" Height="26" VerticalAlignment="Center" MinWidth="160" Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}" />
               </Grid>
-              <Grid Grid.Row="1" Margin="0,0,0,6">
+              <Grid Grid.Row="1" Margin="0,0,0,6" Visibility="{Binding HasDfsTargets, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Target DFS" VerticalAlignment="Center" Margin="0,0,6,0" />
+                <ComboBox Grid.Column="1"
+                          Height="24"
+                          ItemsSource="{Binding DfsTargets}"
+                          SelectedItem="{Binding SelectedDfsTarget, UpdateSourceTrigger=PropertyChanged}" />
+              </Grid>
+              <Grid Grid.Row="2" Margin="0,0,0,6">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="Auto" />
                   <ColumnDefinition Width="Auto" />
@@ -124,7 +136,7 @@
                 <TextBox Grid.Column="1" Width="60" Height="24" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0,0,12,0" />
                 <CheckBox Grid.Column="2" Content="Analizza tutte le sottocartelle" IsChecked="{Binding ScanAllDepths}" />
               </Grid>
-              <CheckBox Grid.Row="2" Content="Includi permessi ereditati" IsChecked="{Binding IncludeInherited}" />
+              <CheckBox Grid.Row="3" Content="Includi permessi ereditati" IsChecked="{Binding IncludeInherited}" />
             </Grid>
           </GroupBox>
           <GroupBox Grid.Column="1" Header="Identità" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,8,0" IsEnabled="{Binding IsScanConfigEnabled}">
