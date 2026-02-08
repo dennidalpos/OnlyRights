@@ -108,7 +108,13 @@ namespace NtfsAudit.App.Services
                                 {
                                     var ioPath = PathResolver.ToExtendedPath(current);
                                     children = new List<string>();
-                                    foreach (var child in Directory.EnumerateDirectories(ioPath, "*", SearchOption.TopDirectoryOnly))
+                                    var enumerationOptions = new EnumerationOptions
+                                    {
+                                        IgnoreInaccessible = true,
+                                        RecurseSubdirectories = false,
+                                        AttributesToSkip = 0
+                                    };
+                                    foreach (var child in Directory.EnumerateDirectories(ioPath, "*", enumerationOptions))
                                     {
                                         var childPath = PathResolver.FromExtendedPath(child);
                                         children.Add(childPath);
@@ -197,7 +203,13 @@ namespace NtfsAudit.App.Services
                                             CurrentPath = current
                                         });
                                     }
-                                    foreach (var file in Directory.EnumerateFiles(ioPath, "*", SearchOption.TopDirectoryOnly))
+                                    var enumerationOptions = new EnumerationOptions
+                                    {
+                                        IgnoreInaccessible = true,
+                                        RecurseSubdirectories = false,
+                                        AttributesToSkip = 0
+                                    };
+                                    foreach (var file in Directory.EnumerateFiles(ioPath, "*", enumerationOptions))
                                     {
                                         token.ThrowIfCancellationRequested();
                                         try
