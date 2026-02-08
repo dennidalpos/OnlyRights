@@ -153,6 +153,7 @@ namespace NtfsAudit.App.Services
 
         private static string TrySelectAvailableStorage(List<DfsStorageInfo> storages, string remainder)
         {
+            if (storages == null || storages.Count == 0) return null;
             foreach (var storage in storages)
             {
                 var root = string.Format("\\\\{0}\\{1}", storage.ServerName, storage.ShareName);
@@ -163,7 +164,9 @@ namespace NtfsAudit.App.Services
                 }
             }
 
-            return null;
+            var preferred = storages[0];
+            var preferredRoot = string.Format("\\\\{0}\\{1}", preferred.ServerName, preferred.ShareName);
+            return string.IsNullOrEmpty(remainder) ? preferredRoot : Path.Combine(preferredRoot, remainder);
         }
 
         private static void CacheDfs(string key, string value)
