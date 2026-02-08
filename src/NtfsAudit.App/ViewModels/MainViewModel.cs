@@ -1022,16 +1022,26 @@ namespace NtfsAudit.App.ViewModels
         private void LoadTree(ScanResult result)
         {
             FolderTree.Clear();
-            if (result == null || result.TreeMap == null || result.TreeMap.Count == 0)
+            if (result == null)
             {
                 return;
             }
 
-            var provider = new FolderTreeProvider(result.TreeMap, result.Details);
-            var rootPath = RootPath;
-            if (string.IsNullOrWhiteSpace(rootPath) || !result.TreeMap.ContainsKey(rootPath))
+            var treeMap = result.TreeMap;
+            if (treeMap == null || treeMap.Count == 0)
             {
-                rootPath = result.TreeMap.Keys.First();
+                treeMap = BuildTreeMapFromDetails(result.Details, RootPath);
+            }
+            if (treeMap == null || treeMap.Count == 0)
+            {
+                return;
+            }
+
+            var provider = new FolderTreeProvider(treeMap, result.Details);
+            var rootPath = RootPath;
+            if (string.IsNullOrWhiteSpace(rootPath) || !treeMap.ContainsKey(rootPath))
+            {
+                rootPath = treeMap.Keys.First();
             }
             if (string.IsNullOrWhiteSpace(rootPath)) return;
 
@@ -1052,6 +1062,63 @@ namespace NtfsAudit.App.ViewModels
             rootNode.IsExpanded = true;
             rootNode.IsSelected = true;
             FolderTree.Add(rootNode);
+        }
+
+        private Dictionary<string, List<string>> BuildTreeMapFromDetails(
+            Dictionary<string, FolderDetail> details,
+            string fallbackRoot)
+        {
+            if (details == null || details.Count == 0)
+            {
+                if (string.IsNullOrWhiteSpace(fallbackRoot))
+                {
+                    return null;
+                }
+                return new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
+                {
+                    [fallbackRoot] = new List<string>()
+                };
+            }
+
+            var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var path in details.Keys.Where(key => !string.IsNullOrWhiteSpace(key)))
+            {
+                if (!map.ContainsKey(path))
+                {
+                    map[path] = new List<string>();
+                }
+
+                var parent = SafeGetParentPath(path);
+                if (string.IsNullOrWhiteSpace(parent)) continue;
+                if (!map.ContainsKey(parent))
+                {
+                    map[parent] = new List<string>();
+                }
+                if (!map[parent].Contains(path, StringComparer.OrdinalIgnoreCase))
+                {
+                    map[parent].Add(path);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(fallbackRoot) && !map.ContainsKey(fallbackRoot))
+            {
+                map[fallbackRoot] = new List<string>();
+            }
+
+            return map;
+        }
+
+        private string SafeGetParentPath(string path)
+        {
+            try
+            {
+                var parent = Directory.GetParent(path);
+                return parent == null ? null : parent.FullName;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private void ApplyDiffs(ScanResult result)
