@@ -437,12 +437,18 @@ namespace NtfsAudit.App.ViewModels
                 _dfsTargets = value ?? new ObservableCollection<string>();
                 OnPropertyChanged("DfsTargets");
                 OnPropertyChanged("HasDfsTargets");
+                OnPropertyChanged("DfsTargetBackground");
             }
         }
 
         public bool HasDfsTargets
         {
             get { return _dfsTargets != null && _dfsTargets.Count > 0; }
+        }
+
+        public string DfsTargetBackground
+        {
+            get { return HasDfsTargets ? "#FFE3F2FD" : "White"; }
         }
 
         public string SelectedDfsTarget
@@ -759,6 +765,10 @@ namespace NtfsAudit.App.ViewModels
 
         private void AddNetworkPlaces(IFileDialog dialog)
         {
+            if (IsElevated)
+            {
+                return;
+            }
             var mappedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             using (var networkKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("Network"))
             {
@@ -1662,6 +1672,7 @@ namespace NtfsAudit.App.ViewModels
                 : DfsTargets.FirstOrDefault(target => string.Equals(target, previousSelection, StringComparison.OrdinalIgnoreCase));
             SelectedDfsTarget = selected ?? DfsTargets[0];
             OnPropertyChanged("HasDfsTargets");
+            OnPropertyChanged("DfsTargetBackground");
         }
 
         private void ApplyIdentityDependencies()
