@@ -16,7 +16,8 @@ namespace NtfsAudit.App.Export
     {
         public void Export(string tempDataPath, string errorPath, string outputPath)
         {
-            var outputDir = Path.GetDirectoryName(outputPath);
+            var ioOutputPath = PathResolver.ToExtendedPath(outputPath);
+            var outputDir = Path.GetDirectoryName(ioOutputPath);
             if (!string.IsNullOrWhiteSpace(outputDir))
             {
                 Directory.CreateDirectory(outputDir);
@@ -72,7 +73,7 @@ namespace NtfsAudit.App.Export
                 "UsePowerShell"
             };
 
-            using (var document = SpreadsheetDocument.Create(outputPath, SpreadsheetDocumentType.Workbook))
+            using (var document = SpreadsheetDocument.Create(ioOutputPath, SpreadsheetDocumentType.Workbook))
             {
                 var workbookPart = document.AddWorkbookPart();
                 workbookPart.Workbook = new Workbook();

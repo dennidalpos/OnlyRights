@@ -5,6 +5,7 @@ param(
     [switch]$SkipPublish,
     [switch]$SkipViewerPublish,
     [switch]$SkipPublishClean,
+    [switch]$CleanAllTemp,
     [switch]$CleanTemp,
     [switch]$CleanImports,
     [switch]$CleanCache,
@@ -36,6 +37,12 @@ if (!(Test-Path $project)) { throw "Project not found" }
 if (!(Test-Path $viewerProject)) { throw "Viewer project not found" }
 
 if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) { throw "dotnet SDK not found." }
+
+if ($CleanAllTemp) {
+    $CleanTemp = $true
+    $CleanImports = $true
+    $CleanCache = $true
+}
 
 if ($CleanTemp) {
     $baseTemp = if ($TempRoot) { $TempRoot } else { $env:TEMP }

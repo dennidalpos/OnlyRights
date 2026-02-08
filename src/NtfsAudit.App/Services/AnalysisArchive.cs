@@ -27,17 +27,18 @@ namespace NtfsAudit.App.Services
                 throw new FileNotFoundException("Scan data file not found.", result.TempDataPath);
             }
 
-            var outputDirectory = Path.GetDirectoryName(outputPath);
+            var ioOutputPath = PathResolver.ToExtendedPath(outputPath);
+            var outputDirectory = Path.GetDirectoryName(ioOutputPath);
             if (!string.IsNullOrWhiteSpace(outputDirectory))
             {
                 Directory.CreateDirectory(outputDirectory);
             }
-            if (File.Exists(outputPath))
+            if (File.Exists(ioOutputPath))
             {
-                File.Delete(outputPath);
+                File.Delete(ioOutputPath);
             }
 
-            using (var archive = ZipFile.Open(outputPath, ZipArchiveMode.Create))
+            using (var archive = ZipFile.Open(ioOutputPath, ZipArchiveMode.Create))
             {
                 AddFileEntry(archive, DataEntryName, result.TempDataPath);
                 if (!AddFileEntry(archive, ErrorsEntryName, result.ErrorPath))
@@ -57,10 +58,11 @@ namespace NtfsAudit.App.Services
         public AnalysisArchiveResult Import(string archivePath)
         {
             if (string.IsNullOrWhiteSpace(archivePath)) throw new ArgumentException("Archive path required", "archivePath");
+            var ioArchivePath = PathResolver.ToExtendedPath(archivePath);
             var tempDir = Path.Combine(Path.GetTempPath(), "NtfsAudit", "imports", Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(tempDir);
 
-            using (var archive = ZipFile.OpenRead(archivePath))
+            using (var archive = ZipFile.OpenRead(ioArchivePath))
             {
                 ExtractEntry(archive, DataEntryName, tempDir);
                 ExtractEntry(archive, ErrorsEntryName, tempDir);
@@ -255,7 +257,7 @@ namespace NtfsAudit.App.Services
                     continue;
                 }
                 if (record == null) continue;
-                if (!string.Equals(record.PrincipalType, "Meta", StringComparison.OrdinalIgnoreCase) &&
+                if (!string.Equals(record.PrincipalType, "Meta", StringComparison.OrdinalIgnoreCase) ||
                     !string.Equals(record.PrincipalName, "SCAN_OPTIONS", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
@@ -485,7 +487,8 @@ namespace NtfsAudit.App.Services
             var entry = archive.GetEntry(entryName);
             if (entry == null) return;
             var destinationPath = Path.Combine(destinationDir, entryName);
-            entry.ExtractToFile(destinationPath, true);
+            var ioDestinationPath = PathResolver.ToExtendedPath(destinationPath);
+            entry.ExtractToFile(ioDestinationPath, true);
         }
 
         private void AddEmptyEntry(ZipArchive archive, string entryName)
