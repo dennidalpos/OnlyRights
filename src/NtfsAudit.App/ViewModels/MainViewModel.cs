@@ -681,12 +681,16 @@ namespace NtfsAudit.App.ViewModels
         private void StartScan()
         {
             if (_isViewerMode) return;
-            var inputRoot = string.IsNullOrWhiteSpace(SelectedDfsTarget) ? RootPath : SelectedDfsTarget;
-            var normalizedRoot = PathResolver.NormalizeRootPath(inputRoot);
-            if (!string.IsNullOrWhiteSpace(normalizedRoot) &&
-                !string.Equals(normalizedRoot, inputRoot, StringComparison.OrdinalIgnoreCase))
+            var useManualTarget = !string.IsNullOrWhiteSpace(SelectedDfsTarget);
+            var inputRoot = useManualTarget ? SelectedDfsTarget : RootPath;
+            if (!useManualTarget)
             {
-                inputRoot = normalizedRoot;
+                var normalizedRoot = PathResolver.NormalizeRootPath(inputRoot);
+                if (!string.IsNullOrWhiteSpace(normalizedRoot) &&
+                    !string.Equals(normalizedRoot, inputRoot, StringComparison.OrdinalIgnoreCase))
+                {
+                    inputRoot = normalizedRoot;
+                }
             }
 
             var ioRootPath = PathResolver.ToExtendedPath(inputRoot);
@@ -1133,7 +1137,19 @@ namespace NtfsAudit.App.ViewModels
         {
             var targets = PathResolver.GetDfsTargets(RootPath);
             DfsTargets = new ObservableCollection<string>(targets ?? new List<string>());
-            SelectedDfsTarget = DfsTargets.Count > 0 ? DfsTargets[0] : string.Empty;
+            if (DfsTargets.Count == 0)
+            {
+                SelectedDfsTarget = string.Empty;
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(SelectedDfsTarget) &&
+                DfsTargets.Contains(SelectedDfsTarget, StringComparer.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            SelectedDfsTarget = DfsTargets[0];
             OnPropertyChanged("HasDfsTargets");
         }
 
