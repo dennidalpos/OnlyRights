@@ -25,6 +25,12 @@ namespace NtfsAudit.App.Export
             if (result == null) throw new ArgumentNullException("result");
             if (string.IsNullOrWhiteSpace(outputPath)) throw new ArgumentException("Percorso output non valido.");
 
+            var outputDir = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrWhiteSpace(outputDir))
+            {
+                Directory.CreateDirectory(outputDir);
+            }
+
             var treeMap = result.TreeMap ?? new Dictionary<string, List<string>>();
             var root = ResolveRootPath(rootPath, treeMap);
             var selectedPath = string.IsNullOrWhiteSpace(selectedFolderPath) ? root : selectedFolderPath;

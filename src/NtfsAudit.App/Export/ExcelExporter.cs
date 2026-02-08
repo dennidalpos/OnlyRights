@@ -16,6 +16,20 @@ namespace NtfsAudit.App.Export
     {
         public void Export(string tempDataPath, string errorPath, string outputPath)
         {
+            if (string.IsNullOrWhiteSpace(tempDataPath))
+            {
+                throw new ArgumentException("Percorso dati non valido.", "tempDataPath");
+            }
+            if (string.IsNullOrWhiteSpace(outputPath))
+            {
+                throw new ArgumentException("Percorso output non valido.", "outputPath");
+            }
+            var dataPath = PathResolver.ToExtendedPath(tempDataPath);
+            if (!File.Exists(dataPath))
+            {
+                throw new FileNotFoundException("File dati scansione non trovato.", tempDataPath);
+            }
+
             var outputDir = Path.GetDirectoryName(outputPath);
             if (!string.IsNullOrWhiteSpace(outputDir))
             {

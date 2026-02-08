@@ -44,8 +44,8 @@ namespace NtfsAudit.App.Services
                 {
                     AddEmptyEntry(archive, ErrorsEntryName);
                 }
-                AddJsonEntry(archive, TreeEntryName, result.TreeMap);
-                AddJsonEntry(archive, FolderFlagsEntryName, BuildFolderFlags(result.Details));
+                AddJsonEntry(archive, TreeEntryName, result.TreeMap ?? new Dictionary<string, List<string>>());
+                AddJsonEntry(archive, FolderFlagsEntryName, BuildFolderFlags(result.Details ?? new Dictionary<string, FolderDetail>()));
                 AddJsonEntry(archive, MetaEntryName, new ArchiveMeta
                 {
                     RootPath = rootPath,
@@ -60,48 +60,56 @@ namespace NtfsAudit.App.Services
             var tempDir = Path.Combine(Path.GetTempPath(), "NtfsAudit", "imports", Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(tempDir);
 
-            using (var archive = ZipFile.OpenRead(archivePath))
+            try
             {
-                ExtractEntry(archive, DataEntryName, tempDir);
-                ExtractEntry(archive, ErrorsEntryName, tempDir);
-                ExtractEntry(archive, TreeEntryName, tempDir);
-                ExtractEntry(archive, FolderFlagsEntryName, tempDir);
-                ExtractEntry(archive, MetaEntryName, tempDir);
+                using (var archive = ZipFile.OpenRead(archivePath))
+                {
+                    ExtractEntry(archive, DataEntryName, tempDir);
+                    ExtractEntry(archive, ErrorsEntryName, tempDir);
+                    ExtractEntry(archive, TreeEntryName, tempDir);
+                    ExtractEntry(archive, FolderFlagsEntryName, tempDir);
+                    ExtractEntry(archive, MetaEntryName, tempDir);
+                }
+
+                var dataPath = Path.Combine(tempDir, DataEntryName);
+                var errorPath = Path.Combine(tempDir, ErrorsEntryName);
+                var treePath = Path.Combine(tempDir, TreeEntryName);
+                var folderFlagsPath = Path.Combine(tempDir, FolderFlagsEntryName);
+                var metaPath = Path.Combine(tempDir, MetaEntryName);
+                if (!File.Exists(dataPath))
+                {
+                    throw new InvalidDataException("Archivio analisi non valido: dati mancanti.");
+                }
+                if (!File.Exists(errorPath))
+                {
+                    File.WriteAllText(errorPath, string.Empty);
+                }
+
+                var treeMap = LoadTreeMap(treePath, dataPath);
+                var meta = LoadMeta(metaPath);
+
+                var details = BuildDetailsFromExport(dataPath);
+                ApplyFolderFlags(details, LoadFolderFlags(folderFlagsPath));
+
+                var result = new ScanResult
+                {
+                    TempDataPath = dataPath,
+                    ErrorPath = errorPath,
+                    Details = details,
+                    TreeMap = treeMap
+                };
+
+                return new AnalysisArchiveResult
+                {
+                    ScanResult = result,
+                    RootPath = meta.RootPath
+                };
             }
-
-            var dataPath = Path.Combine(tempDir, DataEntryName);
-            var errorPath = Path.Combine(tempDir, ErrorsEntryName);
-            var treePath = Path.Combine(tempDir, TreeEntryName);
-            var folderFlagsPath = Path.Combine(tempDir, FolderFlagsEntryName);
-            var metaPath = Path.Combine(tempDir, MetaEntryName);
-            if (!File.Exists(dataPath))
+            catch
             {
-                throw new InvalidDataException("Archivio analisi non valido: dati mancanti.");
+                SafeDeleteDirectory(tempDir);
+                throw;
             }
-            if (!File.Exists(errorPath))
-            {
-                File.WriteAllText(errorPath, string.Empty);
-            }
-
-            var treeMap = LoadTreeMap(treePath, dataPath);
-            var meta = LoadMeta(metaPath);
-
-            var details = BuildDetailsFromExport(dataPath);
-            ApplyFolderFlags(details, LoadFolderFlags(folderFlagsPath));
-
-            var result = new ScanResult
-            {
-                TempDataPath = dataPath,
-                ErrorPath = errorPath,
-                Details = details,
-                TreeMap = treeMap
-            };
-
-            return new AnalysisArchiveResult
-            {
-                ScanResult = result,
-                RootPath = meta.RootPath
-            };
         }
 
         private Dictionary<string, List<string>> LoadTreeMap(string treePath, string dataPath)
@@ -449,6 +457,21 @@ namespace NtfsAudit.App.Services
             using (var writer = new StreamWriter(stream))
             {
                 writer.Write(string.Empty);
+            }
+        }
+
+        private void SafeDeleteDirectory(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return;
+            try
+            {
+                if (Directory.Exists(path))
+                {
+                    Directory.Delete(path, true);
+                }
+            }
+            catch
+            {
             }
         }
 

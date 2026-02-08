@@ -20,7 +20,11 @@ $root = Resolve-Path ".."
 $solution = Join-Path $root "NtfsAudit.sln"
 $project = Join-Path $root "src\NtfsAudit.App\NtfsAudit.App.csproj"
 $viewerProject = Join-Path $root "src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj"
-$distRoot = if ($OutputPath) { $OutputPath } else { Join-Path $root "dist\$Configuration" }
+$distRoot = if ($OutputPath) {
+    if ([System.IO.Path]::IsPathRooted($OutputPath)) { $OutputPath } else { Join-Path $root $OutputPath }
+} else {
+    Join-Path $root "dist\$Configuration"
+}
 $dist = $distRoot
 if ($Runtime) {
     $dist = Join-Path $distRoot $Runtime

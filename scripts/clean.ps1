@@ -2,6 +2,7 @@ param(
     [string]$Configuration,
     [string]$Framework,
     [string]$Runtime,
+    [string]$OutputPath,
     [string]$TempRoot,
     [switch]$KeepDist,
     [switch]$KeepArtifacts,
@@ -12,6 +13,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 $root = Resolve-Path ".."
+$distRoot = if ($OutputPath) {
+    if ([System.IO.Path]::IsPathRooted($OutputPath)) { $OutputPath } else { Join-Path $root $OutputPath }
+} else {
+    Join-Path $root "dist"
+}
 
 $paths = @(
     (Join-Path $root ".vs"),
@@ -22,18 +28,29 @@ $paths = @(
 )
 
 if (-not $KeepDist) {
-    if ($Configuration) {
+    if ($OutputPath) {
+        $paths += $distRoot
+        if ($Runtime) {
+            $paths += (Join-Path $distRoot $Runtime)
+        }
+        if ($Framework) {
+            $paths += (Join-Path $distRoot $Framework)
+            if ($Runtime) {
+                $paths += (Join-Path $distRoot $Runtime $Framework)
+            }
+        }
+    } elseif ($Configuration) {
         if ($Runtime -and $Framework) {
-            $paths += (Join-Path $root "dist\$Configuration\$Runtime\$Framework")
+            $paths += (Join-Path $distRoot "$Configuration\$Runtime\$Framework")
         } elseif ($Runtime) {
-            $paths += (Join-Path $root "dist\$Configuration\$Runtime")
+            $paths += (Join-Path $distRoot "$Configuration\$Runtime")
         } elseif ($Framework) {
-            $paths += (Join-Path $root "dist\$Configuration\$Framework")
+            $paths += (Join-Path $distRoot "$Configuration\$Framework")
         } else {
-            $paths += (Join-Path $root "dist\$Configuration")
+            $paths += (Join-Path $distRoot $Configuration)
         }
     } else {
-        $paths += (Join-Path $root "dist")
+        $paths += $distRoot
     }
 }
 

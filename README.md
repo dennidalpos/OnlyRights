@@ -125,6 +125,8 @@ Formato nome file:
 <NomeCartellaRoot>_<dd-MM-yyyy-HH-mm>.xlsx
 ```
 
+Nota: l’export verifica la presenza del file dati della scansione e crea automaticamente la cartella di destinazione se non esiste.
+
 ### Export HTML (.html)
 
 Produce un file HTML autoconclusivo che replica la vista corrente:
@@ -141,6 +143,8 @@ Formato nome file:
 ```
 <NomeCartellaRoot>_<dd-MM-yyyy-HH-mm>.html
 ```
+
+Nota: la cartella di destinazione viene creata automaticamente se non presente.
 
 ### Export Analisi (.ntaudit)
 
@@ -205,7 +209,7 @@ Parametri principali:
 - `-PublishSingleFile`
 - `-PublishReadyToRun`
 
-Output di default: `dist\<Configuration>` (con eventuale `<Runtime>` e/o `<Framework>`). Il viewer viene pubblicato in `dist\<Configuration>\Viewer`.
+Output di default: `dist\<Configuration>` (con eventuale `<Runtime>` e/o `<Framework>`). Se `-OutputPath` è relativo, viene risolto rispetto alla root del repository. Il viewer viene pubblicato in `dist\<Configuration>\Viewer`.
 
 ### `scripts/clean.ps1`
 
@@ -220,6 +224,7 @@ Parametri:
 - `-Configuration <Release|Debug>`
 - `-Framework <tfm>`
 - `-Runtime <rid>`
+- `-OutputPath <cartella>` (pulisce la cartella di output specificata, coerente con `build.ps1`)
 - `-TempRoot <path>` (override di `%TEMP%` per i file temporanei)
 - `-KeepDist`
 - `-KeepArtifacts`
