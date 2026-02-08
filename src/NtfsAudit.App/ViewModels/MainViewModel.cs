@@ -681,19 +681,24 @@ namespace NtfsAudit.App.ViewModels
         private void Browse()
         {
             if (_isViewerMode) return;
-            using (var dialog = new FolderBrowserDialog())
+            var dialog = new Win32.OpenFileDialog
             {
-                dialog.ShowNewFolderButton = false;
-                dialog.RootFolder = Environment.SpecialFolder.Desktop;
-                dialog.Description = "Seleziona la cartella da analizzare (unità locali o di rete).";
-                if (!string.IsNullOrWhiteSpace(RootPath))
+                CheckFileExists = false,
+                CheckPathExists = true,
+                ValidateNames = false,
+                FileName = "Seleziona cartella",
+                Title = "Seleziona cartella"
+            };
+            if (!string.IsNullOrWhiteSpace(RootPath))
+            {
+                dialog.InitialDirectory = RootPath;
+            }
+            if (dialog.ShowDialog() == true)
+            {
+                var selectedPath = Path.GetDirectoryName(dialog.FileName);
+                if (!string.IsNullOrWhiteSpace(selectedPath))
                 {
-                    dialog.SelectedPath = RootPath;
-                }
-                var result = dialog.ShowDialog();
-                if (result == DialogResult.OK)
-                {
-                    RootPath = dialog.SelectedPath;
+                    RootPath = selectedPath;
                 }
             }
         }
