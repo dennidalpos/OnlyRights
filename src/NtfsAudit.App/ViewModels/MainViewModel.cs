@@ -1137,6 +1137,11 @@ namespace NtfsAudit.App.ViewModels
             {
                 throw new IOException("Il file export non è stato creato.");
             }
+            var info = new FileInfo(ioPath);
+            if (info.Length == 0)
+            {
+                throw new IOException("Il file export risulta vuoto.");
+            }
         }
 
         private void ExecuteScan(ScanOptions options, CancellationToken token)
@@ -1904,6 +1909,22 @@ namespace NtfsAudit.App.ViewModels
             if (result == null)
             {
                 message = "Analisi importata non valida: dati mancanti.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(result.TempDataPath))
+            {
+                message = "Analisi importata non valida: file dati non presente.";
+                return false;
+            }
+            var dataPath = PathResolver.ToExtendedPath(result.TempDataPath);
+            if (!File.Exists(dataPath))
+            {
+                message = "Analisi importata non valida: file dati non trovato.";
+                return false;
+            }
+            if (new FileInfo(dataPath).Length == 0)
+            {
+                message = "Analisi importata non valida: file dati vuoto.";
                 return false;
             }
             if (result.Details == null || result.TreeMap == null)

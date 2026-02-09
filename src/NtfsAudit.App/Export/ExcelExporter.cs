@@ -15,6 +15,8 @@ namespace NtfsAudit.App.Export
     {
         private const int ExcelMaxRows = 1048576;
         private const int MaxDataRowsPerSheet = ExcelMaxRows - 1;
+        private const int MinColumnWidth = 8;
+        private const int MaxColumnWidth = 60;
 
         public ExcelExportResult Export(string tempDataPath, string errorPath, string outputPath)
         {
@@ -55,6 +57,26 @@ namespace NtfsAudit.App.Export
                 "IsAdminAccount"
             };
 
+            var metrics = CollectSheetMetrics(tempDataPath, headers);
+            var errorHeaders = new[]
+            {
+                "Path",
+                "ErrorType",
+                "Message"
+            };
+            var errors = new List<ErrorEntry>(ReadErrors(errorPath));
+            var errorMetrics = BuildSheetMetrics(errorHeaders);
+            foreach (var error in errors)
+            {
+                errorMetrics.UpdateWidths(new[]
+                {
+                    error == null ? string.Empty : error.Path,
+                    error == null ? string.Empty : error.ErrorType,
+                    error == null ? string.Empty : error.Message
+                });
+                errorMetrics.RowCount++;
+            }
+
             var result = new ExcelExportResult();
 
             using (var document = SpreadsheetDocument.Create(ioOutputPath, SpreadsheetDocumentType.Workbook))
@@ -63,23 +85,24 @@ namespace NtfsAudit.App.Export
                 workbookPart.Workbook = new Workbook();
                 var sheets = workbookPart.Workbook.AppendChild(new Sheets());
                 uint sheetId = 1;
+                uint tableId = 1;
 
                 var userSheetIndex = 1;
                 var groupSheetIndex = 1;
-                var userSheetWriter = CreateSheetWriter(workbookPart, sheets, BuildSheetName("Users", userSheetIndex), sheetId++, headers);
-                var groupSheetWriter = CreateSheetWriter(workbookPart, sheets, BuildSheetName("Groups", groupSheetIndex), sheetId++, headers);
+                var userSheetWriter = CreateSheetWriter(workbookPart, sheets, BuildSheetName("Users", userSheetIndex), sheetId++, headers, metrics.UserSheets[userSheetIndex - 1], ref tableId);
+                var groupSheetWriter = CreateSheetWriter(workbookPart, sheets, BuildSheetName("Groups", groupSheetIndex), sheetId++, headers, metrics.GroupSheets[groupSheetIndex - 1], ref tableId);
 
                 foreach (var record in ReadFolderPermissions(tempDataPath))
                 {
                     if (record == null) continue;
                     if (string.Equals(record.PrincipalType, "Group", StringComparison.OrdinalIgnoreCase))
                     {
-                        WriteRecord(ref groupSheetWriter, workbookPart, sheets, "Groups", ref groupSheetIndex, ref sheetId, headers, record);
+                        WriteRecord(ref groupSheetWriter, workbookPart, sheets, "Groups", ref groupSheetIndex, ref sheetId, headers, record, metrics.GroupSheets, ref tableId);
                         result.GroupRowCount++;
                     }
                     else if (string.Equals(record.PrincipalType, "User", StringComparison.OrdinalIgnoreCase))
                     {
-                        WriteRecord(ref userSheetWriter, workbookPart, sheets, "Users", ref userSheetIndex, ref sheetId, headers, record);
+                        WriteRecord(ref userSheetWriter, workbookPart, sheets, "Users", ref userSheetIndex, ref sheetId, headers, record, metrics.UserSheets, ref tableId);
                         result.UserRowCount++;
                     }
                 }
@@ -89,14 +112,8 @@ namespace NtfsAudit.App.Export
                 userSheetWriter.Dispose();
                 groupSheetWriter.Dispose();
 
-                var errorHeaders = new[]
-                {
-                    "Path",
-                    "ErrorType",
-                    "Message"
-                };
                 var errorSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteErrorsSheet(errorSheet, ReadErrors(errorPath), errorHeaders);
+                WriteErrorsSheet(errorSheet, errors, errorHeaders, errorMetrics, ref tableId);
                 sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(errorSheet), SheetId = sheetId, Name = "Errors" });
 
                 workbookPart.Workbook.Save();
@@ -165,41 +182,37 @@ namespace NtfsAudit.App.Export
             }
         }
 
-        private void WriteErrorsSheet(WorksheetPart sheetPart, IEnumerable<ErrorEntry> errors, string[] headers)
+        private void WriteErrorsSheet(WorksheetPart sheetPart, IEnumerable<ErrorEntry> errors, string[] headers, SheetMetrics metrics, ref uint tableId)
         {
-            using (var writer = OpenXmlWriter.Create(sheetPart))
+            var sheetName = "Errors";
+            using (var writer = new SheetWriter(sheetPart, headers, metrics, sheetName, ref tableId))
             {
-                writer.WriteStartElement(new Worksheet());
-                writer.WriteStartElement(new SheetData());
-                WriteRow(writer, headers);
-
                 foreach (var error in errors)
                 {
-                    WriteRow(writer,
-                        error.Path,
-                        error.ErrorType,
-                        error.Message);
+                    writer.WriteRow(new[]
+                    {
+                        error == null ? string.Empty : error.Path,
+                        error == null ? string.Empty : error.ErrorType,
+                        error == null ? string.Empty : error.Message
+                    });
                 }
-
-                writer.WriteEndElement();
-                writer.WriteEndElement();
             }
         }
 
-        private SheetWriter CreateSheetWriter(WorkbookPart workbookPart, Sheets sheets, string sheetName, uint sheetId, string[] headers)
+        private SheetWriter CreateSheetWriter(WorkbookPart workbookPart, Sheets sheets, string sheetName, uint sheetId, string[] headers, SheetMetrics metrics, ref uint tableId)
         {
             var sheetPart = workbookPart.AddNewPart<WorksheetPart>();
             sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(sheetPart), SheetId = sheetId, Name = sheetName });
-            return new SheetWriter(sheetPart, headers);
+            return new SheetWriter(sheetPart, headers, metrics, sheetName, ref tableId);
         }
 
-        private void WriteRecord(ref SheetWriter writer, WorkbookPart workbookPart, Sheets sheets, string prefix, ref int sheetIndex, ref uint sheetId, string[] headers, ExportRecord record)
+        private void WriteRecord(ref SheetWriter writer, WorkbookPart workbookPart, Sheets sheets, string prefix, ref int sheetIndex, ref uint sheetId, string[] headers, ExportRecord record, List<SheetMetrics> metricsPool, ref uint tableId)
         {
             if (writer.RowCount >= MaxDataRowsPerSheet)
             {
                 writer.Dispose();
                 sheetIndex++;
-                writer = CreateSheetWriter(workbookPart, sheets, BuildSheetName(prefix, sheetIndex), sheetId++, headers);
+                writer = CreateSheetWriter(workbookPart, sheets, BuildSheetName(prefix, sheetIndex), sheetId++, headers, metricsPool[sheetIndex - 1], ref tableId);
             }
 
             writer.WriteRow(BuildRowValues(record));
@@ -269,15 +282,128 @@ namespace NtfsAudit.App.Export
             writer.WriteEndElement();
         }
 
+        private SheetMetricsCollection CollectSheetMetrics(string tempDataPath, string[] headers)
+        {
+            var userSheets = new List<SheetMetrics> { BuildSheetMetrics(headers) };
+            var groupSheets = new List<SheetMetrics> { BuildSheetMetrics(headers) };
+            var userIndex = 0;
+            var groupIndex = 0;
+
+            foreach (var record in ReadFolderPermissions(tempDataPath))
+            {
+                if (record == null) continue;
+                var rowValues = BuildRowValues(record);
+                if (string.Equals(record.PrincipalType, "Group", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (groupSheets[groupIndex].RowCount >= MaxDataRowsPerSheet)
+                    {
+                        groupIndex++;
+                        groupSheets.Add(BuildSheetMetrics(headers));
+                    }
+                    groupSheets[groupIndex].UpdateWidths(rowValues);
+                    groupSheets[groupIndex].RowCount++;
+                }
+                else if (string.Equals(record.PrincipalType, "User", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (userSheets[userIndex].RowCount >= MaxDataRowsPerSheet)
+                    {
+                        userIndex++;
+                        userSheets.Add(BuildSheetMetrics(headers));
+                    }
+                    userSheets[userIndex].UpdateWidths(rowValues);
+                    userSheets[userIndex].RowCount++;
+                }
+            }
+
+            return new SheetMetricsCollection(userSheets, groupSheets);
+        }
+
+        private static SheetMetrics BuildSheetMetrics(string[] headers)
+        {
+            var metrics = new SheetMetrics(headers.Length);
+            metrics.UpdateWidths(headers);
+            return metrics;
+        }
+
+        private static double[] BuildColumnWidths(SheetMetrics metrics)
+        {
+            var widths = new double[metrics.MaxWidths.Length];
+            for (var i = 0; i < metrics.MaxWidths.Length; i++)
+            {
+                widths[i] = Math.Min(MaxColumnWidth, Math.Max(MinColumnWidth, metrics.MaxWidths[i] + 2));
+            }
+            return widths;
+        }
+
+        private static string GetColumnName(int index)
+        {
+            var dividend = index;
+            var columnName = string.Empty;
+            while (dividend > 0)
+            {
+                var modulo = (dividend - 1) % 26;
+                columnName = Convert.ToChar(65 + modulo) + columnName;
+                dividend = (dividend - modulo) / 26;
+            }
+            return columnName;
+        }
+
+        private class SheetMetrics
+        {
+            public int RowCount { get; set; }
+            public int[] MaxWidths { get; }
+
+            public SheetMetrics(int columnCount)
+            {
+                MaxWidths = new int[columnCount];
+            }
+
+            public void UpdateWidths(string[] values)
+            {
+                if (values == null) return;
+                var count = Math.Min(values.Length, MaxWidths.Length);
+                for (var i = 0; i < count; i++)
+                {
+                    var length = string.IsNullOrEmpty(values[i]) ? 0 : values[i].Length;
+                    if (length > MaxWidths[i])
+                    {
+                        MaxWidths[i] = length;
+                    }
+                }
+            }
+        }
+
+        private class SheetMetricsCollection
+        {
+            public List<SheetMetrics> UserSheets { get; }
+            public List<SheetMetrics> GroupSheets { get; }
+
+            public SheetMetricsCollection(List<SheetMetrics> userSheets, List<SheetMetrics> groupSheets)
+            {
+                UserSheets = userSheets;
+                GroupSheets = groupSheets;
+            }
+        }
+
         private class SheetWriter : IDisposable
         {
             private readonly OpenXmlWriter _writer;
+            private readonly WorksheetPart _sheetPart;
+            private readonly string[] _headers;
+            private readonly string _sheetName;
+            private readonly uint _tableId;
             public int RowCount { get; private set; }
 
-            public SheetWriter(WorksheetPart sheetPart, string[] headers)
+            public SheetWriter(WorksheetPart sheetPart, string[] headers, SheetMetrics metrics, string sheetName, ref uint tableId)
             {
+                _sheetPart = sheetPart;
+                _headers = headers;
+                _sheetName = sheetName;
+                _tableId = tableId;
+                tableId++;
                 _writer = OpenXmlWriter.Create(sheetPart);
                 _writer.WriteStartElement(new Worksheet());
+                WriteColumns(metrics);
                 _writer.WriteStartElement(new SheetData());
                 ExcelExporter.WriteRow(_writer, headers);
             }
@@ -291,8 +417,71 @@ namespace NtfsAudit.App.Export
             public void Dispose()
             {
                 _writer.WriteEndElement();
+                WriteTableParts();
                 _writer.WriteEndElement();
                 _writer.Dispose();
+            }
+
+            private void WriteColumns(SheetMetrics metrics)
+            {
+                var widths = BuildColumnWidths(metrics);
+                _writer.WriteStartElement(new Columns());
+                for (var i = 0; i < widths.Length; i++)
+                {
+                    var columnIndex = (uint)(i + 1);
+                    _writer.WriteElement(new Column
+                    {
+                        Min = columnIndex,
+                        Max = columnIndex,
+                        Width = widths[i],
+                        CustomWidth = true,
+                        BestFit = true
+                    });
+                }
+                _writer.WriteEndElement();
+            }
+
+            private void WriteTableParts()
+            {
+                var tableDefinitionPart = _sheetPart.AddNewPart<TableDefinitionPart>();
+                var relId = _sheetPart.GetIdOfPart(tableDefinitionPart);
+                var totalRows = Math.Max(1, RowCount + 1);
+                var totalColumns = _headers.Length;
+                var reference = string.Format("{0}1:{1}{2}", GetColumnName(1), GetColumnName(totalColumns), totalRows);
+                tableDefinitionPart.Table = new Table(
+                    new AutoFilter { Reference = reference },
+                    new TableColumns(BuildTableColumns())
+                    {
+                        Count = (uint)totalColumns
+                    },
+                    new TableStyleInfo
+                    {
+                        Name = "TableStyleMedium9",
+                        ShowFirstColumn = false,
+                        ShowLastColumn = false,
+                        ShowRowStripes = true,
+                        ShowColumnStripes = false
+                    })
+                {
+                    Id = _tableId,
+                    Name = _sheetName,
+                    DisplayName = _sheetName,
+                    Reference = reference,
+                    TotalsRowShown = false
+                };
+                tableDefinitionPart.Table.Save();
+
+                _writer.WriteStartElement(new TableParts { Count = 1 });
+                _writer.WriteElement(new TablePart { Id = relId });
+                _writer.WriteEndElement();
+            }
+
+            private IEnumerable<TableColumn> BuildTableColumns()
+            {
+                for (var i = 0; i < _headers.Length; i++)
+                {
+                    yield return new TableColumn { Id = (uint)(i + 1), Name = _headers[i] };
+                }
             }
         }
     }
