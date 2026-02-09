@@ -31,30 +31,30 @@ namespace NtfsAudit.App.Export
             {
                 "FolderName",
                 "PrincipalName",
-                "PrincipalSid",
+                "TargetPath",
+                "EffectiveRightsSummary",
+                "Source",
+                "Owner",
                 "PrincipalType",
                 "PermissionLayer",
                 "AllowDeny",
                 "RightsSummary",
-                "EffectiveRightsSummary",
                 "IsInherited",
                 "AppliesToThisFolder",
                 "AppliesToSubfolders",
                 "AppliesToFiles",
                 "InheritanceFlags",
                 "PropagationFlags",
-                "Source",
                 "Depth",
                 "ResourceType",
-                "TargetPath",
-                "Owner",
                 "ShareName",
                 "ShareServer",
                 "AuditSummary",
                 "RiskLevel",
                 "Disabilitato",
                 "IsServiceAccount",
-                "IsAdminAccount"
+                "IsAdminAccount",
+                "PrincipalSid"
             };
 
             var metrics = CollectSheetMetrics(tempDataPath, headers);
@@ -224,30 +224,30 @@ namespace NtfsAudit.App.Export
             {
                 GetFolderName(record.FolderPath),
                 record.PrincipalName,
-                record.PrincipalSid,
+                record.TargetPath,
+                record.EffectiveRightsSummary,
+                record.Source,
+                record.Owner,
                 record.PrincipalType,
                 record.PermissionLayer.ToString(),
                 record.AllowDeny,
                 record.RightsSummary,
-                record.EffectiveRightsSummary,
                 record.IsInherited.ToString(),
                 record.AppliesToThisFolder.ToString(),
                 record.AppliesToSubfolders.ToString(),
                 record.AppliesToFiles.ToString(),
                 record.InheritanceFlags,
                 record.PropagationFlags,
-                record.Source,
                 record.Depth.ToString(CultureInfo.InvariantCulture),
                 record.ResourceType,
-                record.TargetPath,
-                record.Owner,
                 record.ShareName,
                 record.ShareServer,
                 record.AuditSummary,
                 record.RiskLevel,
                 record.IsDisabled.ToString(),
                 record.IsServiceAccount.ToString(),
-                record.IsAdminAccount.ToString()
+                record.IsAdminAccount.ToString(),
+                record.PrincipalSid
             };
         }
 
