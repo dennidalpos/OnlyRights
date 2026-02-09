@@ -4,6 +4,7 @@ param(
     [string]$Runtime,
     [string]$TempRoot,
     [string]$DistRoot,
+    [switch]$CleanAllTemp,
     [switch]$KeepDist,
     [switch]$KeepArtifacts,
     [switch]$KeepTemp,
@@ -42,6 +43,12 @@ if ($CleanImports) {
 
 if ($CleanCache) {
     $CacheOnly = $true
+}
+
+if ($CleanAllTemp) {
+    $KeepTemp = $false
+    $KeepImportTemp = $false
+    $KeepCache = $false
 }
 
 if ($ImportsOnly -or $CacheOnly) {

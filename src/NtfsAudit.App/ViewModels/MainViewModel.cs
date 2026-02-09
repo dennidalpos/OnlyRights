@@ -1366,9 +1366,15 @@ namespace NtfsAudit.App.ViewModels
             {
                 return preferredRoot;
             }
-            if (!string.IsNullOrWhiteSpace(preferredRoot) && treeMap.ContainsKey(preferredRoot))
+            if (!string.IsNullOrWhiteSpace(preferredRoot))
             {
-                return preferredRoot;
+                var normalizedPreferred = NormalizeTreePath(preferredRoot);
+                var matchingRoot = treeMap.Keys.FirstOrDefault(
+                    key => string.Equals(NormalizeTreePath(key), normalizedPreferred, StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrWhiteSpace(matchingRoot))
+                {
+                    return matchingRoot;
+                }
             }
 
             var childSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -1378,14 +1384,14 @@ namespace NtfsAudit.App.ViewModels
                 {
                     if (!string.IsNullOrWhiteSpace(child))
                     {
-                        childSet.Add(child);
+                        childSet.Add(NormalizeTreePath(child));
                     }
                 }
             }
 
             var roots = treeMap.Keys
-                .Where(key => !childSet.Contains(key))
-                .OrderBy(key => key.Length)
+                .Where(key => !childSet.Contains(NormalizeTreePath(key)))
+                .OrderBy(key => NormalizeTreePath(key).Length)
                 .ToList();
             if (roots.Count > 0)
             {
@@ -1492,8 +1498,13 @@ namespace NtfsAudit.App.ViewModels
                         continue;
                     }
                     if (record == null) continue;
-                    var path = string.IsNullOrWhiteSpace(record.TargetPath) ? record.FolderPath : record.TargetPath;
+                    var path = record.FolderPath;
                     if (string.IsNullOrWhiteSpace(path)) continue;
+                    if (string.Equals(record.PrincipalType, "Meta", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(record.PrincipalName, "SCAN_OPTIONS", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
                     AddPathWithAncestors(map, path, normalizedRoot);
                 }
             }
@@ -1644,6 +1655,18 @@ namespace NtfsAudit.App.ViewModels
         {
             var entry = item as AceEntry;
             if (entry == null) return false;
+            if (!ShowAllow && !ShowDeny)
+            {
+                return false;
+            }
+            if (!ShowInherited && !ShowExplicit)
+            {
+                return false;
+            }
+            if (!ShowEveryone && !ShowAuthenticatedUsers && !ShowServiceAccounts && !ShowAdminAccounts && !ShowOtherPrincipals)
+            {
+                return false;
+            }
             var isDeny = string.Equals(entry.AllowDeny, "Deny", StringComparison.OrdinalIgnoreCase);
             var isAllow = string.Equals(entry.AllowDeny, "Allow", StringComparison.OrdinalIgnoreCase);
             if (!ShowAllow && isAllow)
