@@ -13,6 +13,8 @@ namespace NtfsAudit.App.Export
 {
     public class ExcelExporter
     {
+        private const int MaxExcelRows = 1048576;
+
         public void Export(string tempDataPath, string errorPath, string outputPath)
         {
             var ioOutputPath = PathResolver.ToExtendedPath(outputPath);
@@ -132,6 +134,10 @@ namespace NtfsAudit.App.Export
                 var values = BuildRecordValues(record);
                 UpdateColumnWidths(widths, values);
                 rowCount += 1;
+                if (rowCount >= MaxExcelRows)
+                {
+                    break;
+                }
             }
 
             return new ScanResult(rowCount, widths);
@@ -157,6 +163,10 @@ namespace NtfsAudit.App.Export
                 if (!TryParseError(line, out var entry)) continue;
                 UpdateColumnWidths(widths, entry.Path, entry.ErrorType, entry.Message);
                 rowCount += 1;
+                if (rowCount >= MaxExcelRows)
+                {
+                    break;
+                }
             }
 
             return new ScanResult(rowCount, widths);
@@ -174,12 +184,18 @@ namespace NtfsAudit.App.Export
                 var ioPath = PathResolver.ToExtendedPath(tempDataPath);
                 if (File.Exists(ioPath))
                 {
+                    var rowCount = 1;
                     foreach (var line in File.ReadLines(ioPath))
                     {
                         if (!TryParseRecord(line, out var record)) continue;
                         if (!predicate(record)) continue;
                         var values = BuildRecordValues(record);
                         WriteRow(writer, values);
+                        rowCount += 1;
+                        if (rowCount >= MaxExcelRows)
+                        {
+                            break;
+                        }
                     }
                 }
 
@@ -201,10 +217,16 @@ namespace NtfsAudit.App.Export
                 var ioPath = PathResolver.ToExtendedPath(errorPath);
                 if (File.Exists(ioPath))
                 {
+                    var rowCount = 1;
                     foreach (var line in File.ReadLines(ioPath))
                     {
                         if (!TryParseError(line, out var error)) continue;
                         WriteRow(writer, error.Path, error.ErrorType, error.Message);
+                        rowCount += 1;
+                        if (rowCount >= MaxExcelRows)
+                        {
+                            break;
+                        }
                     }
                 }
 

@@ -1812,8 +1812,22 @@ namespace NtfsAudit.App.ViewModels
             var safeRoot = rootPath ?? string.Empty;
             var baseName = Path.GetFileName(safeRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
             if (string.IsNullOrWhiteSpace(baseName)) baseName = "Root";
+            baseName = SanitizeFileName(baseName);
             var timestamp = DateTime.Now.ToString("dd-MM-yyyy-HH-mm");
             return string.Format("{0}_{1}.{2}", baseName, timestamp, extension);
+        }
+
+        private string SanitizeFileName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "Root";
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var cleaned = new string(name.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray()).Trim();
+            if (string.IsNullOrWhiteSpace(cleaned)) cleaned = "Root";
+            if (cleaned.Length > 40)
+            {
+                cleaned = cleaned.Substring(0, 40);
+            }
+            return cleaned;
         }
 
         private string ResolveInitialDirectory(string preferredDirectory, string rootPath)
