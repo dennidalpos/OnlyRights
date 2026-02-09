@@ -5,7 +5,7 @@ NTFS Audit è una soluzione desktop per Windows (WPF) dedicata all’analisi dei
 - **NtfsAudit.App** per la scansione e l’export dei risultati.
 - **NtfsAudit.Viewer** per aprire archivi `.ntaudit` in modalità sola lettura.
 
-L’applicazione legge le ACL delle cartelle, normalizza i diritti, può risolvere i SID in nomi leggibili e, se richiesto, espandere i gruppi annidati. I dati possono essere esportati in Excel, HTML o archivi `.ntaudit` riutilizzabili.
+L’applicazione legge le ACL delle cartelle, normalizza i diritti, può risolvere i SID in nomi leggibili e, se richiesto, espandere i gruppi annidati. I dati possono essere esportati in Excel o archivi `.ntaudit` riutilizzabili.
 
 ## Indice
 
@@ -29,7 +29,7 @@ Durante una scansione, NTFS Audit:
 1. Normalizza il percorso (locale o UNC).
    - Per i namespace DFS seleziona prima il target con priorità più alta e, se non disponibile, usa i fallback.
 2. Costruisce la struttura ad albero delle cartelle.
-   - Esclude le cartelle cache DFS (`DfsrPrivate`, `System Volume Information\\DFSR`).
+   - Esclude le cartelle di sync/cache DFS (es. `DfsrPrivate`, `System Volume Information\\DFSR`).
 3. Legge le ACE (Allow/Deny) per ogni cartella.
 4. Normalizza i diritti (Full, Modify, Read, ecc.).
 5. (Opzionale) Risolve i SID in nomi e stato (utente/gruppo/disabled).
@@ -60,7 +60,7 @@ L’interfaccia mostra:
 3. Seleziona il percorso root (`C:\...` o `\\server\share\...`).
 4. Configura profondità e opzioni di scansione.
 5. Avvia la scansione con **Start**.
-6. Al termine, usa **Export Excel**, **Export HTML** o **Export Analisi**.
+6. Al termine, usa **Export Excel** o **Export Analisi**.
 
 ## Architettura e progetti
 
@@ -109,7 +109,7 @@ Le opzioni principali influenzano prestazioni e dettaglio dei risultati:
 
 I filtri nella vista risultati funzionano in combinazione:
 
-- **Filtro ACL**: ricerca per nome, SID, allow/deny, diritti, effective access, SACL/audit, source, resource type, target path, owner, risk level e membri espansi.
+- **Filtro ACL**: ricerca per nome, SID, allow/deny, diritti, effective access, percorso/nome cartella, SACL/audit, source, resource type, target path, owner, risk level e membri espansi.
 - **Everyone / Authenticated Users**: mostra solo le ACE con i rispettivi SID o nome equivalente.
 - **Utenti di servizio**: mostra solo le ACE marcate come account di servizio.
 - **Admin**: mostra solo le ACE marcate come account amministrativi.
@@ -123,38 +123,38 @@ I filtri nella vista risultati funzionano in combinazione:
 Gli export partono sempre dai risultati correnti della scansione/import:
 
 1. Seleziona la cartella root e applica i filtri desiderati.
-2. Verifica il tab attivo (ACL gruppi/utenti, ACL completo, errori, share, effective).
-3. Avvia l’export dalla toolbar.
-4. Scegli nome e percorso tramite dialog di salvataggio (il default usa la root e l’ultima cartella usata).
+2. Avvia l’export dalla toolbar.
+3. Scegli nome e percorso tramite dialog di salvataggio (il default usa la root e l’ultima cartella usata).
 
 Il file generato riflette:
 
-- filtro ACL e filtri booleani (Everyone, Authenticated Users, Solo Deny, Ereditarietà disabilitata),
-- tab e contenuti correnti (per HTML),
-- opzioni di scansione e metadati (per `.ntaudit`).
+- per **Excel**: i dati grezzi della scansione (gli eventuali filtri UI non vengono applicati all’export),
+- per **.ntaudit**: opzioni di scansione e metadati (oltre ai dati ACL completi).
 
 ### Export Excel (.xlsx)
 
-Genera un file con quattro fogli:
+Genera un file con tre fogli:
 
-- **Users**: ACE degli utenti.
-- **Groups**: ACE dei gruppi.
-- **Acl**: tutte le ACE.
+- **Users_#**: ACE degli utenti (spezzato in più fogli se necessario).
+- **Groups_#**: ACE dei gruppi (spezzato in più fogli se necessario).
 - **Errors**: errori di accesso raccolti durante la scansione.
+
+Caratteristiche principali:
+
+- Export in streaming (no caricamento completo in memoria).
+- Solo utenti e gruppi: il foglio ACL completo non viene generato.
+- La colonna `FolderName` contiene solo il nome cartella, senza il percorso completo.
+- Se si supera il limite Excel (1.048.576 righe), i dati vengono suddivisi in più fogli e l’app mostra un warning.
 
 Colonne tipiche:
 
-- `FolderPath`, `PrincipalName`, `PrincipalSid`, `PrincipalType`
-- `PermissionLayer`, `ShareName`, `ShareServer`
-- `AllowDeny`, `RightsSummary`, `RightsMask`, `EffectiveRightsSummary`, `EffectiveRightsMask`
-- `ShareRightsMask`, `NtfsRightsMask`, `AppliesToThisFolder`, `AppliesToSubfolders`, `AppliesToFiles`
+- `FolderName`, `PrincipalName`, `PrincipalSid`, `PrincipalType`
+- `PermissionLayer`, `AllowDeny`, `RightsSummary`, `EffectiveRightsSummary`
+- `IsInherited`, `AppliesToThisFolder`, `AppliesToSubfolders`, `AppliesToFiles`
 - `InheritanceFlags`, `PropagationFlags`, `Source`, `Depth`
-- `ResourceType`, `TargetPath`, `Owner`, `AuditSummary`, `RiskLevel`
-- `IsDisabled`, `IsServiceAccount`, `IsAdminAccount`
-- `HasExplicitPermissions`, `IsInheritanceDisabled`
-- `IncludeInherited`, `ResolveIdentities`, `ExcludeServiceAccounts`, `ExcludeAdminAccounts`
-- `EnableAdvancedAudit`, `ComputeEffectiveAccess`, `IncludeSharePermissions`, `IncludeFiles`, `ReadOwnerAndSacl`, `CompareBaseline`
-- `ScanAllDepths`, `MaxDepth`, `ExpandGroups`, `UsePowerShell`
+- `ResourceType`, `TargetPath`, `Owner`, `ShareName`, `ShareServer`
+- `AuditSummary`, `RiskLevel`, `Disabilitato`
+- `IsServiceAccount`, `IsAdminAccount`
 
 Formato nome file:
 
@@ -163,27 +163,6 @@ Formato nome file:
 ```
 
 Il dialog di export propone automaticamente questo nome e ricorda l’ultima cartella di salvataggio.
-
-### Export HTML (.html)
-
-Produce un file HTML autoconclusivo che replica la vista corrente:
-
-- albero cartelle e stato di espansione,
-- cartella selezionata,
-- tab con ACL utenti/gruppi/complete,
-- tab errori,
-- filtri applicati,
-- filtri avanzati (Everyone, Authenticated Users, Solo Deny, Ereditarietà disabilitata),
-- colori per diritto.
-- Il filtro ACL nell’HTML applica gli stessi criteri della UI (nome/SID/diritti/SACL/source/resource/target/owner/rischio/membri).
-
-Formato nome file:
-
-```
-<NomeCartellaRoot>_<dd-MM-yyyy-HH-mm>.html
-```
-
-Il dialog di export usa lo stesso naming e mantiene l’ultima cartella scelta.
 
 ### Export Analisi (.ntaudit)
 
@@ -306,6 +285,8 @@ Parametri:
 - `-KeepCache`
 - `-ImportsOnly` (pulisce solo `%TEMP%\\NtfsAudit\\imports`)
 - `-CacheOnly` (pulisce solo `%LOCALAPPDATA%\\NtfsAudit\\Cache`)
+- `-CleanImports` (alias per `-ImportsOnly`)
+- `-CleanCache` (alias per `-CacheOnly`)
 
 ## File temporanei
 

@@ -10,7 +10,9 @@ param(
     [switch]$KeepImportTemp,
     [switch]$KeepCache,
     [switch]$ImportsOnly,
-    [switch]$CacheOnly
+    [switch]$CacheOnly,
+    [switch]$CleanImports,
+    [switch]$CleanCache
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,7 +20,10 @@ $root = Resolve-Path ".."
 
 function Get-TempRoot {
     param([string]$PreferredRoot)
-    if ($PreferredRoot) { return $PreferredRoot }
+    if ($PreferredRoot) {
+        if ([System.IO.Path]::IsPathRooted($PreferredRoot)) { return $PreferredRoot }
+        return (Join-Path $root $PreferredRoot)
+    }
     if ($env:TEMP) { return $env:TEMP }
     if ($env:TMP) { return $env:TMP }
     return [System.IO.Path]::GetTempPath()
@@ -31,6 +36,13 @@ $paths = @(
     (Join-Path $root "src\NtfsAudit.Viewer\bin"),
     (Join-Path $root "src\NtfsAudit.Viewer\obj")
 )
+if ($CleanImports) {
+    $ImportsOnly = $true
+}
+
+if ($CleanCache) {
+    $CacheOnly = $true
+}
 
 if ($ImportsOnly -or $CacheOnly) {
     $paths = @()
