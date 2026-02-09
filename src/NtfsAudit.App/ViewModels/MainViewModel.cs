@@ -56,6 +56,7 @@ namespace NtfsAudit.App.ViewModels
         private int _errorCount;
         private string _elapsedText = "00:00:00";
         private string _selectedFolderPath;
+        private string _selectedFolderName;
         private string _aclFilter;
         private bool _colorizeRights = true;
         private ObservableCollection<string> _dfsTargets = new ObservableCollection<string>();
@@ -405,6 +406,17 @@ namespace NtfsAudit.App.ViewModels
             {
                 _selectedFolderPath = value;
                 OnPropertyChanged("SelectedFolderPath");
+                SelectedFolderName = GetFolderName(_selectedFolderPath);
+            }
+        }
+
+        public string SelectedFolderName
+        {
+            get { return _selectedFolderName; }
+            private set
+            {
+                _selectedFolderName = value;
+                OnPropertyChanged("SelectedFolderName");
             }
         }
 

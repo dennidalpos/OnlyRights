@@ -97,6 +97,10 @@ namespace NtfsAudit.App.Services
                             Interlocked.Decrement(ref pendingCount);
                             var current = workItem.Path;
                             var depth = workItem.Depth;
+                            if (IsDfsCachePath(current))
+                            {
+                                continue;
+                            }
                             var currentDetail = details.GetOrAdd(current, _ => new FolderDetail());
                             var processedCount = Interlocked.Increment(ref processed);
 

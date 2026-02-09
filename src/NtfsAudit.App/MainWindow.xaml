@@ -301,7 +301,10 @@
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0">
               <TextBlock Text="Risultati" Style="{StaticResource SectionHeaderText}" />
-              <TextBlock Text="{Binding SelectedFolderPath}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis" />
+              <Border Background="#FFE3F2FD" BorderBrush="#FF1565C0" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,6">
+                <TextBlock Text="{Binding SelectedFolderName}" FontWeight="SemiBold" FontSize="14" Foreground="#FF0D47A1" TextTrimming="CharacterEllipsis" />
+              </Border>
+              <TextBlock Text="{Binding SelectedFolderPath}" FontSize="11" Foreground="#FF546E7A" TextTrimming="CharacterEllipsis" />
             </StackPanel>
             <GroupBox Grid.Row="1" Header="Filtri persistenti" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10" Margin="0,8,0,8" IsEnabled="{Binding HasScanResult}">
               <StackPanel>

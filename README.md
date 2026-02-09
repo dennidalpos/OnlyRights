@@ -29,7 +29,7 @@ Durante una scansione, NTFS Audit:
 1. Normalizza il percorso (locale o UNC).
    - Per i namespace DFS seleziona prima il target con priorità più alta e, se non disponibile, usa i fallback.
 2. Costruisce la struttura ad albero delle cartelle.
-   - Esclude le cartelle cache DFS (`DfsrPrivate`, `System Volume Information\\DFSR`).
+   - Esclude le cartelle di sync/cache DFS (es. `DfsrPrivate`, `System Volume Information\\DFSR`).
 3. Legge le ACE (Allow/Deny) per ogni cartella.
 4. Normalizza i diritti (Full, Modify, Read, ecc.).
 5. (Opzionale) Risolve i SID in nomi e stato (utente/gruppo/disabled).
