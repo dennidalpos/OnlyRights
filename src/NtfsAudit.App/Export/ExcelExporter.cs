@@ -279,12 +279,12 @@ namespace NtfsAudit.App.Export
                 _writer = OpenXmlWriter.Create(sheetPart);
                 _writer.WriteStartElement(new Worksheet());
                 _writer.WriteStartElement(new SheetData());
-                WriteRow(_writer, headers);
+                ExcelExporter.WriteRow(_writer, headers);
             }
 
             public void WriteRow(string[] values)
             {
-                WriteRow(_writer, values);
+                ExcelExporter.WriteRow(_writer, values);
                 RowCount++;
             }
 
