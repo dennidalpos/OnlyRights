@@ -1811,10 +1811,27 @@ namespace NtfsAudit.App.ViewModels
         {
             var safeRoot = rootPath ?? string.Empty;
             var baseName = Path.GetFileName(safeRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            if (string.IsNullOrWhiteSpace(baseName))
+            {
+                baseName = ExtractRootName(safeRoot);
+            }
             if (string.IsNullOrWhiteSpace(baseName)) baseName = "Root";
             baseName = SanitizeFileName(baseName);
             var timestamp = DateTime.Now.ToString("dd-MM-yyyy-HH-mm");
             return string.Format("{0}_{1}.{2}", baseName, timestamp, extension);
+        }
+
+        private string ExtractRootName(string rootPath)
+        {
+            if (string.IsNullOrWhiteSpace(rootPath)) return string.Empty;
+            var root = Path.GetPathRoot(rootPath);
+            if (string.IsNullOrWhiteSpace(root)) return string.Empty;
+            var trimmed = root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            if (trimmed.EndsWith(":", StringComparison.Ordinal))
+            {
+                trimmed = trimmed.TrimEnd(':');
+            }
+            return trimmed;
         }
 
         private string SanitizeFileName(string name)
