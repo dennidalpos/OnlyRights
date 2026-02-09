@@ -42,12 +42,12 @@ namespace NtfsAudit.App.Models
             get { return MemberNames == null ? string.Empty : string.Join(", ", MemberNames); }
         }
 
-        public bool HasFullControl { get { return HasRight("FullControl"); } }
-        public bool HasModify { get { return HasRight("Modify"); } }
-        public bool HasReadAndExecute { get { return HasRight("ReadAndExecute"); } }
-        public bool HasList { get { return HasRight("List"); } }
-        public bool HasRead { get { return HasRight("Read"); } }
-        public bool HasWrite { get { return HasRight("Write"); } }
+        public bool HasFullControl { get { return HasRight(RightsSummary, "FullControl"); } }
+        public bool HasModify { get { return HasRight(RightsSummary, "Modify"); } }
+        public bool HasReadAndExecute { get { return HasRight(RightsSummary, "ReadAndExecute"); } }
+        public bool HasList { get { return HasRight(RightsSummary, "List"); } }
+        public bool HasRead { get { return HasRight(RightsSummary, "Read"); } }
+        public bool HasWrite { get { return HasRight(RightsSummary, "Write"); } }
         public bool IsExplicitDeny
         {
             get
@@ -56,13 +56,57 @@ namespace NtfsAudit.App.Models
             }
         }
 
-        private bool HasRight(string right)
+        public string HighestRightKey
         {
-            if (string.IsNullOrWhiteSpace(RightsSummary)) return false;
-            var parts = RightsSummary.Split('|');
+            get
+            {
+                var summary = GetBadgeRightsSummary();
+                if (HasRight(summary, "FullControl")) return "Full";
+                if (HasRight(summary, "Modify")) return "Modify";
+                if (HasRight(summary, "ReadAndExecute")) return "ReadAndExecute";
+                if (HasRight(summary, "Write")) return "Write";
+                if (HasRight(summary, "List")) return "List";
+                if (HasRight(summary, "Read")) return "Read";
+                return string.Empty;
+            }
+        }
+
+        public string HighestRightLabel
+        {
+            get
+            {
+                switch (HighestRightKey)
+                {
+                    case "Full":
+                        return "Full";
+                    case "Modify":
+                        return "Modify";
+                    case "ReadAndExecute":
+                        return "R&E";
+                    case "Write":
+                        return "Write";
+                    case "List":
+                        return "List";
+                    case "Read":
+                        return "Read";
+                    default:
+                        return string.Empty;
+                }
+            }
+        }
+
+        private string GetBadgeRightsSummary()
+        {
+            return string.IsNullOrWhiteSpace(EffectiveRightsSummary) ? RightsSummary : EffectiveRightsSummary;
+        }
+
+        private bool HasRight(string summary, string right)
+        {
+            if (string.IsNullOrWhiteSpace(summary)) return false;
+            var parts = summary.Split(new[] { '|', ',' }, System.StringSplitOptions.RemoveEmptyEntries);
             foreach (var part in parts)
             {
-                if (string.Equals(part, right, System.StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(part.Trim(), right, System.StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }

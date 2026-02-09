@@ -92,6 +92,41 @@
     </Style>
     <DataTemplate x:Key="PermissionBadgesTemplate">
       <StackPanel Orientation="Horizontal">
+        <Border Padding="4,0" CornerRadius="2" Margin="0,0,4,0">
+          <Border.Style>
+            <Style TargetType="Border">
+              <Setter Property="Visibility" Value="Collapsed" />
+              <Setter Property="Background" Value="#FF2F80ED" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding HighestRightKey}" Value="Full">
+                  <Setter Property="Visibility" Value="Visible" />
+                  <Setter Property="Background" Value="#FF9B51E0" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HighestRightKey}" Value="Modify">
+                  <Setter Property="Visibility" Value="Visible" />
+                  <Setter Property="Background" Value="#FFF2994A" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HighestRightKey}" Value="ReadAndExecute">
+                  <Setter Property="Visibility" Value="Visible" />
+                  <Setter Property="Background" Value="#FF2F80ED" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HighestRightKey}" Value="Write">
+                  <Setter Property="Visibility" Value="Visible" />
+                  <Setter Property="Background" Value="#FF27AE60" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HighestRightKey}" Value="List">
+                  <Setter Property="Visibility" Value="Visible" />
+                  <Setter Property="Background" Value="#FF2F80ED" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HighestRightKey}" Value="Read">
+                  <Setter Property="Visibility" Value="Visible" />
+                  <Setter Property="Background" Value="#FF2F80ED" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </Border.Style>
+          <TextBlock Text="{Binding HighestRightLabel}" Foreground="White" FontSize="10" />
+        </Border>
         <Border Background="#FF1976D2" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInherited, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Ereditato" Style="{StaticResource BadgeToolTipBorder}">
           <TextBlock Text="I" Foreground="White" FontSize="10" />
         </Border>
@@ -122,7 +157,6 @@
               <Button Margin="0,0,8,0" Padding="12,4" Content="Start" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" Background="#FF2E7D32" Foreground="White" />
               <Button Margin="0,0,8,0" Padding="12,4" Content="Stop" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" Background="#FFC62828" Foreground="White" />
               <Button Margin="0,0,8,0" Padding="12,4" Content="Export Excel" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
-              <Button Margin="0,0,8,0" Padding="12,4" Content="Export HTML" Command="{Binding ExportHtmlCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
               <Button Margin="0,0,8,0" Padding="12,4" Content="Export Analisi" Command="{Binding ExportAnalysisCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
               <Button Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding IsNotScanning}" Background="#FF616161" Foreground="White" />
             </StackPanel>

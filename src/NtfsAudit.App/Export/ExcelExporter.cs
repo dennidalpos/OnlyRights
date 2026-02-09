@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
@@ -14,7 +13,10 @@ namespace NtfsAudit.App.Export
 {
     public class ExcelExporter
     {
-        public void Export(string tempDataPath, string errorPath, string outputPath)
+        private const int ExcelMaxRows = 1048576;
+        private const int MaxDataRowsPerSheet = ExcelMaxRows - 1;
+
+        public ExcelExportResult Export(string tempDataPath, string errorPath, string outputPath)
         {
             var ioOutputPath = PathResolver.ToExtendedPath(outputPath);
             var outputDir = Path.GetDirectoryName(ioOutputPath);
@@ -23,29 +25,18 @@ namespace NtfsAudit.App.Export
                 Directory.CreateDirectory(outputDir);
             }
 
-            var records = LoadFolderPermissions(tempDataPath);
             var errors = LoadErrors(errorPath);
-            var groupRecords = records
-                .Where(record => string.Equals(record.PrincipalType, "Group", StringComparison.OrdinalIgnoreCase))
-                .ToList();
-            var userRecords = records
-                .Where(record => string.Equals(record.PrincipalType, "User", StringComparison.OrdinalIgnoreCase))
-                .ToList();
 
             var headers = new[]
             {
-                "FolderPath",
+                "FolderName",
                 "PrincipalName",
                 "PrincipalSid",
                 "PrincipalType",
                 "PermissionLayer",
                 "AllowDeny",
                 "RightsSummary",
-                "RightsMask",
                 "EffectiveRightsSummary",
-                "EffectiveRightsMask",
-                "ShareRightsMask",
-                "NtfsRightsMask",
                 "IsInherited",
                 "AppliesToThisFolder",
                 "AppliesToSubfolders",
@@ -63,42 +54,42 @@ namespace NtfsAudit.App.Export
                 "RiskLevel",
                 "Disabilitato",
                 "IsServiceAccount",
-                "IsAdminAccount",
-                "HasExplicitPermissions",
-                "IsInheritanceDisabled",
-                "IncludeInherited",
-                "ResolveIdentities",
-                "ExcludeServiceAccounts",
-                "ExcludeAdminAccounts",
-                "EnableAdvancedAudit",
-                "ComputeEffectiveAccess",
-                "IncludeSharePermissions",
-                "IncludeFiles",
-                "ReadOwnerAndSacl",
-                "CompareBaseline",
-                "ScanAllDepths",
-                "MaxDepth",
-                "ExpandGroups",
-                "UsePowerShell"
+                "IsAdminAccount"
             };
+
+            var result = new ExcelExportResult();
 
             using (var document = SpreadsheetDocument.Create(ioOutputPath, SpreadsheetDocumentType.Workbook))
             {
                 var workbookPart = document.AddWorkbookPart();
                 workbookPart.Workbook = new Workbook();
                 var sheets = workbookPart.Workbook.AppendChild(new Sheets());
+                uint sheetId = 1;
 
-                var userSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteFolderPermissionsSheet(userSheet, userRecords, headers, "UsersTable", 1);
-                sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(userSheet), SheetId = 1, Name = "Users" });
+                var userSheetIndex = 1;
+                var groupSheetIndex = 1;
+                var userSheetWriter = CreateSheetWriter(workbookPart, sheets, BuildSheetName("Users", userSheetIndex), sheetId++, headers);
+                var groupSheetWriter = CreateSheetWriter(workbookPart, sheets, BuildSheetName("Groups", groupSheetIndex), sheetId++, headers);
 
-                var groupSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteFolderPermissionsSheet(groupSheet, groupRecords, headers, "GroupsTable", 2);
-                sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(groupSheet), SheetId = 2, Name = "Groups" });
+                foreach (var record in ReadFolderPermissions(tempDataPath))
+                {
+                    if (record == null) continue;
+                    if (string.Equals(record.PrincipalType, "Group", StringComparison.OrdinalIgnoreCase))
+                    {
+                        WriteRecord(ref groupSheetWriter, workbookPart, sheets, "Groups", ref groupSheetIndex, ref sheetId, headers, record);
+                        result.GroupRowCount++;
+                    }
+                    else if (string.Equals(record.PrincipalType, "User", StringComparison.OrdinalIgnoreCase))
+                    {
+                        WriteRecord(ref userSheetWriter, workbookPart, sheets, "Users", ref userSheetIndex, ref sheetId, headers, record);
+                        result.UserRowCount++;
+                    }
+                }
 
-                var aclSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteFolderPermissionsSheet(aclSheet, records, headers, "AclTable", 3);
-                sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(aclSheet), SheetId = 3, Name = "Acl" });
+                result.UserSheetCount = userSheetIndex;
+                result.GroupSheetCount = groupSheetIndex;
+                userSheetWriter.Dispose();
+                groupSheetWriter.Dispose();
 
                 var errorHeaders = new[]
                 {
@@ -107,20 +98,21 @@ namespace NtfsAudit.App.Export
                     "Message"
                 };
                 var errorSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteErrorsSheet(errorSheet, errors, errorHeaders, "ErrorsTable", 4);
-                sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(errorSheet), SheetId = 4, Name = "Errors" });
+                WriteErrorsSheet(errorSheet, errors, errorHeaders);
+                sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(errorSheet), SheetId = sheetId, Name = "Errors" });
 
                 workbookPart.Workbook.Save();
             }
+
+            return result;
         }
 
-        private List<ExportRecord> LoadFolderPermissions(string tempDataPath)
+        private IEnumerable<ExportRecord> ReadFolderPermissions(string tempDataPath)
         {
-            var records = new List<ExportRecord>();
             var ioPath = PathResolver.ToExtendedPath(tempDataPath);
             if (!File.Exists(ioPath))
             {
-                return records;
+                yield break;
             }
 
             foreach (var line in File.ReadLines(ioPath))
@@ -141,10 +133,8 @@ namespace NtfsAudit.App.Export
                 {
                     continue;
                 }
-                records.Add(record);
+                yield return record;
             }
-
-            return records;
         }
 
         private List<ErrorEntry> LoadErrors(string errorPath)
@@ -180,108 +170,11 @@ namespace NtfsAudit.App.Export
             return errors;
         }
 
-        private void WriteFolderPermissionsSheet(WorksheetPart sheetPart, List<ExportRecord> records, string[] headers, string tableName, uint tableId)
+        private void WriteErrorsSheet(WorksheetPart sheetPart, List<ErrorEntry> errors, string[] headers)
         {
-            var columnWidths = InitializeColumnWidths(headers);
-            foreach (var record in records)
-            {
-                UpdateColumnWidths(columnWidths, record.FolderPath, record.PrincipalName, record.PrincipalSid, record.PrincipalType,
-                    record.PermissionLayer.ToString(), record.AllowDeny, record.RightsSummary, record.RightsMask.ToString(CultureInfo.InvariantCulture),
-                    record.EffectiveRightsSummary, record.EffectiveRightsMask.ToString(CultureInfo.InvariantCulture),
-                    record.ShareRightsMask.ToString(CultureInfo.InvariantCulture), record.NtfsRightsMask.ToString(CultureInfo.InvariantCulture),
-                    record.IsInherited.ToString(), record.AppliesToThisFolder.ToString(),
-                    record.AppliesToSubfolders.ToString(), record.AppliesToFiles.ToString(),
-                    record.InheritanceFlags, record.PropagationFlags, record.Source, record.Depth.ToString(CultureInfo.InvariantCulture),
-                    record.ResourceType, record.TargetPath, record.Owner, record.ShareName, record.ShareServer, record.AuditSummary, record.RiskLevel,
-                    record.IsDisabled.ToString(), record.IsServiceAccount.ToString(), record.IsAdminAccount.ToString(),
-                    record.HasExplicitPermissions.ToString(), record.IsInheritanceDisabled.ToString(),
-                    record.IncludeInherited.ToString(), record.ResolveIdentities.ToString(),
-                    record.ExcludeServiceAccounts.ToString(), record.ExcludeAdminAccounts.ToString(),
-                    record.EnableAdvancedAudit.ToString(), record.ComputeEffectiveAccess.ToString(),
-                    record.IncludeSharePermissions.ToString(),
-                    record.IncludeFiles.ToString(), record.ReadOwnerAndSacl.ToString(), record.CompareBaseline.ToString(),
-                    record.ScanAllDepths.ToString(), record.MaxDepth.ToString(CultureInfo.InvariantCulture),
-                    record.ExpandGroups.ToString(), record.UsePowerShell.ToString());
-            }
-            var rowCount = records.Count + 1;
-
             using (var writer = OpenXmlWriter.Create(sheetPart))
             {
                 writer.WriteStartElement(new Worksheet());
-                WriteColumns(writer, columnWidths);
-                writer.WriteStartElement(new SheetData());
-                WriteRow(writer, headers);
-
-                foreach (var record in records)
-                {
-                    WriteRow(writer,
-                        record.FolderPath,
-                        record.PrincipalName,
-                        record.PrincipalSid,
-                        record.PrincipalType,
-                        record.PermissionLayer.ToString(),
-                        record.AllowDeny,
-                        record.RightsSummary,
-                        record.RightsMask.ToString(CultureInfo.InvariantCulture),
-                        record.EffectiveRightsSummary,
-                        record.EffectiveRightsMask.ToString(CultureInfo.InvariantCulture),
-                        record.ShareRightsMask.ToString(CultureInfo.InvariantCulture),
-                        record.NtfsRightsMask.ToString(CultureInfo.InvariantCulture),
-                        record.IsInherited.ToString(),
-                        record.AppliesToThisFolder.ToString(),
-                        record.AppliesToSubfolders.ToString(),
-                        record.AppliesToFiles.ToString(),
-                        record.InheritanceFlags,
-                        record.PropagationFlags,
-                        record.Source,
-                        record.Depth.ToString(CultureInfo.InvariantCulture),
-                        record.ResourceType,
-                        record.TargetPath,
-                        record.Owner,
-                        record.ShareName,
-                        record.ShareServer,
-                        record.AuditSummary,
-                        record.RiskLevel,
-                        record.IsDisabled.ToString(),
-                        record.IsServiceAccount.ToString(),
-                        record.IsAdminAccount.ToString(),
-                        record.HasExplicitPermissions.ToString(),
-                        record.IsInheritanceDisabled.ToString(),
-                        record.IncludeInherited.ToString(),
-                        record.ResolveIdentities.ToString(),
-                        record.ExcludeServiceAccounts.ToString(),
-                        record.ExcludeAdminAccounts.ToString(),
-                        record.EnableAdvancedAudit.ToString(),
-                        record.ComputeEffectiveAccess.ToString(),
-                        record.IncludeSharePermissions.ToString(),
-                        record.IncludeFiles.ToString(),
-                        record.ReadOwnerAndSacl.ToString(),
-                        record.CompareBaseline.ToString(),
-                        record.ScanAllDepths.ToString(),
-                        record.MaxDepth.ToString(CultureInfo.InvariantCulture),
-                        record.ExpandGroups.ToString(),
-                        record.UsePowerShell.ToString());
-                }
-
-                writer.WriteEndElement();
-                WriteTableParts(writer, sheetPart, tableName, tableId, headers, rowCount);
-                writer.WriteEndElement();
-            }
-        }
-
-        private void WriteErrorsSheet(WorksheetPart sheetPart, List<ErrorEntry> errors, string[] headers, string tableName, uint tableId)
-        {
-            var columnWidths = InitializeColumnWidths(headers);
-            foreach (var error in errors)
-            {
-                UpdateColumnWidths(columnWidths, error.Path, error.ErrorType, error.Message);
-            }
-            var rowCount = errors.Count + 1;
-
-            using (var writer = OpenXmlWriter.Create(sheetPart))
-            {
-                writer.WriteStartElement(new Worksheet());
-                WriteColumns(writer, columnWidths);
                 writer.WriteStartElement(new SheetData());
                 WriteRow(writer, headers);
 
@@ -294,113 +187,80 @@ namespace NtfsAudit.App.Export
                 }
 
                 writer.WriteEndElement();
-                WriteTableParts(writer, sheetPart, tableName, tableId, headers, rowCount);
                 writer.WriteEndElement();
             }
         }
 
-        private int[] InitializeColumnWidths(string[] headers)
+        private SheetWriter CreateSheetWriter(WorkbookPart workbookPart, Sheets sheets, string sheetName, uint sheetId, string[] headers)
         {
-            var widths = new int[headers.Length];
-            for (var i = 0; i < headers.Length; i++)
-            {
-                widths[i] = headers[i] == null ? 0 : headers[i].Length;
-            }
-            return widths;
+            var sheetPart = workbookPart.AddNewPart<WorksheetPart>();
+            sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(sheetPart), SheetId = sheetId, Name = sheetName });
+            return new SheetWriter(sheetPart, headers);
         }
 
-        private void UpdateColumnWidths(int[] widths, params string[] values)
+        private void WriteRecord(ref SheetWriter writer, WorkbookPart workbookPart, Sheets sheets, string prefix, ref int sheetIndex, ref uint sheetId, string[] headers, ExportRecord record)
         {
-            for (var i = 0; i < widths.Length && i < values.Length; i++)
+            if (writer.RowCount >= MaxDataRowsPerSheet)
             {
-                var valueLength = values[i] == null ? 0 : values[i].Length;
-                if (valueLength > widths[i])
-                {
-                    widths[i] = valueLength;
-                }
-            }
-        }
-
-        private void WriteColumns(OpenXmlWriter writer, int[] widths)
-        {
-            writer.WriteStartElement(new Columns());
-            for (var i = 0; i < widths.Length; i++)
-            {
-                var width = CalculateColumnWidth(widths[i]);
-                writer.WriteElement(new Column
-                {
-                    Min = (uint)(i + 1),
-                    Max = (uint)(i + 1),
-                    Width = width,
-                    CustomWidth = true,
-                    BestFit = true
-                });
-            }
-            writer.WriteEndElement();
-        }
-
-        private double CalculateColumnWidth(int maxLength)
-        {
-            var width = maxLength + 2;
-            if (width < 10) width = 10;
-            if (width > 60) width = 60;
-            return width;
-        }
-
-        private void WriteTableParts(OpenXmlWriter writer, WorksheetPart sheetPart, string tableName, uint tableId, string[] headers, int rowCount)
-        {
-            if (rowCount < 2)
-            {
-                return;
+                writer.Dispose();
+                sheetIndex++;
+                writer = CreateSheetWriter(workbookPart, sheets, BuildSheetName(prefix, sheetIndex), sheetId++, headers);
             }
 
-            var columnCount = headers.Length;
-            var range = string.Format("A1:{0}{1}", ColumnName(columnCount), rowCount);
-            var tablePart = sheetPart.AddNewPart<TableDefinitionPart>();
-            var table = new Table
+            writer.WriteRow(BuildRowValues(record));
+        }
+
+        private string[] BuildRowValues(ExportRecord record)
+        {
+            return new[]
             {
-                Id = tableId,
-                Name = tableName,
-                DisplayName = tableName,
-                Reference = range,
-                TotalsRowShown = false
+                GetFolderName(record.FolderPath),
+                record.PrincipalName,
+                record.PrincipalSid,
+                record.PrincipalType,
+                record.PermissionLayer.ToString(),
+                record.AllowDeny,
+                record.RightsSummary,
+                record.EffectiveRightsSummary,
+                record.IsInherited.ToString(),
+                record.AppliesToThisFolder.ToString(),
+                record.AppliesToSubfolders.ToString(),
+                record.AppliesToFiles.ToString(),
+                record.InheritanceFlags,
+                record.PropagationFlags,
+                record.Source,
+                record.Depth.ToString(CultureInfo.InvariantCulture),
+                record.ResourceType,
+                record.TargetPath,
+                record.Owner,
+                record.ShareName,
+                record.ShareServer,
+                record.AuditSummary,
+                record.RiskLevel,
+                record.IsDisabled.ToString(),
+                record.IsServiceAccount.ToString(),
+                record.IsAdminAccount.ToString()
             };
-            var columns = new TableColumns { Count = (uint)columnCount };
-            for (var i = 0; i < columnCount; i++)
-            {
-                columns.Append(new TableColumn { Id = (uint)(i + 1), Name = headers[i] });
-            }
-            table.Append(new AutoFilter { Reference = range });
-            table.Append(columns);
-            table.Append(new TableStyleInfo
-            {
-                Name = "TableStyleMedium2",
-                ShowFirstColumn = false,
-                ShowLastColumn = false,
-                ShowRowStripes = true,
-                ShowColumnStripes = false
-            });
-            tablePart.Table = table;
-
-            writer.WriteStartElement(new TableParts { Count = 1 });
-            writer.WriteElement(new TablePart { Id = sheetPart.GetIdOfPart(tablePart) });
-            writer.WriteEndElement();
         }
 
-        private string ColumnName(int index)
+        private string BuildSheetName(string prefix, int index)
         {
-            var dividend = index;
-            var columnName = string.Empty;
-            while (dividend > 0)
-            {
-                var modulo = (dividend - 1) % 26;
-                columnName = Convert.ToChar('A' + modulo) + columnName;
-                dividend = (dividend - 1) / 26;
-            }
-            return columnName;
+            return string.Format("{0}_{1}", prefix, index);
         }
 
-        private void WriteRow(OpenXmlWriter writer, params string[] values)
+        private string GetFolderName(string folderPath)
+        {
+            if (string.IsNullOrWhiteSpace(folderPath))
+            {
+                return string.Empty;
+            }
+
+            var trimmed = folderPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var name = Path.GetFileName(trimmed);
+            return string.IsNullOrWhiteSpace(name) ? folderPath : name;
+        }
+
+        private static void WriteRow(OpenXmlWriter writer, params string[] values)
         {
             writer.WriteStartElement(new Row());
             foreach (var value in values)
@@ -414,5 +274,44 @@ namespace NtfsAudit.App.Export
             writer.WriteEndElement();
         }
 
+        private class SheetWriter : IDisposable
+        {
+            private readonly OpenXmlWriter _writer;
+            public int RowCount { get; private set; }
+
+            public SheetWriter(WorksheetPart sheetPart, string[] headers)
+            {
+                _writer = OpenXmlWriter.Create(sheetPart);
+                _writer.WriteStartElement(new Worksheet());
+                _writer.WriteStartElement(new SheetData());
+                WriteRow(_writer, headers);
+            }
+
+            public void WriteRow(string[] values)
+            {
+                WriteRow(_writer, values);
+                RowCount++;
+            }
+
+            public void Dispose()
+            {
+                _writer.WriteEndElement();
+                _writer.WriteEndElement();
+                _writer.Dispose();
+            }
+        }
+    }
+
+    public class ExcelExportResult
+    {
+        public int UserRowCount { get; set; }
+        public int GroupRowCount { get; set; }
+        public int UserSheetCount { get; set; }
+        public int GroupSheetCount { get; set; }
+
+        public bool WasSplit
+        {
+            get { return UserSheetCount > 1 || GroupSheetCount > 1; }
+        }
     }
 }
