@@ -92,9 +92,9 @@
     </Style>
     <DataTemplate x:Key="PermissionBadgesTemplate">
       <StackPanel Orientation="Horizontal">
-        <Border Padding="4,0" CornerRadius="2" Margin="0,0,4,0" ToolTip="{Binding HighestRightLabel}" Style="{StaticResource BadgeToolTipBorder}">
+        <Border Padding="4,0" CornerRadius="2" Margin="0,0,4,0" ToolTip="{Binding HighestRightLabel}">
           <Border.Style>
-            <Style TargetType="Border">
+            <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
               <Setter Property="Visibility" Value="Collapsed" />
               <Setter Property="Background" Value="#FF2F80ED" />
               <Style.Triggers>
