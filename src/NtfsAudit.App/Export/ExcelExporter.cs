@@ -25,8 +25,6 @@ namespace NtfsAudit.App.Export
                 Directory.CreateDirectory(outputDir);
             }
 
-            var errors = LoadErrors(errorPath);
-
             var headers = new[]
             {
                 "FolderName",
@@ -98,7 +96,7 @@ namespace NtfsAudit.App.Export
                     "Message"
                 };
                 var errorSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteErrorsSheet(errorSheet, errors, errorHeaders);
+                WriteErrorsSheet(errorSheet, ReadErrors(errorPath), errorHeaders);
                 sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(errorSheet), SheetId = sheetId, Name = "Errors" });
 
                 workbookPart.Workbook.Save();
@@ -137,18 +135,17 @@ namespace NtfsAudit.App.Export
             }
         }
 
-        private List<ErrorEntry> LoadErrors(string errorPath)
+        private IEnumerable<ErrorEntry> ReadErrors(string errorPath)
         {
-            var errors = new List<ErrorEntry>();
             if (string.IsNullOrWhiteSpace(errorPath))
             {
-                return errors;
+                yield break;
             }
 
             var ioPath = PathResolver.ToExtendedPath(errorPath);
             if (!File.Exists(ioPath))
             {
-                return errors;
+                yield break;
             }
 
             foreach (var line in File.ReadLines(ioPath))
@@ -164,13 +161,11 @@ namespace NtfsAudit.App.Export
                     continue;
                 }
                 if (entry == null) continue;
-                errors.Add(entry);
+                yield return entry;
             }
-
-            return errors;
         }
 
-        private void WriteErrorsSheet(WorksheetPart sheetPart, List<ErrorEntry> errors, string[] headers)
+        private void WriteErrorsSheet(WorksheetPart sheetPart, IEnumerable<ErrorEntry> errors, string[] headers)
         {
             using (var writer = OpenXmlWriter.Create(sheetPart))
             {

@@ -46,7 +46,10 @@ if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) { throw "dotnet SDK not
 
 function Get-TempRoot {
     param([string]$PreferredRoot)
-    if ($PreferredRoot) { return $PreferredRoot }
+    if ($PreferredRoot) {
+        if ([System.IO.Path]::IsPathRooted($PreferredRoot)) { return $PreferredRoot }
+        return (Join-Path $root $PreferredRoot)
+    }
     if ($env:TEMP) { return $env:TEMP }
     if ($env:TMP) { return $env:TMP }
     return [System.IO.Path]::GetTempPath()

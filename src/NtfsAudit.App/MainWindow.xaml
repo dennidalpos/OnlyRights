@@ -332,6 +332,12 @@
                   <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4">
                     <TextBlock Text="Read" Foreground="White" FontSize="10" />
                   </Border>
+                  <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4">
+                    <TextBlock Text="List" Foreground="White" FontSize="10" />
+                  </Border>
+                  <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4">
+                    <TextBlock Text="R&amp;E" Foreground="White" FontSize="10" />
+                  </Border>
                   <Border Background="#FF27AE60" Padding="4,2" CornerRadius="2" Margin="0,0,6,4">
                     <TextBlock Text="Write" Foreground="White" FontSize="10" />
                   </Border>

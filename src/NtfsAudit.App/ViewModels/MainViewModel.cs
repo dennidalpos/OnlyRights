@@ -1590,6 +1590,8 @@ namespace NtfsAudit.App.ViewModels
                 || MatchesFilter(entry.AllowDeny, term)
                 || MatchesFilter(entry.RightsSummary, term)
                 || MatchesFilter(entry.EffectiveRightsSummary, term)
+                || MatchesFilter(entry.FolderPath, term)
+                || MatchesFilter(GetFolderName(entry.FolderPath), term)
                 || MatchesFilter(entry.AuditSummary, term)
                 || MatchesFilter(entry.ResourceType, term)
                 || MatchesFilter(entry.TargetPath, term)
@@ -1599,6 +1601,14 @@ namespace NtfsAudit.App.ViewModels
                 || MatchesFilter(entry.RiskLevel, term)
                 || MatchesFilter(entry.Source, term)
                 || MatchesMemberFilter(entry.MemberNames, term);
+        }
+
+        private string GetFolderName(string folderPath)
+        {
+            if (string.IsNullOrWhiteSpace(folderPath)) return string.Empty;
+            var trimmed = folderPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var name = Path.GetFileName(trimmed);
+            return string.IsNullOrWhiteSpace(name) ? folderPath : name;
         }
 
         private bool MatchesMemberFilter(IEnumerable<string> members, string filter)

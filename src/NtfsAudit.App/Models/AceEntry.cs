@@ -42,12 +42,12 @@ namespace NtfsAudit.App.Models
             get { return MemberNames == null ? string.Empty : string.Join(", ", MemberNames); }
         }
 
-        public bool HasFullControl { get { return HasRight(RightsSummary, "FullControl"); } }
-        public bool HasModify { get { return HasRight(RightsSummary, "Modify"); } }
-        public bool HasReadAndExecute { get { return HasRight(RightsSummary, "ReadAndExecute"); } }
-        public bool HasList { get { return HasRight(RightsSummary, "List"); } }
-        public bool HasRead { get { return HasRight(RightsSummary, "Read"); } }
-        public bool HasWrite { get { return HasRight(RightsSummary, "Write"); } }
+        public bool HasFullControl { get { return HasRight(GetRightsSummaryForFlags(), "FullControl"); } }
+        public bool HasModify { get { return HasRight(GetRightsSummaryForFlags(), "Modify"); } }
+        public bool HasReadAndExecute { get { return HasRight(GetRightsSummaryForFlags(), "ReadAndExecute"); } }
+        public bool HasList { get { return HasRight(GetRightsSummaryForFlags(), "List"); } }
+        public bool HasRead { get { return HasRight(GetRightsSummaryForFlags(), "Read"); } }
+        public bool HasWrite { get { return HasRight(GetRightsSummaryForFlags(), "Write"); } }
         public bool IsExplicitDeny
         {
             get
@@ -60,7 +60,7 @@ namespace NtfsAudit.App.Models
         {
             get
             {
-                var summary = GetBadgeRightsSummary();
+                var summary = GetRightsSummaryForFlags();
                 if (HasRight(summary, "FullControl")) return "Full";
                 if (HasRight(summary, "Modify")) return "Modify";
                 if (HasRight(summary, "ReadAndExecute")) return "ReadAndExecute";
@@ -95,7 +95,7 @@ namespace NtfsAudit.App.Models
             }
         }
 
-        private string GetBadgeRightsSummary()
+        private string GetRightsSummaryForFlags()
         {
             return string.IsNullOrWhiteSpace(EffectiveRightsSummary) ? RightsSummary : EffectiveRightsSummary;
         }
