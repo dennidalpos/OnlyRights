@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
@@ -23,14 +22,11 @@ namespace NtfsAudit.App.Export
                 Directory.CreateDirectory(outputDir);
             }
 
-            var records = LoadFolderPermissions(tempDataPath);
-            var errors = LoadErrors(errorPath);
-            var groupRecords = records
-                .Where(record => string.Equals(record.PrincipalType, "Group", StringComparison.OrdinalIgnoreCase))
-                .ToList();
-            var userRecords = records
-                .Where(record => string.Equals(record.PrincipalType, "User", StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            var userPredicate = new Func<ExportRecord, bool>(record =>
+                string.Equals(record.PrincipalType, "User", StringComparison.OrdinalIgnoreCase));
+            var groupPredicate = new Func<ExportRecord, bool>(record =>
+                string.Equals(record.PrincipalType, "Group", StringComparison.OrdinalIgnoreCase));
+            var allPredicate = new Func<ExportRecord, bool>(record => true);
 
             var headers = new[]
             {
@@ -82,6 +78,17 @@ namespace NtfsAudit.App.Export
                 "UsePowerShell"
             };
 
+            var userScan = ScanFolderPermissions(tempDataPath, userPredicate, headers);
+            var groupScan = ScanFolderPermissions(tempDataPath, groupPredicate, headers);
+            var allScan = ScanFolderPermissions(tempDataPath, allPredicate, headers);
+            var errorHeaders = new[]
+            {
+                "Path",
+                "ErrorType",
+                "Message"
+            };
+            var errorScan = ScanErrors(errorPath, errorHeaders);
+
             using (var document = SpreadsheetDocument.Create(ioOutputPath, SpreadsheetDocumentType.Workbook))
             {
                 var workbookPart = document.AddWorkbookPart();
@@ -89,214 +96,223 @@ namespace NtfsAudit.App.Export
                 var sheets = workbookPart.Workbook.AppendChild(new Sheets());
 
                 var userSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteFolderPermissionsSheet(userSheet, userRecords, headers, "UsersTable", 1);
+                WriteFolderPermissionsSheet(userSheet, tempDataPath, userPredicate, headers, "UsersTable", 1, userScan);
                 sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(userSheet), SheetId = 1, Name = "Users" });
 
                 var groupSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteFolderPermissionsSheet(groupSheet, groupRecords, headers, "GroupsTable", 2);
+                WriteFolderPermissionsSheet(groupSheet, tempDataPath, groupPredicate, headers, "GroupsTable", 2, groupScan);
                 sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(groupSheet), SheetId = 2, Name = "Groups" });
 
                 var aclSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteFolderPermissionsSheet(aclSheet, records, headers, "AclTable", 3);
+                WriteFolderPermissionsSheet(aclSheet, tempDataPath, allPredicate, headers, "AclTable", 3, allScan);
                 sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(aclSheet), SheetId = 3, Name = "Acl" });
 
-                var errorHeaders = new[]
-                {
-                    "Path",
-                    "ErrorType",
-                    "Message"
-                };
                 var errorSheet = workbookPart.AddNewPart<WorksheetPart>();
-                WriteErrorsSheet(errorSheet, errors, errorHeaders, "ErrorsTable", 4);
+                WriteErrorsSheet(errorSheet, errorPath, errorHeaders, "ErrorsTable", 4, errorScan);
                 sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(errorSheet), SheetId = 4, Name = "Errors" });
 
                 workbookPart.Workbook.Save();
             }
         }
 
-        private List<ExportRecord> LoadFolderPermissions(string tempDataPath)
+        private ScanResult ScanFolderPermissions(string tempDataPath, Func<ExportRecord, bool> predicate, string[] headers)
         {
-            var records = new List<ExportRecord>();
+            var widths = InitializeColumnWidths(headers);
+            var rowCount = 1;
             var ioPath = PathResolver.ToExtendedPath(tempDataPath);
             if (!File.Exists(ioPath))
             {
-                return records;
+                return new ScanResult(rowCount, widths);
             }
 
             foreach (var line in File.ReadLines(ioPath))
             {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                ExportRecord record;
-                try
-                {
-                    record = JsonConvert.DeserializeObject<ExportRecord>(line);
-                }
-                catch
-                {
-                    continue;
-                }
-                if (record == null) continue;
-                if (string.Equals(record.PrincipalType, "Meta", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(record.PrincipalName, "SCAN_OPTIONS", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-                records.Add(record);
+                if (!TryParseRecord(line, out var record)) continue;
+                if (!predicate(record)) continue;
+                var values = BuildRecordValues(record);
+                UpdateColumnWidths(widths, values);
+                rowCount += 1;
             }
 
-            return records;
+            return new ScanResult(rowCount, widths);
         }
 
-        private List<ErrorEntry> LoadErrors(string errorPath)
+        private ScanResult ScanErrors(string errorPath, string[] headers)
         {
-            var errors = new List<ErrorEntry>();
+            var widths = InitializeColumnWidths(headers);
+            var rowCount = 1;
             if (string.IsNullOrWhiteSpace(errorPath))
             {
-                return errors;
+                return new ScanResult(rowCount, widths);
             }
 
             var ioPath = PathResolver.ToExtendedPath(errorPath);
             if (!File.Exists(ioPath))
             {
-                return errors;
+                return new ScanResult(rowCount, widths);
             }
 
             foreach (var line in File.ReadLines(ioPath))
             {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                ErrorEntry entry;
-                try
-                {
-                    entry = JsonConvert.DeserializeObject<ErrorEntry>(line);
-                }
-                catch
-                {
-                    continue;
-                }
-                if (entry == null) continue;
-                errors.Add(entry);
+                if (!TryParseError(line, out var entry)) continue;
+                UpdateColumnWidths(widths, entry.Path, entry.ErrorType, entry.Message);
+                rowCount += 1;
             }
 
-            return errors;
+            return new ScanResult(rowCount, widths);
         }
 
-        private void WriteFolderPermissionsSheet(WorksheetPart sheetPart, List<ExportRecord> records, string[] headers, string tableName, uint tableId)
+        private void WriteFolderPermissionsSheet(WorksheetPart sheetPart, string tempDataPath, Func<ExportRecord, bool> predicate, string[] headers, string tableName, uint tableId, ScanResult scanResult)
         {
-            var columnWidths = InitializeColumnWidths(headers);
-            foreach (var record in records)
-            {
-                UpdateColumnWidths(columnWidths, record.FolderPath, record.PrincipalName, record.PrincipalSid, record.PrincipalType,
-                    record.PermissionLayer.ToString(), record.AllowDeny, record.RightsSummary, record.RightsMask.ToString(CultureInfo.InvariantCulture),
-                    record.EffectiveRightsSummary, record.EffectiveRightsMask.ToString(CultureInfo.InvariantCulture),
-                    record.ShareRightsMask.ToString(CultureInfo.InvariantCulture), record.NtfsRightsMask.ToString(CultureInfo.InvariantCulture),
-                    record.IsInherited.ToString(), record.AppliesToThisFolder.ToString(),
-                    record.AppliesToSubfolders.ToString(), record.AppliesToFiles.ToString(),
-                    record.InheritanceFlags, record.PropagationFlags, record.Source, record.Depth.ToString(CultureInfo.InvariantCulture),
-                    record.ResourceType, record.TargetPath, record.Owner, record.ShareName, record.ShareServer, record.AuditSummary, record.RiskLevel,
-                    record.IsDisabled.ToString(), record.IsServiceAccount.ToString(), record.IsAdminAccount.ToString(),
-                    record.HasExplicitPermissions.ToString(), record.IsInheritanceDisabled.ToString(),
-                    record.IncludeInherited.ToString(), record.ResolveIdentities.ToString(),
-                    record.ExcludeServiceAccounts.ToString(), record.ExcludeAdminAccounts.ToString(),
-                    record.EnableAdvancedAudit.ToString(), record.ComputeEffectiveAccess.ToString(),
-                    record.IncludeSharePermissions.ToString(),
-                    record.IncludeFiles.ToString(), record.ReadOwnerAndSacl.ToString(), record.CompareBaseline.ToString(),
-                    record.ScanAllDepths.ToString(), record.MaxDepth.ToString(CultureInfo.InvariantCulture),
-                    record.ExpandGroups.ToString(), record.UsePowerShell.ToString());
-            }
-            var rowCount = records.Count + 1;
-
             using (var writer = OpenXmlWriter.Create(sheetPart))
             {
                 writer.WriteStartElement(new Worksheet());
-                WriteColumns(writer, columnWidths);
+                WriteColumns(writer, scanResult.ColumnWidths);
                 writer.WriteStartElement(new SheetData());
                 WriteRow(writer, headers);
 
-                foreach (var record in records)
+                var ioPath = PathResolver.ToExtendedPath(tempDataPath);
+                if (File.Exists(ioPath))
                 {
-                    WriteRow(writer,
-                        record.FolderPath,
-                        record.PrincipalName,
-                        record.PrincipalSid,
-                        record.PrincipalType,
-                        record.PermissionLayer.ToString(),
-                        record.AllowDeny,
-                        record.RightsSummary,
-                        record.RightsMask.ToString(CultureInfo.InvariantCulture),
-                        record.EffectiveRightsSummary,
-                        record.EffectiveRightsMask.ToString(CultureInfo.InvariantCulture),
-                        record.ShareRightsMask.ToString(CultureInfo.InvariantCulture),
-                        record.NtfsRightsMask.ToString(CultureInfo.InvariantCulture),
-                        record.IsInherited.ToString(),
-                        record.AppliesToThisFolder.ToString(),
-                        record.AppliesToSubfolders.ToString(),
-                        record.AppliesToFiles.ToString(),
-                        record.InheritanceFlags,
-                        record.PropagationFlags,
-                        record.Source,
-                        record.Depth.ToString(CultureInfo.InvariantCulture),
-                        record.ResourceType,
-                        record.TargetPath,
-                        record.Owner,
-                        record.ShareName,
-                        record.ShareServer,
-                        record.AuditSummary,
-                        record.RiskLevel,
-                        record.IsDisabled.ToString(),
-                        record.IsServiceAccount.ToString(),
-                        record.IsAdminAccount.ToString(),
-                        record.HasExplicitPermissions.ToString(),
-                        record.IsInheritanceDisabled.ToString(),
-                        record.IncludeInherited.ToString(),
-                        record.ResolveIdentities.ToString(),
-                        record.ExcludeServiceAccounts.ToString(),
-                        record.ExcludeAdminAccounts.ToString(),
-                        record.EnableAdvancedAudit.ToString(),
-                        record.ComputeEffectiveAccess.ToString(),
-                        record.IncludeSharePermissions.ToString(),
-                        record.IncludeFiles.ToString(),
-                        record.ReadOwnerAndSacl.ToString(),
-                        record.CompareBaseline.ToString(),
-                        record.ScanAllDepths.ToString(),
-                        record.MaxDepth.ToString(CultureInfo.InvariantCulture),
-                        record.ExpandGroups.ToString(),
-                        record.UsePowerShell.ToString());
+                    foreach (var line in File.ReadLines(ioPath))
+                    {
+                        if (!TryParseRecord(line, out var record)) continue;
+                        if (!predicate(record)) continue;
+                        var values = BuildRecordValues(record);
+                        WriteRow(writer, values);
+                    }
                 }
 
                 writer.WriteEndElement();
-                WriteTableParts(writer, sheetPart, tableName, tableId, headers, rowCount);
+                WriteTableParts(writer, sheetPart, tableName, tableId, headers, scanResult.RowCount);
                 writer.WriteEndElement();
             }
         }
 
-        private void WriteErrorsSheet(WorksheetPart sheetPart, List<ErrorEntry> errors, string[] headers, string tableName, uint tableId)
+        private void WriteErrorsSheet(WorksheetPart sheetPart, string errorPath, string[] headers, string tableName, uint tableId, ScanResult scanResult)
         {
-            var columnWidths = InitializeColumnWidths(headers);
-            foreach (var error in errors)
-            {
-                UpdateColumnWidths(columnWidths, error.Path, error.ErrorType, error.Message);
-            }
-            var rowCount = errors.Count + 1;
-
             using (var writer = OpenXmlWriter.Create(sheetPart))
             {
                 writer.WriteStartElement(new Worksheet());
-                WriteColumns(writer, columnWidths);
+                WriteColumns(writer, scanResult.ColumnWidths);
                 writer.WriteStartElement(new SheetData());
                 WriteRow(writer, headers);
 
-                foreach (var error in errors)
+                var ioPath = PathResolver.ToExtendedPath(errorPath);
+                if (File.Exists(ioPath))
                 {
-                    WriteRow(writer,
-                        error.Path,
-                        error.ErrorType,
-                        error.Message);
+                    foreach (var line in File.ReadLines(ioPath))
+                    {
+                        if (!TryParseError(line, out var error)) continue;
+                        WriteRow(writer, error.Path, error.ErrorType, error.Message);
+                    }
                 }
 
                 writer.WriteEndElement();
-                WriteTableParts(writer, sheetPart, tableName, tableId, headers, rowCount);
+                WriteTableParts(writer, sheetPart, tableName, tableId, headers, scanResult.RowCount);
                 writer.WriteEndElement();
             }
+        }
+
+        private bool TryParseRecord(string line, out ExportRecord record)
+        {
+            record = null;
+            if (string.IsNullOrWhiteSpace(line)) return false;
+            try
+            {
+                record = JsonConvert.DeserializeObject<ExportRecord>(line);
+            }
+            catch
+            {
+                return false;
+            }
+            if (record == null) return false;
+            if (string.Equals(record.PrincipalType, "Meta", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(record.PrincipalName, "SCAN_OPTIONS", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+            return true;
+        }
+
+        private bool TryParseError(string line, out ErrorEntry entry)
+        {
+            entry = null;
+            if (string.IsNullOrWhiteSpace(line)) return false;
+            try
+            {
+                entry = JsonConvert.DeserializeObject<ErrorEntry>(line);
+            }
+            catch
+            {
+                return false;
+            }
+            return entry != null;
+        }
+
+        private string[] BuildRecordValues(ExportRecord record)
+        {
+            return new[]
+            {
+                record.FolderPath,
+                record.PrincipalName,
+                record.PrincipalSid,
+                record.PrincipalType,
+                record.PermissionLayer.ToString(),
+                record.AllowDeny,
+                record.RightsSummary,
+                record.RightsMask.ToString(CultureInfo.InvariantCulture),
+                record.EffectiveRightsSummary,
+                record.EffectiveRightsMask.ToString(CultureInfo.InvariantCulture),
+                record.ShareRightsMask.ToString(CultureInfo.InvariantCulture),
+                record.NtfsRightsMask.ToString(CultureInfo.InvariantCulture),
+                record.IsInherited.ToString(),
+                record.AppliesToThisFolder.ToString(),
+                record.AppliesToSubfolders.ToString(),
+                record.AppliesToFiles.ToString(),
+                record.InheritanceFlags,
+                record.PropagationFlags,
+                record.Source,
+                record.Depth.ToString(CultureInfo.InvariantCulture),
+                record.ResourceType,
+                record.TargetPath,
+                record.Owner,
+                record.ShareName,
+                record.ShareServer,
+                record.AuditSummary,
+                record.RiskLevel,
+                record.IsDisabled.ToString(),
+                record.IsServiceAccount.ToString(),
+                record.IsAdminAccount.ToString(),
+                record.HasExplicitPermissions.ToString(),
+                record.IsInheritanceDisabled.ToString(),
+                record.IncludeInherited.ToString(),
+                record.ResolveIdentities.ToString(),
+                record.ExcludeServiceAccounts.ToString(),
+                record.ExcludeAdminAccounts.ToString(),
+                record.EnableAdvancedAudit.ToString(),
+                record.ComputeEffectiveAccess.ToString(),
+                record.IncludeSharePermissions.ToString(),
+                record.IncludeFiles.ToString(),
+                record.ReadOwnerAndSacl.ToString(),
+                record.CompareBaseline.ToString(),
+                record.ScanAllDepths.ToString(),
+                record.MaxDepth.ToString(CultureInfo.InvariantCulture),
+                record.ExpandGroups.ToString(),
+                record.UsePowerShell.ToString()
+            };
+        }
+
+        private sealed class ScanResult
+        {
+            public ScanResult(int rowCount, int[] columnWidths)
+            {
+                RowCount = rowCount;
+                ColumnWidths = columnWidths;
+            }
+
+            public int RowCount { get; private set; }
+            public int[] ColumnWidths { get; private set; }
         }
 
         private int[] InitializeColumnWidths(string[] headers)
