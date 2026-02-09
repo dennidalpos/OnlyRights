@@ -445,6 +445,10 @@ namespace NtfsAudit.App.Export
 
             private void WriteTableParts()
             {
+                if (RowCount == 0)
+                {
+                    return;
+                }
                 var tableDefinitionPart = _sheetPart.AddNewPart<TableDefinitionPart>();
                 var relId = _sheetPart.GetIdOfPart(tableDefinitionPart);
                 var totalRows = Math.Max(1, RowCount + 1);
