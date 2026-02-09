@@ -391,6 +391,7 @@ namespace NtfsAudit.App.Export
             private readonly WorksheetPart _sheetPart;
             private readonly string[] _headers;
             private readonly string _sheetName;
+            private readonly string _tableName;
             private readonly uint _tableId;
             public int RowCount { get; private set; }
 
@@ -400,6 +401,7 @@ namespace NtfsAudit.App.Export
                 _headers = headers;
                 _sheetName = sheetName;
                 _tableId = tableId;
+                _tableName = string.Format("Table{0}", _tableId);
                 tableId++;
                 _writer = OpenXmlWriter.Create(sheetPart);
                 _writer.WriteStartElement(new Worksheet());
@@ -464,8 +466,8 @@ namespace NtfsAudit.App.Export
                     })
                 {
                     Id = _tableId,
-                    Name = _sheetName,
-                    DisplayName = _sheetName,
+                    Name = _tableName,
+                    DisplayName = _tableName,
                     Reference = reference,
                     TotalsRowShown = false
                 };
