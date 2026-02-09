@@ -115,6 +115,9 @@ I filtri nella vista risultati funzionano in combinazione:
 - **Admin**: mostra solo le ACE marcate come account amministrativi.
 - **Solo Deny**: mostra solo ACE di tipo deny.
 - **Ereditarietà disabilitata**: filtra le ACE con ereditarietà disabilitata.
+- Se **Allow** e **Deny** sono entrambi disattivati, il risultato è vuoto.
+- Se **Ereditati** ed **Espliciti** sono entrambi disattivati, il risultato è vuoto.
+- Se tutte le categorie principali (Everyone, Authenticated Users, Service, Admin, Altri) sono disattivate, il risultato è vuoto.
 
 ## Export
 
@@ -151,6 +154,7 @@ Colonne tipiche:
 - `FolderName`, `PrincipalName`, `PrincipalSid`, `PrincipalType`
 - `PermissionLayer`, `AllowDeny`, `RightsSummary`, `EffectiveRightsSummary`
 - `IsInherited`, `AppliesToThisFolder`, `AppliesToSubfolders`, `AppliesToFiles`
+- `HasExplicitPermissions`, `IsInheritanceDisabled`
 - `InheritanceFlags`, `PropagationFlags`, `Source`, `Depth`
 - `ResourceType`, `TargetPath`, `Owner`, `ShareName`, `ShareServer`
 - `AuditSummary`, `RiskLevel`, `Disabilitato`
@@ -174,6 +178,8 @@ Archivia i dati della scansione in un singolo file `.ntaudit`:
 - metadati (root e timestamp).
 - opzioni di scansione (ripristinate all’import).
 
+Durante l’export, se la mappa dell’albero non è disponibile o incompleta viene rigenerata dal dataset di ACL; il root viene dedotto dal percorso fornito o dalle opzioni di scansione salvate.
+
 Formato nome file consigliato:
 
 ```
@@ -196,7 +202,7 @@ Flusso consigliato:
 3. Conferma eventuali avvisi di compatibilità.
 4. Verifica che la cartella root importata sia corretta e seleziona il nodo principale.
 
-Nota: l’import ricalcola i flag di servizio/admin a partire dai SID correnti.
+Nota: l’import ricalcola i flag di servizio/admin a partire dai SID correnti. Se il root non è presente nei metadati, viene ricostruito dalle opzioni di scansione o dai record presenti.
 
 ## Formato archivi .ntaudit
 
@@ -287,6 +293,7 @@ Parametri:
 - `-CacheOnly` (pulisce solo `%LOCALAPPDATA%\\NtfsAudit\\Cache`)
 - `-CleanImports` (alias per `-ImportsOnly`)
 - `-CleanCache` (alias per `-CacheOnly`)
+- `-CleanAllTemp` (pulisce temp, import e cache)
 
 ## File temporanei
 

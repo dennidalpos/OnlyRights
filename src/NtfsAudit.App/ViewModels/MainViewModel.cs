@@ -1655,6 +1655,18 @@ namespace NtfsAudit.App.ViewModels
         {
             var entry = item as AceEntry;
             if (entry == null) return false;
+            if (!ShowAllow && !ShowDeny)
+            {
+                return false;
+            }
+            if (!ShowInherited && !ShowExplicit)
+            {
+                return false;
+            }
+            if (!ShowEveryone && !ShowAuthenticatedUsers && !ShowServiceAccounts && !ShowAdminAccounts && !ShowOtherPrincipals)
+            {
+                return false;
+            }
             var isDeny = string.Equals(entry.AllowDeny, "Deny", StringComparison.OrdinalIgnoreCase);
             var isAllow = string.Equals(entry.AllowDeny, "Allow", StringComparison.OrdinalIgnoreCase);
             if (!ShowAllow && isAllow)

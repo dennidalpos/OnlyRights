@@ -28,6 +28,13 @@ namespace NtfsAudit.App.Services
                 throw new FileNotFoundException("Scan data file not found.", result.TempDataPath);
             }
 
+            var resolvedRootPath = ResolveArchiveRoot(rootPath, result.TempDataPath, null);
+            var exportTreeMap = result.TreeMap;
+            if (exportTreeMap == null || exportTreeMap.Count == 0)
+            {
+                exportTreeMap = BuildTreeFromExport(result.TempDataPath, resolvedRootPath);
+            }
+
             var ioOutputPath = PathResolver.ToExtendedPath(outputPath);
             var outputDirectory = Path.GetDirectoryName(ioOutputPath);
             if (!string.IsNullOrWhiteSpace(outputDirectory))
@@ -46,11 +53,11 @@ namespace NtfsAudit.App.Services
                 {
                     AddEmptyEntry(archive, ErrorsEntryName);
                 }
-                AddJsonEntry(archive, TreeEntryName, result.TreeMap);
+                AddJsonEntry(archive, TreeEntryName, exportTreeMap);
                 AddJsonEntry(archive, FolderFlagsEntryName, BuildFolderFlags(result.Details));
                 AddJsonEntry(archive, MetaEntryName, new ArchiveMeta
                 {
-                    RootPath = rootPath,
+                    RootPath = resolvedRootPath,
                     CreatedAt = DateTime.UtcNow,
                     Version = CurrentArchiveVersion
                 });
@@ -88,11 +95,12 @@ namespace NtfsAudit.App.Services
             }
 
             var meta = LoadMeta(metaPath);
-            var treeMap = LoadTreeMap(treePath, dataPath, meta.RootPath);
+            var scanOptions = LoadScanOptions(dataPath);
+            var resolvedRootPath = ResolveArchiveRoot(meta.RootPath, dataPath, scanOptions);
+            var treeMap = LoadTreeMap(treePath, dataPath, resolvedRootPath);
 
             var details = BuildDetailsFromExport(dataPath);
             ApplyFolderFlags(details, LoadFolderFlags(folderFlagsPath));
-            var scanOptions = LoadScanOptions(dataPath);
 
             var result = new ScanResult
             {
@@ -105,9 +113,29 @@ namespace NtfsAudit.App.Services
             return new AnalysisArchiveResult
             {
                 ScanResult = result,
-                RootPath = meta.RootPath,
+                RootPath = resolvedRootPath,
                 ScanOptions = scanOptions
             };
+        }
+
+        private string ResolveArchiveRoot(string rootPath, string dataPath, ScanOptions scanOptions)
+        {
+            if (!string.IsNullOrWhiteSpace(rootPath))
+            {
+                return PathResolver.FromExtendedPath(rootPath);
+            }
+
+            if (scanOptions == null && !string.IsNullOrWhiteSpace(dataPath))
+            {
+                scanOptions = LoadScanOptions(dataPath);
+            }
+
+            if (scanOptions != null && !string.IsNullOrWhiteSpace(scanOptions.RootPath))
+            {
+                return PathResolver.FromExtendedPath(scanOptions.RootPath);
+            }
+
+            return string.Empty;
         }
 
         private Dictionary<string, List<string>> LoadTreeMap(string treePath, string dataPath, string rootPath)
