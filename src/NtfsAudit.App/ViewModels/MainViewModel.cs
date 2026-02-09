@@ -61,12 +61,17 @@ namespace NtfsAudit.App.ViewModels
         private bool _colorizeRights = true;
         private ObservableCollection<string> _dfsTargets = new ObservableCollection<string>();
         private string _selectedDfsTarget;
-        private bool _filterEveryone;
-        private bool _filterAuthenticatedUsers;
-        private bool _filterDenyOnly;
-        private bool _filterInheritanceDisabled;
-        private bool _filterServiceAccounts;
-        private bool _filterAdminAccounts;
+        private bool _showAllow = true;
+        private bool _showDeny = true;
+        private bool _showInherited = true;
+        private bool _showExplicit = true;
+        private bool _showProtected = true;
+        private bool _showDisabled = true;
+        private bool _showEveryone = true;
+        private bool _showAuthenticatedUsers = true;
+        private bool _showServiceAccounts = true;
+        private bool _showAdminAccounts = true;
+        private bool _showOtherPrincipals = true;
         private string _currentPathBackground = "Transparent";
         private int _summaryTotalEntries;
         private int _summaryHighRisk;
@@ -473,68 +478,123 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        public bool FilterEveryone
+        public bool ShowAllow
         {
-            get { return _filterEveryone; }
+            get { return _showAllow; }
             set
             {
-                _filterEveryone = value;
-                OnPropertyChanged("FilterEveryone");
+                _showAllow = value;
+                OnPropertyChanged("ShowAllow");
                 RefreshAclFilters();
             }
         }
 
-        public bool FilterAuthenticatedUsers
+        public bool ShowDeny
         {
-            get { return _filterAuthenticatedUsers; }
+            get { return _showDeny; }
             set
             {
-                _filterAuthenticatedUsers = value;
-                OnPropertyChanged("FilterAuthenticatedUsers");
+                _showDeny = value;
+                OnPropertyChanged("ShowDeny");
                 RefreshAclFilters();
             }
         }
 
-        public bool FilterDenyOnly
+        public bool ShowInherited
         {
-            get { return _filterDenyOnly; }
+            get { return _showInherited; }
             set
             {
-                _filterDenyOnly = value;
-                OnPropertyChanged("FilterDenyOnly");
+                _showInherited = value;
+                OnPropertyChanged("ShowInherited");
                 RefreshAclFilters();
             }
         }
 
-        public bool FilterInheritanceDisabled
+        public bool ShowExplicit
         {
-            get { return _filterInheritanceDisabled; }
+            get { return _showExplicit; }
             set
             {
-                _filterInheritanceDisabled = value;
-                OnPropertyChanged("FilterInheritanceDisabled");
+                _showExplicit = value;
+                OnPropertyChanged("ShowExplicit");
                 RefreshAclFilters();
             }
         }
 
-        public bool FilterServiceAccounts
+        public bool ShowProtected
         {
-            get { return _filterServiceAccounts; }
+            get { return _showProtected; }
             set
             {
-                _filterServiceAccounts = value;
-                OnPropertyChanged("FilterServiceAccounts");
+                _showProtected = value;
+                OnPropertyChanged("ShowProtected");
                 RefreshAclFilters();
             }
         }
 
-        public bool FilterAdminAccounts
+        public bool ShowDisabled
         {
-            get { return _filterAdminAccounts; }
+            get { return _showDisabled; }
             set
             {
-                _filterAdminAccounts = value;
-                OnPropertyChanged("FilterAdminAccounts");
+                _showDisabled = value;
+                OnPropertyChanged("ShowDisabled");
+                RefreshAclFilters();
+            }
+        }
+
+        public bool ShowEveryone
+        {
+            get { return _showEveryone; }
+            set
+            {
+                _showEveryone = value;
+                OnPropertyChanged("ShowEveryone");
+                RefreshAclFilters();
+            }
+        }
+
+        public bool ShowAuthenticatedUsers
+        {
+            get { return _showAuthenticatedUsers; }
+            set
+            {
+                _showAuthenticatedUsers = value;
+                OnPropertyChanged("ShowAuthenticatedUsers");
+                RefreshAclFilters();
+            }
+        }
+
+        public bool ShowServiceAccounts
+        {
+            get { return _showServiceAccounts; }
+            set
+            {
+                _showServiceAccounts = value;
+                OnPropertyChanged("ShowServiceAccounts");
+                RefreshAclFilters();
+            }
+        }
+
+        public bool ShowAdminAccounts
+        {
+            get { return _showAdminAccounts; }
+            set
+            {
+                _showAdminAccounts = value;
+                OnPropertyChanged("ShowAdminAccounts");
+                RefreshAclFilters();
+            }
+        }
+
+        public bool ShowOtherPrincipals
+        {
+            get { return _showOtherPrincipals; }
+            set
+            {
+                _showOtherPrincipals = value;
+                OnPropertyChanged("ShowOtherPrincipals");
                 RefreshAclFilters();
             }
         }
@@ -1137,6 +1197,11 @@ namespace NtfsAudit.App.ViewModels
             {
                 throw new IOException("Il file export non è stato creato.");
             }
+            var info = new FileInfo(ioPath);
+            if (info.Length == 0)
+            {
+                throw new IOException("Il file export risulta vuoto.");
+            }
         }
 
         private void ExecuteScan(ScanOptions options, CancellationToken token)
@@ -1579,25 +1644,57 @@ namespace NtfsAudit.App.ViewModels
         {
             var entry = item as AceEntry;
             if (entry == null) return false;
-            if (FilterDenyOnly && !string.Equals(entry.AllowDeny, "Deny", StringComparison.OrdinalIgnoreCase))
+            var isDeny = string.Equals(entry.AllowDeny, "Deny", StringComparison.OrdinalIgnoreCase);
+            var isAllow = string.Equals(entry.AllowDeny, "Allow", StringComparison.OrdinalIgnoreCase);
+            if (!ShowAllow && isAllow)
             {
                 return false;
             }
-            if (FilterInheritanceDisabled && !entry.IsInheritanceDisabled)
+            if (!ShowDeny && isDeny)
             {
                 return false;
             }
-            if (FilterEveryone || FilterAuthenticatedUsers || FilterServiceAccounts || FilterAdminAccounts)
+            if (!ShowInherited && entry.IsInherited)
             {
-                var matchesPrincipal =
-                    (FilterEveryone && IsEveryone(entry.PrincipalSid, entry.PrincipalName)) ||
-                    (FilterAuthenticatedUsers && IsAuthenticatedUsers(entry.PrincipalSid, entry.PrincipalName)) ||
-                    (FilterServiceAccounts && entry.IsServiceAccount) ||
-                    (FilterAdminAccounts && entry.IsAdminAccount);
-                if (!matchesPrincipal)
-                {
-                    return false;
-                }
+                return false;
+            }
+            if (!ShowExplicit && !entry.IsInherited)
+            {
+                return false;
+            }
+            if (!ShowProtected && entry.IsInheritanceDisabled)
+            {
+                return false;
+            }
+            if (!ShowDisabled && entry.IsDisabled)
+            {
+                return false;
+            }
+
+            var isEveryone = IsEveryone(entry.PrincipalSid, entry.PrincipalName);
+            var isAuthUsers = IsAuthenticatedUsers(entry.PrincipalSid, entry.PrincipalName);
+            var isService = entry.IsServiceAccount;
+            var isAdmin = entry.IsAdminAccount;
+            var isOther = !(isEveryone || isAuthUsers || isService || isAdmin);
+            if (isEveryone && !ShowEveryone)
+            {
+                return false;
+            }
+            if (isAuthUsers && !ShowAuthenticatedUsers)
+            {
+                return false;
+            }
+            if (isService && !ShowServiceAccounts)
+            {
+                return false;
+            }
+            if (isAdmin && !ShowAdminAccounts)
+            {
+                return false;
+            }
+            if (isOther && !ShowOtherPrincipals)
+            {
+                return false;
             }
             if (string.IsNullOrWhiteSpace(AclFilter)) return true;
             var term = AclFilter.Trim();
@@ -1671,12 +1768,17 @@ namespace NtfsAudit.App.ViewModels
             CurrentPathText = string.Empty;
             CurrentPathBackground = "Transparent";
             AclFilter = string.Empty;
-            FilterEveryone = false;
-            FilterAuthenticatedUsers = false;
-            FilterDenyOnly = false;
-            FilterInheritanceDisabled = false;
-            FilterServiceAccounts = false;
-            FilterAdminAccounts = false;
+            ShowAllow = true;
+            ShowDeny = true;
+            ShowInherited = true;
+            ShowExplicit = true;
+            ShowProtected = true;
+            ShowDisabled = true;
+            ShowEveryone = true;
+            ShowAuthenticatedUsers = true;
+            ShowServiceAccounts = true;
+            ShowAdminAccounts = true;
+            ShowOtherPrincipals = true;
             UpdateSummary(null);
         }
 
@@ -1904,6 +2006,22 @@ namespace NtfsAudit.App.ViewModels
             if (result == null)
             {
                 message = "Analisi importata non valida: dati mancanti.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(result.TempDataPath))
+            {
+                message = "Analisi importata non valida: file dati non presente.";
+                return false;
+            }
+            var dataPath = PathResolver.ToExtendedPath(result.TempDataPath);
+            if (!File.Exists(dataPath))
+            {
+                message = "Analisi importata non valida: file dati non trovato.";
+                return false;
+            }
+            if (new FileInfo(dataPath).Length == 0)
+            {
+                message = "Analisi importata non valida: file dati vuoto.";
                 return false;
             }
             if (result.Details == null || result.TreeMap == null)

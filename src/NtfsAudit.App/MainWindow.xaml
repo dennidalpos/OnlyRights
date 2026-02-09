@@ -320,37 +320,42 @@
                 <TextBlock Text="Permessi" Style="{StaticResource SubsectionHeaderText}" />
                 <WrapPanel Margin="0,0,0,4">
                   <CheckBox Margin="0,0,12,6" Content="Colora per diritto" IsChecked="{Binding ColorizeRights}" />
-                  <CheckBox Margin="0,0,12,6" Content="Solo Deny" IsChecked="{Binding FilterDenyOnly}" />
-                  <CheckBox Margin="0,0,12,6" Content="Ereditarietà disabilitata" IsChecked="{Binding FilterInheritanceDisabled}" />
+                  <CheckBox Margin="0,0,12,6" Content="Allow" IsChecked="{Binding ShowAllow}" />
+                  <CheckBox Margin="0,0,12,6" Content="Deny" IsChecked="{Binding ShowDeny}" />
+                  <CheckBox Margin="0,0,12,6" Content="Ereditato" IsChecked="{Binding ShowInherited}" />
+                  <CheckBox Margin="0,0,12,6" Content="Esplicito" IsChecked="{Binding ShowExplicit}" />
+                  <CheckBox Margin="0,0,12,6" Content="Protetto" IsChecked="{Binding ShowProtected}" />
+                  <CheckBox Margin="0,0,12,6" Content="Disabilitato" IsChecked="{Binding ShowDisabled}" />
                 </WrapPanel>
                 <TextBlock Text="Identità" Style="{StaticResource SubsectionHeaderText}" />
                 <WrapPanel Margin="0,0,0,4">
-                  <CheckBox Margin="0,0,12,6" Content="Everyone" IsChecked="{Binding FilterEveryone}" />
-                  <CheckBox Margin="0,0,12,6" Content="Authenticated Users" IsChecked="{Binding FilterAuthenticatedUsers}" />
-                  <CheckBox Margin="0,0,12,6" Content="Utenti di servizio" IsChecked="{Binding FilterServiceAccounts}" />
-                  <CheckBox Margin="0,0,12,6" Content="Admin" IsChecked="{Binding FilterAdminAccounts}" />
+                  <CheckBox Margin="0,0,12,6" Content="Everyone" IsChecked="{Binding ShowEveryone}" />
+                  <CheckBox Margin="0,0,12,6" Content="Authenticated Users" IsChecked="{Binding ShowAuthenticatedUsers}" />
+                  <CheckBox Margin="0,0,12,6" Content="Utenti di servizio" IsChecked="{Binding ShowServiceAccounts}" />
+                  <CheckBox Margin="0,0,12,6" Content="Admin" IsChecked="{Binding ShowAdminAccounts}" />
+                  <CheckBox Margin="0,0,12,6" Content="Altri" IsChecked="{Binding ShowOtherPrincipals}" />
                 </WrapPanel>
                 <TextBlock Text="Legenda diritti" Style="{StaticResource SubsectionHeaderText}" />
                 <WrapPanel>
-                  <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4">
+                  <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Read" Style="{StaticResource BadgeToolTipBorder}">
                     <TextBlock Text="Read" Foreground="White" FontSize="10" />
                   </Border>
-                  <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4">
+                  <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="List" Style="{StaticResource BadgeToolTipBorder}">
                     <TextBlock Text="List" Foreground="White" FontSize="10" />
                   </Border>
-                  <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4">
+                  <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Read &amp; Execute" Style="{StaticResource BadgeToolTipBorder}">
                     <TextBlock Text="R&amp;E" Foreground="White" FontSize="10" />
                   </Border>
-                  <Border Background="#FF27AE60" Padding="4,2" CornerRadius="2" Margin="0,0,6,4">
+                  <Border Background="#FF27AE60" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Write" Style="{StaticResource BadgeToolTipBorder}">
                     <TextBlock Text="Write" Foreground="White" FontSize="10" />
                   </Border>
-                  <Border Background="#FFF2994A" Padding="4,2" CornerRadius="2" Margin="0,0,6,4">
+                  <Border Background="#FFF2994A" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Modify" Style="{StaticResource BadgeToolTipBorder}">
                     <TextBlock Text="Modify" Foreground="White" FontSize="10" />
                   </Border>
-                  <Border Background="#FF9B51E0" Padding="4,2" CornerRadius="2" Margin="0,0,6,4">
+                  <Border Background="#FF9B51E0" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Full Control" Style="{StaticResource BadgeToolTipBorder}">
                     <TextBlock Text="Full" Foreground="White" FontSize="10" />
                   </Border>
-                  <Border Background="#FFEB5757" Padding="4,2" CornerRadius="2" Margin="0,0,6,4">
+                  <Border Background="#FFEB5757" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Deny" Style="{StaticResource BadgeToolTipBorder}">
                     <TextBlock Text="Deny" Foreground="White" FontSize="10" />
                   </Border>
                 </WrapPanel>
