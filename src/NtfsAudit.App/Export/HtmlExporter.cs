@@ -647,11 +647,11 @@ namespace NtfsAudit.App.Export
                 var baselineRemoved = baselineSummary == null ? 0 : baselineSummary.Removed.Count;
 
                 writer.WriteStartObject();
-                WriteProperty(writer, "GroupEntries", detail == null ? Array.Empty<AceEntry>() : (detail.GroupEntries ?? Array.Empty<AceEntry>()));
-                WriteProperty(writer, "UserEntries", detail == null ? Array.Empty<AceEntry>() : (detail.UserEntries ?? Array.Empty<AceEntry>()));
-                WriteProperty(writer, "AllEntries", detail == null ? Array.Empty<AceEntry>() : (detail.AllEntries ?? Array.Empty<AceEntry>()));
-                WriteProperty(writer, "ShareEntries", detail == null ? Array.Empty<AceEntry>() : (detail.ShareEntries ?? Array.Empty<AceEntry>()));
-                WriteProperty(writer, "EffectiveEntries", detail == null ? Array.Empty<AceEntry>() : (detail.EffectiveEntries ?? Array.Empty<AceEntry>()));
+                WriteProperty(writer, "GroupEntries", detail == null ? new List<AceEntry>() : (detail.GroupEntries ?? new List<AceEntry>()));
+                WriteProperty(writer, "UserEntries", detail == null ? new List<AceEntry>() : (detail.UserEntries ?? new List<AceEntry>()));
+                WriteProperty(writer, "AllEntries", detail == null ? new List<AceEntry>() : (detail.AllEntries ?? new List<AceEntry>()));
+                WriteProperty(writer, "ShareEntries", detail == null ? new List<AceEntry>() : (detail.ShareEntries ?? new List<AceEntry>()));
+                WriteProperty(writer, "EffectiveEntries", detail == null ? new List<AceEntry>() : (detail.EffectiveEntries ?? new List<AceEntry>()));
                 writer.WritePropertyName("HasExplicitPermissions");
                 writer.WriteValue(detail != null && detail.HasExplicitPermissions);
                 writer.WritePropertyName("HasExplicitNtfs");
