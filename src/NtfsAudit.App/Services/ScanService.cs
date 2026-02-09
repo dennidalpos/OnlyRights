@@ -74,7 +74,7 @@ namespace NtfsAudit.App.Services
                 var errorWriterTask = Task.Run(() => DrainQueue(errorQueue, errorWriter, token), token);
 
                 dataQueue.Add(BuildExportRecord(BuildScanOptionsRecord(options), options));
-                var workerCount = Math.Max(2, Environment.ProcessorCount);
+                var workerCount = Math.Max(2, Math.Min(Environment.ProcessorCount, 8));
                 var workers = new Task[workerCount];
                 for (var i = 0; i < workerCount; i++)
                 {
@@ -116,23 +116,27 @@ namespace NtfsAudit.App.Services
                                 });
                             }
 
-                            List<string> children = null;
+                            var hasChildren = false;
                             if (depth < options.MaxDepth)
                             {
                                 try
                                 {
                                     var ioPath = PathResolver.ToExtendedPath(current);
-                                    children = new List<string>();
                                     var enumerationOptions = new EnumerationOptions
                                     {
                                         IgnoreInaccessible = true,
                                         RecurseSubdirectories = false,
                                         AttributesToSkip = 0
                                     };
+                                    var parentBag = treeMap.GetOrAdd(current, _ => new ConcurrentBag<string>());
                                     foreach (var child in Directory.EnumerateDirectories(ioPath, "*", enumerationOptions))
                                     {
                                         var childPath = PathResolver.FromExtendedPath(child);
-                                        children.Add(childPath);
+                                        parentBag.Add(childPath);
+                                        treeMap.GetOrAdd(childPath, _ => new ConcurrentBag<string>());
+                                        if (IsDfsCachePath(childPath)) continue;
+                                        Enqueue(new WorkItem(childPath, depth + 1));
+                                        hasChildren = true;
                                     }
                                 }
                                 catch (Exception ex)
@@ -153,16 +157,9 @@ namespace NtfsAudit.App.Services
                                 }
                             }
 
-                            if (children != null)
+                            if (hasChildren)
                             {
-                                var parentBag = treeMap.GetOrAdd(current, _ => new ConcurrentBag<string>());
-                                foreach (var child in children)
-                                {
-                                    parentBag.Add(child);
-                                    treeMap.GetOrAdd(child, _ => new ConcurrentBag<string>());
-                                    if (IsDfsCachePath(child)) continue;
-                                    Enqueue(new WorkItem(child, depth + 1));
-                                }
+                                treeMap.GetOrAdd(current, _ => new ConcurrentBag<string>());
                             }
 
                             if (progress != null)

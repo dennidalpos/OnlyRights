@@ -143,65 +143,44 @@ namespace NtfsAudit.App.Services
                 }
             }
 
-            var parts = normalized.TrimStart('\\').Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length < 2) return null;
-
-            var dfsRoot = string.Format("\\\\{0}\\{1}", parts[0], parts[1]);
-            var remainder = parts.Length > 2 ? string.Join("\\", parts, 2, parts.Length - 2) : string.Empty;
-            IntPtr buffer;
-            try
-            {
-                var status = NetDfsGetInfo(dfsRoot, null, null, 3, out buffer);
-                if (status != 0 || buffer == IntPtr.Zero)
-                {
-                    CacheDfs(normalized, null);
-                    return null;
-                }
-            }
-            catch
+            DFS_INFO_3 info;
+            string remainder;
+            if (!TryGetDfsInfo(normalized, out info, out remainder))
             {
                 CacheDfs(normalized, null);
                 return null;
             }
 
-            try
+            var storages = ReadStorages(info.Storage, (int)info.NumberOfStorages)
+                .OrderBy(storage => GetStoragePriority(storage))
+                .ThenBy(storage => storage.ServerName, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(storage => storage.ShareName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var highestPriority = storages.Count > 0 ? GetStoragePriority(storages[0]) : int.MaxValue;
+            var prioritized = storages
+                .Where(storage => GetStoragePriority(storage) == highestPriority)
+                .ToList();
+            var fallbacks = storages
+                .Where(storage => GetStoragePriority(storage) != highestPriority)
+                .ToList();
+
+            var selected = TrySelectAvailableStorage(prioritized, remainder);
+            if (selected != null)
             {
-                var info = Marshal.PtrToStructure<DFS_INFO_3>(buffer);
-                var storages = ReadStorages(info.Storage, (int)info.NumberOfStorages)
-                    .OrderBy(storage => GetStoragePriority(storage))
-                    .ThenBy(storage => storage.ServerName, StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(storage => storage.ShareName, StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-
-                var highestPriority = storages.Count > 0 ? GetStoragePriority(storages[0]) : int.MaxValue;
-                var prioritized = storages
-                    .Where(storage => GetStoragePriority(storage) == highestPriority)
-                    .ToList();
-                var fallbacks = storages
-                    .Where(storage => GetStoragePriority(storage) != highestPriority)
-                    .ToList();
-
-                var selected = TrySelectAvailableStorage(prioritized, remainder);
-                if (selected != null)
-                {
-                    CacheDfs(normalized, selected);
-                    return selected;
-                }
-
-                selected = TrySelectAvailableStorage(fallbacks, remainder);
-                if (selected != null)
-                {
-                    CacheDfs(normalized, selected);
-                    return selected;
-                }
-
-                CacheDfs(normalized, null);
-                return null;
+                CacheDfs(normalized, selected);
+                return selected;
             }
-            finally
+
+            selected = TrySelectAvailableStorage(fallbacks, remainder);
+            if (selected != null)
             {
-                NetApiBufferFree(buffer);
+                CacheDfs(normalized, selected);
+                return selected;
             }
+
+            CacheDfs(normalized, null);
+            return null;
         }
 
         private static List<string> TryResolveDfsTargets(string uncPath)
@@ -218,52 +197,86 @@ namespace NtfsAudit.App.Services
                 }
             }
 
-            var parts = normalized.TrimStart('\\').Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length < 2) return new List<string>();
-
-            var dfsRoot = string.Format("\\\\{0}\\{1}", parts[0], parts[1]);
-            var remainder = parts.Length > 2 ? string.Join("\\", parts, 2, parts.Length - 2) : string.Empty;
-            IntPtr buffer;
-            try
-            {
-                var status = NetDfsGetInfo(dfsRoot, null, null, 3, out buffer);
-                if (status != 0 || buffer == IntPtr.Zero)
-                {
-                    CacheDfsTargets(normalized, new List<string>());
-                    return new List<string>();
-                }
-            }
-            catch
+            DFS_INFO_3 info;
+            string remainder;
+            if (!TryGetDfsInfo(normalized, out info, out remainder))
             {
                 CacheDfsTargets(normalized, new List<string>());
                 return new List<string>();
             }
 
-            try
-            {
-                var info = Marshal.PtrToStructure<DFS_INFO_3>(buffer);
-                var storages = ReadStorages(info.Storage, (int)info.NumberOfStorages)
-                    .OrderBy(storage => GetStoragePriority(storage))
-                    .ThenBy(storage => storage.ServerName, StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(storage => storage.ShareName, StringComparer.OrdinalIgnoreCase)
-                    .ToList();
+            var storages = ReadStorages(info.Storage, (int)info.NumberOfStorages)
+                .OrderBy(storage => GetStoragePriority(storage))
+                .ThenBy(storage => storage.ServerName, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(storage => storage.ShareName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
-                var targets = storages
-                    .Select(storage =>
+            var targets = storages
+                .Select(storage =>
+                {
+                    var root = string.Format("\\\\{0}\\{1}", storage.ServerName, storage.ShareName);
+                    return string.IsNullOrEmpty(remainder) ? root : Path.Combine(root, remainder);
+                })
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            CacheDfsTargets(normalized, targets);
+            return new List<string>(targets);
+        }
+
+        private static bool TryGetDfsInfo(string normalizedPath, out DFS_INFO_3 info, out string remainder)
+        {
+            info = default(DFS_INFO_3);
+            remainder = string.Empty;
+            if (string.IsNullOrWhiteSpace(normalizedPath) || !normalizedPath.StartsWith("\\\\", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            var parts = normalizedPath.TrimStart('\\').Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 2)
+            {
+                return false;
+            }
+
+            for (var i = parts.Length; i >= 2; i--)
+            {
+                var entryPath = string.Format("\\\\{0}", string.Join("\\", parts.Take(i)));
+                IntPtr buffer = IntPtr.Zero;
+                try
+                {
+                    var status = NetDfsGetInfo(entryPath, null, null, 3, out buffer);
+                    if (status != 0 || buffer == IntPtr.Zero)
                     {
-                        var root = string.Format("\\\\{0}\\{1}", storage.ServerName, storage.ShareName);
-                        return string.IsNullOrEmpty(remainder) ? root : Path.Combine(root, remainder);
-                    })
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
+                        if (buffer != IntPtr.Zero)
+                        {
+                            NetApiBufferFree(buffer);
+                        }
+                        continue;
+                    }
+                }
+                catch
+                {
+                    if (buffer != IntPtr.Zero)
+                    {
+                        NetApiBufferFree(buffer);
+                    }
+                    continue;
+                }
 
-                CacheDfsTargets(normalized, targets);
-                return new List<string>(targets);
+                try
+                {
+                    info = Marshal.PtrToStructure<DFS_INFO_3>(buffer);
+                    remainder = i < parts.Length ? string.Join("\\", parts, i, parts.Length - i) : string.Empty;
+                    return true;
+                }
+                finally
+                {
+                    NetApiBufferFree(buffer);
+                }
             }
-            finally
-            {
-                NetApiBufferFree(buffer);
-            }
+
+            return false;
         }
 
         private static string TrySelectAvailableStorage(List<DfsStorageInfo> storages, string remainder)
