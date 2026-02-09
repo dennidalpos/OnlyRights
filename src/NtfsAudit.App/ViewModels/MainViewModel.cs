@@ -1051,21 +1051,27 @@ namespace NtfsAudit.App.ViewModels
                 _scanResult = importedResult;
                 _hasExported = false;
                 ApplyImportedOptions(imported.ScanOptions);
-                RootPath = string.IsNullOrWhiteSpace(imported.RootPath) ? RootPath : imported.RootPath;
+                if (!string.IsNullOrWhiteSpace(imported.RootPath))
+                {
+                    RootPath = imported.RootPath;
+                }
                 ClearResults();
                 LoadTree(_scanResult);
                 LoadErrors(_scanResult.ErrorPath);
-                if (!string.IsNullOrWhiteSpace(RootPath) && _scanResult.TreeMap.Count > 0 && !_scanResult.TreeMap.ContainsKey(RootPath))
-                {
-                    RootPath = _scanResult.TreeMap.Keys.First();
-                }
                 var root = RootPath;
+                if (!string.IsNullOrWhiteSpace(root) && _scanResult.TreeMap.Count > 0 && !_scanResult.TreeMap.ContainsKey(root))
+                {
+                    root = _scanResult.TreeMap.Keys.FirstOrDefault();
+                }
                 if (string.IsNullOrWhiteSpace(root) && _scanResult.TreeMap.Count > 0)
                 {
                     root = _scanResult.TreeMap.Keys.First();
-                    RootPath = root;
                 }
-                SelectFolder(root);
+                if (!string.IsNullOrWhiteSpace(root))
+                {
+                    RootPath = root;
+                    SelectFolder(root);
+                }
                 UpdateLastDirectory(ref _lastImportDirectory, dialog.FileName);
                 ProgressText = string.Format("Analisi importata: {0}", dialog.FileName);
                 WpfMessageBox.Show(string.Format("Analisi importata:\n{0}", dialog.FileName), "Import completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
