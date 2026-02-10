@@ -331,7 +331,11 @@ namespace NtfsAudit.App.Services
                 TempDataPath = tempDataPath,
                 ErrorPath = errorPath,
                 Details = detailsResult,
-                TreeMap = treeMapResult
+                TreeMap = treeMapResult,
+                RootPath = options.RootPath,
+                RootPathKind = rootPathKind,
+                ScanOptions = options,
+                ScannedAtUtc = DateTime.UtcNow
             };
         }
 

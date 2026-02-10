@@ -95,6 +95,8 @@ namespace NtfsAudit.App.ViewModels
         private bool _treeFilterRiskHighOnly;
         private bool _treeFilterRiskMediumOnly;
         private bool _treeFilterRiskLowOnly;
+        private bool _treeFilterFilesOnly;
+        private bool _treeFilterFoldersOnly;
         private string _selectedPathKind = "Unknown";
         private string _selectedOwnerSummary = "-";
         private string _selectedInheritanceSummary = "-";
@@ -105,6 +107,7 @@ namespace NtfsAudit.App.ViewModels
         private string _selectedPermissionLayers = "-";
         private string _selectedRiskSummary = "-";
         private string _selectedAcquisitionWarnings = "-";
+        private string _selectedScannedAtText = "-";
 
         public MainViewModel(bool viewerMode = false)
         {
@@ -144,6 +147,7 @@ namespace NtfsAudit.App.ViewModels
             ExportCommand = new RelayCommand(Export, () => CanExport);
             ExportAnalysisCommand = new RelayCommand(ExportAnalysis, () => CanExport);
             ImportAnalysisCommand = new RelayCommand(ImportAnalysis, () => !_isScanning && !IsBusy);
+            ResetTreeFiltersCommand = new RelayCommand(ResetTreeFilters, () => HasScanResult);
 
             LoadCache();
             InitializeScanTimer();
@@ -179,6 +183,7 @@ namespace NtfsAudit.App.ViewModels
         public RelayCommand ExportCommand { get; private set; }
         public RelayCommand ExportAnalysisCommand { get; private set; }
         public RelayCommand ImportAnalysisCommand { get; private set; }
+        public RelayCommand ResetTreeFiltersCommand { get; private set; }
 
         public string RootPath
         {
@@ -771,6 +776,38 @@ namespace NtfsAudit.App.ViewModels
             set { _treeFilterRiskLowOnly = value; OnPropertyChanged("TreeFilterRiskLowOnly"); ReloadTreeWithFilters(); }
         }
 
+        public bool TreeFilterFilesOnly
+        {
+            get { return _treeFilterFilesOnly; }
+            set
+            {
+                _treeFilterFilesOnly = value;
+                if (_treeFilterFilesOnly && _treeFilterFoldersOnly)
+                {
+                    _treeFilterFoldersOnly = false;
+                    OnPropertyChanged("TreeFilterFoldersOnly");
+                }
+                OnPropertyChanged("TreeFilterFilesOnly");
+                ReloadTreeWithFilters();
+            }
+        }
+
+        public bool TreeFilterFoldersOnly
+        {
+            get { return _treeFilterFoldersOnly; }
+            set
+            {
+                _treeFilterFoldersOnly = value;
+                if (_treeFilterFoldersOnly && _treeFilterFilesOnly)
+                {
+                    _treeFilterFilesOnly = false;
+                    OnPropertyChanged("TreeFilterFilesOnly");
+                }
+                OnPropertyChanged("TreeFilterFoldersOnly");
+                ReloadTreeWithFilters();
+            }
+        }
+
         public string SelectedPathKind { get { return _selectedPathKind; } private set { _selectedPathKind = value; OnPropertyChanged("SelectedPathKind"); } }
         public string SelectedOwnerSummary { get { return _selectedOwnerSummary; } private set { _selectedOwnerSummary = value; OnPropertyChanged("SelectedOwnerSummary"); } }
         public string SelectedInheritanceSummary { get { return _selectedInheritanceSummary; } private set { _selectedInheritanceSummary = value; OnPropertyChanged("SelectedInheritanceSummary"); } }
@@ -781,6 +818,7 @@ namespace NtfsAudit.App.ViewModels
         public string SelectedPermissionLayers { get { return _selectedPermissionLayers; } private set { _selectedPermissionLayers = value; OnPropertyChanged("SelectedPermissionLayers"); } }
         public string SelectedRiskSummary { get { return _selectedRiskSummary; } private set { _selectedRiskSummary = value; OnPropertyChanged("SelectedRiskSummary"); } }
         public string SelectedAcquisitionWarnings { get { return _selectedAcquisitionWarnings; } private set { _selectedAcquisitionWarnings = value; OnPropertyChanged("SelectedAcquisitionWarnings"); } }
+        public string SelectedScannedAtText { get { return _selectedScannedAtText; } private set { _selectedScannedAtText = value; OnPropertyChanged("SelectedScannedAtText"); } }
 
         public bool HasScanResult { get { return _scanResult != null; } }
         public bool IsBusy { get { return _isBusy; } }
@@ -1509,12 +1547,14 @@ namespace NtfsAudit.App.ViewModels
             if (TreeFilterRiskHighOnly && !detail.AllEntries.Any(e => string.Equals(e.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase))) return false;
             if (TreeFilterRiskMediumOnly && !detail.AllEntries.Any(e => string.Equals(e.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase))) return false;
             if (TreeFilterRiskLowOnly && !detail.AllEntries.Any(e => string.Equals(e.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase))) return false;
+            if (TreeFilterFilesOnly && !detail.AllEntries.Any(e => string.Equals(e.ResourceType, "File", StringComparison.OrdinalIgnoreCase))) return false;
+            if (TreeFilterFoldersOnly && !detail.AllEntries.Any(e => string.Equals(e.ResourceType, "Cartella", StringComparison.OrdinalIgnoreCase))) return false;
             return true;
         }
 
         private bool AnyTreeFilterEnabled()
         {
-            return TreeFilterExplicitOnly || TreeFilterInheritanceDisabledOnly || TreeFilterDiffOnly || TreeFilterExplicitDenyOnly || TreeFilterBaselineMismatchOnly || TreeFilterRiskHighOnly || TreeFilterRiskMediumOnly || TreeFilterRiskLowOnly;
+            return TreeFilterExplicitOnly || TreeFilterInheritanceDisabledOnly || TreeFilterDiffOnly || TreeFilterExplicitDenyOnly || TreeFilterBaselineMismatchOnly || TreeFilterRiskHighOnly || TreeFilterRiskMediumOnly || TreeFilterRiskLowOnly || TreeFilterFilesOnly || TreeFilterFoldersOnly;
         }
 
         private void UpdateSelectedFolderInfo(string path, FolderDetail detail)
@@ -1543,6 +1583,9 @@ namespace NtfsAudit.App.ViewModels
                 warning = "Percorso NFS: alcune ACL potrebbero non essere disponibili in ambiente Windows.";
             }
             SelectedAcquisitionWarnings = string.IsNullOrWhiteSpace(warning) ? "-" : warning;
+            SelectedScannedAtText = _scanResult != null && _scanResult.ScannedAtUtc != default(DateTime)
+                ? _scanResult.ScannedAtUtc.ToLocalTime().ToString("dd-MM-yyyy HH:mm:ss")
+                : "-";
         }
 
         private string ResolveTreeRoot(Dictionary<string, List<string>> treeMap, string preferredRoot)
@@ -1923,6 +1966,7 @@ namespace NtfsAudit.App.ViewModels
                 || MatchesFilter(entry.ShareServer, term)
                 || MatchesFilter(entry.RiskLevel, term)
                 || MatchesFilter(entry.Source, term)
+                || MatchesFilter(entry.PathKind.ToString(), term)
                 || MatchesMemberFilter(entry.MemberNames, term);
         }
 
@@ -1987,7 +2031,41 @@ namespace NtfsAudit.App.ViewModels
             ShowServiceAccounts = true;
             ShowAdminAccounts = true;
             ShowOtherPrincipals = true;
+            ResetTreeFilters(false);
             UpdateSummary(null);
+        }
+
+        private void ResetTreeFilters()
+        {
+            ResetTreeFilters(true);
+        }
+
+        private void ResetTreeFilters(bool reloadTree)
+        {
+            _treeFilterExplicitOnly = false;
+            _treeFilterInheritanceDisabledOnly = false;
+            _treeFilterDiffOnly = false;
+            _treeFilterExplicitDenyOnly = false;
+            _treeFilterBaselineMismatchOnly = false;
+            _treeFilterRiskHighOnly = false;
+            _treeFilterRiskMediumOnly = false;
+            _treeFilterRiskLowOnly = false;
+            _treeFilterFilesOnly = false;
+            _treeFilterFoldersOnly = false;
+            OnPropertyChanged("TreeFilterExplicitOnly");
+            OnPropertyChanged("TreeFilterInheritanceDisabledOnly");
+            OnPropertyChanged("TreeFilterDiffOnly");
+            OnPropertyChanged("TreeFilterExplicitDenyOnly");
+            OnPropertyChanged("TreeFilterBaselineMismatchOnly");
+            OnPropertyChanged("TreeFilterRiskHighOnly");
+            OnPropertyChanged("TreeFilterRiskMediumOnly");
+            OnPropertyChanged("TreeFilterRiskLowOnly");
+            OnPropertyChanged("TreeFilterFilesOnly");
+            OnPropertyChanged("TreeFilterFoldersOnly");
+            if (reloadTree)
+            {
+                ReloadTreeWithFilters();
+            }
         }
 
         private void UpdateDfsTargets()
@@ -2105,6 +2183,7 @@ namespace NtfsAudit.App.ViewModels
             ExportCommand.RaiseCanExecuteChanged();
             ExportAnalysisCommand.RaiseCanExecuteChanged();
             ImportAnalysisCommand.RaiseCanExecuteChanged();
+            ResetTreeFiltersCommand.RaiseCanExecuteChanged();
         }
 
         private string FormatElapsed(TimeSpan elapsed)

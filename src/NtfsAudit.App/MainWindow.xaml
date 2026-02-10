@@ -201,16 +201,21 @@
                 <Button Padding="10,4" Content="Comprimi tutto" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
               </StackPanel>
               <GroupBox Header="Filtri Tree" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" IsEnabled="{Binding HasScanResult}">
-                <WrapPanel>
-                  <CheckBox Margin="0,0,10,4" Content="Espliciti" IsChecked="{Binding TreeFilterExplicitOnly}" />
-                  <CheckBox Margin="0,0,10,4" Content="Ereditarietà OFF" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" />
-                  <CheckBox Margin="0,0,10,4" Content="Diff vs parent" IsChecked="{Binding TreeFilterDiffOnly}" />
-                  <CheckBox Margin="0,0,10,4" Content="Deny espliciti" IsChecked="{Binding TreeFilterExplicitDenyOnly}" />
-                  <CheckBox Margin="0,0,10,4" Content="Mismatch baseline" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" />
-                  <CheckBox Margin="0,0,10,4" Content="Risk High" IsChecked="{Binding TreeFilterRiskHighOnly}" />
-                  <CheckBox Margin="0,0,10,4" Content="Risk Medium" IsChecked="{Binding TreeFilterRiskMediumOnly}" />
-                  <CheckBox Margin="0,0,10,4" Content="Risk Low" IsChecked="{Binding TreeFilterRiskLowOnly}" />
-                </WrapPanel>
+                <StackPanel>
+                  <WrapPanel>
+                    <CheckBox Margin="0,0,10,4" Content="Espliciti" IsChecked="{Binding TreeFilterExplicitOnly}" />
+                    <CheckBox Margin="0,0,10,4" Content="Ereditarietà OFF" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" />
+                    <CheckBox Margin="0,0,10,4" Content="Diff vs parent" IsChecked="{Binding TreeFilterDiffOnly}" />
+                    <CheckBox Margin="0,0,10,4" Content="Deny espliciti" IsChecked="{Binding TreeFilterExplicitDenyOnly}" />
+                    <CheckBox Margin="0,0,10,4" Content="Mismatch baseline" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" />
+                    <CheckBox Margin="0,0,10,4" Content="Risk High" IsChecked="{Binding TreeFilterRiskHighOnly}" />
+                    <CheckBox Margin="0,0,10,4" Content="Risk Medium" IsChecked="{Binding TreeFilterRiskMediumOnly}" />
+                    <CheckBox Margin="0,0,10,4" Content="Risk Low" IsChecked="{Binding TreeFilterRiskLowOnly}" />
+                    <CheckBox Margin="0,0,10,4" Content="Solo nodi con File" IsChecked="{Binding TreeFilterFilesOnly}" />
+                    <CheckBox Margin="0,0,10,4" Content="Solo nodi Cartella" IsChecked="{Binding TreeFilterFoldersOnly}" />
+                  </WrapPanel>
+                  <Button Content="Reset filtri tree" Width="140" Margin="0,4,0,0" Command="{Binding ResetTreeFiltersCommand}" />
+                </StackPanel>
               </GroupBox>
               <Expander Header="Legenda" IsExpanded="False">
                 <StackPanel Margin="0,6,0,0">
@@ -565,6 +570,7 @@
                     <TextBlock Text="{Binding SelectedPermissionLayers, StringFormat=Layer: {0}}" />
                     <TextBlock Text="{Binding SelectedRiskSummary, StringFormat=Rischio: {0}}" />
                     <TextBlock Text="{Binding SelectedAcquisitionWarnings, StringFormat=Warning: {0}}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding SelectedScannedAtText, StringFormat=Timestamp scansione: {0}}" />
                     <TextBlock Text="{Binding SelectedTotalAceCount, StringFormat=ACE Totali: {0}}" />
                     <TextBlock Text="{Binding SelectedExplicitAceCount, StringFormat=ACE Esplicite: {0}}" />
                     <TextBlock Text="{Binding SelectedInheritedAceCount, StringFormat=ACE Ereditate: {0}}" />

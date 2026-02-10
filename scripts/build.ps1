@@ -17,11 +17,14 @@ param(
     [string]$Runtime,
     [switch]$SelfContained,
     [switch]$PublishSingleFile,
-    [switch]$PublishReadyToRun
+    [switch]$PublishReadyToRun,
+    [switch]$RunClean,
+    [switch]$SkipTests,
+    [switch]$CleanLogs
 )
 
 $ErrorActionPreference = "Stop"
-$root = Resolve-Path ".."
+$root = Resolve-Path (Join-Path $PSScriptRoot "..")
 $solution = Join-Path $root "NtfsAudit.sln"
 $project = Join-Path $root "src\NtfsAudit.App\NtfsAudit.App.csproj"
 $viewerProject = Join-Path $root "src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj"
@@ -43,6 +46,21 @@ if (!(Test-Path $project)) { throw "Project not found" }
 if (!(Test-Path $viewerProject)) { throw "Viewer project not found" }
 
 if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) { throw "dotnet SDK not found." }
+
+if ($RunClean) {
+    $cleanScript = Join-Path $PSScriptRoot "clean.ps1"
+    if (!(Test-Path $cleanScript)) { throw "clean.ps1 not found." }
+    $cleanArgs = @()
+    if ($CleanAllTemp) { $cleanArgs += "-CleanAllTemp" }
+    if ($CleanTemp) { $cleanArgs += "-KeepImportTemp" }
+    if ($CleanImports) { $cleanArgs += "-CleanImports" }
+    if ($CleanCache) { $cleanArgs += "-CleanCache" }
+    if ($CleanDist) { $cleanArgs += "-Configuration"; $cleanArgs += $Configuration }
+    if ($CleanArtifacts) { } else { $cleanArgs += "-KeepArtifacts" }
+    if ($CleanLogs) { $cleanArgs += "-CleanLogs" }
+    & $cleanScript @cleanArgs
+    if ($LASTEXITCODE -ne 0) { throw "Clean failed." }
+}
 
 function Get-TempRoot {
     param([string]$PreferredRoot)
@@ -100,6 +118,11 @@ if (-not $SkipBuild) {
     }
     & dotnet @buildArgs
     if ($LASTEXITCODE -ne 0) { throw "Build failed." }
+}
+
+if (-not $SkipTests) {
+    & dotnet test $solution -c $Configuration --no-build --nologo
+    if ($LASTEXITCODE -ne 0) { throw "Tests failed." }
 }
 
 if (-not $SkipPublish) {

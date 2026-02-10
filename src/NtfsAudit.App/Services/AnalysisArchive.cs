@@ -11,7 +11,7 @@ namespace NtfsAudit.App.Services
 {
     public class AnalysisArchive
     {
-        private const int CurrentArchiveVersion = 2;
+        private const int CurrentArchiveVersion = 3;
         private const string DataEntryName = "data.jsonl";
         private const string ErrorsEntryName = "errors.jsonl";
         private const string TreeEntryName = "tree.json";
@@ -28,7 +28,9 @@ namespace NtfsAudit.App.Services
                 throw new FileNotFoundException("Scan data file not found.", result.TempDataPath);
             }
 
-            var resolvedRootPath = ResolveArchiveRoot(rootPath, result.TempDataPath, null);
+            var exportOptions = result.ScanOptions ?? LoadScanOptions(result.TempDataPath);
+            var resolvedRootPath = ResolveArchiveRoot(rootPath, result.TempDataPath, exportOptions);
+            var resolvedPathKind = result.RootPathKind == PathKind.Unknown ? PathResolver.DetectPathKind(resolvedRootPath) : result.RootPathKind;
             var exportTreeMap = result.TreeMap;
             if (exportTreeMap == null || exportTreeMap.Count == 0)
             {
@@ -58,8 +60,10 @@ namespace NtfsAudit.App.Services
                 AddJsonEntry(archive, MetaEntryName, new ArchiveMeta
                 {
                     RootPath = resolvedRootPath,
-                    CreatedAt = DateTime.UtcNow,
-                    Version = CurrentArchiveVersion
+                    RootPathKind = resolvedPathKind,
+                    CreatedAt = result.ScannedAtUtc == default(DateTime) ? DateTime.UtcNow : result.ScannedAtUtc,
+                    Version = CurrentArchiveVersion,
+                    ScanOptions = exportOptions
                 });
             }
         }
@@ -95,7 +99,7 @@ namespace NtfsAudit.App.Services
             }
 
             var meta = LoadMeta(metaPath);
-            var scanOptions = LoadScanOptions(dataPath);
+            var scanOptions = meta.ScanOptions ?? LoadScanOptions(dataPath);
             var resolvedRootPath = ResolveArchiveRoot(meta.RootPath, dataPath, scanOptions);
             var treeMap = LoadTreeMap(treePath, dataPath, resolvedRootPath);
 
@@ -107,13 +111,19 @@ namespace NtfsAudit.App.Services
                 TempDataPath = dataPath,
                 ErrorPath = errorPath,
                 Details = details,
-                TreeMap = treeMap
+                TreeMap = treeMap,
+                RootPath = resolvedRootPath,
+                RootPathKind = meta.RootPathKind == PathKind.Unknown ? PathResolver.DetectPathKind(resolvedRootPath) : meta.RootPathKind,
+                ScanOptions = scanOptions,
+                ScannedAtUtc = meta.CreatedAt
             };
 
             return new AnalysisArchiveResult
             {
                 ScanResult = result,
                 RootPath = resolvedRootPath,
+                RootPathKind = result.RootPathKind,
+                ScannedAtUtc = result.ScannedAtUtc,
                 ScanOptions = scanOptions
             };
         }
@@ -162,7 +172,7 @@ namespace NtfsAudit.App.Services
         {
             if (!File.Exists(metaPath))
             {
-                return new ArchiveMeta { Version = 1 };
+                return new ArchiveMeta { Version = 1, RootPathKind = PathKind.Unknown };
             }
 
             try
@@ -176,7 +186,7 @@ namespace NtfsAudit.App.Services
             }
             catch
             {
-                return new ArchiveMeta { Version = 1 };
+                return new ArchiveMeta { Version = 1, RootPathKind = PathKind.Unknown };
             }
         }
 
@@ -411,7 +421,7 @@ namespace NtfsAudit.App.Services
         {
             var principalKey = string.IsNullOrWhiteSpace(record.PrincipalSid) ? record.PrincipalName : record.PrincipalSid;
             var membersKey = record.MemberNames == null ? string.Empty : string.Join(",", record.MemberNames);
-            return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}|{13}|{14}|{15}|{16}|{17}|{18}|{19}|{20}|{21}|{22}|{23}|{24}|{25}|{26}|{27}|{28}|{29}|{30}",
+            return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}|{13}|{14}|{15}|{16}|{17}|{18}|{19}|{20}|{21}|{22}|{23}|{24}|{25}|{26}|{27}|{28}|{29}|{30}|{31}",
                 principalKey ?? string.Empty,
                 record.PrincipalType ?? string.Empty,
                 record.PermissionLayer.ToString(),
@@ -442,7 +452,8 @@ namespace NtfsAudit.App.Services
                 record.IsAdminAccount,
                 membersKey,
                 record.HasExplicitPermissions,
-                record.IsInheritanceDisabled);
+                record.IsInheritanceDisabled,
+                record.PathKind);
         }
 
         private Dictionary<string, List<string>> BuildTreeFromExport(string dataPath, string rootPath)
@@ -638,8 +649,10 @@ namespace NtfsAudit.App.Services
         private class ArchiveMeta
         {
             public string RootPath { get; set; }
+            public PathKind RootPathKind { get; set; }
             public DateTime CreatedAt { get; set; }
             public int Version { get; set; }
+            public ScanOptions ScanOptions { get; set; }
         }
 
         private class FolderFlagsPayload
@@ -657,6 +670,8 @@ namespace NtfsAudit.App.Services
     {
         public ScanResult ScanResult { get; set; }
         public string RootPath { get; set; }
+        public PathKind RootPathKind { get; set; }
+        public DateTime ScannedAtUtc { get; set; }
         public ScanOptions ScanOptions { get; set; }
     }
 }
