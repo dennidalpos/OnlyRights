@@ -246,6 +246,7 @@ namespace NtfsAudit.App.Services
                     InheritanceFlags = record.InheritanceFlags,
                     PropagationFlags = record.PropagationFlags,
                     Source = record.Source,
+                    PathKind = record.PathKind,
                     Depth = record.Depth,
                     ResourceType = record.ResourceType,
                     TargetPath = record.TargetPath,

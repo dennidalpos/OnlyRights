@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using NtfsAudit.App.Models;
 
 namespace NtfsAudit.App.Services
 {
@@ -90,6 +91,30 @@ namespace NtfsAudit.App.Services
             return TryResolveDfsTargets(uncPath);
         }
 
+        public static PathKind DetectPathKind(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return PathKind.Unknown;
+            var normalized = FromExtendedPath(input.Trim());
+            if (normalized.StartsWith("nfs://", StringComparison.OrdinalIgnoreCase))
+            {
+                return PathKind.Nfs;
+            }
+            if (IsLikelyNfsPath(normalized))
+            {
+                return PathKind.Nfs;
+            }
+            if (normalized.StartsWith("\\\\", StringComparison.Ordinal))
+            {
+                var targets = TryResolveDfsTargets(normalized);
+                return targets.Count > 0 ? PathKind.Dfs : PathKind.Unc;
+            }
+            if (normalized.Length >= 2 && normalized[1] == ':')
+            {
+                return PathKind.Local;
+            }
+            return PathKind.Unknown;
+        }
+
         public static bool TryGetShareInfo(string path, out string server, out string share)
         {
             server = null;
@@ -102,6 +127,16 @@ namespace NtfsAudit.App.Services
             server = parts[0];
             share = parts[1];
             return !string.IsNullOrWhiteSpace(server) && !string.IsNullOrWhiteSpace(share);
+        }
+
+        private static bool IsLikelyNfsPath(string normalized)
+        {
+            if (string.IsNullOrWhiteSpace(normalized)) return false;
+            var path = normalized.Replace('/', '\\').ToLowerInvariant();
+            if (path.StartsWith("\\\\wsl$\\", StringComparison.Ordinal)) return true;
+            if (path.Contains("\\nfs\\")) return true;
+            if (path.StartsWith("\\\\nfs", StringComparison.Ordinal)) return true;
+            return false;
         }
 
         private static string TryGetUncPath(string drive)

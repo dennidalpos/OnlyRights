@@ -107,6 +107,19 @@ Le opzioni principali influenzano prestazioni e dettaglio dei risultati:
 
 ### Filtri risultati
 
+### Filtri TreeView (nuovo)
+
+La TreeView supporta filtri rapidi per isolare nodi con variazioni sui permessi:
+- permessi espliciti,
+- ereditarietà disabilitata,
+- differenze vs parent,
+- deny espliciti,
+- mismatch baseline,
+- rischio High/Medium/Low.
+
+I filtri preservano la gerarchia mostrando automaticamente gli antenati necessari alla navigazione.
+
+
 I filtri nella vista risultati funzionano in combinazione:
 
 - **Filtro ACL**: ricerca per nome, SID, allow/deny, diritti, effective access, percorso/nome cartella, SACL/audit, source, resource type, target path, owner, risk level e membri espansi.

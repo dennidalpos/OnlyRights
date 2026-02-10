@@ -200,6 +200,18 @@
                 <Button Margin="0,0,8,0" Padding="10,4" Content="Espandi tutto" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
                 <Button Padding="10,4" Content="Comprimi tutto" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
               </StackPanel>
+              <GroupBox Header="Filtri Tree" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" IsEnabled="{Binding HasScanResult}">
+                <WrapPanel>
+                  <CheckBox Margin="0,0,10,4" Content="Espliciti" IsChecked="{Binding TreeFilterExplicitOnly}" />
+                  <CheckBox Margin="0,0,10,4" Content="Ereditarietà OFF" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" />
+                  <CheckBox Margin="0,0,10,4" Content="Diff vs parent" IsChecked="{Binding TreeFilterDiffOnly}" />
+                  <CheckBox Margin="0,0,10,4" Content="Deny espliciti" IsChecked="{Binding TreeFilterExplicitDenyOnly}" />
+                  <CheckBox Margin="0,0,10,4" Content="Mismatch baseline" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" />
+                  <CheckBox Margin="0,0,10,4" Content="Risk High" IsChecked="{Binding TreeFilterRiskHighOnly}" />
+                  <CheckBox Margin="0,0,10,4" Content="Risk Medium" IsChecked="{Binding TreeFilterRiskMediumOnly}" />
+                  <CheckBox Margin="0,0,10,4" Content="Risk Low" IsChecked="{Binding TreeFilterRiskLowOnly}" />
+                </WrapPanel>
+              </GroupBox>
               <Expander Header="Legenda" IsExpanded="False">
                 <StackPanel Margin="0,6,0,0">
                   <TextBlock Text="Stato" Style="{StaticResource SubsectionHeaderText}" />
@@ -535,6 +547,30 @@
                     <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" Width="70" />
                   </DataGrid.Columns>
                 </DataGrid>
+              </TabItem>
+              <TabItem Header="Info Permessi">
+                <Grid Margin="8">
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+                  <TextBlock Grid.Row="0" Text="{Binding SelectedFolderPath}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                  <TextBlock Grid.Row="1" Text="{Binding SelectedPathKind, StringFormat=Tipo percorso: {0}}" Margin="0,6,0,0" />
+                  <TextBlock Grid.Row="2" Text="{Binding SelectedOwnerSummary, StringFormat=Owner: {0}}" Margin="0,4,0,0" />
+                  <TextBlock Grid.Row="3" Text="{Binding SelectedInheritanceSummary}" Margin="0,4,0,0" />
+                  <StackPanel Grid.Row="4" Margin="0,8,0,0">
+                    <TextBlock Text="{Binding SelectedPermissionLayers, StringFormat=Layer: {0}}" />
+                    <TextBlock Text="{Binding SelectedRiskSummary, StringFormat=Rischio: {0}}" />
+                    <TextBlock Text="{Binding SelectedAcquisitionWarnings, StringFormat=Warning: {0}}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding SelectedTotalAceCount, StringFormat=ACE Totali: {0}}" />
+                    <TextBlock Text="{Binding SelectedExplicitAceCount, StringFormat=ACE Esplicite: {0}}" />
+                    <TextBlock Text="{Binding SelectedInheritedAceCount, StringFormat=ACE Ereditate: {0}}" />
+                    <TextBlock Text="{Binding SelectedDenyAceCount, StringFormat=ACE Deny: {0}}" />
+                  </StackPanel>
+                </Grid>
               </TabItem>
               <TabItem Header="Errori">
                 <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
