@@ -13,11 +13,12 @@ param(
     [switch]$ImportsOnly,
     [switch]$CacheOnly,
     [switch]$CleanImports,
-    [switch]$CleanCache
+    [switch]$CleanCache,
+    [switch]$CleanLogs
 )
 
 $ErrorActionPreference = "Stop"
-$root = Resolve-Path ".."
+$root = Resolve-Path (Join-Path $PSScriptRoot "..")
 
 function Get-TempRoot {
     param([string]$PreferredRoot)
@@ -110,4 +111,14 @@ if (-not $KeepCache) {
     $localAppData = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [Environment]::GetFolderPath("LocalApplicationData") }
     $cache = Join-Path $localAppData "NtfsAudit\Cache"
     if (Test-Path $cache) { Remove-Item $cache -Recurse -Force }
+}
+
+
+if ($CleanLogs) {
+    $baseTemp = Get-TempRoot $TempRoot
+    $tempLogs = Join-Path (Join-Path $baseTemp "NtfsAudit") "logs"
+    if (Test-Path $tempLogs) { Remove-Item $tempLogs -Recurse -Force }
+    $localAppData = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [Environment]::GetFolderPath("LocalApplicationData") }
+    $appLogs = Join-Path $localAppData "NtfsAudit\Logs"
+    if (Test-Path $appLogs) { Remove-Item $appLogs -Recurse -Force }
 }

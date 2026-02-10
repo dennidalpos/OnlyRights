@@ -109,7 +109,7 @@ Le opzioni principali influenzano prestazioni e dettaglio dei risultati:
 
 I filtri nella vista risultati funzionano in combinazione:
 
-- **Filtro ACL**: ricerca per nome, SID, allow/deny, diritti, effective access, percorso/nome cartella, SACL/audit, source, resource type, target path, owner, risk level e membri espansi.
+- **Filtro ACL**: ricerca per nome, SID, allow/deny, diritti, effective access, percorso/nome cartella, SACL/audit, source, `PathKind`, resource type, target path, owner, risk level e membri espansi.
 - **Everyone / Authenticated Users**: mostra solo le ACE con i rispettivi SID o nome equivalente.
 - **Utenti di servizio**: mostra solo le ACE marcate come account di servizio.
 - **Admin**: mostra solo le ACE marcate come account amministrativi.
@@ -118,6 +118,23 @@ I filtri nella vista risultati funzionano in combinazione:
 - Se **Allow** e **Deny** sono entrambi disattivati, il risultato è vuoto.
 - Se **Ereditati** ed **Espliciti** sono entrambi disattivati, il risultato è vuoto.
 - Se tutte le categorie principali (Everyone, Authenticated Users, Service, Admin, Altri) sono disattivate, il risultato è vuoto.
+
+### Filtri TreeView
+
+La TreeView supporta filtri rapidi per isolare nodi con variazioni sui permessi:
+- permessi espliciti,
+- ereditarietà disabilitata,
+- differenze vs parent,
+- deny espliciti,
+- mismatch baseline,
+- rischio High/Medium/Low,
+- solo nodi con file,
+- solo nodi cartella.
+
+Comportamento:
+- i filtri preservano la gerarchia mostrando automaticamente gli antenati necessari alla navigazione,
+- i filtri “solo file” e “solo cartella” sono mutuamente esclusivi,
+- è disponibile il comando **Reset filtri tree** per tornare allo stato neutro.
 
 ## Export
 
@@ -175,8 +192,8 @@ Archivia i dati della scansione in un singolo file `.ntaudit`:
 - ACL in JSONL,
 - errori in JSONL,
 - mappa dell’albero,
-- metadati (root e timestamp).
-- opzioni di scansione (ripristinate all’import).
+- metadati (root, `PathKind`, timestamp e versione schema).
+- opzioni di scansione (salvate in `meta.json` e ripristinate all’import).
 
 Durante l’export, se la mappa dell’albero non è disponibile o incompleta viene rigenerata dal dataset di ACL; il root viene dedotto dal percorso fornito o dalle opzioni di scansione salvate.
 
@@ -211,7 +228,7 @@ Un archivio `.ntaudit` è uno ZIP con le seguenti entry:
 - `data.jsonl`: righe ACL.
 - `errors.jsonl`: errori di accesso.
 - `tree.json`: mappa albero cartelle.
-- `meta.json`: metadati (root/timestamp/versione schema).
+- `meta.json`: metadati (root, `PathKind`, timestamp, versione schema, scan options).
 - `folderflags.json`: flag aggiuntivi per folder.
 
 Se `errors.jsonl` manca, l’import procede con un set vuoto. In fase di import, i flag `IsServiceAccount` e `IsAdminAccount` vengono ricalcolati da SID per garantire coerenza con le regole correnti.
@@ -266,6 +283,9 @@ Parametri principali:
 - `-SelfContained`
 - `-PublishSingleFile`
 - `-PublishReadyToRun`
+- `-RunClean` (esegue `scripts/clean.ps1` prima del ciclo restore/build)
+- `-SkipTests` (salta `dotnet test` dopo la build)
+- `-CleanLogs` (pulisce log in `%TEMP%\NtfsAudit\logs` e `%LOCALAPPDATA%\NtfsAudit\Logs`)
 
 Output di default: `dist\<Configuration>` (con eventuale `<Runtime>` e/o `<Framework>`). Il viewer viene pubblicato in `dist\<Configuration>\Viewer`.
 
@@ -294,6 +314,7 @@ Parametri:
 - `-CleanImports` (alias per `-ImportsOnly`)
 - `-CleanCache` (alias per `-CacheOnly`)
 - `-CleanAllTemp` (pulisce temp, import e cache)
+- `-CleanLogs` (pulisce log temporanei e applicativi)
 
 ## File temporanei
 

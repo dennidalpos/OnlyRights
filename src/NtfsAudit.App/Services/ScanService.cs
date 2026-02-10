@@ -49,6 +49,7 @@ namespace NtfsAudit.App.Services
             var errorCount = 0;
             var pendingCount = 0;
             var stopwatch = Stopwatch.StartNew();
+            var rootPathKind = PathResolver.DetectPathKind(options.RootPath);
 
             void Enqueue(WorkItem workItem)
             {
@@ -73,7 +74,7 @@ namespace NtfsAudit.App.Services
                 var dataWriterTask = Task.Run(() => DrainQueue(dataQueue, dataWriter, token), token);
                 var errorWriterTask = Task.Run(() => DrainQueue(errorQueue, errorWriter, token), token);
 
-                dataQueue.Add(BuildExportRecord(BuildScanOptionsRecord(options), options));
+                dataQueue.Add(BuildExportRecord(BuildScanOptionsRecord(options, rootPathKind), options));
                 var workerCount = Math.Max(2, Math.Min(Environment.ProcessorCount, 8));
                 var workers = new Task[workerCount];
                 for (var i = 0; i < workerCount; i++)
@@ -204,7 +205,7 @@ namespace NtfsAudit.App.Services
                                     dataQueue,
                                     errorQueue,
                                     token,
-                                    auditFailureReason);
+                                    auditFailureReason, rootPathKind);
 
                                 if (options.IncludeFiles)
                                 {
@@ -253,7 +254,8 @@ namespace NtfsAudit.App.Services
                                                 dataQueue,
                                                 errorQueue,
                                                 token,
-                                                fileAuditFailureReason);
+                                                fileAuditFailureReason,
+                                                rootPathKind);
                                         }
                                         catch (Exception ex)
                                         {
@@ -329,7 +331,11 @@ namespace NtfsAudit.App.Services
                 TempDataPath = tempDataPath,
                 ErrorPath = errorPath,
                 Details = detailsResult,
-                TreeMap = treeMapResult
+                TreeMap = treeMapResult,
+                RootPath = options.RootPath,
+                RootPathKind = rootPathKind,
+                ScanOptions = options,
+                ScannedAtUtc = DateTime.UtcNow
             };
         }
 
@@ -364,6 +370,7 @@ namespace NtfsAudit.App.Services
                 InheritanceFlags = entry.InheritanceFlags,
                 PropagationFlags = entry.PropagationFlags,
                 Source = entry.Source,
+                PathKind = entry.PathKind,
                 Depth = entry.Depth,
                 ResourceType = entry.ResourceType,
                 TargetPath = entry.TargetPath,
@@ -405,7 +412,7 @@ namespace NtfsAudit.App.Services
             };
         }
 
-        private AceEntry BuildScanOptionsRecord(ScanOptions options)
+        private AceEntry BuildScanOptionsRecord(ScanOptions options, PathKind rootPathKind)
         {
             return new AceEntry
             {
@@ -420,6 +427,7 @@ namespace NtfsAudit.App.Services
                 InheritanceFlags = string.Empty,
                 PropagationFlags = string.Empty,
                 Source = "Meta",
+                PathKind = rootPathKind,
                 Depth = 0,
                 IsDisabled = false
             };
@@ -439,7 +447,8 @@ namespace NtfsAudit.App.Services
             BlockingCollection<ExportRecord> dataQueue,
             BlockingCollection<ErrorEntry> errorQueue,
             CancellationToken token,
-            string auditFailureReason)
+            string auditFailureReason,
+            PathKind rootPathKind)
         {
             if (security == null) return;
             var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
@@ -655,7 +664,8 @@ namespace NtfsAudit.App.Services
                 dataQueue,
                 owner,
                 auditSummary,
-                isInheritanceDisabled);
+                isInheritanceDisabled,
+                rootPathKind);
         }
 
         private List<NtfsPermission> BuildNtfsPermissions(IEnumerable<FileSystemAccessRule> rules, ScanOptions options, string folderKey, string targetPath)
@@ -700,12 +710,13 @@ namespace NtfsAudit.App.Services
             BlockingCollection<ExportRecord> dataQueue,
             string owner,
             string auditSummary,
-            bool isInheritanceDisabled)
+            bool isInheritanceDisabled,
+            PathKind rootPathKind)
         {
             var shareEntries = shareContext == null || shareContext.Permissions == null || shareContext.Permissions.Count == 0
                 ? new List<AceEntry>()
-                : BuildShareEntries(shareContext, options, folderKey, targetPath, isFile, depth, owner, auditSummary, isInheritanceDisabled);
-            var effectiveEntries = BuildEffectiveEntries(shareContext, shareAccessMap, ntfsAccessMap, options, folderKey, targetPath, isFile, depth, owner, auditSummary, isInheritanceDisabled);
+                : BuildShareEntries(shareContext, options, folderKey, targetPath, isFile, depth, owner, auditSummary, isInheritanceDisabled, rootPathKind);
+            var effectiveEntries = BuildEffectiveEntries(shareContext, shareAccessMap, ntfsAccessMap, options, folderKey, targetPath, isFile, depth, owner, auditSummary, isInheritanceDisabled, rootPathKind);
 
             lock (currentDetail)
             {
@@ -740,7 +751,8 @@ namespace NtfsAudit.App.Services
             int depth,
             string owner,
             string auditSummary,
-            bool isInheritanceDisabled)
+            bool isInheritanceDisabled,
+            PathKind rootPathKind)
         {
             var entries = new List<AceEntry>();
             foreach (var permission in shareContext.Permissions)
@@ -785,6 +797,7 @@ namespace NtfsAudit.App.Services
                     InheritanceFlags = string.Empty,
                     PropagationFlags = string.Empty,
                     Source = "Share",
+                    PathKind = rootPathKind,
                     Depth = depth,
                     IsDisabled = resolved.IsDisabled,
                     IsServiceAccount = resolved.IsServiceAccount,
@@ -809,7 +822,8 @@ namespace NtfsAudit.App.Services
             int depth,
             string owner,
             string auditSummary,
-            bool isInheritanceDisabled)
+            bool isInheritanceDisabled,
+            PathKind rootPathKind)
         {
             var entries = new List<AceEntry>();
             if (!options.ComputeEffectiveAccess) return entries;
@@ -873,6 +887,7 @@ namespace NtfsAudit.App.Services
                     InheritanceFlags = string.Empty,
                     PropagationFlags = string.Empty,
                     Source = "Effective",
+                    PathKind = rootPathKind,
                     Depth = depth,
                     IsDisabled = resolved.IsDisabled,
                     IsServiceAccount = resolved.IsServiceAccount,

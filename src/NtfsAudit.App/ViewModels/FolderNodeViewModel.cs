@@ -26,7 +26,10 @@ namespace NtfsAudit.App.ViewModels
             int baselineAddedCount,
             int baselineRemovedCount,
             bool hasExplicitNtfs,
-            bool hasExplicitShare)
+            bool hasExplicitShare,
+            bool hasHighRisk,
+            bool hasMediumRisk,
+            bool hasLowRisk)
         {
             Path = path;
             DisplayName = displayName;
@@ -41,6 +44,9 @@ namespace NtfsAudit.App.ViewModels
             BaselineRemovedCount = baselineRemovedCount;
             HasExplicitNtfs = hasExplicitNtfs;
             HasExplicitShare = hasExplicitShare;
+            HasHighRisk = hasHighRisk;
+            HasMediumRisk = hasMediumRisk;
+            HasLowRisk = hasLowRisk;
             Children = new ObservableCollection<FolderNodeViewModel>();
             if (_treeProvider != null && _treeProvider.HasChildren(path))
             {
@@ -69,6 +75,9 @@ namespace NtfsAudit.App.ViewModels
         public int BaselineRemovedCount { get; private set; }
         public bool HasExplicitNtfs { get; private set; }
         public bool HasExplicitShare { get; private set; }
+        public bool HasHighRisk { get; private set; }
+        public bool HasMediumRisk { get; private set; }
+        public bool HasLowRisk { get; private set; }
         public bool HasExplicitAdded { get { return ExplicitAddedCount > 0; } }
         public bool HasExplicitRemoved { get { return ExplicitRemovedCount > 0; } }
         public bool HasDenyExplicit { get { return DenyExplicitCount > 0; } }

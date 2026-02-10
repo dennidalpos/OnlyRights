@@ -23,6 +23,7 @@ namespace NtfsAudit.App.Models
         public string InheritanceFlags { get; set; }
         public string PropagationFlags { get; set; }
         public string Source { get; set; }
+        public PathKind PathKind { get; set; }
         public int Depth { get; set; }
         public string ResourceType { get; set; }
         public string TargetPath { get; set; }
