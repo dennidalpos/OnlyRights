@@ -664,7 +664,8 @@ namespace NtfsAudit.App.Services
                 dataQueue,
                 owner,
                 auditSummary,
-                isInheritanceDisabled);
+                isInheritanceDisabled,
+                rootPathKind);
         }
 
         private List<NtfsPermission> BuildNtfsPermissions(IEnumerable<FileSystemAccessRule> rules, ScanOptions options, string folderKey, string targetPath)
@@ -821,7 +822,8 @@ namespace NtfsAudit.App.Services
             int depth,
             string owner,
             string auditSummary,
-            bool isInheritanceDisabled)
+            bool isInheritanceDisabled,
+            PathKind rootPathKind)
         {
             var entries = new List<AceEntry>();
             if (!options.ComputeEffectiveAccess) return entries;
