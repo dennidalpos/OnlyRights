@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -1528,23 +1529,35 @@ namespace NtfsAudit.App.ViewModels
 
             var treeMap = result.TreeMap;
             var detailsTreeMap = BuildTreeMapFromDetails(result.Details, RootPath);
+            var treeMapCount = treeMap == null ? 0 : treeMap.Count;
+            var detailsTreeMapCount = detailsTreeMap == null ? 0 : detailsTreeMap.Count;
+
+            Debug.WriteLine(string.Format(
+                "[TreeMap] import source counts => treeMap:{0}, detailsTreeMap:{1}, root:{2}",
+                treeMapCount,
+                detailsTreeMapCount,
+                RootPath));
 
             if ((treeMap == null || treeMap.Count == 0) && detailsTreeMap != null && detailsTreeMap.Count > 0)
             {
+                Debug.WriteLine("[TreeMap] using detailsTreeMap (treeMap missing or empty)");
                 return detailsTreeMap;
             }
 
             // Compatibilità con analisi legacy: alcune esportazioni storiche contengono TreeMap parziali.
             if (treeMap != null && treeMap.Count > 0 && detailsTreeMap != null && detailsTreeMap.Count > treeMap.Count)
             {
+                Debug.WriteLine("[TreeMap] using detailsTreeMap (legacy partial treeMap detected)");
                 return detailsTreeMap;
             }
 
             if (treeMap != null && treeMap.Count > 0)
             {
+                Debug.WriteLine("[TreeMap] using persisted treeMap");
                 return treeMap;
             }
 
+            Debug.WriteLine("[TreeMap] fallback to export records treeMap reconstruction");
             return BuildTreeMapFromExportRecords(result.TempDataPath, RootPath);
         }
 
