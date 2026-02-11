@@ -146,3 +146,15 @@ Aggiornamenti principali:
 - Il badge Deny nei risultati usa la stessa semantica di legenda: "Accesso negato (Deny)".
 - Tooltip uniformati in tutte le tab principali (Permessi Gruppi/Utenti, Dettaglio ACL, Share, Effective Access, Info Permessi, Errori).
 - Stile tooltip unificato anche per la vista dettagli principal (`PrincipalDetailsWindow`).
+
+
+## 8) Tab "Info Permessi" (allineata a Sicurezza/Avanzate Windows)
+
+- Rimossi campi diagnostici superflui (risk, warning acquisizione, timestamp tecnico).
+- Focus su elementi operativi: oggetto cartella, owner, stato ereditarietà, riepilogo autorizzazioni (totali/esplicite/ereditate/deny).
+- Evidenziazione a sfondo condizionale:
+  - owner mancante: rosso tenue,
+  - ereditarietà disabilitata: rosso tenue,
+  - ACE ereditate assenti: giallo tenue,
+  - ACE deny presenti: rosso tenue (neutralizzata se `0`).
+

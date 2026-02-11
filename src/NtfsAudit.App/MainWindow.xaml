@@ -608,30 +608,93 @@
                   </DataGrid.Columns>
                 </DataGrid>
               </TabItem>
-              <TabItem Header="Info Permessi" ToolTip="Riepilogo tecnico della cartella selezionata.">
-                <Grid Margin="8">
-                  <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                  </Grid.RowDefinitions>
-                  <TextBlock Grid.Row="0" Text="{Binding SelectedFolderPath}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                  <TextBlock Grid.Row="1" Text="{Binding SelectedPathKind, StringFormat=Tipo percorso: {0}}" Margin="0,6,0,0" />
-                  <TextBlock Grid.Row="2" Text="{Binding SelectedOwnerSummary, StringFormat=Owner: {0}}" Margin="0,4,0,0" />
-                  <TextBlock Grid.Row="3" Text="{Binding SelectedInheritanceSummary}" Margin="0,4,0,0" />
-                  <StackPanel Grid.Row="4" Margin="0,8,0,0">
-                    <TextBlock Text="{Binding SelectedPermissionLayers, StringFormat=Layer: {0}}" />
-                    <TextBlock Text="{Binding SelectedRiskSummary, StringFormat=Rischio: {0}}" />
-                    <TextBlock Text="{Binding SelectedAcquisitionWarnings, StringFormat=Warning: {0}}" TextWrapping="Wrap" />
-                    <TextBlock Text="{Binding SelectedScannedAtText, StringFormat=Timestamp scansione: {0}}" />
-                    <TextBlock Text="{Binding SelectedTotalAceCount, StringFormat=ACE Totali: {0}}" />
-                    <TextBlock Text="{Binding SelectedExplicitAceCount, StringFormat=ACE Esplicite: {0}}" />
-                    <TextBlock Text="{Binding SelectedInheritedAceCount, StringFormat=ACE Ereditate: {0}}" />
-                    <TextBlock Text="{Binding SelectedDenyAceCount, StringFormat=ACE Deny: {0}}" />
+              <TabItem Header="Info Permessi" ToolTip="Riepilogo cartella e autorizzazioni in stile sicurezza/avanzate Windows.">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                  <StackPanel Margin="8">
+                    <TextBlock Text="Oggetto" Style="{StaticResource SubsectionHeaderText}" />
+                    <Border Background="#FFF5F5F5" BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,8">
+                      <TextBlock Text="{Binding SelectedFolderPath}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    </Border>
+
+                    <TextBlock Text="Sicurezza avanzata" Style="{StaticResource SubsectionHeaderText}" />
+                    <Border BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,6">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="#FFE8F5E9" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedOwnerSummary}" Value="-">
+                              <Setter Property="Background" Value="#FFFFEBEE" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock Text="{Binding SelectedOwnerSummary, StringFormat=Owner: {0}}" />
+                    </Border>
+
+                    <Border BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,10">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="#FFE8F5E9" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedInheritanceSummary}" Value="Ereditarietà disabilitata">
+                              <Setter Property="Background" Value="#FFFFEBEE" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock Text="{Binding SelectedInheritanceSummary}" />
+                    </Border>
+
+                    <TextBlock Text="Riepilogo autorizzazioni" Style="{StaticResource SubsectionHeaderText}" />
+                    <WrapPanel>
+                      <Border Background="#FFE3F2FD" BorderBrush="#FFBBDEFB" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                        <TextBlock Text="{Binding SelectedTotalAceCount, StringFormat=Totali: {0}}" />
+                      </Border>
+                      <Border BorderBrush="#FFBBDEFB" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                        <Border.Style>
+                          <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFE3F2FD" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding SelectedExplicitAceCount}" Value="0">
+                                <Setter Property="Background" Value="#FFF5F5F5" />
+                                <Setter Property="BorderBrush" Value="#FFE0E0E0" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding SelectedExplicitAceCount, StringFormat=Esplicite: {0}}" />
+                      </Border>
+                      <Border BorderBrush="#FFC8E6C9" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                        <Border.Style>
+                          <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFE8F5E9" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding SelectedInheritedAceCount}" Value="0">
+                                <Setter Property="Background" Value="#FFFFF8E1" />
+                                <Setter Property="BorderBrush" Value="#FFFFE082" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding SelectedInheritedAceCount, StringFormat=Ereditate: {0}}" />
+                      </Border>
+                      <Border BorderBrush="#FFFFCDD2" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                        <Border.Style>
+                          <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFFFEBEE" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding SelectedDenyAceCount}" Value="0">
+                                <Setter Property="Background" Value="#FFF5F5F5" />
+                                <Setter Property="BorderBrush" Value="#FFE0E0E0" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding SelectedDenyAceCount, StringFormat=Deny: {0}}" />
+                      </Border>
+                    </WrapPanel>
                   </StackPanel>
-                </Grid>
+                </ScrollViewer>
               </TabItem>
               <TabItem Header="Errori" ToolTip="Errori raccolti durante scansione e import/export.">
                 <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">

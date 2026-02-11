@@ -325,6 +325,8 @@ Per il dettaglio completo della logica aggiornata (filtri tree, checkbox persist
 
 - `docs/FILTRI_CHECKBOX_IMPORT_EXPORT.md`
 
+Nella tab **Info Permessi** la UI è stata semplificata per aderire al modello operativo di Windows (schede Sicurezza/Avanzate): focus su owner, ereditarietà e conteggi ACL essenziali con evidenziazione condizionale.
+
 ## File temporanei
 
 Durante la scansione vengono creati file in `%TEMP%\NtfsAudit`:
