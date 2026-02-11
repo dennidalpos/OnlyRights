@@ -92,11 +92,11 @@ namespace NtfsAudit.App.ViewModels
         private string _uiPreferencesPath;
         private Dictionary<string, List<string>> _fullTreeMap;
         private Dictionary<string, List<string>> _currentFilteredTreeMap;
-        private bool _treeFilterExplicitOnly = true;
-        private bool _treeFilterInheritanceDisabledOnly = true;
-        private bool _treeFilterDiffOnly = true;
-        private bool _treeFilterExplicitDenyOnly = true;
-        private bool _treeFilterBaselineMismatchOnly = true;
+        private bool _treeFilterExplicitOnly;
+        private bool _treeFilterInheritanceDisabledOnly;
+        private bool _treeFilterDiffOnly;
+        private bool _treeFilterExplicitDenyOnly;
+        private bool _treeFilterBaselineMismatchOnly;
         private bool _treeFilterFilesOnly = true;
         private bool _treeFilterFoldersOnly = true;
         private string _selectedPathKind = "Unknown";
@@ -737,6 +737,7 @@ namespace NtfsAudit.App.ViewModels
 
         public bool IsScanning { get { return _isScanning; } }
         public bool IsNotScanning { get { return !_isScanning; } }
+        public bool CanImportAnalysis { get { return !_isScanning && !IsBusy; } }
         public bool IsViewerMode { get { return _isViewerMode; } }
         public bool IsNotViewerMode { get { return !_isViewerMode; } }
         public bool IsScanConfigEnabled { get { return !_isViewerMode && !_isScanning; } }
@@ -1601,25 +1602,37 @@ namespace NtfsAudit.App.ViewModels
             {
                 return !AnyTreeFilterEnabled();
             }
-            if (!TreeFilterExplicitOnly && detail.HasExplicitPermissions) return false;
-            if (!TreeFilterInheritanceDisabledOnly && detail.IsInheritanceDisabled) return false;
+
+            if (TreeFilterExplicitOnly && !detail.HasExplicitPermissions) return false;
+            if (TreeFilterInheritanceDisabledOnly && !detail.IsInheritanceDisabled) return false;
+
             var diff = detail.DiffSummary;
             var hasDiff = diff != null && (diff.Added.Count > 0 || diff.Removed.Count > 0);
-            if (!TreeFilterDiffOnly && hasDiff) return false;
+            if (TreeFilterDiffOnly && !hasDiff) return false;
+
             var hasExplicitDeny = diff != null && diff.DenyExplicitCount > 0;
-            if (!TreeFilterExplicitDenyOnly && hasExplicitDeny) return false;
+            if (TreeFilterExplicitDenyOnly && !hasExplicitDeny) return false;
+
             var hasBaselineMismatch = detail.BaselineSummary != null && (detail.BaselineSummary.Added.Count > 0 || detail.BaselineSummary.Removed.Count > 0);
-            if (!TreeFilterBaselineMismatchOnly && hasBaselineMismatch) return false;
+            if (TreeFilterBaselineMismatchOnly && !hasBaselineMismatch) return false;
+
             var hasFiles = detail.AllEntries.Any(e => string.Equals(e.ResourceType, "File", StringComparison.OrdinalIgnoreCase));
             var hasFolders = detail.AllEntries.Any(e => string.Equals(e.ResourceType, "Cartella", StringComparison.OrdinalIgnoreCase));
-            if (!TreeFilterFilesOnly && hasFiles) return false;
-            if (!TreeFilterFoldersOnly && hasFolders) return false;
+
+            if (TreeFilterFilesOnly && !TreeFilterFoldersOnly && !hasFiles) return false;
+            if (TreeFilterFoldersOnly && !TreeFilterFilesOnly && !hasFolders) return false;
+
             return true;
         }
 
         private bool AnyTreeFilterEnabled()
         {
-            return !TreeFilterExplicitOnly || !TreeFilterInheritanceDisabledOnly || !TreeFilterDiffOnly || !TreeFilterExplicitDenyOnly || !TreeFilterBaselineMismatchOnly || !TreeFilterFilesOnly || !TreeFilterFoldersOnly;
+            return TreeFilterExplicitOnly
+                || TreeFilterInheritanceDisabledOnly
+                || TreeFilterDiffOnly
+                || TreeFilterExplicitDenyOnly
+                || TreeFilterBaselineMismatchOnly
+                || (TreeFilterFilesOnly ^ TreeFilterFoldersOnly);
         }
 
         private void UpdateSelectedFolderInfo(string path, FolderDetail detail)
@@ -2121,11 +2134,11 @@ namespace NtfsAudit.App.ViewModels
 
         private void ResetTreeFilters(bool reloadTree)
         {
-            _treeFilterExplicitOnly = true;
-            _treeFilterInheritanceDisabledOnly = true;
-            _treeFilterDiffOnly = true;
-            _treeFilterExplicitDenyOnly = true;
-            _treeFilterBaselineMismatchOnly = true;
+            _treeFilterExplicitOnly = false;
+            _treeFilterInheritanceDisabledOnly = false;
+            _treeFilterDiffOnly = false;
+            _treeFilterExplicitDenyOnly = false;
+            _treeFilterBaselineMismatchOnly = false;
             _treeFilterFilesOnly = true;
             _treeFilterFoldersOnly = true;
             OnPropertyChanged("TreeFilterExplicitOnly");
@@ -2260,6 +2273,7 @@ namespace NtfsAudit.App.ViewModels
             OnPropertyChanged("CanStart");
             OnPropertyChanged("CanStop");
             OnPropertyChanged("CanExport");
+            OnPropertyChanged("CanImportAnalysis");
             OnPropertyChanged("IsBusy");
             OnPropertyChanged("IsNotBusy");
             StartCommand.RaiseCanExecuteChanged();
@@ -2509,11 +2523,11 @@ namespace NtfsAudit.App.ViewModels
             public bool ShowServiceAccounts { get; set; } = true;
             public bool ShowAdminAccounts { get; set; } = true;
             public bool ShowOtherPrincipals { get; set; } = true;
-            public bool TreeFilterExplicitOnly { get; set; } = true;
-            public bool TreeFilterInheritanceDisabledOnly { get; set; } = true;
-            public bool TreeFilterDiffOnly { get; set; } = true;
-            public bool TreeFilterExplicitDenyOnly { get; set; } = true;
-            public bool TreeFilterBaselineMismatchOnly { get; set; } = true;
+            public bool TreeFilterExplicitOnly { get; set; }
+            public bool TreeFilterInheritanceDisabledOnly { get; set; }
+            public bool TreeFilterDiffOnly { get; set; }
+            public bool TreeFilterExplicitDenyOnly { get; set; }
+            public bool TreeFilterBaselineMismatchOnly { get; set; }
             public bool TreeFilterFilesOnly { get; set; } = true;
             public bool TreeFilterFoldersOnly { get; set; } = true;
         }

@@ -172,13 +172,13 @@
               <Button Margin="0,0,8,0" Padding="12,4" Content="Stop" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" Background="#FFC62828" Foreground="White" />
               <Button Margin="0,0,8,0" Padding="12,4" Content="Esporta elenco permessi (Excel)" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
               <Button Margin="0,0,8,0" Padding="12,4" Content="Salva report completo (.ntaudit)" Command="{Binding ExportAnalysisCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
-              <Button Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding IsNotScanning}" Background="#FF616161" Foreground="White" />
+              <Button Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" Background="#FF616161" Foreground="White" />
             </StackPanel>
           </Border>
 
           <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
-              <Button Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding IsNotScanning}" Background="#FF616161" Foreground="White" />
+              <Button Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" Background="#FF616161" Foreground="White" />
             </StackPanel>
           </Border>
 

@@ -1,85 +1,99 @@
 # NTFS Audit
 
-NTFS Audit è un’applicazione desktop WPF per analizzare autorizzazioni NTFS su alberi di cartelle Windows, con risoluzione identità (SID/utente/gruppo), supporto opzionale ai permessi SMB Share, calcolo dell’accesso effettivo e confronto ACL rispetto a baseline. Il progetto include anche un viewer dedicato all’apertura delle analisi archiviate.
+NTFS Audit è una suite WPF per analizzare permessi NTFS/SMB su percorsi locali, UNC e DFS. La soluzione è composta da:
 
-## Obiettivo
+- **NtfsAudit.App**: scansione, analisi interattiva, export Excel e archivio `.ntaudit`.
+- **NtfsAudit.Viewer**: sola consultazione/import di analisi salvate.
+- **NtfsAudit.App.Tests**: test unitari sui servizi di calcolo ACL.
 
-Lo scopo del progetto è offrire una vista operativa e strutturata delle autorizzazioni, aiutando attività di:
+---
 
-- audit di sicurezza file server;
-- verifica ereditarietà ACL ed eccezioni (deny/protected/explicit);
-- individuazione di gruppi e account ad alto impatto (es. Everyone, Authenticated Users, account di servizio, account amministrativi);
-- confronto differenziale ACL (cartella vs padre e baseline attesa);
-- esportazione report e archiviazione analisi per revisione successiva.
+## 1) Cosa fa l’applicazione
 
-## Componenti della soluzione
+L’applicazione acquisisce ACL NTFS, opzionalmente integra layer Share SMB ed Effective Access, risolve SID/identità AD e produce:
 
-La soluzione contiene tre progetti principali:
+- vista ad albero del percorso analizzato;
+- tabelle ACL per gruppi/utenti/tutte le entry;
+- pannello errori;
+- riepilogo rischio (deny, everyone, authenticated users, baseline mismatch).
 
-- `src/NtfsAudit.App`: applicazione WPF principale (scanner + analisi + export/import).
-- `src/NtfsAudit.Viewer`: viewer WPF per aprire analisi salvate.
-- `tests/NtfsAudit.App.Tests`: test automatici dei servizi core.
+È pensata per attività operative di audit e hardening su file server Windows.
 
-## Funzionalità principali
+---
 
-### Scansione ACL NTFS
+## 2) Funzioni principali
 
-- Scansione da percorso radice locale o UNC.
-- Profondità configurabile (`MaxDepth`) con opzione scansione completa (`ScanAllDepths`).
-- Inclusione/esclusione ACE ereditate (`IncludeInherited`).
-- Opzione di scansione file oltre alle cartelle (`IncludeFiles`).
-- Lettura owner e SACL (se abilitata e con privilegi adeguati).
+## Scansione
 
-### Risoluzione identità
+- Selezione cartella root locale/UNC.
+- Profondità configurabile (`MaxDepth`) o scansione completa (`ScanAllDepths`).
+- Inclusione ACL ereditate (`IncludeInherited`).
+- Opzione scansione file (`IncludeFiles`) oltre alle cartelle.
+- Lettura Owner e SACL (`ReadOwnerAndSacl`) se permessi/contesto lo consentono.
 
-- Risoluzione SID → account tramite cache locale.
-- Risoluzione AD tramite provider multipli (Directory Services e PowerShell, in base alle opzioni).
-- Espansione gruppi per analisi membership (`ExpandGroups`).
-- Filtri dedicati per escludere o evidenziare account di servizio e amministrativi.
+## Risoluzione identità
 
-### Audit avanzato
+- Risoluzione SID con cache locale.
+- Risoluzione AD con provider composito (PowerShell + Directory Services).
+- Espansione gruppi annidati (`ExpandGroups`).
+- Classificazione account di servizio/amministrativi.
 
-Quando attivo (`EnableAdvancedAudit`):
+## Audit avanzato
 
-- acquisizione permessi Share SMB (`IncludeSharePermissions`);
-- calcolo accesso effettivo (`ComputeEffectiveAccess`) combinando layer NTFS/Share;
-- confronto con baseline ACL (`CompareBaseline`).
+Con `EnableAdvancedAudit` attivo:
 
-### Navigazione e analisi UI
+- acquisizione ACL Share (`IncludeSharePermissions`);
+- calcolo Effective Access (`ComputeEffectiveAccess`);
+- confronto baseline (`CompareBaseline`).
 
-- Albero cartelle con indicatori visuali (es. nodi protetti, deny espliciti, mismatch baseline, presenza file).
-- Filtri tree rapidi con reset immediato.
-- Tab separati per:
-  - permessi gruppi;
-  - permessi utenti;
-  - dettaglio ACL completo;
-  - permessi Share;
-  - effective access;
-  - riepilogo info permessi;
-  - errori di scansione/import/export.
-- Highlight dei diritti per priorità/rischio (read/write/modify/full/deny).
+## Export e import
 
-### Esportazione e archiviazione
+- **Export Excel (`.xlsx`)** con dataset ACL per analisi esterna.
+- **Export archivio (`.ntaudit`)** con dati scansione completi.
+- **Import archivio (`.ntaudit`)** in App o Viewer, con validazione struttura e recovery dei metadati principali.
 
-- Export report Excel (`.xlsx`) per condivisione e audit formale.
-- Export analisi in formato archivio (`.ntaudit`).
-- Import analisi archiviate per revisione offline tramite app principale o viewer.
+---
 
-### Caching e performance
+## 3) Logica filtri e checkbox
 
-- Cache locale per risoluzione SID.
-- Cache membership gruppi con TTL.
-- Persistenza preferenze UI e percorsi usati di recente.
+## Filtri ACL (griglie)
 
-## Requisiti
+Le checkbox in area filtri ACL applicano restrizioni immediate su tutte le griglie ACL:
 
-- Windows (l’app è WPF e target `net6.0-windows` / `net8.0-windows`).
-- .NET SDK 8 consigliato per build e test.
-- Permessi adeguati all’analisi del filesystem target (per audit avanzato è consigliata esecuzione elevata).
+- `Allow` / `Deny`: tipo ACE;
+- `Ereditato` / `Esplicito`: provenienza della regola;
+- `Protetto`: nodi con ereditarietà disabilitata;
+- `Disabilitato`: ACE disattivate;
+- `Everyone`, `Authenticated Users`, `Utenti di servizio`, `Admin`, `Altri`: segmentazione principale.
 
-## Build e test
+Il filtro testuale (`AclFilter`) ricerca su campi principali (principal, SID, rights, path, share, risk, source e membership).
 
-### Comandi `dotnet`
+## Filtri Tree
+
+I filtri Tree sono **inclusivi**:
+
+- `NTFS espliciti`: mostra solo nodi con permessi espliciti;
+- `Protetto`: mostra solo nodi con inheritance disabilitata;
+- `Diff vs padre`: mostra solo nodi con differenze ACL rispetto al padre;
+- `Deny espliciti`: mostra solo nodi con deny espliciti;
+- `Mismatch baseline`: mostra solo nodi con mismatch baseline;
+- `Con file` / `Solo cartelle`: controllo visibilità per nodi con contenuto file o cartella.
+
+`Reset filtri tree` riporta la configurazione predefinita neutra.
+
+---
+
+## 4) Requisiti
+
+- Windows 10/11 o Server con supporto WPF.
+- .NET SDK 8.x consigliato.
+- Accesso ai percorsi target e, per audit avanzato completo, esecuzione elevata.
+
+---
+
+## 5) Build, test, publish
+
+## Comandi dotnet
 
 ```powershell
 dotnet restore NtfsAudit.sln
@@ -87,68 +101,55 @@ dotnet build NtfsAudit.sln -c Release
 dotnet test NtfsAudit.sln -c Release
 ```
 
-### Script PowerShell inclusi
+## Script build (`scripts/build.ps1`)
 
-Build/publish completo:
+Flusso base:
 
 ```powershell
 ./scripts/build.ps1 -Configuration Release
 ```
 
-Opzioni comuni:
+Supporta restore/build/test/publish app + viewer e gestione clean integrata.
+
+Opzioni più usate:
 
 - `-Framework net8.0-windows`
 - `-Runtime win-x64`
 - `-SelfContained`
 - `-PublishSingleFile`
 - `-PublishReadyToRun`
-- `-SkipTests`
-- `-RunClean`
+- `-SkipRestore`, `-SkipBuild`, `-SkipTests`, `-SkipPublish`
+- `-RunClean` con switch pulizia (`-CleanTemp`, `-CleanImports`, `-CleanCache`, `-CleanLogs`, `-CleanExports`, `-CleanDist`, `-CleanArtifacts`)
 
-Pulizia artefatti/cache/temp:
+## Script clean (`scripts/clean.ps1`)
+
+Pulizia completa predefinita:
 
 ```powershell
 ./scripts/clean.ps1
 ```
 
-Opzioni utili:
+Rimuove binari/obj, `.vs`, dist/artifacts (in base ai flag), cache locale, temp import/export e log.
 
-- `-CleanAllTemp`
-- `-CleanImports`
-- `-CleanCache`
-- `-CleanLogs`
-- `-CleanExports`
+---
 
-## Esecuzione
+## 6) Flusso operativo consigliato
 
-Dopo build/publish, avviare:
+1. Selezionare root da analizzare.
+2. Configurare opzioni scansione (profondità, identity resolution, audit avanzato).
+3. Avviare scansione.
+4. Applicare filtri tree/ACL per isolare criticità.
+5. Esportare Excel per audit tabellare.
+6. Salvare archivio `.ntaudit` per review successiva e condivisione con Viewer.
 
-- `NtfsAudit.App` per scansioni complete, export/import e analisi interattiva;
-- `NtfsAudit.Viewer` per consultazione analisi `.ntaudit`.
+---
 
-Flusso operativo tipico:
+## 7) Struttura repository
 
-1. impostare percorso radice;
-2. configurare opzioni di scansione (profondità, filtri, audit avanzato);
-3. avviare scansione;
-4. usare tree e tab per analisi dettagliata;
-5. esportare in Excel o salvare archivio `.ntaudit`.
-
-## Struttura tecnica (alto livello)
-
-- **ViewModel/UI**: orchestrazione comandi, stato scansione, filtri e binding WPF.
-- **Servizi**:
-  - scansione ACL e costruzione albero;
-  - risoluzione identità e classificazione SID;
-  - espansione gruppi AD;
-  - normalizzazione diritti e calcolo effective access;
-  - confronto ACL/baseline;
-  - gestione archivi analisi e export Excel.
-- **Modelli**: opzioni scansione, dettaglio cartelle, ACE, differenze ACL, errori.
-- **Cache**: SID, membership gruppi, preferenze locali.
-
-## Note operative
-
-- Su share remoti/DFS il comportamento dipende dalla raggiungibilità e dai permessi disponibili.
-- Le opzioni avanzate possono aumentare i tempi di scansione su alberi molto grandi.
-- Per risultati completi su owner/SACL/share/effective access è raccomandata esecuzione con privilegi elevati.
+- `src/NtfsAudit.App/`
+  - `ViewModels/MainViewModel.cs`: orchestrazione UI, comandi, filtri, import/export.
+  - `Services/`: scan, risoluzione identità, diff ACL, archivio analisi.
+  - `Export/`: serializzazione record ACL + export Excel.
+- `src/NtfsAudit.Viewer/`: shell viewer e bootstrap.
+- `tests/NtfsAudit.App.Tests/`: test unitari dei servizi core.
+- `scripts/`: automazione build/clean.
