@@ -125,9 +125,9 @@ I filtri nella vista risultati funzionano in combinazione:
 La TreeView supporta filtri rapidi per isolare nodi con variazioni sui permessi:
 - permessi espliciti,
 - ereditarietà disabilitata,
-- differenze vs parent,
+- differenze vs parent (confronto con la cartella padre immediata),
 - deny espliciti,
-- mismatch baseline,
+- mismatch baseline (confronto con baseline/policy attesa),
 - rischio High/Medium/Low,
 - solo nodi con file,
 - solo nodi cartella.

@@ -65,9 +65,9 @@ Quando un flag viene disattivato (`false`), la relativa categoria viene esclusa.
 
 - `NTFS espliciti`: usa `HasExplicitPermissions`
 - `Protetto`: usa `IsInheritanceDisabled`
-- `Diff parent`: usa `DiffSummary`
+- `Diff vs padre (Δ)`: usa `DiffSummary` e confronta il nodo con la cartella padre immediata (confronto gerarchico)
 - `Deny espliciti`: usa `DiffSummary.DenyExplicitCount`
-- `Baseline mismatch`: usa `BaselineSummary`
+- `Mismatch baseline (B)`: usa `BaselineSummary` e confronta il nodo con baseline/policy attesa (confronto assoluto)
 - `Con file`: usa `ResourceType == File`
 - `Solo cartelle`: usa `ResourceType == Cartella`
 

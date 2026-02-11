@@ -226,17 +226,17 @@
                                             <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="P" Foreground="White" FontSize="10" /></Border>
                       <CheckBox Content="Protetto" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con differenze rispetto alla cartella padre.">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con differenze ACL rispetto alla cartella padre immediata (confronto gerarchico).">
                                             <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="Δ" Foreground="White" FontSize="10" /></Border>
-                      <CheckBox Content="Diff parent" IsChecked="{Binding TreeFilterDiffOnly}" />
+                      <CheckBox Content="Diff vs padre" IsChecked="{Binding TreeFilterDiffOnly}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con regole Deny esplicite.">
                                             <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="D" Foreground="White" FontSize="10" /></Border>
                       <CheckBox Content="Deny espliciti" IsChecked="{Binding TreeFilterExplicitDenyOnly}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con differenze rispetto alla baseline.">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con differenze ACL rispetto alla baseline/policy attesa (confronto assoluto).">
                                             <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="B" Foreground="White" FontSize="10" /></Border>
-                      <CheckBox Content="Baseline mismatch" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" />
+                      <CheckBox Content="Mismatch baseline" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi che contengono file analizzati.">
                                             <Border Background="#FF616161" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="F" Foreground="White" FontSize="10" /></Border>
@@ -247,6 +247,7 @@
                       <CheckBox Content="Solo cartelle" IsChecked="{Binding TreeFilterFoldersOnly}" />
                     </StackPanel>
                   </WrapPanel>
+                  <TextBlock Text="Δ = confronto con la cartella padre | B = confronto con baseline/policy attesa" Style="{StaticResource MicrocopyText}" />
                   <Button Content="Reset filtri tree" Width="140" Margin="0,0,0,8" Command="{Binding ResetTreeFiltersCommand}" />
                                   </StackPanel>
               </Expander>
