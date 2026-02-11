@@ -1530,14 +1530,6 @@ namespace NtfsAudit.App.ViewModels
                     return direct;
                 }
 
-                // Se un nodo non rispetta i filtri correnti, l'intero sottoalbero va escluso
-                // dalla visualizzazione per evitare che cartelle "filtrate out" restino visibili
-                // come antenati di nodi figli.
-                if (!direct && !string.Equals(node, rootPath, StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-
                 var includedChildren = new List<string>();
                 foreach (var child in children)
                 {
@@ -1603,26 +1595,62 @@ namespace NtfsAudit.App.ViewModels
                 return !AnyTreeFilterEnabled();
             }
 
-            if (TreeFilterExplicitOnly && !detail.HasExplicitPermissions) return false;
-            if (TreeFilterInheritanceDisabledOnly && !detail.IsInheritanceDisabled) return false;
-
             var diff = detail.DiffSummary;
             var hasDiff = diff != null && (diff.Added.Count > 0 || diff.Removed.Count > 0);
-            if (TreeFilterDiffOnly && !hasDiff) return false;
-
             var hasExplicitDeny = diff != null && diff.DenyExplicitCount > 0;
-            if (TreeFilterExplicitDenyOnly && !hasExplicitDeny) return false;
-
             var hasBaselineMismatch = detail.BaselineSummary != null && (detail.BaselineSummary.Added.Count > 0 || detail.BaselineSummary.Removed.Count > 0);
-            if (TreeFilterBaselineMismatchOnly && !hasBaselineMismatch) return false;
 
+            var hasTypeMatch = true;
             var hasFiles = detail.AllEntries.Any(e => string.Equals(e.ResourceType, "File", StringComparison.OrdinalIgnoreCase));
             var hasFolders = detail.AllEntries.Any(e => string.Equals(e.ResourceType, "Cartella", StringComparison.OrdinalIgnoreCase));
+            if (TreeFilterFilesOnly && !TreeFilterFoldersOnly)
+            {
+                hasTypeMatch = hasFiles;
+            }
+            else if (TreeFilterFoldersOnly && !TreeFilterFilesOnly)
+            {
+                hasTypeMatch = hasFolders;
+            }
 
-            if (TreeFilterFilesOnly && !TreeFilterFoldersOnly && !hasFiles) return false;
-            if (TreeFilterFoldersOnly && !TreeFilterFilesOnly && !hasFolders) return false;
+            if (!hasTypeMatch)
+            {
+                return false;
+            }
 
-            return true;
+            var includeByCategory = false;
+            var categoryFilterSelected = false;
+
+            if (TreeFilterExplicitOnly)
+            {
+                categoryFilterSelected = true;
+                includeByCategory = includeByCategory || detail.HasExplicitPermissions;
+            }
+
+            if (TreeFilterInheritanceDisabledOnly)
+            {
+                categoryFilterSelected = true;
+                includeByCategory = includeByCategory || detail.IsInheritanceDisabled;
+            }
+
+            if (TreeFilterDiffOnly)
+            {
+                categoryFilterSelected = true;
+                includeByCategory = includeByCategory || hasDiff;
+            }
+
+            if (TreeFilterExplicitDenyOnly)
+            {
+                categoryFilterSelected = true;
+                includeByCategory = includeByCategory || hasExplicitDeny;
+            }
+
+            if (TreeFilterBaselineMismatchOnly)
+            {
+                categoryFilterSelected = true;
+                includeByCategory = includeByCategory || hasBaselineMismatch;
+            }
+
+            return !categoryFilterSelected || includeByCategory;
         }
 
         private bool AnyTreeFilterEnabled()
