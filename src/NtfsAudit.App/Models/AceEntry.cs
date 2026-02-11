@@ -96,6 +96,30 @@ namespace NtfsAudit.App.Models
             }
         }
 
+        public string HighestRightToolTip
+        {
+            get
+            {
+                switch (HighestRightKey)
+                {
+                    case "Full":
+                        return "Controllo completo";
+                    case "Modify":
+                        return "Modifica";
+                    case "ReadAndExecute":
+                        return "Lettura ed esecuzione";
+                    case "Write":
+                        return "Scrittura";
+                    case "List":
+                        return "Visualizza elenco contenuti";
+                    case "Read":
+                        return "Permesso di lettura";
+                    default:
+                        return string.Empty;
+                }
+            }
+        }
+
         private string GetRightsSummaryForFlags()
         {
             return string.IsNullOrWhiteSpace(EffectiveRightsSummary) ? RightsSummary : EffectiveRightsSummary;

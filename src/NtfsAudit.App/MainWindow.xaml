@@ -10,6 +10,20 @@
         Closing="MainWindow_OnClosing">
   <Window.Resources>
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <Style TargetType="FrameworkElement">
+      <Setter Property="ToolTipService.InitialShowDelay" Value="250" />
+      <Setter Property="ToolTipService.ShowDuration" Value="8000" />
+      <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+    </Style>
+    <Style TargetType="ToolTip">
+      <Setter Property="Placement" Value="Mouse" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Padding" Value="8,6" />
+      <Setter Property="Background" Value="#FF263238" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="BorderBrush" Value="#FF37474F" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
     <Style x:Key="SectionHeaderText" TargetType="TextBlock">
       <Setter Property="FontSize" Value="16" />
       <Setter Property="FontWeight" Value="SemiBold" />
@@ -86,13 +100,13 @@
       </Style.Triggers>
     </Style>
     <Style x:Key="BadgeToolTipBorder" TargetType="Border">
-      <Setter Property="ToolTipService.InitialShowDelay" Value="200" />
-      <Setter Property="ToolTipService.ShowDuration" Value="6000" />
+      <Setter Property="ToolTipService.InitialShowDelay" Value="250" />
+      <Setter Property="ToolTipService.ShowDuration" Value="8000" />
       <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
     </Style>
     <DataTemplate x:Key="PermissionBadgesTemplate">
       <StackPanel Orientation="Horizontal">
-        <Border Padding="4,0" CornerRadius="2" Margin="0,0,4,0" ToolTip="{Binding HighestRightLabel}">
+        <Border Padding="4,0" CornerRadius="2" Margin="0,0,4,0" ToolTip="{Binding HighestRightToolTip}">
           <Border.Style>
             <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
               <Setter Property="Visibility" Value="Collapsed" />
@@ -133,7 +147,7 @@
         <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Protetto (ereditarietà disabilitata)" Style="{StaticResource BadgeToolTipBorder}">
           <TextBlock Text="P" Foreground="White" FontSize="10" />
         </Border>
-        <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Deny esplicito" Style="{StaticResource BadgeToolTipBorder}">
+        <Border Background="#FFEB5757" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Accesso negato (Deny esplicito)" Style="{StaticResource BadgeToolTipBorder}">
           <TextBlock Text="D" Foreground="White" FontSize="10" />
         </Border>
       </StackPanel>
@@ -204,35 +218,36 @@
                 <StackPanel Margin="0,6,0,0">
                   <TextBlock Text="🔎 Filtri Tree" Style="{StaticResource SubsectionHeaderText}" />
                   <WrapPanel Margin="0,0,0,4">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra/nasconde nodi con permessi NTFS espliciti.">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con permessi NTFS espliciti.">
                                             <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="N" Foreground="White" FontSize="10" /></Border>
                       <CheckBox Content="NTFS espliciti" IsChecked="{Binding TreeFilterExplicitOnly}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra/nasconde nodi protetti (ereditarietà disabilitata).">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi protetti (ereditarietà disabilitata).">
                                             <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="P" Foreground="White" FontSize="10" /></Border>
                       <CheckBox Content="Protetto" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra/nasconde nodi con differenze rispetto alla cartella padre.">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con differenze ACL rispetto alla cartella padre immediata (confronto gerarchico).">
                                             <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="Δ" Foreground="White" FontSize="10" /></Border>
-                      <CheckBox Content="Diff parent" IsChecked="{Binding TreeFilterDiffOnly}" />
+                      <CheckBox Content="Diff vs padre" IsChecked="{Binding TreeFilterDiffOnly}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra/nasconde nodi con regole Deny esplicite.">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con regole Deny esplicite.">
                                             <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="D" Foreground="White" FontSize="10" /></Border>
                       <CheckBox Content="Deny espliciti" IsChecked="{Binding TreeFilterExplicitDenyOnly}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra/nasconde nodi con differenze dalla baseline.">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con differenze ACL rispetto alla baseline/policy attesa (confronto assoluto).">
                                             <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="B" Foreground="White" FontSize="10" /></Border>
-                      <CheckBox Content="Baseline mismatch" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" />
+                      <CheckBox Content="Mismatch baseline" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra/nasconde nodi che contengono file analizzati.">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi che contengono file analizzati.">
                                             <Border Background="#FF616161" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="F" Foreground="White" FontSize="10" /></Border>
                       <CheckBox Content="Con file" IsChecked="{Binding TreeFilterFilesOnly}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra/nasconde nodi di tipo cartella.">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi di tipo cartella.">
                                             <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="C" Foreground="White" FontSize="10" /></Border>
                       <CheckBox Content="Solo cartelle" IsChecked="{Binding TreeFilterFoldersOnly}" />
                     </StackPanel>
                   </WrapPanel>
+                  <TextBlock Text="Δ = confronto con la cartella padre | B = confronto con baseline/policy attesa" Style="{StaticResource MicrocopyText}" />
                   <Button Content="Reset filtri tree" Width="140" Margin="0,0,0,8" Command="{Binding ResetTreeFiltersCommand}" />
                                   </StackPanel>
               </Expander>
@@ -291,7 +306,7 @@
                       </Border.Style>
                       <TextBlock Text="{Binding DiffLabel}" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Deny espliciti">
+                    <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Accesso negato (Deny espliciti)">
                       <Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
@@ -325,7 +340,7 @@
                       </Border.Style>
                       <TextBlock Text="{Binding BaselineMismatchLabel}" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="ACE NTFS esplicite">
+                    <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Permessi NTFS espliciti">
                       <Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
@@ -382,7 +397,7 @@
                 <Border Background="#FF9B51E0" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Controllo completo" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="👑 Full" Foreground="White" FontSize="10" />
                 </Border>
-                <Border Background="#FFEB5757" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Accesso negato" Style="{StaticResource BadgeToolTipBorder}">
+                <Border Background="#FFEB5757" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Accesso negato (Deny)" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="⛔ Deny" Foreground="White" FontSize="10" />
                 </Border>
               </WrapPanel>
@@ -423,8 +438,8 @@
               </Expander>
             </StackPanel>
             <TabControl Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-              <TabItem Header="Permessi Gruppi">
-                <DataGrid ItemsSource="{Binding FilteredGroupEntries}"
+              <TabItem Header="Permessi Gruppi" ToolTip="Vista permessi dei gruppi con badge, diritti e metadati ACL.">
+                <DataGrid ToolTip="Risultati filtrati dei permessi gruppo." ItemsSource="{Binding FilteredGroupEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"
@@ -462,8 +477,8 @@
                   </DataGrid.Columns>
                 </DataGrid>
               </TabItem>
-              <TabItem Header="Permessi Utenti">
-                <DataGrid ItemsSource="{Binding FilteredUserEntries}"
+              <TabItem Header="Permessi Utenti" ToolTip="Vista permessi degli utenti con badge, diritti e metadati ACL.">
+                <DataGrid ToolTip="Risultati filtrati dei permessi utente." ItemsSource="{Binding FilteredUserEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"
@@ -501,8 +516,8 @@
                   </DataGrid.Columns>
                 </DataGrid>
               </TabItem>
-              <TabItem Header="Dettaglio ACL">
-                <DataGrid ItemsSource="{Binding FilteredAllEntries}"
+              <TabItem Header="Dettaglio ACL" ToolTip="Vista completa ACL (utenti, gruppi, share ed effective).">
+                <DataGrid ToolTip="Dettaglio ACL completo del nodo selezionato." ItemsSource="{Binding FilteredAllEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"
@@ -540,8 +555,8 @@
                   </DataGrid.Columns>
                 </DataGrid>
               </TabItem>
-              <TabItem Header="Share">
-                <DataGrid ItemsSource="{Binding FilteredShareEntries}"
+              <TabItem Header="Share" ToolTip="Vista dei permessi Share SMB rilevati durante la scansione.">
+                <DataGrid ToolTip="Permessi Share SMB del nodo selezionato." ItemsSource="{Binding FilteredShareEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"
@@ -567,8 +582,8 @@
                   </DataGrid.Columns>
                 </DataGrid>
               </TabItem>
-              <TabItem Header="Effective Access">
-                <DataGrid ItemsSource="{Binding FilteredEffectiveEntries}"
+              <TabItem Header="Effective Access" ToolTip="Vista accesso effettivo calcolato da NTFS + Share.">
+                <DataGrid ToolTip="Accesso effettivo combinato NTFS/Share del nodo selezionato." ItemsSource="{Binding FilteredEffectiveEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"
@@ -593,34 +608,97 @@
                   </DataGrid.Columns>
                 </DataGrid>
               </TabItem>
-              <TabItem Header="Info Permessi">
-                <Grid Margin="8">
-                  <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                  </Grid.RowDefinitions>
-                  <TextBlock Grid.Row="0" Text="{Binding SelectedFolderPath}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                  <TextBlock Grid.Row="1" Text="{Binding SelectedPathKind, StringFormat=Tipo percorso: {0}}" Margin="0,6,0,0" />
-                  <TextBlock Grid.Row="2" Text="{Binding SelectedOwnerSummary, StringFormat=Owner: {0}}" Margin="0,4,0,0" />
-                  <TextBlock Grid.Row="3" Text="{Binding SelectedInheritanceSummary}" Margin="0,4,0,0" />
-                  <StackPanel Grid.Row="4" Margin="0,8,0,0">
-                    <TextBlock Text="{Binding SelectedPermissionLayers, StringFormat=Layer: {0}}" />
-                    <TextBlock Text="{Binding SelectedRiskSummary, StringFormat=Rischio: {0}}" />
-                    <TextBlock Text="{Binding SelectedAcquisitionWarnings, StringFormat=Warning: {0}}" TextWrapping="Wrap" />
-                    <TextBlock Text="{Binding SelectedScannedAtText, StringFormat=Timestamp scansione: {0}}" />
-                    <TextBlock Text="{Binding SelectedTotalAceCount, StringFormat=ACE Totali: {0}}" />
-                    <TextBlock Text="{Binding SelectedExplicitAceCount, StringFormat=ACE Esplicite: {0}}" />
-                    <TextBlock Text="{Binding SelectedInheritedAceCount, StringFormat=ACE Ereditate: {0}}" />
-                    <TextBlock Text="{Binding SelectedDenyAceCount, StringFormat=ACE Deny: {0}}" />
+              <TabItem Header="Info Permessi" ToolTip="Riepilogo cartella e autorizzazioni in stile sicurezza/avanzate Windows.">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                  <StackPanel Margin="8">
+                    <TextBlock Text="Oggetto" Style="{StaticResource SubsectionHeaderText}" />
+                    <Border Background="#FFF5F5F5" BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,8">
+                      <TextBlock Text="{Binding SelectedFolderPath}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    </Border>
+
+                    <TextBlock Text="Sicurezza avanzata" Style="{StaticResource SubsectionHeaderText}" />
+                    <Border BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,6">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="#FFE8F5E9" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedOwnerSummary}" Value="-">
+                              <Setter Property="Background" Value="#FFFFEBEE" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock Text="{Binding SelectedOwnerSummary, StringFormat=Owner: {0}}" />
+                    </Border>
+
+                    <Border BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,10">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="#FFE8F5E9" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedInheritanceSummary}" Value="Ereditarietà disabilitata">
+                              <Setter Property="Background" Value="#FFFFEBEE" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock Text="{Binding SelectedInheritanceSummary}" />
+                    </Border>
+
+                    <TextBlock Text="Riepilogo autorizzazioni" Style="{StaticResource SubsectionHeaderText}" />
+                    <WrapPanel>
+                      <Border Background="#FFE3F2FD" BorderBrush="#FFBBDEFB" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                        <TextBlock Text="{Binding SelectedTotalAceCount, StringFormat=Totali: {0}}" />
+                      </Border>
+                      <Border BorderBrush="#FFBBDEFB" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                        <Border.Style>
+                          <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFE3F2FD" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding SelectedExplicitAceCount}" Value="0">
+                                <Setter Property="Background" Value="#FFF5F5F5" />
+                                <Setter Property="BorderBrush" Value="#FFE0E0E0" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding SelectedExplicitAceCount, StringFormat=Esplicite: {0}}" />
+                      </Border>
+                      <Border BorderBrush="#FFC8E6C9" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                        <Border.Style>
+                          <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFE8F5E9" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding SelectedInheritedAceCount}" Value="0">
+                                <Setter Property="Background" Value="#FFFFF8E1" />
+                                <Setter Property="BorderBrush" Value="#FFFFE082" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding SelectedInheritedAceCount, StringFormat=Ereditate: {0}}" />
+                      </Border>
+                      <Border BorderBrush="#FFFFCDD2" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                        <Border.Style>
+                          <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFFFEBEE" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding SelectedDenyAceCount}" Value="0">
+                                <Setter Property="Background" Value="#FFF5F5F5" />
+                                <Setter Property="BorderBrush" Value="#FFE0E0E0" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding SelectedDenyAceCount, StringFormat=Deny: {0}}" />
+                      </Border>
+                    </WrapPanel>
                   </StackPanel>
-                </Grid>
+                </ScrollViewer>
               </TabItem>
-              <TabItem Header="Errori">
+              <TabItem Header="Errori" ToolTip="Errori raccolti durante scansione e import/export.">
                 <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                  <DataGrid ItemsSource="{Binding FilteredErrors}"
+                  <DataGrid ToolTip="Elenco errori (path, tipo e messaggio)." ItemsSource="{Binding FilteredErrors}"
                             AutoGenerateColumns="False"
                             IsReadOnly="True"
                             EnableRowVirtualization="True"

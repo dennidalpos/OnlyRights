@@ -125,9 +125,9 @@ I filtri nella vista risultati funzionano in combinazione:
 La TreeView supporta filtri rapidi per isolare nodi con variazioni sui permessi:
 - permessi espliciti,
 - ereditarietà disabilitata,
-- differenze vs parent,
+- differenze vs parent (confronto con la cartella padre immediata),
 - deny espliciti,
-- mismatch baseline,
+- mismatch baseline (confronto con baseline/policy attesa),
 - rischio High/Medium/Low,
 - solo nodi con file,
 - solo nodi cartella.
@@ -287,7 +287,7 @@ Parametri principali:
 - `-RunClean` (esegue `scripts/clean.ps1` prima del ciclo restore/build)
 - `-SkipTests` (salta `dotnet test` dopo la build)
 - `-CleanLogs` (pulisce log in `%TEMP%\NtfsAudit\logs` e `%LOCALAPPDATA%\NtfsAudit\Logs`)
-- `-CleanExports` (pulisce solo l'output `dist`, mantenendo artifacts/temp/cache)
+- `-CleanExports` (pulisce i soli file export `*.xlsx`/`*.ntaudit` in `dist`, `artifacts`, `exports` e temp export)
 
 Output di default: `dist\<Configuration>` (con eventuale `<Runtime>` e/o `<Framework>`). Il viewer viene pubblicato in `dist\<Configuration>\Viewer`.
 
@@ -317,13 +317,15 @@ Parametri:
 - `-CleanCache` (alias per `-CacheOnly`)
 - `-CleanAllTemp` (pulisce temp, import e cache)
 - `-CleanLogs` (pulisce log temporanei e applicativi)
-- `-CleanExports` (pulisce solo l'output export/dist)
+- `-CleanExports` (rimuove solo i file export `*.xlsx`/`*.ntaudit`, senza cancellare bin/obj)
 
 ## Filtri, checkbox e processi Import/Export
 
-Per il dettaglio completo della logica aggiornata (filtri tree, checkbox persistenti, import/export e esclusioni DFS/DFSR) vedi:
+Per il dettaglio completo della logica aggiornata (filtri tree, checkbox persistenti, import/export, uniformità badge/tooltip e esclusioni DFS/DFSR) vedi:
 
 - `docs/FILTRI_CHECKBOX_IMPORT_EXPORT.md`
+
+Nella tab **Info Permessi** la UI è stata semplificata per aderire al modello operativo di Windows (schede Sicurezza/Avanzate): focus su owner, ereditarietà e conteggi ACL essenziali con evidenziazione condizionale.
 
 ## File temporanei
 
