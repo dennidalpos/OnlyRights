@@ -2031,10 +2031,12 @@ namespace NtfsAudit.App.ViewModels
                 var hasParent = _parentPathMap.TryGetValue(path, out parentPath);
                 var isRoot = string.Equals(path, result.RootPath, StringComparison.OrdinalIgnoreCase) || !hasParent;
                 var hasReadError = errorPaths.Contains(path);
-                FolderDetail parentDetail;
-                var hasParentDetail = hasParent
-                    && !string.IsNullOrWhiteSpace(parentPath)
-                    && result.Details.TryGetValue(parentPath, out parentDetail);
+                FolderDetail parentDetail = null;
+                var hasParentDetail = hasParent && !string.IsNullOrWhiteSpace(parentPath);
+                if (hasParentDetail)
+                {
+                    hasParentDetail = result.Details.TryGetValue(parentPath, out parentDetail);
+                }
                 var parent = hasParentDetail ? parentDetail : null;
                 _folderExplanations[path] = _parentDiffExplainer.Explain(child, parent, useEffective, isRoot, hasReadError);
             }
