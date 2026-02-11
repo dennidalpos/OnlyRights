@@ -1508,6 +1508,15 @@ namespace NtfsAudit.App.ViewModels
                     if (direct) filtered[node] = new List<string>();
                     return direct;
                 }
+
+                // Se un nodo non rispetta i filtri correnti, l'intero sottoalbero va escluso
+                // dalla visualizzazione per evitare che cartelle "filtrate out" restino visibili
+                // come antenati di nodi figli.
+                if (!direct && !string.Equals(node, rootPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
                 var includedChildren = new List<string>();
                 foreach (var child in children)
                 {
