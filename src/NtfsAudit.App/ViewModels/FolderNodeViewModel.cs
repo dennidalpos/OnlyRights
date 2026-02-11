@@ -80,16 +80,15 @@ namespace NtfsAudit.App.ViewModels
         public bool HasLowRisk { get; private set; }
         public bool HasExplicitAdded { get { return ExplicitAddedCount > 0; } }
         public bool HasExplicitRemoved { get { return ExplicitRemovedCount > 0; } }
+        public bool HasDiff { get { return HasExplicitAdded || HasExplicitRemoved; } }
         public bool HasDenyExplicit { get { return DenyExplicitCount > 0; } }
         public bool HasBaselineAdded { get { return BaselineAddedCount > 0; } }
         public bool HasBaselineRemoved { get { return BaselineRemovedCount > 0; } }
-        public string ExplicitAddedLabel { get { return string.Format("A+{0}", ExplicitAddedCount); } }
-        public string ExplicitRemovedLabel { get { return string.Format("R-{0}", ExplicitRemovedCount); } }
+        public bool HasBaselineMismatch { get { return HasBaselineAdded || HasBaselineRemoved; } }
+        public string DiffLabel { get { return "Δ"; } }
         public string DenyExplicitLabel { get { return "D"; } }
-        public string BaselineAddedLabel { get { return string.Format("B+{0}", BaselineAddedCount); } }
-        public string BaselineRemovedLabel { get { return string.Format("B-{0}", BaselineRemovedCount); } }
+        public string BaselineMismatchLabel { get { return "B"; } }
         public string ExplicitNtfsLabel { get { return "N"; } }
-        public string ExplicitShareLabel { get { return "S"; } }
 
         public bool IsExpanded
         {
