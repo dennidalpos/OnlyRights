@@ -72,60 +72,73 @@ namespace NtfsAudit.App.Services
         {
             if (string.IsNullOrWhiteSpace(archivePath)) throw new ArgumentException("Archive path required", "archivePath");
             var ioArchivePath = PathResolver.ToExtendedPath(archivePath);
+            if (!File.Exists(ioArchivePath)) throw new FileNotFoundException("Analysis archive not found.", archivePath);
             var tempDir = Path.Combine(Path.GetTempPath(), "NtfsAudit", "imports", Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(tempDir);
+            var importSucceeded = false;
 
-            using (var archive = ZipFile.OpenRead(ioArchivePath))
+            try
             {
-                ExtractEntry(archive, DataEntryName, tempDir);
-                ExtractEntry(archive, ErrorsEntryName, tempDir);
-                ExtractEntry(archive, TreeEntryName, tempDir);
-                ExtractEntry(archive, FolderFlagsEntryName, tempDir);
-                ExtractEntry(archive, MetaEntryName, tempDir);
+                using (var archive = ZipFile.OpenRead(ioArchivePath))
+                {
+                    ExtractEntry(archive, DataEntryName, tempDir);
+                    ExtractEntry(archive, ErrorsEntryName, tempDir);
+                    ExtractEntry(archive, TreeEntryName, tempDir);
+                    ExtractEntry(archive, FolderFlagsEntryName, tempDir);
+                    ExtractEntry(archive, MetaEntryName, tempDir);
+                }
+
+                var dataPath = Path.Combine(tempDir, DataEntryName);
+                var errorPath = Path.Combine(tempDir, ErrorsEntryName);
+                var treePath = Path.Combine(tempDir, TreeEntryName);
+                var folderFlagsPath = Path.Combine(tempDir, FolderFlagsEntryName);
+                var metaPath = Path.Combine(tempDir, MetaEntryName);
+                if (!File.Exists(dataPath))
+                {
+                    throw new InvalidDataException("Archivio analisi non valido: dati mancanti.");
+                }
+                if (!File.Exists(errorPath))
+                {
+                    File.WriteAllText(errorPath, string.Empty);
+                }
+
+                var meta = LoadMeta(metaPath);
+                var scanOptions = meta.ScanOptions ?? LoadScanOptions(dataPath);
+                var resolvedRootPath = ResolveArchiveRoot(meta.RootPath, dataPath, scanOptions);
+                var treeMap = LoadTreeMap(treePath, dataPath, resolvedRootPath);
+
+                var details = BuildDetailsFromExport(dataPath);
+                ApplyFolderFlags(details, LoadFolderFlags(folderFlagsPath));
+
+                var result = new ScanResult
+                {
+                    TempDataPath = dataPath,
+                    ErrorPath = errorPath,
+                    Details = details,
+                    TreeMap = treeMap,
+                    RootPath = resolvedRootPath,
+                    RootPathKind = meta.RootPathKind == PathKind.Unknown ? PathResolver.DetectPathKind(resolvedRootPath) : meta.RootPathKind,
+                    ScanOptions = scanOptions,
+                    ScannedAtUtc = meta.CreatedAt
+                };
+
+                importSucceeded = true;
+                return new AnalysisArchiveResult
+                {
+                    ScanResult = result,
+                    RootPath = resolvedRootPath,
+                    RootPathKind = result.RootPathKind,
+                    ScannedAtUtc = result.ScannedAtUtc,
+                    ScanOptions = scanOptions
+                };
             }
-
-            var dataPath = Path.Combine(tempDir, DataEntryName);
-            var errorPath = Path.Combine(tempDir, ErrorsEntryName);
-            var treePath = Path.Combine(tempDir, TreeEntryName);
-            var folderFlagsPath = Path.Combine(tempDir, FolderFlagsEntryName);
-            var metaPath = Path.Combine(tempDir, MetaEntryName);
-            if (!File.Exists(dataPath))
+            finally
             {
-                throw new InvalidDataException("Archivio analisi non valido: dati mancanti.");
+                if (!importSucceeded && Directory.Exists(tempDir))
+                {
+                    Directory.Delete(tempDir, true);
+                }
             }
-            if (!File.Exists(errorPath))
-            {
-                File.WriteAllText(errorPath, string.Empty);
-            }
-
-            var meta = LoadMeta(metaPath);
-            var scanOptions = meta.ScanOptions ?? LoadScanOptions(dataPath);
-            var resolvedRootPath = ResolveArchiveRoot(meta.RootPath, dataPath, scanOptions);
-            var treeMap = LoadTreeMap(treePath, dataPath, resolvedRootPath);
-
-            var details = BuildDetailsFromExport(dataPath);
-            ApplyFolderFlags(details, LoadFolderFlags(folderFlagsPath));
-
-            var result = new ScanResult
-            {
-                TempDataPath = dataPath,
-                ErrorPath = errorPath,
-                Details = details,
-                TreeMap = treeMap,
-                RootPath = resolvedRootPath,
-                RootPathKind = meta.RootPathKind == PathKind.Unknown ? PathResolver.DetectPathKind(resolvedRootPath) : meta.RootPathKind,
-                ScanOptions = scanOptions,
-                ScannedAtUtc = meta.CreatedAt
-            };
-
-            return new AnalysisArchiveResult
-            {
-                ScanResult = result,
-                RootPath = resolvedRootPath,
-                RootPathKind = result.RootPathKind,
-                ScannedAtUtc = result.ScannedAtUtc,
-                ScanOptions = scanOptions
-            };
         }
 
         private string ResolveArchiveRoot(string rootPath, string dataPath, ScanOptions scanOptions)

@@ -287,7 +287,7 @@ Parametri principali:
 - `-RunClean` (esegue `scripts/clean.ps1` prima del ciclo restore/build)
 - `-SkipTests` (salta `dotnet test` dopo la build)
 - `-CleanLogs` (pulisce log in `%TEMP%\NtfsAudit\logs` e `%LOCALAPPDATA%\NtfsAudit\Logs`)
-- `-CleanExports` (pulisce solo l'output `dist`, mantenendo artifacts/temp/cache)
+- `-CleanExports` (pulisce i soli file export `*.xlsx`/`*.ntaudit` in `dist`, `artifacts`, `exports` e temp export)
 
 Output di default: `dist\<Configuration>` (con eventuale `<Runtime>` e/o `<Framework>`). Il viewer viene pubblicato in `dist\<Configuration>\Viewer`.
 
@@ -317,7 +317,7 @@ Parametri:
 - `-CleanCache` (alias per `-CacheOnly`)
 - `-CleanAllTemp` (pulisce temp, import e cache)
 - `-CleanLogs` (pulisce log temporanei e applicativi)
-- `-CleanExports` (pulisce solo l'output export/dist)
+- `-CleanExports` (rimuove solo i file export `*.xlsx`/`*.ntaudit`, senza cancellare bin/obj)
 
 ## Filtri, checkbox e processi Import/Export
 

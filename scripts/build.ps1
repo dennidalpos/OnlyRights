@@ -45,21 +45,31 @@ if ($Framework) {
 if (!(Test-Path $solution)) { throw "Solution not found" }
 if (!(Test-Path $project)) { throw "Project not found" }
 if (!(Test-Path $viewerProject)) { throw "Viewer project not found" }
-
 if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) { throw "dotnet SDK not found." }
 
 if ($RunClean) {
     $cleanScript = Join-Path $PSScriptRoot "clean.ps1"
     if (!(Test-Path $cleanScript)) { throw "clean.ps1 not found." }
-    $cleanArgs = @()
+
+    $cleanArgs = @("-Configuration", $Configuration)
+
+    if ($Framework) { $cleanArgs += @("-Framework", $Framework) }
+    if ($Runtime) { $cleanArgs += @("-Runtime", $Runtime) }
+    if ($TempRoot) { $cleanArgs += @("-TempRoot", $TempRoot) }
+    if ($OutputPath) { $cleanArgs += @("-DistRoot", $distRoot) }
+
     if ($CleanAllTemp) { $cleanArgs += "-CleanAllTemp" }
-    if ($CleanTemp) { $cleanArgs += "-KeepImportTemp" }
     if ($CleanImports) { $cleanArgs += "-CleanImports" }
     if ($CleanCache) { $cleanArgs += "-CleanCache" }
-    if ($CleanDist) { $cleanArgs += "-Configuration"; $cleanArgs += $Configuration }
-    if ($CleanArtifacts) { } else { $cleanArgs += "-KeepArtifacts" }
     if ($CleanLogs) { $cleanArgs += "-CleanLogs" }
     if ($CleanExports) { $cleanArgs += "-CleanExports" }
+
+    if (-not $CleanDist) { $cleanArgs += "-KeepDist" }
+    if (-not $CleanArtifacts) { $cleanArgs += "-KeepArtifacts" }
+    if (-not $CleanTemp -and -not $CleanAllTemp) { $cleanArgs += "-KeepTemp" }
+    if (-not $CleanImports -and -not $CleanAllTemp) { $cleanArgs += "-KeepImportTemp" }
+    if (-not $CleanCache -and -not $CleanAllTemp) { $cleanArgs += "-KeepCache" }
+
     & $cleanScript @cleanArgs
     if ($LASTEXITCODE -ne 0) { throw "Clean failed." }
 }

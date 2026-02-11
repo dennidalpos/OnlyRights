@@ -32,13 +32,22 @@ function Get-TempRoot {
     return [System.IO.Path]::GetTempPath()
 }
 
-$paths = @(
-    (Join-Path $root ".vs"),
-    (Join-Path $root "src\NtfsAudit.App\bin"),
-    (Join-Path $root "src\NtfsAudit.App\obj"),
-    (Join-Path $root "src\NtfsAudit.Viewer\bin"),
-    (Join-Path $root "src\NtfsAudit.Viewer\obj")
-)
+function Remove-PathIfExists {
+    param([string]$PathToRemove)
+    if (-not [string]::IsNullOrWhiteSpace($PathToRemove) -and (Test-Path $PathToRemove)) {
+        Remove-Item $PathToRemove -Recurse -Force
+    }
+}
+
+function Remove-ExportFiles {
+    param([string[]]$BasePaths)
+    foreach ($basePath in $BasePaths) {
+        if (-not (Test-Path $basePath)) { continue }
+        Get-ChildItem -Path $basePath -Include *.xlsx, *.ntaudit -File -Recurse -ErrorAction SilentlyContinue |
+            ForEach-Object { Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue }
+    }
+}
+
 if ($CleanImports) {
     $ImportsOnly = $true
 }
@@ -47,19 +56,34 @@ if ($CleanCache) {
     $CacheOnly = $true
 }
 
-if ($CleanExports) {
-    $KeepDist = $false
-    $KeepArtifacts = $true
-    $KeepTemp = $true
-    $KeepImportTemp = $true
-    $KeepCache = $true
-}
-
 if ($CleanAllTemp) {
     $KeepTemp = $false
     $KeepImportTemp = $false
     $KeepCache = $false
 }
+
+if ($CleanExports) {
+    $ImportsOnly = $false
+    $CacheOnly = $false
+    Remove-ExportFiles @(
+        (Join-Path $root "dist"),
+        (Join-Path $root "artifacts"),
+        (Join-Path $root "exports")
+    )
+
+    $baseTemp = Get-TempRoot $TempRoot
+    Remove-ExportFiles @(
+        (Join-Path (Join-Path $baseTemp "NtfsAudit") "exports")
+    )
+}
+
+$paths = @(
+    (Join-Path $root ".vs"),
+    (Join-Path $root "src\NtfsAudit.App\bin"),
+    (Join-Path $root "src\NtfsAudit.App\obj"),
+    (Join-Path $root "src\NtfsAudit.Viewer\bin"),
+    (Join-Path $root "src\NtfsAudit.Viewer\obj")
+)
 
 if ($ImportsOnly -or $CacheOnly) {
     $paths = @()
@@ -74,17 +98,22 @@ if (-not $KeepDist) {
     if ($DistRoot) {
         $distPath = if ([System.IO.Path]::IsPathRooted($DistRoot)) { $DistRoot } else { Join-Path $root $DistRoot }
         $paths += $distPath
-    } elseif ($Configuration) {
+    }
+    elseif ($Configuration) {
         if ($Runtime -and $Framework) {
             $paths += (Join-Path $root "dist\$Configuration\$Runtime\$Framework")
-        } elseif ($Runtime) {
+        }
+        elseif ($Runtime) {
             $paths += (Join-Path $root "dist\$Configuration\$Runtime")
-        } elseif ($Framework) {
+        }
+        elseif ($Framework) {
             $paths += (Join-Path $root "dist\$Configuration\$Framework")
-        } else {
+        }
+        else {
             $paths += (Join-Path $root "dist\$Configuration")
         }
-    } else {
+    }
+    else {
         $paths += (Join-Path $root "dist")
     }
 }
@@ -94,40 +123,38 @@ if (-not $KeepArtifacts) {
 }
 
 foreach ($path in $paths) {
-    if (Test-Path $path) { Remove-Item $path -Recurse -Force }
+    Remove-PathIfExists $path
 }
 
+$baseTemp = Get-TempRoot $TempRoot
 if (-not $KeepTemp) {
-    $baseTemp = Get-TempRoot $TempRoot
     $temp = Join-Path $baseTemp "NtfsAudit"
     if (Test-Path $temp) {
         if ($KeepImportTemp) {
             Get-ChildItem $temp | Where-Object { $_.Name -ne "imports" } | ForEach-Object {
-                Remove-Item $_.FullName -Recurse -Force
+                Remove-PathIfExists $_.FullName
             }
-        } else {
-            Remove-Item $temp -Recurse -Force
+        }
+        else {
+            Remove-PathIfExists $temp
         }
     }
 }
 elseif (-not $KeepImportTemp) {
-    $baseTemp = Get-TempRoot $TempRoot
     $importTemp = Join-Path (Join-Path $baseTemp "NtfsAudit") "imports"
-    if (Test-Path $importTemp) { Remove-Item $importTemp -Recurse -Force }
+    Remove-PathIfExists $importTemp
 }
 
 if (-not $KeepCache) {
     $localAppData = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [Environment]::GetFolderPath("LocalApplicationData") }
     $cache = Join-Path $localAppData "NtfsAudit\Cache"
-    if (Test-Path $cache) { Remove-Item $cache -Recurse -Force }
+    Remove-PathIfExists $cache
 }
 
-
 if ($CleanLogs) {
-    $baseTemp = Get-TempRoot $TempRoot
     $tempLogs = Join-Path (Join-Path $baseTemp "NtfsAudit") "logs"
-    if (Test-Path $tempLogs) { Remove-Item $tempLogs -Recurse -Force }
+    Remove-PathIfExists $tempLogs
     $localAppData = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [Environment]::GetFolderPath("LocalApplicationData") }
     $appLogs = Join-Path $localAppData "NtfsAudit\Logs"
-    if (Test-Path $appLogs) { Remove-Item $appLogs -Recurse -Force }
+    Remove-PathIfExists $appLogs
 }

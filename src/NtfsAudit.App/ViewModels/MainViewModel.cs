@@ -773,13 +773,33 @@ namespace NtfsAudit.App.ViewModels
         public bool TreeFilterFilesOnly
         {
             get { return _treeFilterFilesOnly; }
-            set { _treeFilterFilesOnly = value; OnPropertyChanged("TreeFilterFilesOnly"); ReloadTreeWithFilters(); }
+            set
+            {
+                _treeFilterFilesOnly = value;
+                OnPropertyChanged("TreeFilterFilesOnly");
+                if (!value && !_treeFilterFoldersOnly)
+                {
+                    _treeFilterFoldersOnly = true;
+                    OnPropertyChanged("TreeFilterFoldersOnly");
+                }
+                ReloadTreeWithFilters();
+            }
         }
 
         public bool TreeFilterFoldersOnly
         {
             get { return _treeFilterFoldersOnly; }
-            set { _treeFilterFoldersOnly = value; OnPropertyChanged("TreeFilterFoldersOnly"); ReloadTreeWithFilters(); }
+            set
+            {
+                _treeFilterFoldersOnly = value;
+                OnPropertyChanged("TreeFilterFoldersOnly");
+                if (!value && !_treeFilterFilesOnly)
+                {
+                    _treeFilterFilesOnly = true;
+                    OnPropertyChanged("TreeFilterFilesOnly");
+                }
+                ReloadTreeWithFilters();
+            }
         }
 
         public string SelectedPathKind { get { return _selectedPathKind; } private set { _selectedPathKind = value; OnPropertyChanged("SelectedPathKind"); } }
@@ -1941,8 +1961,8 @@ namespace NtfsAudit.App.ViewModels
             {
                 return false;
             }
-            var isDeny = string.Equals(entry.AllowDeny, "Deny", StringComparison.OrdinalIgnoreCase);
-            var isAllow = string.Equals(entry.AllowDeny, "Allow", StringComparison.OrdinalIgnoreCase);
+            var isDeny = IsDenyEntry(entry);
+            var isAllow = IsAllowEntry(entry);
             if (!ShowAllow && isAllow)
             {
                 return false;
@@ -2014,6 +2034,16 @@ namespace NtfsAudit.App.ViewModels
                 || MatchesFilter(entry.Source, term)
                 || MatchesFilter(entry.PathKind.ToString(), term)
                 || MatchesMemberFilter(entry.MemberNames, term);
+        }
+
+        private bool IsAllowEntry(AceEntry entry)
+        {
+            return entry != null && string.Equals(entry.AllowDeny, "Allow", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsDenyEntry(AceEntry entry)
+        {
+            return entry != null && string.Equals(entry.AllowDeny, "Deny", StringComparison.OrdinalIgnoreCase);
         }
 
         private string GetFolderName(string folderPath)
