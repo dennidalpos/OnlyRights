@@ -1145,14 +1145,14 @@ namespace NtfsAudit.App.ViewModels
                 _hasExported = true;
                 UpdateLastDirectory(ref _lastExportDirectory, outputPath);
                 var warningMessage = BuildExcelWarningMessage(result);
-                var progressMessage = string.IsNullOrWhiteSpace(warningMessage)
-                    ? string.Format("Export completato: {0}", outputPath)
-                    : string.Format("Export completato con avvisi: {0}", outputPath);
-                ProgressText = progressMessage;
-                var dialogMessage = string.IsNullOrWhiteSpace(warningMessage)
-                    ? string.Format("Export completato:\n{0}", outputPath)
-                    : string.Format("Export completato:\n{0}\n\nATTENZIONE: {1}", outputPath, warningMessage);
-                WpfMessageBox.Show(dialogMessage, "Export completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                if (!string.IsNullOrWhiteSpace(warningMessage))
+                {
+                    WpfMessageBox.Show(
+                        string.Format("ATTENZIONE: {0}", warningMessage),
+                        "Export con avvisi",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Warning);
+                }
             }
             catch (Exception ex)
             {
@@ -1178,8 +1178,6 @@ namespace NtfsAudit.App.ViewModels
             if (dialog.ShowDialog() != true) return;
             await RunExportActionAsync(
                 () => _analysisArchive.Export(_scanResult, RootPath, dialog.FileName),
-                string.Format("Analisi esportata: {0}", dialog.FileName),
-                string.Format("Analisi esportata:\n{0}", dialog.FileName),
                 "Errore export analisi",
                 dialog.FileName);
         }
@@ -1241,8 +1239,6 @@ namespace NtfsAudit.App.ViewModels
                     SelectFolder(root);
                 }
                 UpdateLastDirectory(ref _lastImportDirectory, dialog.FileName);
-                ProgressText = string.Format("Analisi importata: {0}", dialog.FileName);
-                WpfMessageBox.Show(string.Format("Analisi importata:\n{0}", dialog.FileName), "Import completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 UpdateCommands();
             }
             catch (Exception ex)
@@ -1256,7 +1252,7 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        private async Task RunExportActionAsync(Action exportAction, string progressMessage, string dialogMessage, string errorLabel, string outputPath = null)
+        private async Task RunExportActionAsync(Action exportAction, string errorLabel, string outputPath = null)
         {
             try
             {
@@ -1265,8 +1261,6 @@ namespace NtfsAudit.App.ViewModels
                 EnsureExportOutput(outputPath);
                 _hasExported = true;
                 UpdateLastDirectory(ref _lastExportDirectory, outputPath);
-                ProgressText = progressMessage;
-                WpfMessageBox.Show(dialogMessage, "Export completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
