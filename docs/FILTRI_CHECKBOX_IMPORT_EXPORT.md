@@ -137,3 +137,12 @@ Aggiornamenti principali:
 - helper centralizzati per rimozione sicura path,
 - modalità `-CleanExports` dedicata alla sola pulizia file export (`*.xlsx`, `*.ntaudit`) in `dist/`, `artifacts/`, `exports/` e temp export,
 - compatibilità con pulizie selettive (`ImportsOnly`, `CacheOnly`, `CleanAllTemp`, `CleanLogs`).
+
+---
+
+## 7) Uniformità badge e tooltip UI
+
+- I badge dei permessi nelle griglie risultati sono ora allineati alla legenda diritti (stesse etichette/semantica tooltip).
+- Il badge Deny nei risultati usa la stessa semantica di legenda: "Accesso negato (Deny)".
+- Tooltip uniformati in tutte le tab principali (Permessi Gruppi/Utenti, Dettaglio ACL, Share, Effective Access, Info Permessi, Errori).
+- Stile tooltip unificato anche per la vista dettagli principal (`PrincipalDetailsWindow`).

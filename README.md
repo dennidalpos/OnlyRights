@@ -321,7 +321,7 @@ Parametri:
 
 ## Filtri, checkbox e processi Import/Export
 
-Per il dettaglio completo della logica aggiornata (filtri tree, checkbox persistenti, import/export e esclusioni DFS/DFSR) vedi:
+Per il dettaglio completo della logica aggiornata (filtri tree, checkbox persistenti, import/export, uniformità badge/tooltip e esclusioni DFS/DFSR) vedi:
 
 - `docs/FILTRI_CHECKBOX_IMPORT_EXPORT.md`
 
