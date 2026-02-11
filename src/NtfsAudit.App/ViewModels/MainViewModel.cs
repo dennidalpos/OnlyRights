@@ -1130,6 +1130,12 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_isViewerMode) return;
             if (_scanResult == null) return;
+            if (string.IsNullOrWhiteSpace(_scanResult.TempDataPath) || !File.Exists(_scanResult.TempDataPath))
+            {
+                ProgressText = "Export non disponibile: file dati scansione mancante.";
+                WpfMessageBox.Show(ProgressText, "Export non disponibile", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return;
+            }
             var dialog = new Win32.SaveFileDialog
             {
                 Filter = "Excel (*.xlsx)|*.xlsx",
@@ -1185,6 +1191,7 @@ namespace NtfsAudit.App.ViewModels
 
         private async void ImportAnalysis()
         {
+            if (IsBusy) return;
             var dialog = new Win32.OpenFileDialog
             {
                 Filter = "Analisi NtfsAudit (*.ntaudit)|*.ntaudit",
@@ -1201,6 +1208,15 @@ namespace NtfsAudit.App.ViewModels
                     ProgressText = "Analisi importata non valida.";
                     return;
                 }
+                if (importedResult.Details == null)
+                {
+                    importedResult.Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase);
+                }
+                if (importedResult.TreeMap == null)
+                {
+                    importedResult.TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                }
+
                 ApplyDiffs(importedResult);
                 if (!ValidateImportedResult(importedResult, out var validationMessage))
                 {

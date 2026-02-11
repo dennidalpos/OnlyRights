@@ -14,7 +14,8 @@ param(
     [switch]$CacheOnly,
     [switch]$CleanImports,
     [switch]$CleanCache,
-    [switch]$CleanLogs
+    [switch]$CleanLogs,
+    [switch]$CleanExports
 )
 
 $ErrorActionPreference = "Stop"
@@ -44,6 +45,14 @@ if ($CleanImports) {
 
 if ($CleanCache) {
     $CacheOnly = $true
+}
+
+if ($CleanExports) {
+    $KeepDist = $false
+    $KeepArtifacts = $true
+    $KeepTemp = $true
+    $KeepImportTemp = $true
+    $KeepCache = $true
 }
 
 if ($CleanAllTemp) {

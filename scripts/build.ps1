@@ -20,7 +20,8 @@ param(
     [switch]$PublishReadyToRun,
     [switch]$RunClean,
     [switch]$SkipTests,
-    [switch]$CleanLogs
+    [switch]$CleanLogs,
+    [switch]$CleanExports
 )
 
 $ErrorActionPreference = "Stop"
@@ -58,6 +59,7 @@ if ($RunClean) {
     if ($CleanDist) { $cleanArgs += "-Configuration"; $cleanArgs += $Configuration }
     if ($CleanArtifacts) { } else { $cleanArgs += "-KeepArtifacts" }
     if ($CleanLogs) { $cleanArgs += "-CleanLogs" }
+    if ($CleanExports) { $cleanArgs += "-CleanExports" }
     & $cleanScript @cleanArgs
     if ($LASTEXITCODE -ne 0) { throw "Clean failed." }
 }
