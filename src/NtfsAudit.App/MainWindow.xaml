@@ -274,13 +274,14 @@
                       </Border.Style>
                       <TextBlock Text="P" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FF2E7D32" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="ACE esplicite aggiunte rispetto al parent"><Border.Style>
+                    <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Differenze rispetto alla cartella padre">
+                      <Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
                           <Style.Triggers>
                             <MultiDataTrigger>
                               <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding HasExplicitAdded}" Value="True" />
+                                <Condition Binding="{Binding HasDiff}" Value="True" />
                                 <Condition Binding="{Binding DataContext.TreeFilterDiffOnly, RelativeSource={RelativeSource AncestorType=TreeView}}" Value="True" />
                               </MultiDataTrigger.Conditions>
                               <Setter Property="Visibility" Value="Visible" />
@@ -288,25 +289,10 @@
                           </Style.Triggers>
                         </Style>
                       </Border.Style>
-                      <TextBlock Text="{Binding ExplicitAddedLabel}" Foreground="White" FontSize="10" />
+                      <TextBlock Text="{Binding DiffLabel}" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FFF57C00" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="ACE rimosse rispetto al parent"><Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
-                          <Setter Property="Visibility" Value="Collapsed" />
-                          <Style.Triggers>
-                            <MultiDataTrigger>
-                              <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding HasExplicitRemoved}" Value="True" />
-                                <Condition Binding="{Binding DataContext.TreeFilterDiffOnly, RelativeSource={RelativeSource AncestorType=TreeView}}" Value="True" />
-                              </MultiDataTrigger.Conditions>
-                              <Setter Property="Visibility" Value="Visible" />
-                            </MultiDataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </Border.Style>
-                      <TextBlock Text="{Binding ExplicitRemovedLabel}" Foreground="White" FontSize="10" />
-                    </Border>
-                    <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Deny espliciti"><Border.Style>
+                    <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Deny espliciti">
+                      <Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
                           <Style.Triggers>
@@ -322,13 +308,14 @@
                       </Border.Style>
                       <TextBlock Text="{Binding DenyExplicitLabel}" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Aggiunte vs baseline"><Border.Style>
+                    <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Differenze rispetto alla baseline">
+                      <Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
                           <Style.Triggers>
                             <MultiDataTrigger>
                               <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding HasBaselineAdded}" Value="True" />
+                                <Condition Binding="{Binding HasBaselineMismatch}" Value="True" />
                                 <Condition Binding="{Binding DataContext.TreeFilterBaselineMismatchOnly, RelativeSource={RelativeSource AncestorType=TreeView}}" Value="True" />
                               </MultiDataTrigger.Conditions>
                               <Setter Property="Visibility" Value="Visible" />
@@ -336,25 +323,10 @@
                           </Style.Triggers>
                         </Style>
                       </Border.Style>
-                      <TextBlock Text="{Binding BaselineAddedLabel}" Foreground="White" FontSize="10" />
+                      <TextBlock Text="{Binding BaselineMismatchLabel}" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FF78909C" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Rimozioni vs baseline"><Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
-                          <Setter Property="Visibility" Value="Collapsed" />
-                          <Style.Triggers>
-                            <MultiDataTrigger>
-                              <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding HasBaselineRemoved}" Value="True" />
-                                <Condition Binding="{Binding DataContext.TreeFilterBaselineMismatchOnly, RelativeSource={RelativeSource AncestorType=TreeView}}" Value="True" />
-                              </MultiDataTrigger.Conditions>
-                              <Setter Property="Visibility" Value="Visible" />
-                            </MultiDataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </Border.Style>
-                      <TextBlock Text="{Binding BaselineRemovedLabel}" Foreground="White" FontSize="10" />
-                    </Border>
-                    <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="ACE NTFS esplicite"><Border.Style>
+                    <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="ACE NTFS esplicite">
+                      <Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
                           <Style.Triggers>
@@ -369,9 +341,6 @@
                         </Style>
                       </Border.Style>
                       <TextBlock Text="{Binding ExplicitNtfsLabel}" Foreground="White" FontSize="10" />
-                    </Border>
-                    <Border Background="#FF1565C0" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Permessi Share espliciti" Style="{StaticResource BadgeToolTipBorder}" Visibility="{Binding HasExplicitShare, Converter={StaticResource BooleanToVisibilityConverter}}">
-                      <TextBlock Text="{Binding ExplicitShareLabel}" Foreground="White" FontSize="10" />
                     </Border>
                   </StackPanel>
                 </HierarchicalDataTemplate>
