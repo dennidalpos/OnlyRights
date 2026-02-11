@@ -340,66 +340,68 @@
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0">
               <TextBlock Text="Risultati" Style="{StaticResource SectionHeaderText}" />
-              <Border Background="#FFE3F2FD" BorderBrush="#FF1565C0" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,6">
-                <TextBlock Text="{Binding SelectedFolderName}" FontWeight="SemiBold" FontSize="14" Foreground="#FF0D47A1" TextTrimming="CharacterEllipsis" />
-              </Border>
-              <TextBlock Text="{Binding SelectedFolderPath}" FontSize="11" Foreground="#FF546E7A" TextTrimming="CharacterEllipsis" />
             </StackPanel>
-            <GroupBox Grid.Row="1" Header="Filtri persistenti" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10" Margin="0,8,0,8" IsEnabled="{Binding HasScanResult}">
-              <StackPanel>
-                <TextBlock Text="Ricerca ACL / Gruppo / Utente" Style="{StaticResource SubsectionHeaderText}" />
-                <Grid Margin="0,0,0,6">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                  </Grid.ColumnDefinitions>
-                  <TextBlock Grid.Column="0" Text="Filtro:" VerticalAlignment="Center" Margin="0,0,6,0" />
-                  <TextBox Grid.Column="1" Height="26" MinWidth="220" Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
-                </Grid>
-                <TextBlock Text="Permessi" Style="{StaticResource SubsectionHeaderText}" />
-                <WrapPanel Margin="0,0,0,4">
-                  <CheckBox Margin="0,0,12,6" Content="Colora per diritto" IsChecked="{Binding ColorizeRights}" />
-                  <CheckBox Margin="0,0,12,6" Content="Allow" IsChecked="{Binding ShowAllow}" />
-                  <CheckBox Margin="0,0,12,6" Content="Deny" IsChecked="{Binding ShowDeny}" />
-                  <CheckBox Margin="0,0,12,6" Content="Ereditato" IsChecked="{Binding ShowInherited}" />
-                  <CheckBox Margin="0,0,12,6" Content="Esplicito" IsChecked="{Binding ShowExplicit}" />
-                  <CheckBox Margin="0,0,12,6" Content="Protetto" IsChecked="{Binding ShowProtected}" />
-                  <CheckBox Margin="0,0,12,6" Content="Disabilitato" IsChecked="{Binding ShowDisabled}" />
-                </WrapPanel>
-                <TextBlock Text="Identità" Style="{StaticResource SubsectionHeaderText}" />
-                <WrapPanel Margin="0,0,0,4">
-                  <CheckBox Margin="0,0,12,6" Content="Everyone" IsChecked="{Binding ShowEveryone}" />
-                  <CheckBox Margin="0,0,12,6" Content="Authenticated Users" IsChecked="{Binding ShowAuthenticatedUsers}" />
-                  <CheckBox Margin="0,0,12,6" Content="Utenti di servizio" IsChecked="{Binding ShowServiceAccounts}" />
-                  <CheckBox Margin="0,0,12,6" Content="Admin" IsChecked="{Binding ShowAdminAccounts}" />
-                  <CheckBox Margin="0,0,12,6" Content="Altri" IsChecked="{Binding ShowOtherPrincipals}" />
-                </WrapPanel>
-                <TextBlock Text="🏷️ Legenda diritti" Style="{StaticResource SubsectionHeaderText}" />
-                <WrapPanel>
-                  <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Read" Style="{StaticResource BadgeToolTipBorder}">
-                    <TextBlock Text="👁 Read" Foreground="White" FontSize="10" />
-                  </Border>
-                  <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="List" Style="{StaticResource BadgeToolTipBorder}">
-                    <TextBlock Text="📄 List" Foreground="White" FontSize="10" />
-                  </Border>
-                  <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Read &amp; Execute" Style="{StaticResource BadgeToolTipBorder}">
-                    <TextBlock Text="⚙ R&amp;E" Foreground="White" FontSize="10" />
-                  </Border>
-                  <Border Background="#FF27AE60" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Write" Style="{StaticResource BadgeToolTipBorder}">
-                    <TextBlock Text="✍ Write" Foreground="White" FontSize="10" />
-                  </Border>
-                  <Border Background="#FFF2994A" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Modify" Style="{StaticResource BadgeToolTipBorder}">
-                    <TextBlock Text="🛠 Modify" Foreground="White" FontSize="10" />
-                  </Border>
-                  <Border Background="#FF9B51E0" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Full Control" Style="{StaticResource BadgeToolTipBorder}">
-                    <TextBlock Text="👑 Full" Foreground="White" FontSize="10" />
-                  </Border>
-                  <Border Background="#FFEB5757" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Deny" Style="{StaticResource BadgeToolTipBorder}">
-                    <TextBlock Text="⛔ Deny" Foreground="White" FontSize="10" />
-                  </Border>
-                </WrapPanel>
-              </StackPanel>
-            </GroupBox>
+            <StackPanel Grid.Row="1" Margin="0,8,0,8" IsEnabled="{Binding HasScanResult}">
+              <TextBlock Text="🏷️ Legenda diritti" Style="{StaticResource SubsectionHeaderText}" />
+              <WrapPanel Margin="0,0,0,6">
+                <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Read" Style="{StaticResource BadgeToolTipBorder}">
+                  <TextBlock Text="👁 Read" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="List" Style="{StaticResource BadgeToolTipBorder}">
+                  <TextBlock Text="📄 List" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Read &amp; Execute" Style="{StaticResource BadgeToolTipBorder}">
+                  <TextBlock Text="⚙ R&amp;E" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FF27AE60" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Write" Style="{StaticResource BadgeToolTipBorder}">
+                  <TextBlock Text="✍ Write" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FFF2994A" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Modify" Style="{StaticResource BadgeToolTipBorder}">
+                  <TextBlock Text="🛠 Modify" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FF9B51E0" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Full Control" Style="{StaticResource BadgeToolTipBorder}">
+                  <TextBlock Text="👑 Full" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FFEB5757" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Deny" Style="{StaticResource BadgeToolTipBorder}">
+                  <TextBlock Text="⛔ Deny" Foreground="White" FontSize="10" />
+                </Border>
+              </WrapPanel>
+              <TextBlock Text="Cartella trattata" FontSize="11" Foreground="#FF546E7A" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding SelectedFolderName}" FontWeight="SemiBold" FontSize="13" Foreground="#FF0D47A1" TextTrimming="CharacterEllipsis" />
+              <TextBlock Text="{Binding SelectedFolderPath}" FontSize="11" Foreground="#FF546E7A" TextTrimming="CharacterEllipsis" Margin="0,0,0,6" />
+
+              <Expander Header="Filtri persistenti" IsExpanded="False" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10">
+                <StackPanel>
+                  <TextBlock Text="Ricerca ACL / Gruppo / Utente" Style="{StaticResource SubsectionHeaderText}" />
+                  <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Filtro:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBox Grid.Column="1" Height="26" MinWidth="220" Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
+                  </Grid>
+                  <TextBlock Text="Permessi" Style="{StaticResource SubsectionHeaderText}" />
+                  <WrapPanel Margin="0,0,0,4">
+                    <CheckBox Margin="0,0,12,6" Content="Colora per diritto" IsChecked="{Binding ColorizeRights}" />
+                    <CheckBox Margin="0,0,12,6" Content="Allow" IsChecked="{Binding ShowAllow}" />
+                    <CheckBox Margin="0,0,12,6" Content="Deny" IsChecked="{Binding ShowDeny}" />
+                    <CheckBox Margin="0,0,12,6" Content="Ereditato" IsChecked="{Binding ShowInherited}" />
+                    <CheckBox Margin="0,0,12,6" Content="Esplicito" IsChecked="{Binding ShowExplicit}" />
+                    <CheckBox Margin="0,0,12,6" Content="Protetto" IsChecked="{Binding ShowProtected}" />
+                    <CheckBox Margin="0,0,12,6" Content="Disabilitato" IsChecked="{Binding ShowDisabled}" />
+                  </WrapPanel>
+                  <TextBlock Text="Identità" Style="{StaticResource SubsectionHeaderText}" />
+                  <WrapPanel Margin="0,0,0,4">
+                    <CheckBox Margin="0,0,12,6" Content="Everyone" IsChecked="{Binding ShowEveryone}" />
+                    <CheckBox Margin="0,0,12,6" Content="Authenticated Users" IsChecked="{Binding ShowAuthenticatedUsers}" />
+                    <CheckBox Margin="0,0,12,6" Content="Utenti di servizio" IsChecked="{Binding ShowServiceAccounts}" />
+                    <CheckBox Margin="0,0,12,6" Content="Admin" IsChecked="{Binding ShowAdminAccounts}" />
+                    <CheckBox Margin="0,0,12,6" Content="Altri" IsChecked="{Binding ShowOtherPrincipals}" />
+                  </WrapPanel>
+                </StackPanel>
+              </Expander>
+            </StackPanel>
             <TabControl Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
               <TabItem Header="Permessi Gruppi">
                 <DataGrid ItemsSource="{Binding FilteredGroupEntries}"
@@ -435,7 +437,7 @@
                     <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" Width="60" />
                     <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" Width="60" />
                     <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" Width="60" />
-                    <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" Width="90" />
+                    <DataGridCheckBoxColumn Header="Ereditato" Binding="{Binding IsInherited, Mode=OneWay}" Width="90" />
                     <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" Width="120" />
                     <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" Width="120" />
                   </DataGrid.Columns>
@@ -475,7 +477,7 @@
                     <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" Width="60" />
                     <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" Width="60" />
                     <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" Width="60" />
-                    <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" Width="90" />
+                    <DataGridCheckBoxColumn Header="Ereditato" Binding="{Binding IsInherited, Mode=OneWay}" Width="90" />
                     <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" Width="120" />
                     <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" Width="120" />
                   </DataGrid.Columns>
@@ -515,7 +517,7 @@
                     <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" Width="60" />
                     <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" Width="60" />
                     <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" Width="60" />
-                    <DataGridTextColumn Header="Inherited" Binding="{Binding IsInherited}" Width="90" />
+                    <DataGridCheckBoxColumn Header="Ereditato" Binding="{Binding IsInherited, Mode=OneWay}" Width="90" />
                     <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" Width="120" />
                     <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" Width="120" />
                   </DataGrid.Columns>

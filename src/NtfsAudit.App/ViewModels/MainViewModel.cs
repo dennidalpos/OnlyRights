@@ -13,6 +13,7 @@ using System.Windows.Data;
 using System.Windows.Forms;
 using System.Windows.Threading;
 using Win32 = Microsoft.Win32;
+using Newtonsoft.Json;
 using WpfMessageBox = System.Windows.MessageBox;
 using NtfsAudit.App.Cache;
 using NtfsAudit.App.Export;
@@ -88,15 +89,16 @@ namespace NtfsAudit.App.ViewModels
         private bool _isElevated;
         private string _lastExportDirectory;
         private string _lastImportDirectory;
+        private string _uiPreferencesPath;
         private Dictionary<string, List<string>> _fullTreeMap;
         private Dictionary<string, List<string>> _currentFilteredTreeMap;
-        private bool _treeFilterExplicitOnly;
-        private bool _treeFilterInheritanceDisabledOnly;
-        private bool _treeFilterDiffOnly;
-        private bool _treeFilterExplicitDenyOnly;
-        private bool _treeFilterBaselineMismatchOnly;
-        private bool _treeFilterFilesOnly;
-        private bool _treeFilterFoldersOnly;
+        private bool _treeFilterExplicitOnly = true;
+        private bool _treeFilterInheritanceDisabledOnly = true;
+        private bool _treeFilterDiffOnly = true;
+        private bool _treeFilterExplicitDenyOnly = true;
+        private bool _treeFilterBaselineMismatchOnly = true;
+        private bool _treeFilterFilesOnly = true;
+        private bool _treeFilterFoldersOnly = true;
         private string _selectedPathKind = "Unknown";
         private string _selectedOwnerSummary = "-";
         private string _selectedInheritanceSummary = "-";
@@ -771,33 +773,13 @@ namespace NtfsAudit.App.ViewModels
         public bool TreeFilterFilesOnly
         {
             get { return _treeFilterFilesOnly; }
-            set
-            {
-                _treeFilterFilesOnly = value;
-                if (_treeFilterFilesOnly && _treeFilterFoldersOnly)
-                {
-                    _treeFilterFoldersOnly = false;
-                    OnPropertyChanged("TreeFilterFoldersOnly");
-                }
-                OnPropertyChanged("TreeFilterFilesOnly");
-                ReloadTreeWithFilters();
-            }
+            set { _treeFilterFilesOnly = value; OnPropertyChanged("TreeFilterFilesOnly"); ReloadTreeWithFilters(); }
         }
 
         public bool TreeFilterFoldersOnly
         {
             get { return _treeFilterFoldersOnly; }
-            set
-            {
-                _treeFilterFoldersOnly = value;
-                if (_treeFilterFoldersOnly && _treeFilterFilesOnly)
-                {
-                    _treeFilterFilesOnly = false;
-                    OnPropertyChanged("TreeFilterFilesOnly");
-                }
-                OnPropertyChanged("TreeFilterFoldersOnly");
-                ReloadTreeWithFilters();
-            }
+            set { _treeFilterFoldersOnly = value; OnPropertyChanged("TreeFilterFoldersOnly"); ReloadTreeWithFilters(); }
         }
 
         public string SelectedPathKind { get { return _selectedPathKind; } private set { _selectedPathKind = value; OnPropertyChanged("SelectedPathKind"); } }
@@ -1590,30 +1572,25 @@ namespace NtfsAudit.App.ViewModels
             {
                 return !AnyTreeFilterEnabled();
             }
-            if (TreeFilterExplicitOnly && !detail.HasExplicitPermissions) return false;
-            if (TreeFilterInheritanceDisabledOnly && !detail.IsInheritanceDisabled) return false;
-            if (TreeFilterDiffOnly)
-            {
-                var diff = detail.DiffSummary;
-                if (diff == null || (diff.Added.Count == 0 && diff.Removed.Count == 0)) return false;
-            }
-            if (TreeFilterExplicitDenyOnly)
-            {
-                var diff = detail.DiffSummary;
-                if (diff == null || diff.DenyExplicitCount <= 0) return false;
-            }
-            if (TreeFilterBaselineMismatchOnly)
-            {
-                if (detail.BaselineSummary == null || (detail.BaselineSummary.Added.Count == 0 && detail.BaselineSummary.Removed.Count == 0)) return false;
-            }
-            if (TreeFilterFilesOnly && !detail.AllEntries.Any(e => string.Equals(e.ResourceType, "File", StringComparison.OrdinalIgnoreCase))) return false;
-            if (TreeFilterFoldersOnly && !detail.AllEntries.Any(e => string.Equals(e.ResourceType, "Cartella", StringComparison.OrdinalIgnoreCase))) return false;
+            if (!TreeFilterExplicitOnly && detail.HasExplicitPermissions) return false;
+            if (!TreeFilterInheritanceDisabledOnly && detail.IsInheritanceDisabled) return false;
+            var diff = detail.DiffSummary;
+            var hasDiff = diff != null && (diff.Added.Count > 0 || diff.Removed.Count > 0);
+            if (!TreeFilterDiffOnly && hasDiff) return false;
+            var hasExplicitDeny = diff != null && diff.DenyExplicitCount > 0;
+            if (!TreeFilterExplicitDenyOnly && hasExplicitDeny) return false;
+            var hasBaselineMismatch = detail.BaselineSummary != null && (detail.BaselineSummary.Added.Count > 0 || detail.BaselineSummary.Removed.Count > 0);
+            if (!TreeFilterBaselineMismatchOnly && hasBaselineMismatch) return false;
+            var hasFiles = detail.AllEntries.Any(e => string.Equals(e.ResourceType, "File", StringComparison.OrdinalIgnoreCase));
+            var hasFolders = detail.AllEntries.Any(e => string.Equals(e.ResourceType, "Cartella", StringComparison.OrdinalIgnoreCase));
+            if (!TreeFilterFilesOnly && hasFiles) return false;
+            if (!TreeFilterFoldersOnly && hasFolders) return false;
             return true;
         }
 
         private bool AnyTreeFilterEnabled()
         {
-            return TreeFilterExplicitOnly || TreeFilterInheritanceDisabledOnly || TreeFilterDiffOnly || TreeFilterExplicitDenyOnly || TreeFilterBaselineMismatchOnly || TreeFilterFilesOnly || TreeFilterFoldersOnly;
+            return !TreeFilterExplicitOnly || !TreeFilterInheritanceDisabledOnly || !TreeFilterDiffOnly || !TreeFilterExplicitDenyOnly || !TreeFilterBaselineMismatchOnly || !TreeFilterFilesOnly || !TreeFilterFoldersOnly;
         }
 
         private void UpdateSelectedFolderInfo(string path, FolderDetail detail)
@@ -1924,6 +1901,7 @@ namespace NtfsAudit.App.ViewModels
 
         private void RefreshAclFilters()
         {
+            SaveUiPreferences();
             FilteredGroupEntries.Refresh();
             FilteredUserEntries.Refresh();
             FilteredAllEntries.Refresh();
@@ -2104,13 +2082,13 @@ namespace NtfsAudit.App.ViewModels
 
         private void ResetTreeFilters(bool reloadTree)
         {
-            _treeFilterExplicitOnly = false;
-            _treeFilterInheritanceDisabledOnly = false;
-            _treeFilterDiffOnly = false;
-            _treeFilterExplicitDenyOnly = false;
-            _treeFilterBaselineMismatchOnly = false;
-            _treeFilterFilesOnly = false;
-            _treeFilterFoldersOnly = false;
+            _treeFilterExplicitOnly = true;
+            _treeFilterInheritanceDisabledOnly = true;
+            _treeFilterDiffOnly = true;
+            _treeFilterExplicitDenyOnly = true;
+            _treeFilterBaselineMismatchOnly = true;
+            _treeFilterFilesOnly = true;
+            _treeFilterFoldersOnly = true;
             OnPropertyChanged("TreeFilterExplicitOnly");
             OnPropertyChanged("TreeFilterInheritanceDisabledOnly");
             OnPropertyChanged("TreeFilterDiffOnly");
@@ -2401,12 +2379,104 @@ namespace NtfsAudit.App.ViewModels
         {
             var cachePath = _cacheStore.GetCacheFilePath("sid-cache.json");
             _sidNameCache.Load(cachePath);
+            _uiPreferencesPath = _cacheStore.GetCacheFilePath("ui-preferences.json");
+            LoadUiPreferences();
         }
 
         private void SaveCache()
         {
             var cachePath = _cacheStore.GetCacheFilePath("sid-cache.json");
             _sidNameCache.Save(cachePath);
+            SaveUiPreferences();
+        }
+
+
+        private void LoadUiPreferences()
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(_uiPreferencesPath) || !File.Exists(_uiPreferencesPath)) return;
+                var json = File.ReadAllText(_uiPreferencesPath);
+                var prefs = JsonConvert.DeserializeObject<UiPreferences>(json);
+                if (prefs == null) return;
+
+                ShowAllow = prefs.ShowAllow;
+                ShowDeny = prefs.ShowDeny;
+                ShowInherited = prefs.ShowInherited;
+                ShowExplicit = prefs.ShowExplicit;
+                ShowProtected = prefs.ShowProtected;
+                ShowDisabled = prefs.ShowDisabled;
+                ShowEveryone = prefs.ShowEveryone;
+                ShowAuthenticatedUsers = prefs.ShowAuthenticatedUsers;
+                ShowServiceAccounts = prefs.ShowServiceAccounts;
+                ShowAdminAccounts = prefs.ShowAdminAccounts;
+                ShowOtherPrincipals = prefs.ShowOtherPrincipals;
+                TreeFilterExplicitOnly = prefs.TreeFilterExplicitOnly;
+                TreeFilterInheritanceDisabledOnly = prefs.TreeFilterInheritanceDisabledOnly;
+                TreeFilterDiffOnly = prefs.TreeFilterDiffOnly;
+                TreeFilterExplicitDenyOnly = prefs.TreeFilterExplicitDenyOnly;
+                TreeFilterBaselineMismatchOnly = prefs.TreeFilterBaselineMismatchOnly;
+                TreeFilterFilesOnly = prefs.TreeFilterFilesOnly;
+                TreeFilterFoldersOnly = prefs.TreeFilterFoldersOnly;
+            }
+            catch
+            {
+            }
+        }
+
+        private void SaveUiPreferences()
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(_uiPreferencesPath)) return;
+                var prefs = new UiPreferences
+                {
+                    ShowAllow = ShowAllow,
+                    ShowDeny = ShowDeny,
+                    ShowInherited = ShowInherited,
+                    ShowExplicit = ShowExplicit,
+                    ShowProtected = ShowProtected,
+                    ShowDisabled = ShowDisabled,
+                    ShowEveryone = ShowEveryone,
+                    ShowAuthenticatedUsers = ShowAuthenticatedUsers,
+                    ShowServiceAccounts = ShowServiceAccounts,
+                    ShowAdminAccounts = ShowAdminAccounts,
+                    ShowOtherPrincipals = ShowOtherPrincipals,
+                    TreeFilterExplicitOnly = TreeFilterExplicitOnly,
+                    TreeFilterInheritanceDisabledOnly = TreeFilterInheritanceDisabledOnly,
+                    TreeFilterDiffOnly = TreeFilterDiffOnly,
+                    TreeFilterExplicitDenyOnly = TreeFilterExplicitDenyOnly,
+                    TreeFilterBaselineMismatchOnly = TreeFilterBaselineMismatchOnly,
+                    TreeFilterFilesOnly = TreeFilterFilesOnly,
+                    TreeFilterFoldersOnly = TreeFilterFoldersOnly
+                };
+                File.WriteAllText(_uiPreferencesPath, JsonConvert.SerializeObject(prefs, Formatting.Indented));
+            }
+            catch
+            {
+            }
+        }
+
+        private sealed class UiPreferences
+        {
+            public bool ShowAllow { get; set; } = true;
+            public bool ShowDeny { get; set; } = true;
+            public bool ShowInherited { get; set; } = true;
+            public bool ShowExplicit { get; set; } = true;
+            public bool ShowProtected { get; set; } = true;
+            public bool ShowDisabled { get; set; } = true;
+            public bool ShowEveryone { get; set; } = true;
+            public bool ShowAuthenticatedUsers { get; set; } = true;
+            public bool ShowServiceAccounts { get; set; } = true;
+            public bool ShowAdminAccounts { get; set; } = true;
+            public bool ShowOtherPrincipals { get; set; } = true;
+            public bool TreeFilterExplicitOnly { get; set; } = true;
+            public bool TreeFilterInheritanceDisabledOnly { get; set; } = true;
+            public bool TreeFilterDiffOnly { get; set; } = true;
+            public bool TreeFilterExplicitDenyOnly { get; set; } = true;
+            public bool TreeFilterBaselineMismatchOnly { get; set; } = true;
+            public bool TreeFilterFilesOnly { get; set; } = true;
+            public bool TreeFilterFoldersOnly { get; set; } = true;
         }
 
         private void OnPropertyChanged(string propertyName)
