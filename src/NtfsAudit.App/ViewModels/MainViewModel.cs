@@ -53,6 +53,7 @@ namespace NtfsAudit.App.ViewModels
         private string _progressText = "Pronto";
         private string _currentPathText;
         private int _processedCount;
+        private int _processedFilesCount;
         private int _errorCount;
         private string _elapsedText = "00:00:00";
         private string _selectedFolderPath;
@@ -87,14 +88,12 @@ namespace NtfsAudit.App.ViewModels
         private string _lastExportDirectory;
         private string _lastImportDirectory;
         private Dictionary<string, List<string>> _fullTreeMap;
+        private Dictionary<string, List<string>> _currentFilteredTreeMap;
         private bool _treeFilterExplicitOnly;
         private bool _treeFilterInheritanceDisabledOnly;
         private bool _treeFilterDiffOnly;
         private bool _treeFilterExplicitDenyOnly;
         private bool _treeFilterBaselineMismatchOnly;
-        private bool _treeFilterRiskHighOnly;
-        private bool _treeFilterRiskMediumOnly;
-        private bool _treeFilterRiskLowOnly;
         private bool _treeFilterFilesOnly;
         private bool _treeFilterFoldersOnly;
         private string _selectedPathKind = "Unknown";
@@ -395,6 +394,16 @@ namespace NtfsAudit.App.ViewModels
             {
                 _processedCount = value;
                 OnPropertyChanged("ProcessedCount");
+            }
+        }
+
+        public int ProcessedFilesCount
+        {
+            get { return _processedFilesCount; }
+            set
+            {
+                _processedFilesCount = value;
+                OnPropertyChanged("ProcessedFilesCount");
             }
         }
 
@@ -756,24 +765,6 @@ namespace NtfsAudit.App.ViewModels
         {
             get { return _treeFilterBaselineMismatchOnly; }
             set { _treeFilterBaselineMismatchOnly = value; OnPropertyChanged("TreeFilterBaselineMismatchOnly"); ReloadTreeWithFilters(); }
-        }
-
-        public bool TreeFilterRiskHighOnly
-        {
-            get { return _treeFilterRiskHighOnly; }
-            set { _treeFilterRiskHighOnly = value; OnPropertyChanged("TreeFilterRiskHighOnly"); ReloadTreeWithFilters(); }
-        }
-
-        public bool TreeFilterRiskMediumOnly
-        {
-            get { return _treeFilterRiskMediumOnly; }
-            set { _treeFilterRiskMediumOnly = value; OnPropertyChanged("TreeFilterRiskMediumOnly"); ReloadTreeWithFilters(); }
-        }
-
-        public bool TreeFilterRiskLowOnly
-        {
-            get { return _treeFilterRiskLowOnly; }
-            set { _treeFilterRiskLowOnly = value; OnPropertyChanged("TreeFilterRiskLowOnly"); ReloadTreeWithFilters(); }
         }
 
         public bool TreeFilterFilesOnly
@@ -1412,6 +1403,7 @@ namespace NtfsAudit.App.ViewModels
         {
             CurrentPathText = string.IsNullOrWhiteSpace(progress.CurrentPath) ? string.Empty : progress.CurrentPath;
             ProcessedCount = progress.Processed;
+            ProcessedFilesCount = progress.FilesProcessed;
             ElapsedText = FormatElapsed(progress.Elapsed);
             ErrorCount = progress.Errors;
             if (string.Equals(progress.Stage, "Errore", StringComparison.OrdinalIgnoreCase))
@@ -1431,6 +1423,7 @@ namespace NtfsAudit.App.ViewModels
         private void LoadTree(ScanResult result)
         {
             FolderTree.Clear();
+            _currentFilteredTreeMap = null;
             if (result == null)
             {
                 return;
@@ -1452,6 +1445,7 @@ namespace NtfsAudit.App.ViewModels
 
             _fullTreeMap = treeMap;
             var filteredTreeMap = ApplyTreeFilters(treeMap, result.Details, ResolveTreeRoot(treeMap, RootPath));
+            _currentFilteredTreeMap = filteredTreeMap;
             var provider = new FolderTreeProvider(filteredTreeMap, result.Details);
             var rootPath = ResolveTreeRoot(filteredTreeMap, RootPath);
             if (string.IsNullOrWhiteSpace(rootPath)) return;
@@ -1485,10 +1479,23 @@ namespace NtfsAudit.App.ViewModels
         private void ReloadTreeWithFilters()
         {
             if (_scanResult == null || _fullTreeMap == null || _fullTreeMap.Count == 0) return;
+            var preferredPath = SelectedFolderPath;
             LoadTree(_scanResult);
-            if (!string.IsNullOrWhiteSpace(SelectedFolderPath))
+            if (_currentFilteredTreeMap == null || _currentFilteredTreeMap.Count == 0)
             {
-                SelectFolder(SelectedFolderPath);
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(preferredPath) && _currentFilteredTreeMap.ContainsKey(preferredPath))
+            {
+                SelectFolder(preferredPath);
+                return;
+            }
+
+            var visibleRoot = ResolveTreeRoot(_currentFilteredTreeMap, RootPath);
+            if (!string.IsNullOrWhiteSpace(visibleRoot))
+            {
+                SelectFolder(visibleRoot);
             }
         }
 
@@ -1519,7 +1526,7 @@ namespace NtfsAudit.App.ViewModels
                 return false;
             }
             IncludeNode(rootPath);
-            return filtered.Count > 0 ? filtered : treeMap;
+            return filtered;
         }
 
         private bool NodeMatchesTreeFilters(string path, Dictionary<string, FolderDetail> details)
@@ -1544,9 +1551,6 @@ namespace NtfsAudit.App.ViewModels
             {
                 if (detail.BaselineSummary == null || (detail.BaselineSummary.Added.Count == 0 && detail.BaselineSummary.Removed.Count == 0)) return false;
             }
-            if (TreeFilterRiskHighOnly && !detail.AllEntries.Any(e => string.Equals(e.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase))) return false;
-            if (TreeFilterRiskMediumOnly && !detail.AllEntries.Any(e => string.Equals(e.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase))) return false;
-            if (TreeFilterRiskLowOnly && !detail.AllEntries.Any(e => string.Equals(e.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase))) return false;
             if (TreeFilterFilesOnly && !detail.AllEntries.Any(e => string.Equals(e.ResourceType, "File", StringComparison.OrdinalIgnoreCase))) return false;
             if (TreeFilterFoldersOnly && !detail.AllEntries.Any(e => string.Equals(e.ResourceType, "Cartella", StringComparison.OrdinalIgnoreCase))) return false;
             return true;
@@ -1554,7 +1558,7 @@ namespace NtfsAudit.App.ViewModels
 
         private bool AnyTreeFilterEnabled()
         {
-            return TreeFilterExplicitOnly || TreeFilterInheritanceDisabledOnly || TreeFilterDiffOnly || TreeFilterExplicitDenyOnly || TreeFilterBaselineMismatchOnly || TreeFilterRiskHighOnly || TreeFilterRiskMediumOnly || TreeFilterRiskLowOnly || TreeFilterFilesOnly || TreeFilterFoldersOnly;
+            return TreeFilterExplicitOnly || TreeFilterInheritanceDisabledOnly || TreeFilterDiffOnly || TreeFilterExplicitDenyOnly || TreeFilterBaselineMismatchOnly || TreeFilterFilesOnly || TreeFilterFoldersOnly;
         }
 
         private void UpdateSelectedFolderInfo(string path, FolderDetail detail)
@@ -2015,6 +2019,7 @@ namespace NtfsAudit.App.ViewModels
             Errors.Clear();
             SelectedFolderPath = string.Empty;
             ProcessedCount = 0;
+            ProcessedFilesCount = 0;
             ErrorCount = 0;
             ElapsedText = "00:00:00";
             CurrentPathText = string.Empty;
@@ -2047,9 +2052,6 @@ namespace NtfsAudit.App.ViewModels
             _treeFilterDiffOnly = false;
             _treeFilterExplicitDenyOnly = false;
             _treeFilterBaselineMismatchOnly = false;
-            _treeFilterRiskHighOnly = false;
-            _treeFilterRiskMediumOnly = false;
-            _treeFilterRiskLowOnly = false;
             _treeFilterFilesOnly = false;
             _treeFilterFoldersOnly = false;
             OnPropertyChanged("TreeFilterExplicitOnly");
@@ -2057,9 +2059,6 @@ namespace NtfsAudit.App.ViewModels
             OnPropertyChanged("TreeFilterDiffOnly");
             OnPropertyChanged("TreeFilterExplicitDenyOnly");
             OnPropertyChanged("TreeFilterBaselineMismatchOnly");
-            OnPropertyChanged("TreeFilterRiskHighOnly");
-            OnPropertyChanged("TreeFilterRiskMediumOnly");
-            OnPropertyChanged("TreeFilterRiskLowOnly");
             OnPropertyChanged("TreeFilterFilesOnly");
             OnPropertyChanged("TreeFilterFoldersOnly");
             if (reloadTree)

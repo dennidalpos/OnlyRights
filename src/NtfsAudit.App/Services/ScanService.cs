@@ -46,6 +46,7 @@ namespace NtfsAudit.App.Services
             var queue = new ConcurrentQueue<WorkItem>();
             var queueSignal = new SemaphoreSlim(0);
             var processed = 0;
+            var processedFiles = 0;
             var errorCount = 0;
             var pendingCount = 0;
             var stopwatch = Stopwatch.StartNew();
@@ -110,6 +111,7 @@ namespace NtfsAudit.App.Services
                                 progress.Report(new ScanProgress
                                 {
                                     Processed = processedCount,
+                                    FilesProcessed = Volatile.Read(ref processedFiles),
                                     Errors = Volatile.Read(ref errorCount),
                                     Elapsed = stopwatch.Elapsed,
                                     Stage = "Enumerazione cartelle",
@@ -149,6 +151,7 @@ namespace NtfsAudit.App.Services
                                         progress.Report(new ScanProgress
                                         {
                                             Processed = processedCount,
+                                            FilesProcessed = Volatile.Read(ref processedFiles),
                                             Errors = Volatile.Read(ref errorCount),
                                             Elapsed = stopwatch.Elapsed,
                                             Stage = "Errore",
@@ -168,6 +171,7 @@ namespace NtfsAudit.App.Services
                                 progress.Report(new ScanProgress
                                 {
                                     Processed = processedCount,
+                                    FilesProcessed = Volatile.Read(ref processedFiles),
                                     Errors = Volatile.Read(ref errorCount),
                                     Elapsed = stopwatch.Elapsed,
                                     Stage = "Lettura ACL",
@@ -214,6 +218,7 @@ namespace NtfsAudit.App.Services
                                         progress.Report(new ScanProgress
                                         {
                                             Processed = processedCount,
+                                            FilesProcessed = Volatile.Read(ref processedFiles),
                                             Errors = Volatile.Read(ref errorCount),
                                             Elapsed = stopwatch.Elapsed,
                                             Stage = "Lettura ACL file",
@@ -229,6 +234,7 @@ namespace NtfsAudit.App.Services
                                     foreach (var file in Directory.EnumerateFiles(ioPath, "*", enumerationOptions))
                                     {
                                         token.ThrowIfCancellationRequested();
+                                        Interlocked.Increment(ref processedFiles);
                                         try
                                         {
                                             var filePath = PathResolver.FromExtendedPath(file);
@@ -274,6 +280,7 @@ namespace NtfsAudit.App.Services
                                     progress.Report(new ScanProgress
                                     {
                                         Processed = processedCount,
+                                        FilesProcessed = Volatile.Read(ref processedFiles),
                                         Errors = Volatile.Read(ref errorCount),
                                         Elapsed = stopwatch.Elapsed,
                                         Stage = "Errore",
@@ -308,6 +315,7 @@ namespace NtfsAudit.App.Services
                     progress.Report(new ScanProgress
                     {
                         Processed = Volatile.Read(ref processed),
+                        FilesProcessed = Volatile.Read(ref processedFiles),
                         Errors = Volatile.Read(ref errorCount),
                         Elapsed = stopwatch.Elapsed
                     });

@@ -83,8 +83,8 @@ namespace NtfsAudit.App.ViewModels
         public bool HasDenyExplicit { get { return DenyExplicitCount > 0; } }
         public bool HasBaselineAdded { get { return BaselineAddedCount > 0; } }
         public bool HasBaselineRemoved { get { return BaselineRemovedCount > 0; } }
-        public string ExplicitAddedLabel { get { return string.Format("+{0}", ExplicitAddedCount); } }
-        public string ExplicitRemovedLabel { get { return string.Format("-{0}", ExplicitRemovedCount); } }
+        public string ExplicitAddedLabel { get { return string.Format("A+{0}", ExplicitAddedCount); } }
+        public string ExplicitRemovedLabel { get { return string.Format("R-{0}", ExplicitRemovedCount); } }
         public string DenyExplicitLabel { get { return "D"; } }
         public string BaselineAddedLabel { get { return string.Format("B+{0}", BaselineAddedCount); } }
         public string BaselineRemovedLabel { get { return string.Format("B-{0}", BaselineRemovedCount); } }
