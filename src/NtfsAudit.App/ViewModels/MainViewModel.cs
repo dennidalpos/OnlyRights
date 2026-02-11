@@ -1225,15 +1225,15 @@ namespace NtfsAudit.App.ViewModels
                 ClearResults();
                 LoadTree(_scanResult);
                 LoadErrors(_scanResult.ErrorPath);
-                var root = RootPath;
-                if (!string.IsNullOrWhiteSpace(root) && _scanResult.TreeMap.Count > 0 && !_scanResult.TreeMap.ContainsKey(root))
+                var root = _fullTreeMap == null || _fullTreeMap.Count == 0
+                    ? RootPath
+                    : ResolveTreeRoot(_fullTreeMap, _scanResult.RootPath);
+
+                if (string.IsNullOrWhiteSpace(root) && _scanResult.TreeMap != null && _scanResult.TreeMap.Count > 0)
                 {
-                    root = _scanResult.TreeMap.Keys.FirstOrDefault();
+                    root = ResolveTreeRoot(_scanResult.TreeMap, _scanResult.RootPath);
                 }
-                if (string.IsNullOrWhiteSpace(root) && _scanResult.TreeMap.Count > 0)
-                {
-                    root = _scanResult.TreeMap.Keys.First();
-                }
+
                 if (!string.IsNullOrWhiteSpace(root))
                 {
                     RootPath = root;
@@ -1528,7 +1528,8 @@ namespace NtfsAudit.App.ViewModels
             }
 
             var treeMap = result.TreeMap;
-            var detailsTreeMap = BuildTreeMapFromDetails(result.Details, RootPath);
+            var preferredRoot = !string.IsNullOrWhiteSpace(result.RootPath) ? result.RootPath : RootPath;
+            var detailsTreeMap = BuildTreeMapFromDetails(result.Details, preferredRoot);
             var treeMapCount = treeMap == null ? 0 : treeMap.Count;
             var detailsTreeMapCount = detailsTreeMap == null ? 0 : detailsTreeMap.Count;
 
@@ -1536,7 +1537,7 @@ namespace NtfsAudit.App.ViewModels
                 "[TreeMap] import source counts => treeMap:{0}, detailsTreeMap:{1}, root:{2}",
                 treeMapCount,
                 detailsTreeMapCount,
-                RootPath));
+                preferredRoot));
 
             if ((treeMap == null || treeMap.Count == 0) && detailsTreeMap != null && detailsTreeMap.Count > 0)
             {
@@ -1558,7 +1559,7 @@ namespace NtfsAudit.App.ViewModels
             }
 
             Debug.WriteLine("[TreeMap] fallback to export records treeMap reconstruction");
-            return BuildTreeMapFromExportRecords(result.TempDataPath, RootPath);
+            return BuildTreeMapFromExportRecords(result.TempDataPath, preferredRoot);
         }
 
         private bool NodeMatchesTreeFilters(string path, Dictionary<string, FolderDetail> details)
