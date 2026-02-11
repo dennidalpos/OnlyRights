@@ -2027,11 +2027,15 @@ namespace NtfsAudit.App.ViewModels
             {
                 var path = pair.Key;
                 var child = pair.Value;
-                var isRoot = string.Equals(path, result.RootPath, StringComparison.OrdinalIgnoreCase) || !_parentPathMap.TryGetValue(path, out var parentPath);
+                string parentPath;
+                var hasParent = _parentPathMap.TryGetValue(path, out parentPath);
+                var isRoot = string.Equals(path, result.RootPath, StringComparison.OrdinalIgnoreCase) || !hasParent;
                 var hasReadError = errorPaths.Contains(path);
-                var parent = isRoot || string.IsNullOrWhiteSpace(parentPath) || !result.Details.TryGetValue(parentPath, out var parentDetail)
-                    ? null
-                    : parentDetail;
+                FolderDetail parentDetail;
+                var hasParentDetail = hasParent
+                    && !string.IsNullOrWhiteSpace(parentPath)
+                    && result.Details.TryGetValue(parentPath, out parentDetail);
+                var parent = hasParentDetail ? parentDetail : null;
                 _folderExplanations[path] = _parentDiffExplainer.Explain(child, parent, useEffective, isRoot, hasReadError);
             }
         }
