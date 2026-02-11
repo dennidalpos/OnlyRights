@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
+using NtfsAudit.App.Models;
 using NtfsAudit.App.Services;
 
 namespace NtfsAudit.App.ViewModels
@@ -12,6 +14,9 @@ namespace NtfsAudit.App.ViewModels
         private bool _childrenLoaded;
         private bool _isSelected;
         private readonly bool _isPlaceholder;
+        private FolderStatus _status;
+        private string _statusTooltip;
+        private ObservableCollection<string> _topReasons;
 
         public FolderNodeViewModel(
             string path,
@@ -29,7 +34,8 @@ namespace NtfsAudit.App.ViewModels
             bool hasExplicitShare,
             bool hasHighRisk,
             bool hasMediumRisk,
-            bool hasLowRisk)
+            bool hasLowRisk,
+            FolderExplanation explanation)
         {
             Path = path;
             DisplayName = displayName;
@@ -47,6 +53,7 @@ namespace NtfsAudit.App.ViewModels
             HasHighRisk = hasHighRisk;
             HasMediumRisk = hasMediumRisk;
             HasLowRisk = hasLowRisk;
+            ApplyExplanation(explanation);
             Children = new ObservableCollection<FolderNodeViewModel>();
             if (_treeProvider != null && _treeProvider.HasChildren(path))
             {
@@ -59,6 +66,9 @@ namespace NtfsAudit.App.ViewModels
             Path = string.Empty;
             DisplayName = string.Empty;
             _isPlaceholder = true;
+            _status = FolderStatus.Same;
+            _statusTooltip = string.Empty;
+            _topReasons = new ObservableCollection<string>();
             Children = new ObservableCollection<FolderNodeViewModel>();
         }
 
@@ -90,6 +100,31 @@ namespace NtfsAudit.App.ViewModels
         public string BaselineRemovedLabel { get { return string.Format("B-{0}", BaselineRemovedCount); } }
         public string ExplicitNtfsLabel { get { return "N"; } }
         public string ExplicitShareLabel { get { return "S"; } }
+        public FolderStatus Status { get { return _status; } }
+        public ObservableCollection<string> TopReasons { get { return _topReasons; } }
+        public bool IsDifferentFromParent { get { return _status != FolderStatus.Same; } }
+        public string StatusTooltip { get { return _statusTooltip; } }
+        public string StatusBadgeText
+        {
+            get
+            {
+                switch (_status)
+                {
+                    case FolderStatus.MorePermissive:
+                        return "↑";
+                    case FolderStatus.MoreRestrictive:
+                        return "↓";
+                    case FolderStatus.BrokenInheritance:
+                        return "BRK";
+                    case FolderStatus.DenyPresent:
+                        return "DENY";
+                    case FolderStatus.Unknown:
+                        return "UNK";
+                    default:
+                        return "=";
+                }
+            }
+        }
 
         public bool IsExpanded
         {
@@ -133,6 +168,23 @@ namespace NtfsAudit.App.ViewModels
             {
                 Children.Add(child);
             }
+        }
+
+        private void ApplyExplanation(FolderExplanation explanation)
+        {
+            if (explanation == null)
+            {
+                _status = FolderStatus.Same;
+                _topReasons = new ObservableCollection<string>();
+                _statusTooltip = "Uguale al padre";
+                return;
+            }
+
+            _status = explanation.Status;
+            _topReasons = new ObservableCollection<string>((explanation.Reasons ?? new System.Collections.Generic.List<string>()).Take(3));
+            _statusTooltip = string.IsNullOrWhiteSpace(explanation.Summary)
+                ? "Stato permessi"
+                : string.Format("{0}\n{1}", explanation.Summary, string.Join("\n", _topReasons));
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

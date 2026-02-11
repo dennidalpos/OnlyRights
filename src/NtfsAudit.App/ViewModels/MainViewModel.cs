@@ -28,6 +28,7 @@ namespace NtfsAudit.App.ViewModels
         private readonly GroupMembershipCache _groupMembershipCache;
         private readonly ExcelExporter _excelExporter;
         private readonly AnalysisArchive _analysisArchive;
+        private readonly ParentDiffExplainer _parentDiffExplainer;
         private ScanResult _scanResult;
         private CancellationTokenSource _cts;
         private bool _isScanning;
@@ -97,6 +98,13 @@ namespace NtfsAudit.App.ViewModels
         private bool _treeFilterBaselineMismatchOnly;
         private bool _treeFilterFilesOnly;
         private bool _treeFilterFoldersOnly;
+        private bool _simpleFilterDifferentOnly;
+        private bool _simpleFilterMoreOpenOnly;
+        private bool _simpleFilterMoreRestrictiveOnly;
+        private bool _simpleFilterErrorsOnly;
+        private bool _isSimpleMode = true;
+        private Dictionary<string, string> _parentPathMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, FolderExplanation> _folderExplanations = new Dictionary<string, FolderExplanation>(StringComparer.OrdinalIgnoreCase);
         private string _selectedPathKind = "Unknown";
         private string _selectedOwnerSummary = "-";
         private string _selectedInheritanceSummary = "-";
@@ -108,6 +116,9 @@ namespace NtfsAudit.App.ViewModels
         private string _selectedRiskSummary = "-";
         private string _selectedAcquisitionWarnings = "-";
         private string _selectedScannedAtText = "-";
+        private string _simpleStatusTitle = "-";
+        private string _simpleStatusBadge = "=";
+        private string _simpleReasonsText = "Seleziona una cartella per vedere una spiegazione semplice.";
 
         public MainViewModel(bool viewerMode = false)
         {
@@ -117,6 +128,7 @@ namespace NtfsAudit.App.ViewModels
             _groupMembershipCache = new GroupMembershipCache(TimeSpan.FromHours(2));
             _excelExporter = new ExcelExporter();
             _analysisArchive = new AnalysisArchive();
+            _parentDiffExplainer = new ParentDiffExplainer();
 
             FolderTree = new ObservableCollection<FolderNodeViewModel>();
             GroupEntries = new ObservableCollection<AceEntry>();
@@ -800,6 +812,56 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
+        public bool IsSimpleMode
+        {
+            get { return _isSimpleMode; }
+            set
+            {
+                _isSimpleMode = value;
+                OnPropertyChanged("IsSimpleMode");
+                OnPropertyChanged("IsAdvancedMode");
+            }
+        }
+
+        public bool IsAdvancedMode
+        {
+            get { return !_isSimpleMode; }
+            set
+            {
+                _isSimpleMode = !value;
+                OnPropertyChanged("IsSimpleMode");
+                OnPropertyChanged("IsAdvancedMode");
+            }
+        }
+
+        public bool SimpleFilterDifferentOnly
+        {
+            get { return _simpleFilterDifferentOnly; }
+            set { _simpleFilterDifferentOnly = value; OnPropertyChanged("SimpleFilterDifferentOnly"); ReloadTreeWithFilters(); }
+        }
+
+        public bool SimpleFilterMoreOpenOnly
+        {
+            get { return _simpleFilterMoreOpenOnly; }
+            set { _simpleFilterMoreOpenOnly = value; OnPropertyChanged("SimpleFilterMoreOpenOnly"); ReloadTreeWithFilters(); }
+        }
+
+        public bool SimpleFilterMoreRestrictiveOnly
+        {
+            get { return _simpleFilterMoreRestrictiveOnly; }
+            set { _simpleFilterMoreRestrictiveOnly = value; OnPropertyChanged("SimpleFilterMoreRestrictiveOnly"); ReloadTreeWithFilters(); }
+        }
+
+        public bool SimpleFilterErrorsOnly
+        {
+            get { return _simpleFilterErrorsOnly; }
+            set { _simpleFilterErrorsOnly = value; OnPropertyChanged("SimpleFilterErrorsOnly"); ReloadTreeWithFilters(); }
+        }
+
+        public string SimpleStatusTitle { get { return _simpleStatusTitle; } private set { _simpleStatusTitle = value; OnPropertyChanged("SimpleStatusTitle"); } }
+        public string SimpleStatusBadge { get { return _simpleStatusBadge; } private set { _simpleStatusBadge = value; OnPropertyChanged("SimpleStatusBadge"); } }
+        public string SimpleReasonsText { get { return _simpleReasonsText; } private set { _simpleReasonsText = value; OnPropertyChanged("SimpleReasonsText"); } }
+
         public string SelectedPathKind { get { return _selectedPathKind; } private set { _selectedPathKind = value; OnPropertyChanged("SelectedPathKind"); } }
         public string SelectedOwnerSummary { get { return _selectedOwnerSummary; } private set { _selectedOwnerSummary = value; OnPropertyChanged("SelectedOwnerSummary"); } }
         public string SelectedInheritanceSummary { get { return _selectedInheritanceSummary; } private set { _selectedInheritanceSummary = value; OnPropertyChanged("SelectedInheritanceSummary"); } }
@@ -1453,7 +1515,7 @@ namespace NtfsAudit.App.ViewModels
 
             var filteredTreeMap = ApplyTreeFilters(treeMap, result.Details, ResolveTreeRoot(treeMap, RootPath));
             _currentFilteredTreeMap = filteredTreeMap;
-            var provider = new FolderTreeProvider(filteredTreeMap, result.Details);
+            var provider = new FolderTreeProvider(filteredTreeMap, result.Details, GetFolderExplanation);
             var rootPath = ResolveTreeRoot(filteredTreeMap, RootPath);
             if (string.IsNullOrWhiteSpace(rootPath)) return;
 
@@ -1477,7 +1539,8 @@ namespace NtfsAudit.App.ViewModels
                 rootDetail != null && rootDetail.HasExplicitShare,
                 rootDetail != null && rootDetail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase)),
                 rootDetail != null && rootDetail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase)),
-                rootDetail != null && rootDetail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase)));
+                rootDetail != null && rootDetail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase)),
+                GetFolderExplanation(rootPath));
             rootNode.IsExpanded = true;
             rootNode.IsSelected = true;
             FolderTree.Add(rootNode);
@@ -1608,12 +1671,18 @@ namespace NtfsAudit.App.ViewModels
             }
             if (TreeFilterFilesOnly && !detail.AllEntries.Any(e => string.Equals(e.ResourceType, "File", StringComparison.OrdinalIgnoreCase))) return false;
             if (TreeFilterFoldersOnly && !detail.AllEntries.Any(e => string.Equals(e.ResourceType, "Cartella", StringComparison.OrdinalIgnoreCase))) return false;
+
+            var explanation = GetFolderExplanation(path);
+            if (SimpleFilterDifferentOnly && !IsDifferentStatus(explanation.Status)) return false;
+            if (SimpleFilterMoreOpenOnly && explanation.Status != FolderStatus.MorePermissive) return false;
+            if (SimpleFilterMoreRestrictiveOnly && explanation.Status != FolderStatus.MoreRestrictive) return false;
+            if (SimpleFilterErrorsOnly && explanation.Status != FolderStatus.Unknown) return false;
             return true;
         }
 
         private bool AnyTreeFilterEnabled()
         {
-            return TreeFilterExplicitOnly || TreeFilterInheritanceDisabledOnly || TreeFilterDiffOnly || TreeFilterExplicitDenyOnly || TreeFilterBaselineMismatchOnly || TreeFilterFilesOnly || TreeFilterFoldersOnly;
+            return TreeFilterExplicitOnly || TreeFilterInheritanceDisabledOnly || TreeFilterDiffOnly || TreeFilterExplicitDenyOnly || TreeFilterBaselineMismatchOnly || TreeFilterFilesOnly || TreeFilterFoldersOnly || SimpleFilterDifferentOnly || SimpleFilterMoreOpenOnly || SimpleFilterMoreRestrictiveOnly || SimpleFilterErrorsOnly;
         }
 
         private void UpdateSelectedFolderInfo(string path, FolderDetail detail)
@@ -1645,6 +1714,14 @@ namespace NtfsAudit.App.ViewModels
             SelectedScannedAtText = _scanResult != null && _scanResult.ScannedAtUtc != default(DateTime)
                 ? _scanResult.ScannedAtUtc.ToLocalTime().ToString("dd-MM-yyyy HH:mm:ss")
                 : "-";
+
+            var explanation = GetFolderExplanation(path);
+            SimpleStatusTitle = explanation == null || string.IsNullOrWhiteSpace(explanation.Summary) ? "-" : explanation.Summary;
+            SimpleStatusBadge = ToStatusBadge(explanation == null ? FolderStatus.Same : explanation.Status);
+            var reasons = explanation == null ? new List<string>() : explanation.Reasons;
+            SimpleReasonsText = reasons == null || reasons.Count == 0
+                ? "Nessun dettaglio disponibile."
+                : string.Join(Environment.NewLine + "• ", new[] { "•" }.Concat(reasons.Take(3)));
         }
 
         private string ResolveTreeRoot(Dictionary<string, List<string>> treeMap, string preferredRoot)
@@ -1897,6 +1974,98 @@ namespace NtfsAudit.App.ViewModels
             if (result == null || result.Details == null) return;
             var diffService = new AclDiffService();
             diffService.ApplyDiffs(result.Details);
+            BuildParentMap(result.TreeMap, result.Details.Keys);
+            BuildFolderExplanations(result);
+        }
+
+        private void BuildParentMap(Dictionary<string, List<string>> treeMap, IEnumerable<string> detailPaths)
+        {
+            _parentPathMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (treeMap != null)
+            {
+                foreach (var kvp in treeMap)
+                {
+                    if (kvp.Value == null) continue;
+                    foreach (var child in kvp.Value)
+                    {
+                        if (!string.IsNullOrWhiteSpace(child))
+                        {
+                            _parentPathMap[child] = kvp.Key;
+                        }
+                    }
+                }
+            }
+
+            if (detailPaths == null) return;
+            foreach (var path in detailPaths)
+            {
+                if (string.IsNullOrWhiteSpace(path) || _parentPathMap.ContainsKey(path)) continue;
+                var parent = SafeGetParentPath(path);
+                if (!string.IsNullOrWhiteSpace(parent))
+                {
+                    _parentPathMap[path] = parent;
+                }
+            }
+        }
+
+        private void BuildFolderExplanations(ScanResult result)
+        {
+            _folderExplanations = new Dictionary<string, FolderExplanation>(StringComparer.OrdinalIgnoreCase);
+            if (result == null || result.Details == null) return;
+
+            var errorPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var error in Errors)
+            {
+                if (!string.IsNullOrWhiteSpace(error.Path))
+                {
+                    errorPaths.Add(error.Path);
+                }
+            }
+
+            var useEffective = ComputeEffectiveAccess;
+            foreach (var pair in result.Details)
+            {
+                var path = pair.Key;
+                var child = pair.Value;
+                var isRoot = string.Equals(path, result.RootPath, StringComparison.OrdinalIgnoreCase) || !_parentPathMap.TryGetValue(path, out var parentPath);
+                var hasReadError = errorPaths.Contains(path);
+                var parent = isRoot || string.IsNullOrWhiteSpace(parentPath) || !result.Details.TryGetValue(parentPath, out var parentDetail)
+                    ? null
+                    : parentDetail;
+                _folderExplanations[path] = _parentDiffExplainer.Explain(child, parent, useEffective, isRoot, hasReadError);
+            }
+        }
+
+        private FolderExplanation GetFolderExplanation(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return new FolderExplanation();
+            }
+            if (_folderExplanations != null && _folderExplanations.TryGetValue(path, out var explanation))
+            {
+                return explanation;
+            }
+
+            return new FolderExplanation();
+        }
+
+        private static bool IsDifferentStatus(FolderStatus status)
+        {
+            return status != FolderStatus.Same;
+        }
+
+        private static string ToStatusBadge(FolderStatus status)
+        {
+            switch (status)
+            {
+                case FolderStatus.MorePermissive: return "↑";
+                case FolderStatus.MoreRestrictive: return "↓";
+                case FolderStatus.BrokenInheritance: return "BRK";
+                case FolderStatus.DenyPresent: return "DENY";
+                case FolderStatus.Unknown: return "UNK";
+                default: return "=";
+            }
         }
 
         private void LoadErrors(string path)
@@ -1919,6 +2088,11 @@ namespace NtfsAudit.App.ViewModels
                 catch
                 {
                 }
+            }
+
+            if (_scanResult != null)
+            {
+                BuildFolderExplanations(_scanResult);
             }
         }
 
@@ -2068,6 +2242,8 @@ namespace NtfsAudit.App.ViewModels
             FolderTree.Clear();
             _fullTreeMap = null;
             _currentFilteredTreeMap = null;
+            _folderExplanations = new Dictionary<string, FolderExplanation>(StringComparer.OrdinalIgnoreCase);
+            _parentPathMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             GroupEntries.Clear();
             UserEntries.Clear();
             AllEntries.Clear();
@@ -2094,6 +2270,9 @@ namespace NtfsAudit.App.ViewModels
             ShowAdminAccounts = true;
             ShowOtherPrincipals = true;
             ResetTreeFilters(false);
+            SimpleStatusTitle = "-";
+            SimpleStatusBadge = "=";
+            SimpleReasonsText = "Seleziona una cartella per vedere una spiegazione semplice.";
             UpdateSummary(null);
         }
 
@@ -2111,6 +2290,10 @@ namespace NtfsAudit.App.ViewModels
             _treeFilterBaselineMismatchOnly = false;
             _treeFilterFilesOnly = false;
             _treeFilterFoldersOnly = false;
+            _simpleFilterDifferentOnly = false;
+            _simpleFilterMoreOpenOnly = false;
+            _simpleFilterMoreRestrictiveOnly = false;
+            _simpleFilterErrorsOnly = false;
             OnPropertyChanged("TreeFilterExplicitOnly");
             OnPropertyChanged("TreeFilterInheritanceDisabledOnly");
             OnPropertyChanged("TreeFilterDiffOnly");
@@ -2118,6 +2301,10 @@ namespace NtfsAudit.App.ViewModels
             OnPropertyChanged("TreeFilterBaselineMismatchOnly");
             OnPropertyChanged("TreeFilterFilesOnly");
             OnPropertyChanged("TreeFilterFoldersOnly");
+            OnPropertyChanged("SimpleFilterDifferentOnly");
+            OnPropertyChanged("SimpleFilterMoreOpenOnly");
+            OnPropertyChanged("SimpleFilterMoreRestrictiveOnly");
+            OnPropertyChanged("SimpleFilterErrorsOnly");
 
             if (_scanResult != null && _fullTreeMap != null && _fullTreeMap.Count > 0)
             {

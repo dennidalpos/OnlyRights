@@ -39,6 +39,8 @@ Durante una scansione, NTFS Audit:
 
 L’interfaccia mostra:
 
+- modalità **Semplice** (default) con badge stato rispetto al padre, spiegazioni in linguaggio non tecnico e filtri rapidi,
+- modalità **Avanzata** con tutti i tab/filtro tecnici già presenti,
 - albero cartelle con caricamento lazy,
 - griglie ACL separate per utenti/gruppi e vista completa,
 - filtri per utente/SID/diritti/allow-deny,
@@ -119,6 +121,17 @@ I filtri nella vista risultati funzionano in combinazione:
 - Se **Allow** e **Deny** sono entrambi disattivati, il risultato è vuoto.
 - Se **Ereditati** ed **Espliciti** sono entrambi disattivati, il risultato è vuoto.
 - Se tutte le categorie principali (Everyone, Authenticated Users, Service, Admin, Altri) sono disattivate, il risultato è vuoto.
+
+### Badge stato semplificato (rispetto al padre)
+
+In modalità Semplice, ogni nodo mostra un badge principale con priorità: `UNK > DENY > ↑ > ↓ > BRK > =`.
+
+- `=`: permessi equivalenti al padre.
+- `↑`: cartella più aperta del padre.
+- `↓`: cartella più restrittiva del padre.
+- `BRK`: ereditarietà disattivata.
+- `DENY`: presente deny esplicito.
+- `UNK`: permessi non leggibili / errore di acquisizione.
 
 ### Filtri TreeView
 

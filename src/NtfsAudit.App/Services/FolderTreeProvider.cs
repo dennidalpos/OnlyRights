@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,11 +11,13 @@ namespace NtfsAudit.App.Services
     {
         private readonly Dictionary<string, List<string>> _childrenMap;
         private readonly Dictionary<string, FolderDetail> _details;
+        private readonly Func<string, FolderExplanation> _explanationProvider;
 
-        public FolderTreeProvider(Dictionary<string, List<string>> childrenMap, Dictionary<string, FolderDetail> details)
+        public FolderTreeProvider(Dictionary<string, List<string>> childrenMap, Dictionary<string, FolderDetail> details, Func<string, FolderExplanation> explanationProvider)
         {
             _childrenMap = childrenMap;
             _details = details;
+            _explanationProvider = explanationProvider;
         }
 
         public IEnumerable<FolderNodeViewModel> GetChildren(string parentPath)
@@ -46,7 +49,8 @@ namespace NtfsAudit.App.Services
                     flags.hasExplicitShare,
                     flags.hasHighRisk,
                     flags.hasMediumRisk,
-                    flags.hasLowRisk);
+                    flags.hasLowRisk,
+                    _explanationProvider == null ? null : _explanationProvider(child));
             }
         }
 

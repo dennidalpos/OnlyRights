@@ -192,6 +192,7 @@
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
               <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Text="Albero cartelle" Style="{StaticResource SectionHeaderText}" />
@@ -202,8 +203,20 @@
               </StackPanel>
               <Expander Header="Legenda e filtri Tree" IsExpanded="False" IsEnabled="{Binding HasScanResult}">
                 <StackPanel Margin="0,6,0,0">
-                  <TextBlock Text="🔎 Filtri Tree" Style="{StaticResource SubsectionHeaderText}" />
-                  <WrapPanel Margin="0,0,0,4">
+                  <TextBlock Text="Modalità visualizzazione" Style="{StaticResource SubsectionHeaderText}" />
+                  <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                    <RadioButton Content="Semplice" IsChecked="{Binding IsSimpleMode}" GroupName="ModeGroup" Margin="0,0,12,0" />
+                    <RadioButton Content="Avanzata" IsChecked="{Binding IsAdvancedMode}" GroupName="ModeGroup" />
+                  </StackPanel>
+                  <TextBlock Text="✨ Filtri semplici" Style="{StaticResource SubsectionHeaderText}" />
+                  <WrapPanel Margin="0,0,0,6">
+                    <CheckBox Margin="0,0,10,4" Content="Diverse dal padre" IsChecked="{Binding SimpleFilterDifferentOnly}" />
+                    <CheckBox Margin="0,0,10,4" Content="Più aperte" IsChecked="{Binding SimpleFilterMoreOpenOnly}" />
+                    <CheckBox Margin="0,0,10,4" Content="Più restrittive" IsChecked="{Binding SimpleFilterMoreRestrictiveOnly}" />
+                    <CheckBox Margin="0,0,10,4" Content="Errori" IsChecked="{Binding SimpleFilterErrorsOnly}" />
+                  </WrapPanel>
+                  <TextBlock Text="🔎 Filtri Tree (avanzati)" Style="{StaticResource SubsectionHeaderText}" Visibility="{Binding IsAdvancedMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                  <WrapPanel Margin="0,0,0,4" Visibility="{Binding IsAdvancedMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra solo nodi con ACE NTFS esplicite.">
                       <TextBlock Text="🔎" VerticalAlignment="Center" Margin="0,0,3,0" />
                       <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="N" Foreground="White" FontSize="10" /></Border>
@@ -296,8 +309,11 @@
               <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                   <StackPanel Orientation="Horizontal">
+                    <Border Background="#FF37474F" Padding="3,0" CornerRadius="3" Margin="0,0,6,0" VerticalAlignment="Center" ToolTip="{Binding StatusTooltip}">
+                      <TextBlock Text="{Binding StatusBadgeText}" Foreground="White" FontSize="10" FontWeight="SemiBold" />
+                    </Border>
                     <TextBlock Text="📁" Margin="0,0,6,0" />
-                    <TextBlock Text="{Binding DisplayName}" />
+                    <TextBlock Text="{Binding DisplayName}" ToolTip="{Binding StatusTooltip}" />
                     <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Protetto (ereditarietà disabilitata)" Style="{StaticResource BadgeToolTipBorder}" Visibility="{Binding IsProtected, Converter={StaticResource BooleanToVisibilityConverter}}">
                       <TextBlock Text="P" Foreground="White" FontSize="10" />
                     </Border>
@@ -336,6 +352,7 @@
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
               <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0">
@@ -345,7 +362,20 @@
               </Border>
               <TextBlock Text="{Binding SelectedFolderPath}" FontSize="11" Foreground="#FF546E7A" TextTrimming="CharacterEllipsis" />
             </StackPanel>
-            <GroupBox Grid.Row="1" Header="Filtri persistenti" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10" Margin="0,8,0,8" IsEnabled="{Binding HasScanResult}">
+            <GroupBox Grid.Row="1" Header="Spiegazione (semplice)" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10" Margin="0,8,0,8" Visibility="{Binding IsSimpleMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+              <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                  <Border Background="#FF37474F" Padding="6,2" CornerRadius="4" Margin="0,0,8,0">
+                    <TextBlock Text="{Binding SimpleStatusBadge}" Foreground="White" FontWeight="SemiBold" />
+                  </Border>
+                  <TextBlock Text="{Binding SimpleStatusTitle}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBlock Text="Perché" FontWeight="SemiBold" Margin="0,0,0,4" />
+                <TextBlock Text="{Binding SimpleReasonsText}" TextWrapping="Wrap" />
+                <TextBlock Text="Dettagli tecnici disponibili nelle tab Utenti/Gruppi/Info Permessi." Foreground="#FF546E7A" Margin="0,8,0,0" />
+              </StackPanel>
+            </GroupBox>
+            <GroupBox Grid.Row="2" Header="Filtri persistenti" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10" Margin="0,8,0,8" IsEnabled="{Binding HasScanResult}" Visibility="{Binding IsAdvancedMode, Converter={StaticResource BooleanToVisibilityConverter}}">
               <StackPanel>
                 <TextBlock Text="Ricerca ACL / Gruppo / Utente" Style="{StaticResource SubsectionHeaderText}" />
                 <Grid Margin="0,0,0,6">
@@ -400,7 +430,7 @@
                 </WrapPanel>
               </StackPanel>
             </GroupBox>
-            <TabControl Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <TabControl Grid.Row="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
               <TabItem Header="Permessi Gruppi">
                 <DataGrid ItemsSource="{Binding FilteredGroupEntries}"
                           AutoGenerateColumns="False"
@@ -481,7 +511,7 @@
                   </DataGrid.Columns>
                 </DataGrid>
               </TabItem>
-              <TabItem Header="Dettaglio ACL">
+              <TabItem Header="Dettaglio ACL" Visibility="{Binding IsAdvancedMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <DataGrid ItemsSource="{Binding FilteredAllEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
@@ -521,7 +551,7 @@
                   </DataGrid.Columns>
                 </DataGrid>
               </TabItem>
-              <TabItem Header="Share">
+              <TabItem Header="Share" Visibility="{Binding IsAdvancedMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <DataGrid ItemsSource="{Binding FilteredShareEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
@@ -549,7 +579,7 @@
                   </DataGrid.Columns>
                 </DataGrid>
               </TabItem>
-              <TabItem Header="Effective Access">
+              <TabItem Header="Effective Access" Visibility="{Binding IsAdvancedMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <DataGrid ItemsSource="{Binding FilteredEffectiveEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
@@ -600,7 +630,7 @@
                   </StackPanel>
                 </Grid>
               </TabItem>
-              <TabItem Header="Errori">
+              <TabItem Header="Errori" Visibility="{Binding IsAdvancedMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                   <DataGrid ItemsSource="{Binding FilteredErrors}"
                             AutoGenerateColumns="False"
