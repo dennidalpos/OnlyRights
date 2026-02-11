@@ -1423,21 +1423,17 @@ namespace NtfsAudit.App.ViewModels
                 return;
             }
 
-            var treeMap = result.TreeMap;
-            if (treeMap == null || treeMap.Count == 0)
+            if (_fullTreeMap == null || _fullTreeMap.Count == 0)
             {
-                treeMap = BuildTreeMapFromDetails(result.Details, RootPath);
+                _fullTreeMap = ResolveFullTreeMap(result);
             }
-            if (treeMap == null || treeMap.Count == 0)
-            {
-                treeMap = BuildTreeMapFromExportRecords(result.TempDataPath, RootPath);
-            }
+
+            var treeMap = _fullTreeMap;
             if (treeMap == null || treeMap.Count == 0)
             {
                 return;
             }
 
-            _fullTreeMap = treeMap;
             var filteredTreeMap = ApplyTreeFilters(treeMap, result.Details, ResolveTreeRoot(treeMap, RootPath));
             _currentFilteredTreeMap = filteredTreeMap;
             var provider = new FolderTreeProvider(filteredTreeMap, result.Details);
@@ -1521,6 +1517,35 @@ namespace NtfsAudit.App.ViewModels
             }
             IncludeNode(rootPath);
             return filtered;
+        }
+
+        private Dictionary<string, List<string>> ResolveFullTreeMap(ScanResult result)
+        {
+            if (result == null)
+            {
+                return null;
+            }
+
+            var treeMap = result.TreeMap;
+            var detailsTreeMap = BuildTreeMapFromDetails(result.Details, RootPath);
+
+            if ((treeMap == null || treeMap.Count == 0) && detailsTreeMap != null && detailsTreeMap.Count > 0)
+            {
+                return detailsTreeMap;
+            }
+
+            // Compatibilità con analisi legacy: alcune esportazioni storiche contengono TreeMap parziali.
+            if (treeMap != null && treeMap.Count > 0 && detailsTreeMap != null && detailsTreeMap.Count > treeMap.Count)
+            {
+                return detailsTreeMap;
+            }
+
+            if (treeMap != null && treeMap.Count > 0)
+            {
+                return treeMap;
+            }
+
+            return BuildTreeMapFromExportRecords(result.TempDataPath, RootPath);
         }
 
         private bool NodeMatchesTreeFilters(string path, Dictionary<string, FolderDetail> details)
@@ -2005,6 +2030,8 @@ namespace NtfsAudit.App.ViewModels
         private void ClearResults()
         {
             FolderTree.Clear();
+            _fullTreeMap = null;
+            _currentFilteredTreeMap = null;
             GroupEntries.Clear();
             UserEntries.Clear();
             AllEntries.Clear();
