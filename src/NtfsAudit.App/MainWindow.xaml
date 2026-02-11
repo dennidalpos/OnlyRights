@@ -272,7 +272,6 @@
                           </Style.Triggers>
                         </Style>
                       </Border.Style>
-                      >
                       <TextBlock Text="P" Foreground="White" FontSize="10" />
                     </Border>
                     <Border Background="#FF2E7D32" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="ACE esplicite aggiunte rispetto al parent"><Border.Style>
@@ -289,7 +288,6 @@
                           </Style.Triggers>
                         </Style>
                       </Border.Style>
-                      >
                       <TextBlock Text="{Binding ExplicitAddedLabel}" Foreground="White" FontSize="10" />
                     </Border>
                     <Border Background="#FFF57C00" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="ACE rimosse rispetto al parent"><Border.Style>
@@ -306,7 +304,6 @@
                           </Style.Triggers>
                         </Style>
                       </Border.Style>
-                      >
                       <TextBlock Text="{Binding ExplicitRemovedLabel}" Foreground="White" FontSize="10" />
                     </Border>
                     <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Deny espliciti"><Border.Style>
@@ -323,7 +320,6 @@
                           </Style.Triggers>
                         </Style>
                       </Border.Style>
-                      >
                       <TextBlock Text="{Binding DenyExplicitLabel}" Foreground="White" FontSize="10" />
                     </Border>
                     <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Aggiunte vs baseline"><Border.Style>
@@ -340,7 +336,6 @@
                           </Style.Triggers>
                         </Style>
                       </Border.Style>
-                      >
                       <TextBlock Text="{Binding BaselineAddedLabel}" Foreground="White" FontSize="10" />
                     </Border>
                     <Border Background="#FF78909C" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Rimozioni vs baseline"><Border.Style>
@@ -357,7 +352,6 @@
                           </Style.Triggers>
                         </Style>
                       </Border.Style>
-                      >
                       <TextBlock Text="{Binding BaselineRemovedLabel}" Foreground="White" FontSize="10" />
                     </Border>
                     <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="ACE NTFS esplicite"><Border.Style>
@@ -374,7 +368,6 @@
                           </Style.Triggers>
                         </Style>
                       </Border.Style>
-                      >
                       <TextBlock Text="{Binding ExplicitNtfsLabel}" Foreground="White" FontSize="10" />
                     </Border>
                     <Border Background="#FF1565C0" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Permessi Share espliciti" Style="{StaticResource BadgeToolTipBorder}" Visibility="{Binding HasExplicitShare, Converter={StaticResource BooleanToVisibilityConverter}}">
