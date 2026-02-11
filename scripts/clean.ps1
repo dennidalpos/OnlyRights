@@ -82,7 +82,9 @@ $paths = @(
     (Join-Path $root "src\NtfsAudit.App\bin"),
     (Join-Path $root "src\NtfsAudit.App\obj"),
     (Join-Path $root "src\NtfsAudit.Viewer\bin"),
-    (Join-Path $root "src\NtfsAudit.Viewer\obj")
+    (Join-Path $root "src\NtfsAudit.Viewer\obj"),
+    (Join-Path $root "tests\NtfsAudit.App.Tests\bin"),
+    (Join-Path $root "tests\NtfsAudit.App.Tests\obj")
 )
 
 if ($ImportsOnly -or $CacheOnly) {

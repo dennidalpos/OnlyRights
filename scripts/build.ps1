@@ -42,6 +42,33 @@ if ($Framework) {
     $dist = Join-Path $dist $Framework
 }
 
+function Get-TempRoot {
+    param([string]$PreferredRoot)
+    if ($PreferredRoot) {
+        if ([System.IO.Path]::IsPathRooted($PreferredRoot)) { return $PreferredRoot }
+        return (Join-Path $root $PreferredRoot)
+    }
+    if ($env:TEMP) { return $env:TEMP }
+    if ($env:TMP) { return $env:TMP }
+    return [System.IO.Path]::GetTempPath()
+}
+
+function Remove-PathIfExists {
+    param([string]$PathToRemove)
+    if (-not [string]::IsNullOrWhiteSpace($PathToRemove) -and (Test-Path $PathToRemove)) {
+        Remove-Item $PathToRemove -Recurse -Force
+    }
+}
+
+function Remove-ExportFiles {
+    param([string[]]$BasePaths)
+    foreach ($basePath in $BasePaths) {
+        if (-not (Test-Path $basePath)) { continue }
+        Get-ChildItem -Path $basePath -Include *.xlsx, *.ntaudit -File -Recurse -ErrorAction SilentlyContinue |
+            ForEach-Object { Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue }
+    }
+}
+
 if (!(Test-Path $solution)) { throw "Solution not found" }
 if (!(Test-Path $project)) { throw "Project not found" }
 if (!(Test-Path $viewerProject)) { throw "Viewer project not found" }
@@ -74,17 +101,6 @@ if ($RunClean) {
     if ($LASTEXITCODE -ne 0) { throw "Clean failed." }
 }
 
-function Get-TempRoot {
-    param([string]$PreferredRoot)
-    if ($PreferredRoot) {
-        if ([System.IO.Path]::IsPathRooted($PreferredRoot)) { return $PreferredRoot }
-        return (Join-Path $root $PreferredRoot)
-    }
-    if ($env:TEMP) { return $env:TEMP }
-    if ($env:TMP) { return $env:TMP }
-    return [System.IO.Path]::GetTempPath()
-}
-
 if ($CleanAllTemp) {
     $CleanTemp = $true
     $CleanImports = $true
@@ -93,29 +109,44 @@ if ($CleanAllTemp) {
 
 if ($CleanTemp) {
     $baseTemp = Get-TempRoot $TempRoot
-    $temp = Join-Path $baseTemp "NtfsAudit"
-    if (Test-Path $temp) { Remove-Item $temp -Recurse -Force }
+    Remove-PathIfExists (Join-Path $baseTemp "NtfsAudit")
 }
 
 if ($CleanImports) {
     $baseTemp = Get-TempRoot $TempRoot
-    $importTemp = Join-Path (Join-Path $baseTemp "NtfsAudit") "imports"
-    if (Test-Path $importTemp) { Remove-Item $importTemp -Recurse -Force }
+    Remove-PathIfExists (Join-Path (Join-Path $baseTemp "NtfsAudit") "imports")
 }
 
 if ($CleanCache) {
     $localAppData = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [Environment]::GetFolderPath("LocalApplicationData") }
-    $cache = Join-Path $localAppData "NtfsAudit\Cache"
-    if (Test-Path $cache) { Remove-Item $cache -Recurse -Force }
+    Remove-PathIfExists (Join-Path $localAppData "NtfsAudit\Cache")
 }
 
 if ($CleanArtifacts) {
-    $artifactsPath = Join-Path $root "artifacts"
-    if (Test-Path $artifactsPath) { Remove-Item $artifactsPath -Recurse -Force }
+    Remove-PathIfExists (Join-Path $root "artifacts")
 }
 
 if ($CleanDist) {
-    if (Test-Path $distRoot) { Remove-Item $distRoot -Recurse -Force }
+    Remove-PathIfExists $distRoot
+}
+
+if ($CleanExports) {
+    Remove-ExportFiles @(
+        (Join-Path $root "dist"),
+        (Join-Path $root "artifacts"),
+        (Join-Path $root "exports")
+    )
+
+    $baseTemp = Get-TempRoot $TempRoot
+    Remove-ExportFiles @((Join-Path (Join-Path $baseTemp "NtfsAudit") "exports"))
+}
+
+if ($CleanLogs) {
+    $baseTemp = Get-TempRoot $TempRoot
+    Remove-PathIfExists (Join-Path (Join-Path $baseTemp "NtfsAudit") "logs")
+
+    $localAppData = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { [Environment]::GetFolderPath("LocalApplicationData") }
+    Remove-PathIfExists (Join-Path $localAppData "NtfsAudit\Logs")
 }
 
 if (-not $SkipRestore) {
@@ -123,6 +154,7 @@ if (-not $SkipRestore) {
     if ($LASTEXITCODE -ne 0) { throw "Restore failed." }
 }
 
+$buildCompleted = $false
 if (-not $SkipBuild) {
     $buildArgs = @("build", $solution, "-c", $Configuration, "--no-restore", "--nologo")
     if ($Framework) {
@@ -130,16 +162,21 @@ if (-not $SkipBuild) {
     }
     & dotnet @buildArgs
     if ($LASTEXITCODE -ne 0) { throw "Build failed." }
+    $buildCompleted = $true
 }
 
 if (-not $SkipTests) {
-    & dotnet test $solution -c $Configuration --no-build --nologo
+    $testArgs = @("test", $solution, "-c", $Configuration, "--nologo")
+    if ($buildCompleted) {
+        $testArgs += "--no-build"
+    }
+    & dotnet @testArgs
     if ($LASTEXITCODE -ne 0) { throw "Tests failed." }
 }
 
 if (-not $SkipPublish) {
     if (-not $SkipPublishClean) {
-        if (Test-Path $dist) { Remove-Item $dist -Recurse -Force }
+        Remove-PathIfExists $dist
     }
     if (!(Test-Path $dist)) {
         New-Item -ItemType Directory -Path $dist | Out-Null
@@ -155,7 +192,10 @@ if (-not $SkipPublish) {
         throw "Runtime required for self-contained publish."
     }
 
-    $publishArgs = @("publish", $project, "-c", $Configuration, "--no-build", "--nologo", "-o", $dist)
+    $publishArgs = @("publish", $project, "-c", $Configuration, "--nologo", "-o", $dist)
+    if ($buildCompleted) {
+        $publishArgs += "--no-build"
+    }
     if ($Framework) {
         $publishArgs += @("-f", $Framework)
     }
@@ -179,7 +219,10 @@ if (-not $SkipPublish) {
             New-Item -ItemType Directory -Path $viewerDist | Out-Null
         }
 
-        $viewerPublishArgs = @("publish", $viewerProject, "-c", $Configuration, "--no-build", "--nologo", "-o", $viewerDist)
+        $viewerPublishArgs = @("publish", $viewerProject, "-c", $Configuration, "--nologo", "-o", $viewerDist)
+        if ($buildCompleted) {
+            $viewerPublishArgs += "--no-build"
+        }
         if ($Framework) {
             $viewerPublishArgs += @("-f", $Framework)
         }
