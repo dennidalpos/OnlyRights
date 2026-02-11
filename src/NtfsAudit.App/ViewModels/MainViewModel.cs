@@ -1471,6 +1471,12 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_scanResult == null || _fullTreeMap == null || _fullTreeMap.Count == 0) return;
             var preferredPath = SelectedFolderPath;
+            var preferredRoot = ResolveTreeRoot(_fullTreeMap, _scanResult.RootPath);
+            if (!string.IsNullOrWhiteSpace(preferredRoot)
+                && !string.Equals(RootPath, preferredRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                RootPath = preferredRoot;
+            }
             LoadTree(_scanResult);
             if (_currentFilteredTreeMap == null || _currentFilteredTreeMap.Count == 0)
             {
@@ -2096,6 +2102,17 @@ namespace NtfsAudit.App.ViewModels
             OnPropertyChanged("TreeFilterBaselineMismatchOnly");
             OnPropertyChanged("TreeFilterFilesOnly");
             OnPropertyChanged("TreeFilterFoldersOnly");
+
+            if (_scanResult != null && _fullTreeMap != null && _fullTreeMap.Count > 0)
+            {
+                var root = ResolveTreeRoot(_fullTreeMap, _scanResult.RootPath);
+                if (!string.IsNullOrWhiteSpace(root)
+                    && !string.Equals(RootPath, root, StringComparison.OrdinalIgnoreCase))
+                {
+                    RootPath = root;
+                }
+            }
+
             if (reloadTree)
             {
                 ReloadTreeWithFilters();

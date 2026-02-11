@@ -1214,9 +1214,37 @@ namespace NtfsAudit.App.Services
             var trimmed = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             var folderName = Path.GetFileName(trimmed);
             if (string.IsNullOrWhiteSpace(folderName)) return false;
+
+            if (string.Equals(folderName, "System Volume Information", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
             if (string.Equals(folderName, "DfsrPrivate", StringComparison.OrdinalIgnoreCase))
             {
                 return true;
+            }
+
+            if (string.Equals(folderName, "DfsPrivate", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (string.Equals(folderName, "ConflictAndDeleted", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(folderName, "Deleted", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(folderName, "PreExisting", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(folderName, "Staging", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(folderName, "Staging Areas", StringComparison.OrdinalIgnoreCase))
+            {
+                var parent = Path.GetDirectoryName(trimmed);
+                var parentName = string.IsNullOrWhiteSpace(parent)
+                    ? string.Empty
+                    : Path.GetFileName(parent.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                if (string.Equals(parentName, "DfsrPrivate", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(parentName, "DFSR", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
             }
 
             if (string.Equals(folderName, "DFSR", StringComparison.OrdinalIgnoreCase))
