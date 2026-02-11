@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -53,6 +54,7 @@ namespace NtfsAudit.App.ViewModels
         private string _progressText = "Pronto";
         private string _currentPathText;
         private int _processedCount;
+        private int _processedFilesCount;
         private int _errorCount;
         private string _elapsedText = "00:00:00";
         private string _selectedFolderPath;
@@ -87,14 +89,12 @@ namespace NtfsAudit.App.ViewModels
         private string _lastExportDirectory;
         private string _lastImportDirectory;
         private Dictionary<string, List<string>> _fullTreeMap;
+        private Dictionary<string, List<string>> _currentFilteredTreeMap;
         private bool _treeFilterExplicitOnly;
         private bool _treeFilterInheritanceDisabledOnly;
         private bool _treeFilterDiffOnly;
         private bool _treeFilterExplicitDenyOnly;
         private bool _treeFilterBaselineMismatchOnly;
-        private bool _treeFilterRiskHighOnly;
-        private bool _treeFilterRiskMediumOnly;
-        private bool _treeFilterRiskLowOnly;
         private bool _treeFilterFilesOnly;
         private bool _treeFilterFoldersOnly;
         private string _selectedPathKind = "Unknown";
@@ -395,6 +395,16 @@ namespace NtfsAudit.App.ViewModels
             {
                 _processedCount = value;
                 OnPropertyChanged("ProcessedCount");
+            }
+        }
+
+        public int ProcessedFilesCount
+        {
+            get { return _processedFilesCount; }
+            set
+            {
+                _processedFilesCount = value;
+                OnPropertyChanged("ProcessedFilesCount");
             }
         }
 
@@ -756,24 +766,6 @@ namespace NtfsAudit.App.ViewModels
         {
             get { return _treeFilterBaselineMismatchOnly; }
             set { _treeFilterBaselineMismatchOnly = value; OnPropertyChanged("TreeFilterBaselineMismatchOnly"); ReloadTreeWithFilters(); }
-        }
-
-        public bool TreeFilterRiskHighOnly
-        {
-            get { return _treeFilterRiskHighOnly; }
-            set { _treeFilterRiskHighOnly = value; OnPropertyChanged("TreeFilterRiskHighOnly"); ReloadTreeWithFilters(); }
-        }
-
-        public bool TreeFilterRiskMediumOnly
-        {
-            get { return _treeFilterRiskMediumOnly; }
-            set { _treeFilterRiskMediumOnly = value; OnPropertyChanged("TreeFilterRiskMediumOnly"); ReloadTreeWithFilters(); }
-        }
-
-        public bool TreeFilterRiskLowOnly
-        {
-            get { return _treeFilterRiskLowOnly; }
-            set { _treeFilterRiskLowOnly = value; OnPropertyChanged("TreeFilterRiskLowOnly"); ReloadTreeWithFilters(); }
         }
 
         public bool TreeFilterFilesOnly
@@ -1138,6 +1130,12 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_isViewerMode) return;
             if (_scanResult == null) return;
+            if (string.IsNullOrWhiteSpace(_scanResult.TempDataPath) || !File.Exists(_scanResult.TempDataPath))
+            {
+                ProgressText = "Export non disponibile: file dati scansione mancante.";
+                WpfMessageBox.Show(ProgressText, "Export non disponibile", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return;
+            }
             var dialog = new Win32.SaveFileDialog
             {
                 Filter = "Excel (*.xlsx)|*.xlsx",
@@ -1154,14 +1152,14 @@ namespace NtfsAudit.App.ViewModels
                 _hasExported = true;
                 UpdateLastDirectory(ref _lastExportDirectory, outputPath);
                 var warningMessage = BuildExcelWarningMessage(result);
-                var progressMessage = string.IsNullOrWhiteSpace(warningMessage)
-                    ? string.Format("Export completato: {0}", outputPath)
-                    : string.Format("Export completato con avvisi: {0}", outputPath);
-                ProgressText = progressMessage;
-                var dialogMessage = string.IsNullOrWhiteSpace(warningMessage)
-                    ? string.Format("Export completato:\n{0}", outputPath)
-                    : string.Format("Export completato:\n{0}\n\nATTENZIONE: {1}", outputPath, warningMessage);
-                WpfMessageBox.Show(dialogMessage, "Export completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                if (!string.IsNullOrWhiteSpace(warningMessage))
+                {
+                    WpfMessageBox.Show(
+                        string.Format("ATTENZIONE: {0}", warningMessage),
+                        "Export con avvisi",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Warning);
+                }
             }
             catch (Exception ex)
             {
@@ -1187,14 +1185,13 @@ namespace NtfsAudit.App.ViewModels
             if (dialog.ShowDialog() != true) return;
             await RunExportActionAsync(
                 () => _analysisArchive.Export(_scanResult, RootPath, dialog.FileName),
-                string.Format("Analisi esportata: {0}", dialog.FileName),
-                string.Format("Analisi esportata:\n{0}", dialog.FileName),
                 "Errore export analisi",
                 dialog.FileName);
         }
 
         private async void ImportAnalysis()
         {
+            if (IsBusy) return;
             var dialog = new Win32.OpenFileDialog
             {
                 Filter = "Analisi NtfsAudit (*.ntaudit)|*.ntaudit",
@@ -1211,6 +1208,15 @@ namespace NtfsAudit.App.ViewModels
                     ProgressText = "Analisi importata non valida.";
                     return;
                 }
+                if (importedResult.Details == null)
+                {
+                    importedResult.Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase);
+                }
+                if (importedResult.TreeMap == null)
+                {
+                    importedResult.TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                }
+
                 ApplyDiffs(importedResult);
                 if (!ValidateImportedResult(importedResult, out var validationMessage))
                 {
@@ -1235,23 +1241,21 @@ namespace NtfsAudit.App.ViewModels
                 ClearResults();
                 LoadTree(_scanResult);
                 LoadErrors(_scanResult.ErrorPath);
-                var root = RootPath;
-                if (!string.IsNullOrWhiteSpace(root) && _scanResult.TreeMap.Count > 0 && !_scanResult.TreeMap.ContainsKey(root))
+                var root = _fullTreeMap == null || _fullTreeMap.Count == 0
+                    ? RootPath
+                    : ResolveTreeRoot(_fullTreeMap, _scanResult.RootPath);
+
+                if (string.IsNullOrWhiteSpace(root) && _scanResult.TreeMap != null && _scanResult.TreeMap.Count > 0)
                 {
-                    root = _scanResult.TreeMap.Keys.FirstOrDefault();
+                    root = ResolveTreeRoot(_scanResult.TreeMap, _scanResult.RootPath);
                 }
-                if (string.IsNullOrWhiteSpace(root) && _scanResult.TreeMap.Count > 0)
-                {
-                    root = _scanResult.TreeMap.Keys.First();
-                }
+
                 if (!string.IsNullOrWhiteSpace(root))
                 {
                     RootPath = root;
                     SelectFolder(root);
                 }
                 UpdateLastDirectory(ref _lastImportDirectory, dialog.FileName);
-                ProgressText = string.Format("Analisi importata: {0}", dialog.FileName);
-                WpfMessageBox.Show(string.Format("Analisi importata:\n{0}", dialog.FileName), "Import completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 UpdateCommands();
             }
             catch (Exception ex)
@@ -1265,7 +1269,7 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        private async Task RunExportActionAsync(Action exportAction, string progressMessage, string dialogMessage, string errorLabel, string outputPath = null)
+        private async Task RunExportActionAsync(Action exportAction, string errorLabel, string outputPath = null)
         {
             try
             {
@@ -1274,8 +1278,6 @@ namespace NtfsAudit.App.ViewModels
                 EnsureExportOutput(outputPath);
                 _hasExported = true;
                 UpdateLastDirectory(ref _lastExportDirectory, outputPath);
-                ProgressText = progressMessage;
-                WpfMessageBox.Show(dialogMessage, "Export completato", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -1412,6 +1414,7 @@ namespace NtfsAudit.App.ViewModels
         {
             CurrentPathText = string.IsNullOrWhiteSpace(progress.CurrentPath) ? string.Empty : progress.CurrentPath;
             ProcessedCount = progress.Processed;
+            ProcessedFilesCount = progress.FilesProcessed;
             ElapsedText = FormatElapsed(progress.Elapsed);
             ErrorCount = progress.Errors;
             if (string.Equals(progress.Stage, "Errore", StringComparison.OrdinalIgnoreCase))
@@ -1431,27 +1434,25 @@ namespace NtfsAudit.App.ViewModels
         private void LoadTree(ScanResult result)
         {
             FolderTree.Clear();
+            _currentFilteredTreeMap = null;
             if (result == null)
             {
                 return;
             }
 
-            var treeMap = result.TreeMap;
-            if (treeMap == null || treeMap.Count == 0)
+            if (_fullTreeMap == null || _fullTreeMap.Count == 0)
             {
-                treeMap = BuildTreeMapFromDetails(result.Details, RootPath);
+                _fullTreeMap = ResolveFullTreeMap(result);
             }
-            if (treeMap == null || treeMap.Count == 0)
-            {
-                treeMap = BuildTreeMapFromExportRecords(result.TempDataPath, RootPath);
-            }
+
+            var treeMap = _fullTreeMap;
             if (treeMap == null || treeMap.Count == 0)
             {
                 return;
             }
 
-            _fullTreeMap = treeMap;
             var filteredTreeMap = ApplyTreeFilters(treeMap, result.Details, ResolveTreeRoot(treeMap, RootPath));
+            _currentFilteredTreeMap = filteredTreeMap;
             var provider = new FolderTreeProvider(filteredTreeMap, result.Details);
             var rootPath = ResolveTreeRoot(filteredTreeMap, RootPath);
             if (string.IsNullOrWhiteSpace(rootPath)) return;
@@ -1485,10 +1486,29 @@ namespace NtfsAudit.App.ViewModels
         private void ReloadTreeWithFilters()
         {
             if (_scanResult == null || _fullTreeMap == null || _fullTreeMap.Count == 0) return;
-            LoadTree(_scanResult);
-            if (!string.IsNullOrWhiteSpace(SelectedFolderPath))
+            var preferredPath = SelectedFolderPath;
+            var preferredRoot = ResolveTreeRoot(_fullTreeMap, _scanResult.RootPath);
+            if (!string.IsNullOrWhiteSpace(preferredRoot)
+                && !string.Equals(RootPath, preferredRoot, StringComparison.OrdinalIgnoreCase))
             {
-                SelectFolder(SelectedFolderPath);
+                RootPath = preferredRoot;
+            }
+            LoadTree(_scanResult);
+            if (_currentFilteredTreeMap == null || _currentFilteredTreeMap.Count == 0)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(preferredPath) && _currentFilteredTreeMap.ContainsKey(preferredPath))
+            {
+                SelectFolder(preferredPath);
+                return;
+            }
+
+            var visibleRoot = ResolveTreeRoot(_currentFilteredTreeMap, RootPath);
+            if (!string.IsNullOrWhiteSpace(visibleRoot))
+            {
+                SelectFolder(visibleRoot);
             }
         }
 
@@ -1519,7 +1539,49 @@ namespace NtfsAudit.App.ViewModels
                 return false;
             }
             IncludeNode(rootPath);
-            return filtered.Count > 0 ? filtered : treeMap;
+            return filtered;
+        }
+
+        private Dictionary<string, List<string>> ResolveFullTreeMap(ScanResult result)
+        {
+            if (result == null)
+            {
+                return null;
+            }
+
+            var treeMap = result.TreeMap;
+            var preferredRoot = !string.IsNullOrWhiteSpace(result.RootPath) ? result.RootPath : RootPath;
+            var detailsTreeMap = BuildTreeMapFromDetails(result.Details, preferredRoot);
+            var treeMapCount = treeMap == null ? 0 : treeMap.Count;
+            var detailsTreeMapCount = detailsTreeMap == null ? 0 : detailsTreeMap.Count;
+
+            Debug.WriteLine(string.Format(
+                "[TreeMap] import source counts => treeMap:{0}, detailsTreeMap:{1}, root:{2}",
+                treeMapCount,
+                detailsTreeMapCount,
+                preferredRoot));
+
+            if ((treeMap == null || treeMap.Count == 0) && detailsTreeMap != null && detailsTreeMap.Count > 0)
+            {
+                Debug.WriteLine("[TreeMap] using detailsTreeMap (treeMap missing or empty)");
+                return detailsTreeMap;
+            }
+
+            // Compatibilità con analisi legacy: alcune esportazioni storiche contengono TreeMap parziali.
+            if (treeMap != null && treeMap.Count > 0 && detailsTreeMap != null && detailsTreeMap.Count > treeMap.Count)
+            {
+                Debug.WriteLine("[TreeMap] using detailsTreeMap (legacy partial treeMap detected)");
+                return detailsTreeMap;
+            }
+
+            if (treeMap != null && treeMap.Count > 0)
+            {
+                Debug.WriteLine("[TreeMap] using persisted treeMap");
+                return treeMap;
+            }
+
+            Debug.WriteLine("[TreeMap] fallback to export records treeMap reconstruction");
+            return BuildTreeMapFromExportRecords(result.TempDataPath, preferredRoot);
         }
 
         private bool NodeMatchesTreeFilters(string path, Dictionary<string, FolderDetail> details)
@@ -1544,9 +1606,6 @@ namespace NtfsAudit.App.ViewModels
             {
                 if (detail.BaselineSummary == null || (detail.BaselineSummary.Added.Count == 0 && detail.BaselineSummary.Removed.Count == 0)) return false;
             }
-            if (TreeFilterRiskHighOnly && !detail.AllEntries.Any(e => string.Equals(e.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase))) return false;
-            if (TreeFilterRiskMediumOnly && !detail.AllEntries.Any(e => string.Equals(e.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase))) return false;
-            if (TreeFilterRiskLowOnly && !detail.AllEntries.Any(e => string.Equals(e.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase))) return false;
             if (TreeFilterFilesOnly && !detail.AllEntries.Any(e => string.Equals(e.ResourceType, "File", StringComparison.OrdinalIgnoreCase))) return false;
             if (TreeFilterFoldersOnly && !detail.AllEntries.Any(e => string.Equals(e.ResourceType, "Cartella", StringComparison.OrdinalIgnoreCase))) return false;
             return true;
@@ -1554,7 +1613,7 @@ namespace NtfsAudit.App.ViewModels
 
         private bool AnyTreeFilterEnabled()
         {
-            return TreeFilterExplicitOnly || TreeFilterInheritanceDisabledOnly || TreeFilterDiffOnly || TreeFilterExplicitDenyOnly || TreeFilterBaselineMismatchOnly || TreeFilterRiskHighOnly || TreeFilterRiskMediumOnly || TreeFilterRiskLowOnly || TreeFilterFilesOnly || TreeFilterFoldersOnly;
+            return TreeFilterExplicitOnly || TreeFilterInheritanceDisabledOnly || TreeFilterDiffOnly || TreeFilterExplicitDenyOnly || TreeFilterBaselineMismatchOnly || TreeFilterFilesOnly || TreeFilterFoldersOnly;
         }
 
         private void UpdateSelectedFolderInfo(string path, FolderDetail detail)
@@ -2007,6 +2066,8 @@ namespace NtfsAudit.App.ViewModels
         private void ClearResults()
         {
             FolderTree.Clear();
+            _fullTreeMap = null;
+            _currentFilteredTreeMap = null;
             GroupEntries.Clear();
             UserEntries.Clear();
             AllEntries.Clear();
@@ -2015,6 +2076,7 @@ namespace NtfsAudit.App.ViewModels
             Errors.Clear();
             SelectedFolderPath = string.Empty;
             ProcessedCount = 0;
+            ProcessedFilesCount = 0;
             ErrorCount = 0;
             ElapsedText = "00:00:00";
             CurrentPathText = string.Empty;
@@ -2047,9 +2109,6 @@ namespace NtfsAudit.App.ViewModels
             _treeFilterDiffOnly = false;
             _treeFilterExplicitDenyOnly = false;
             _treeFilterBaselineMismatchOnly = false;
-            _treeFilterRiskHighOnly = false;
-            _treeFilterRiskMediumOnly = false;
-            _treeFilterRiskLowOnly = false;
             _treeFilterFilesOnly = false;
             _treeFilterFoldersOnly = false;
             OnPropertyChanged("TreeFilterExplicitOnly");
@@ -2057,11 +2116,19 @@ namespace NtfsAudit.App.ViewModels
             OnPropertyChanged("TreeFilterDiffOnly");
             OnPropertyChanged("TreeFilterExplicitDenyOnly");
             OnPropertyChanged("TreeFilterBaselineMismatchOnly");
-            OnPropertyChanged("TreeFilterRiskHighOnly");
-            OnPropertyChanged("TreeFilterRiskMediumOnly");
-            OnPropertyChanged("TreeFilterRiskLowOnly");
             OnPropertyChanged("TreeFilterFilesOnly");
             OnPropertyChanged("TreeFilterFoldersOnly");
+
+            if (_scanResult != null && _fullTreeMap != null && _fullTreeMap.Count > 0)
+            {
+                var root = ResolveTreeRoot(_fullTreeMap, _scanResult.RootPath);
+                if (!string.IsNullOrWhiteSpace(root)
+                    && !string.Equals(RootPath, root, StringComparison.OrdinalIgnoreCase))
+                {
+                    RootPath = root;
+                }
+            }
+
             if (reloadTree)
             {
                 ReloadTreeWithFilters();

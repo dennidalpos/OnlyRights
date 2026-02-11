@@ -133,7 +133,7 @@
         <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Protetto (ereditarietà disabilitata)" Style="{StaticResource BadgeToolTipBorder}">
           <TextBlock Text="P" Foreground="White" FontSize="10" />
         </Border>
-        <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Deny esplicito" Style="{StaticResource BadgeToolTipBorder}">
+        <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Deny esplicito" Style="{StaticResource BadgeToolTipBorder}">
           <TextBlock Text="D" Foreground="White" FontSize="10" />
         </Border>
       </StackPanel>
@@ -200,55 +200,77 @@
                 <Button Margin="0,0,8,0" Padding="10,4" Content="Espandi tutto" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
                 <Button Padding="10,4" Content="Comprimi tutto" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
               </StackPanel>
-              <GroupBox Header="Filtri Tree" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" IsEnabled="{Binding HasScanResult}">
-                <StackPanel>
-                  <WrapPanel>
-                    <CheckBox Margin="0,0,10,4" Content="Espliciti" IsChecked="{Binding TreeFilterExplicitOnly}" />
-                    <CheckBox Margin="0,0,10,4" Content="Ereditarietà OFF" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" />
-                    <CheckBox Margin="0,0,10,4" Content="Diff vs parent" IsChecked="{Binding TreeFilterDiffOnly}" />
-                    <CheckBox Margin="0,0,10,4" Content="Deny espliciti" IsChecked="{Binding TreeFilterExplicitDenyOnly}" />
-                    <CheckBox Margin="0,0,10,4" Content="Mismatch baseline" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" />
-                    <CheckBox Margin="0,0,10,4" Content="Risk High" IsChecked="{Binding TreeFilterRiskHighOnly}" />
-                    <CheckBox Margin="0,0,10,4" Content="Risk Medium" IsChecked="{Binding TreeFilterRiskMediumOnly}" />
-                    <CheckBox Margin="0,0,10,4" Content="Risk Low" IsChecked="{Binding TreeFilterRiskLowOnly}" />
-                    <CheckBox Margin="0,0,10,4" Content="Solo nodi con File" IsChecked="{Binding TreeFilterFilesOnly}" />
-                    <CheckBox Margin="0,0,10,4" Content="Solo nodi Cartella" IsChecked="{Binding TreeFilterFoldersOnly}" />
-                  </WrapPanel>
-                  <Button Content="Reset filtri tree" Width="140" Margin="0,4,0,0" Command="{Binding ResetTreeFiltersCommand}" />
-                </StackPanel>
-              </GroupBox>
-              <Expander Header="Legenda" IsExpanded="False">
+              <Expander Header="Legenda e filtri Tree" IsExpanded="False" IsEnabled="{Binding HasScanResult}">
                 <StackPanel Margin="0,6,0,0">
-                  <TextBlock Text="Stato" Style="{StaticResource SubsectionHeaderText}" />
+                  <TextBlock Text="🔎 Filtri Tree" Style="{StaticResource SubsectionHeaderText}" />
+                  <WrapPanel Margin="0,0,0,4">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra solo nodi con ACE NTFS esplicite.">
+                      <TextBlock Text="🔎" VerticalAlignment="Center" Margin="0,0,3,0" />
+                      <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="N" Foreground="White" FontSize="10" /></Border>
+                      <CheckBox Content="NTFS espliciti" IsChecked="{Binding TreeFilterExplicitOnly}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra solo nodi con ereditarietà disabilitata (protetti).">
+                      <TextBlock Text="🔎" VerticalAlignment="Center" Margin="0,0,3,0" />
+                      <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="P" Foreground="White" FontSize="10" /></Border>
+                      <CheckBox Content="Protetto" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra solo nodi con differenze di ACE rispetto al parent.">
+                      <TextBlock Text="🔎" VerticalAlignment="Center" Margin="0,0,3,0" />
+                      <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="Δ" Foreground="White" FontSize="10" /></Border>
+                      <CheckBox Content="Diff parent" IsChecked="{Binding TreeFilterDiffOnly}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra solo nodi con deny espliciti.">
+                      <TextBlock Text="🔎" VerticalAlignment="Center" Margin="0,0,3,0" />
+                      <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="D" Foreground="White" FontSize="10" /></Border>
+                      <CheckBox Content="Deny espliciti" IsChecked="{Binding TreeFilterExplicitDenyOnly}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra solo nodi con mismatch rispetto alla baseline attesa.">
+                      <TextBlock Text="🔎" VerticalAlignment="Center" Margin="0,0,3,0" />
+                      <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="B" Foreground="White" FontSize="10" /></Border>
+                      <CheckBox Content="Baseline mismatch" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra solo nodi che includono file analizzati.">
+                      <TextBlock Text="🔎" VerticalAlignment="Center" Margin="0,0,3,0" />
+                      <Border Background="#FF616161" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="F" Foreground="White" FontSize="10" /></Border>
+                      <CheckBox Content="Con file" IsChecked="{Binding TreeFilterFilesOnly}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra solo nodi di tipo cartella.">
+                      <TextBlock Text="🔎" VerticalAlignment="Center" Margin="0,0,3,0" />
+                      <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="C" Foreground="White" FontSize="10" /></Border>
+                      <CheckBox Content="Solo cartelle" IsChecked="{Binding TreeFilterFoldersOnly}" />
+                    </StackPanel>
+                  </WrapPanel>
+                  <Button Content="Reset filtri tree" Width="140" Margin="0,0,0,8" Command="{Binding ResetTreeFiltersCommand}" />
+                  <TextBlock Text="🧭 Stato" Style="{StaticResource SubsectionHeaderText}" />
                   <WrapPanel Margin="0,0,0,4">
                     <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Protetto (ereditarietà disabilitata)" Style="{StaticResource BadgeToolTipBorder}">
                       <TextBlock Text="P" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Deny espliciti" Style="{StaticResource BadgeToolTipBorder}">
+                    <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Deny espliciti" Style="{StaticResource BadgeToolTipBorder}">
                       <TextBlock Text="D" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FF5E35B1" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Permessi Share presenti" Style="{StaticResource BadgeToolTipBorder}">
+                    <Border Background="#FF1565C0" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Permessi Share espliciti" Style="{StaticResource BadgeToolTipBorder}">
                       <TextBlock Text="S" Foreground="White" FontSize="10" />
                     </Border>
                     <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="ACE NTFS esplicite" Style="{StaticResource BadgeToolTipBorder}">
                       <TextBlock Text="N" Foreground="White" FontSize="10" />
                     </Border>
                   </WrapPanel>
-                  <TextBlock Text="Baseline" Style="{StaticResource SubsectionHeaderText}" />
+                  <TextBlock Text="📏 Baseline" Style="{StaticResource SubsectionHeaderText}" />
                   <WrapPanel Margin="0,0,0,4">
                     <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Aggiunte vs baseline" Style="{StaticResource BadgeToolTipBorder}">
-                      <TextBlock Text="BA" Foreground="White" FontSize="10" />
+                      <TextBlock Text="B+" Foreground="White" FontSize="10" />
                     </Border>
                     <Border Background="#FF78909C" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="Rimozioni vs baseline" Style="{StaticResource BadgeToolTipBorder}">
-                      <TextBlock Text="BR" Foreground="White" FontSize="10" />
+                      <TextBlock Text="B-" Foreground="White" FontSize="10" />
                     </Border>
                   </WrapPanel>
-                  <TextBlock Text="Sorgente" Style="{StaticResource SubsectionHeaderText}" />
+                  <TextBlock Text="🧩 Sorgente" Style="{StaticResource SubsectionHeaderText}" />
                   <WrapPanel>
                     <Border Background="#FF2E7D32" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="ACE esplicite aggiunte" Style="{StaticResource BadgeToolTipBorder}">
                       <TextBlock Text="A" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FFF57C00" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="ACE rimosse rispetto al padre" Style="{StaticResource BadgeToolTipBorder}">
+                    <Border Background="#FFF57C00" Padding="2,0" CornerRadius="2" Margin="0,0,6,4" ToolTip="ACE rimosse rispetto al parent" Style="{StaticResource BadgeToolTipBorder}">
                       <TextBlock Text="R" Foreground="White" FontSize="10" />
                     </Border>
                   </WrapPanel>
@@ -276,28 +298,28 @@
                   <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📁" Margin="0,0,6,0" />
                     <TextBlock Text="{Binding DisplayName}" />
-                    <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsProtected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Protetto (ereditarietà disabilitata)" Style="{StaticResource BadgeToolTipBorder}" Visibility="{Binding IsProtected, Converter={StaticResource BooleanToVisibilityConverter}}">
                       <TextBlock Text="P" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FF2E7D32" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasExplicitAdded, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border Background="#FF2E7D32" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="ACE esplicite aggiunte rispetto al parent" Style="{StaticResource BadgeToolTipBorder}" Visibility="{Binding HasExplicitAdded, Converter={StaticResource BooleanToVisibilityConverter}}">
                       <TextBlock Text="{Binding ExplicitAddedLabel}" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FFF57C00" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasExplicitRemoved, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border Background="#FFF57C00" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="ACE rimosse rispetto al parent" Style="{StaticResource BadgeToolTipBorder}" Visibility="{Binding HasExplicitRemoved, Converter={StaticResource BooleanToVisibilityConverter}}">
                       <TextBlock Text="{Binding ExplicitRemovedLabel}" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FF6A1B9A" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasDenyExplicit, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Deny espliciti" Style="{StaticResource BadgeToolTipBorder}" Visibility="{Binding HasDenyExplicit, Converter={StaticResource BooleanToVisibilityConverter}}">
                       <TextBlock Text="{Binding DenyExplicitLabel}" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasBaselineAdded, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Aggiunte vs baseline" Style="{StaticResource BadgeToolTipBorder}" Visibility="{Binding HasBaselineAdded, Converter={StaticResource BooleanToVisibilityConverter}}">
                       <TextBlock Text="{Binding BaselineAddedLabel}" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FF78909C" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasBaselineRemoved, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border Background="#FF78909C" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Rimozioni vs baseline" Style="{StaticResource BadgeToolTipBorder}" Visibility="{Binding HasBaselineRemoved, Converter={StaticResource BooleanToVisibilityConverter}}">
                       <TextBlock Text="{Binding BaselineRemovedLabel}" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasExplicitNtfs, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="ACE NTFS esplicite" Style="{StaticResource BadgeToolTipBorder}" Visibility="{Binding HasExplicitNtfs, Converter={StaticResource BooleanToVisibilityConverter}}">
                       <TextBlock Text="{Binding ExplicitNtfsLabel}" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FF5E35B1" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding HasExplicitShare, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border Background="#FF1565C0" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Permessi Share espliciti" Style="{StaticResource BadgeToolTipBorder}" Visibility="{Binding HasExplicitShare, Converter={StaticResource BooleanToVisibilityConverter}}">
                       <TextBlock Text="{Binding ExplicitShareLabel}" Foreground="White" FontSize="10" />
                     </Border>
                   </StackPanel>
@@ -352,28 +374,28 @@
                   <CheckBox Margin="0,0,12,6" Content="Admin" IsChecked="{Binding ShowAdminAccounts}" />
                   <CheckBox Margin="0,0,12,6" Content="Altri" IsChecked="{Binding ShowOtherPrincipals}" />
                 </WrapPanel>
-                <TextBlock Text="Legenda diritti" Style="{StaticResource SubsectionHeaderText}" />
+                <TextBlock Text="🏷️ Legenda diritti" Style="{StaticResource SubsectionHeaderText}" />
                 <WrapPanel>
                   <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Read" Style="{StaticResource BadgeToolTipBorder}">
-                    <TextBlock Text="Read" Foreground="White" FontSize="10" />
+                    <TextBlock Text="👁 Read" Foreground="White" FontSize="10" />
                   </Border>
                   <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="List" Style="{StaticResource BadgeToolTipBorder}">
-                    <TextBlock Text="List" Foreground="White" FontSize="10" />
+                    <TextBlock Text="📄 List" Foreground="White" FontSize="10" />
                   </Border>
                   <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Read &amp; Execute" Style="{StaticResource BadgeToolTipBorder}">
-                    <TextBlock Text="R&amp;E" Foreground="White" FontSize="10" />
+                    <TextBlock Text="⚙ R&amp;E" Foreground="White" FontSize="10" />
                   </Border>
                   <Border Background="#FF27AE60" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Write" Style="{StaticResource BadgeToolTipBorder}">
-                    <TextBlock Text="Write" Foreground="White" FontSize="10" />
+                    <TextBlock Text="✍ Write" Foreground="White" FontSize="10" />
                   </Border>
                   <Border Background="#FFF2994A" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Modify" Style="{StaticResource BadgeToolTipBorder}">
-                    <TextBlock Text="Modify" Foreground="White" FontSize="10" />
+                    <TextBlock Text="🛠 Modify" Foreground="White" FontSize="10" />
                   </Border>
                   <Border Background="#FF9B51E0" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Full Control" Style="{StaticResource BadgeToolTipBorder}">
-                    <TextBlock Text="Full" Foreground="White" FontSize="10" />
+                    <TextBlock Text="👑 Full" Foreground="White" FontSize="10" />
                   </Border>
                   <Border Background="#FFEB5757" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Deny" Style="{StaticResource BadgeToolTipBorder}">
-                    <TextBlock Text="Deny" Foreground="White" FontSize="10" />
+                    <TextBlock Text="⛔ Deny" Foreground="White" FontSize="10" />
                   </Border>
                 </WrapPanel>
               </StackPanel>
@@ -621,8 +643,14 @@
                   <WrapPanel Margin="0,0,0,6">
                     <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFE8F5E9">
                       <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Analizzate: " VerticalAlignment="Center" />
+                        <TextBlock Text="Cartelle analizzate: " VerticalAlignment="Center" />
                         <TextBlock Text="{Binding ProcessedCount}" VerticalAlignment="Center" />
+                      </StackPanel>
+                    </Border>
+                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFE3F2FD">
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="File analizzati: " VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding ProcessedFilesCount}" VerticalAlignment="Center" />
                       </StackPanel>
                     </Border>
                     <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFFFEBEE">
@@ -635,68 +663,6 @@
                       <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Tempo: " VerticalAlignment="Center" />
                         <TextBlock Text="{Binding ElapsedText}" VerticalAlignment="Center" />
-                      </StackPanel>
-                    </Border>
-                  </WrapPanel>
-                  <WrapPanel>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFF5F5F5">
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Totale ACE: " VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding SummaryTotalEntries}" VerticalAlignment="Center" />
-                      </StackPanel>
-                    </Border>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFFFEBEE">
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Rischio alto: " VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding SummaryHighRisk}" VerticalAlignment="Center" />
-                      </StackPanel>
-                    </Border>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFFFF8E1">
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Rischio medio: " VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding SummaryMediumRisk}" VerticalAlignment="Center" />
-                      </StackPanel>
-                    </Border>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFE8F5E9">
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Rischio basso: " VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding SummaryLowRisk}" VerticalAlignment="Center" />
-                      </StackPanel>
-                    </Border>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFFFEBEE">
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Deny espliciti: " VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding SummaryDenyCount}" VerticalAlignment="Center" />
-                      </StackPanel>
-                    </Border>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFF5F5F5">
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Everyone: " VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding SummaryEveryoneCount}" VerticalAlignment="Center" />
-                      </StackPanel>
-                    </Border>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFF5F5F5">
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Authenticated Users: " VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding SummaryAuthUsersCount}" VerticalAlignment="Center" />
-                      </StackPanel>
-                    </Border>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFF5F5F5">
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="File analizzati: " VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding SummaryFilesCount}" VerticalAlignment="Center" />
-                      </StackPanel>
-                    </Border>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFF5F5F5">
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Baseline +: " VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding SummaryBaselineAdded}" VerticalAlignment="Center" />
-                      </StackPanel>
-                    </Border>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFF5F5F5">
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Baseline -: " VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding SummaryBaselineRemoved}" VerticalAlignment="Center" />
                       </StackPanel>
                     </Border>
                   </WrapPanel>

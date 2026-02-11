@@ -19,6 +19,7 @@ L’applicazione legge le ACL delle cartelle, normalizza i diritti, può risolve
 - [Formato archivi .ntaudit](#formato-archivi-ntaudit)
 - [Viewer](#viewer)
 - [Script di build](#script-di-build)
+- [Filtri, checkbox e processi Import/Export](#filtri-checkbox-e-processi-importexport)
 - [File temporanei](#file-temporanei)
 - [Troubleshooting](#troubleshooting)
 
@@ -286,6 +287,7 @@ Parametri principali:
 - `-RunClean` (esegue `scripts/clean.ps1` prima del ciclo restore/build)
 - `-SkipTests` (salta `dotnet test` dopo la build)
 - `-CleanLogs` (pulisce log in `%TEMP%\NtfsAudit\logs` e `%LOCALAPPDATA%\NtfsAudit\Logs`)
+- `-CleanExports` (pulisce solo l'output `dist`, mantenendo artifacts/temp/cache)
 
 Output di default: `dist\<Configuration>` (con eventuale `<Runtime>` e/o `<Framework>`). Il viewer viene pubblicato in `dist\<Configuration>\Viewer`.
 
@@ -315,6 +317,13 @@ Parametri:
 - `-CleanCache` (alias per `-CacheOnly`)
 - `-CleanAllTemp` (pulisce temp, import e cache)
 - `-CleanLogs` (pulisce log temporanei e applicativi)
+- `-CleanExports` (pulisce solo l'output export/dist)
+
+## Filtri, checkbox e processi Import/Export
+
+Per il dettaglio completo della logica aggiornata (filtri tree, checkbox persistenti, import/export e esclusioni DFS/DFSR) vedi:
+
+- `docs/FILTRI_CHECKBOX_IMPORT_EXPORT.md`
 
 ## File temporanei
 
@@ -338,5 +347,6 @@ Gli import di analisi usano `%TEMP%\NtfsAudit\\imports` e possono essere elimina
 - **Unità di rete non visibili nel dialog**: inserisci manualmente il percorso UNC (es. `\\server\share`) nel campo percorso o verifica la mappatura da Esplora file.
 - **AD non disponibile**: disattiva “Usa PowerShell per AD” o installa RSAT.
 - **Prestazioni**: riduci la profondità o disattiva risoluzione identità/espansione gruppi.
+- **Cartelle DFS tecniche**: la scansione ignora automaticamente cartelle di sync/replica DFSR (es. `DfsrPrivate`, `System Volume Information\DFSR`, staging/deleted) per evitare rumore e falsi positivi.
 - **SACL sempre vuote**: verifica che “Leggi Owner e SACL” sia attivo e che l’app sia eseguita come amministratore. In caso di privilegi mancanti o accesso negato, la UI mostra “SACL non disponibile (privilegi/accesso negato)”; se non esistono regole di audit, viene indicato “Nessuna voce SACL”.
 - **Compatibilità 2012 R2**: usa `net6.0-windows` per server legacy.
