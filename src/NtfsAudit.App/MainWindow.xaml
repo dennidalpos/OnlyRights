@@ -10,99 +10,63 @@
         Closing="MainWindow_OnClosing">
   <Window.Resources>
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-    <Style TargetType="FrameworkElement">
-      <Setter Property="ToolTipService.InitialShowDelay" Value="250" />
-      <Setter Property="ToolTipService.ShowDuration" Value="8000" />
-      <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
-    </Style>
-    <Style TargetType="ToolTip">
-      <Setter Property="Placement" Value="Mouse" />
-      <Setter Property="FontSize" Value="12" />
-      <Setter Property="Padding" Value="8,6" />
-      <Setter Property="Background" Value="#FF263238" />
-      <Setter Property="Foreground" Value="White" />
-      <Setter Property="BorderBrush" Value="#FF37474F" />
-      <Setter Property="BorderThickness" Value="1" />
-    </Style>
-    <Style x:Key="SectionHeaderText" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="16" />
-      <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="Foreground" Value="#FF1F1F1F" />
-      <Setter Property="Margin" Value="0,0,0,8" />
-    </Style>
-    <Style x:Key="SubsectionHeaderText" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="13" />
-      <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="Foreground" Value="#FF424242" />
-      <Setter Property="Margin" Value="0,6,0,4" />
-    </Style>
-    <Style x:Key="MicrocopyText" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="11" />
-      <Setter Property="Foreground" Value="#FF616161" />
-      <Setter Property="Margin" Value="0,2,0,6" />
-    </Style>
     <Style x:Key="RightsRowStyle" TargetType="DataGridRow">
       <Style.Triggers>
         <DataTrigger Binding="{Binding IsDisabled}" Value="True">
           <Setter Property="TextBlock.TextDecorations" Value="Strikethrough" />
-          <Setter Property="Foreground" Value="#FF9E9E9E" />
+          <Setter Property="Foreground" Value="{StaticResource ColorNeutral500}" />
         </DataTrigger>
         <MultiDataTrigger>
           <MultiDataTrigger.Conditions>
             <Condition Binding="{Binding DataContext.ColorizeRights, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True" />
             <Condition Binding="{Binding HasRead}" Value="True" />
           </MultiDataTrigger.Conditions>
-          <Setter Property="Background" Value="#FFE3F2FD" />
+          <Setter Property="Background" Value="{StaticResource ColorInfoSurface}" />
         </MultiDataTrigger>
         <MultiDataTrigger>
           <MultiDataTrigger.Conditions>
             <Condition Binding="{Binding DataContext.ColorizeRights, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True" />
             <Condition Binding="{Binding HasList}" Value="True" />
           </MultiDataTrigger.Conditions>
-          <Setter Property="Background" Value="#FFE3F2FD" />
+          <Setter Property="Background" Value="{StaticResource ColorInfoSurface}" />
         </MultiDataTrigger>
         <MultiDataTrigger>
           <MultiDataTrigger.Conditions>
             <Condition Binding="{Binding DataContext.ColorizeRights, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True" />
             <Condition Binding="{Binding HasReadAndExecute}" Value="True" />
           </MultiDataTrigger.Conditions>
-          <Setter Property="Background" Value="#FFE3F2FD" />
+          <Setter Property="Background" Value="{StaticResource ColorInfoSurface}" />
         </MultiDataTrigger>
         <MultiDataTrigger>
           <MultiDataTrigger.Conditions>
             <Condition Binding="{Binding DataContext.ColorizeRights, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True" />
             <Condition Binding="{Binding HasWrite}" Value="True" />
           </MultiDataTrigger.Conditions>
-          <Setter Property="Background" Value="#FFE8F5E9" />
+          <Setter Property="Background" Value="{StaticResource ColorSuccessSurface}" />
         </MultiDataTrigger>
         <MultiDataTrigger>
           <MultiDataTrigger.Conditions>
             <Condition Binding="{Binding DataContext.ColorizeRights, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True" />
             <Condition Binding="{Binding HasModify}" Value="True" />
           </MultiDataTrigger.Conditions>
-          <Setter Property="Background" Value="#FFFFF3E0" />
+          <Setter Property="Background" Value="{StaticResource ColorWarningSurfaceSoft}" />
         </MultiDataTrigger>
         <MultiDataTrigger>
           <MultiDataTrigger.Conditions>
             <Condition Binding="{Binding DataContext.ColorizeRights, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True" />
             <Condition Binding="{Binding HasFullControl}" Value="True" />
           </MultiDataTrigger.Conditions>
-          <Setter Property="Background" Value="#FFF3E5F5" />
+          <Setter Property="Background" Value="{StaticResource ColorSurfacePurple}" />
         </MultiDataTrigger>
         <MultiDataTrigger>
           <MultiDataTrigger.Conditions>
             <Condition Binding="{Binding DataContext.ColorizeRights, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True" />
             <Condition Binding="{Binding AllowDeny}" Value="Deny" />
           </MultiDataTrigger.Conditions>
-          <Setter Property="Background" Value="#FFFFEBEE" />
-          <Setter Property="Foreground" Value="#FFB71C1C" />
+          <Setter Property="Background" Value="{StaticResource ColorDangerSurface}" />
+          <Setter Property="Foreground" Value="{StaticResource ColorDangerText}" />
         </MultiDataTrigger>
       </Style.Triggers>
-    </Style>
-    <Style x:Key="BadgeToolTipBorder" TargetType="Border">
-      <Setter Property="ToolTipService.InitialShowDelay" Value="250" />
-      <Setter Property="ToolTipService.ShowDuration" Value="8000" />
-      <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
     </Style>
     <DataTemplate x:Key="PermissionBadgesTemplate">
       <StackPanel Orientation="Horizontal">
@@ -110,44 +74,44 @@
           <Border.Style>
             <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
               <Setter Property="Visibility" Value="Collapsed" />
-              <Setter Property="Background" Value="#FF2F80ED" />
+              <Setter Property="Background" Value="{StaticResource ColorInfo}" />
               <Style.Triggers>
                 <DataTrigger Binding="{Binding HighestRightKey}" Value="Full">
                   <Setter Property="Visibility" Value="Visible" />
-                  <Setter Property="Background" Value="#FF9B51E0" />
+                  <Setter Property="Background" Value="{StaticResource ColorRiskFullControl}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding HighestRightKey}" Value="Modify">
                   <Setter Property="Visibility" Value="Visible" />
-                  <Setter Property="Background" Value="#FFF2994A" />
+                  <Setter Property="Background" Value="{StaticResource ColorWarning}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding HighestRightKey}" Value="ReadAndExecute">
                   <Setter Property="Visibility" Value="Visible" />
-                  <Setter Property="Background" Value="#FF2F80ED" />
+                  <Setter Property="Background" Value="{StaticResource ColorInfo}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding HighestRightKey}" Value="Write">
                   <Setter Property="Visibility" Value="Visible" />
-                  <Setter Property="Background" Value="#FF27AE60" />
+                  <Setter Property="Background" Value="{StaticResource ColorSuccess}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding HighestRightKey}" Value="List">
                   <Setter Property="Visibility" Value="Visible" />
-                  <Setter Property="Background" Value="#FF2F80ED" />
+                  <Setter Property="Background" Value="{StaticResource ColorInfo}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding HighestRightKey}" Value="Read">
                   <Setter Property="Visibility" Value="Visible" />
-                  <Setter Property="Background" Value="#FF2F80ED" />
+                  <Setter Property="Background" Value="{StaticResource ColorInfo}" />
                 </DataTrigger>
               </Style.Triggers>
             </Style>
           </Border.Style>
           <TextBlock Text="{Binding HighestRightLabel}" Foreground="White" FontSize="10" />
         </Border>
-        <Border Background="#FF1976D2" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInherited, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Ereditato" Style="{StaticResource BadgeToolTipBorder}">
+        <Border Background="{StaticResource ColorInfoDark}" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInherited, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Ereditato" Style="{StaticResource BadgeToolTipBorder}">
           <TextBlock Text="I" Foreground="White" FontSize="10" />
         </Border>
-        <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Protetto (ereditarietà disabilitata)" Style="{StaticResource BadgeToolTipBorder}">
+        <Border Background="{StaticResource ColorDangerDark}" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Protetto (ereditarietà disabilitata)" Style="{StaticResource BadgeToolTipBorder}">
           <TextBlock Text="P" Foreground="White" FontSize="10" />
         </Border>
-        <Border Background="#FFEB5757" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Accesso negato (Deny esplicito)" Style="{StaticResource BadgeToolTipBorder}">
+        <Border Background="{StaticResource ColorDanger}" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Accesso negato (Deny esplicito)" Style="{StaticResource BadgeToolTipBorder}">
           <TextBlock Text="D" Foreground="White" FontSize="10" />
         </Border>
       </StackPanel>
@@ -160,33 +124,63 @@
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
-      <Border Grid.Row="0" Padding="12" BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+      <Border Grid.Row="0" Padding="12" BorderBrush="{StaticResource ColorBorderSubtle}" BorderThickness="0,0,0,1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
-          <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+          <Border Grid.Row="0" BorderBrush="{StaticResource ColorBorderSubtle}" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
-              <Button Margin="0,0,8,0" Padding="12,4" Content="Avvia analisi" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" Background="#FF2E7D32" Foreground="White" />
-              <Button Margin="0,0,8,0" Padding="12,4" Content="Stop" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" Background="#FFC62828" Foreground="White" />
-              <Button Margin="0,0,8,0" Padding="12,4" Content="Esporta elenco permessi (Excel)" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
-              <Button Margin="0,0,8,0" Padding="12,4" Content="Salva report completo (.ntaudit)" Command="{Binding ExportAnalysisCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
-              <Button Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" Background="#FF616161" Foreground="White" />
+              <Button Margin="0,0,8,0" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" Style="{StaticResource ButtonSuccess}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="{StaticResource IconScan}" Style="{StaticResource IconText16}" />
+                  <TextBlock Text="Avvia analisi" />
+                </StackPanel>
+              </Button>
+              <Button Margin="0,0,8,0" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" Style="{StaticResource ButtonDanger}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="{StaticResource IconStop}" Style="{StaticResource IconText16}" />
+                  <TextBlock Text="Stop" />
+                </StackPanel>
+              </Button>
+              <Button Margin="0,0,8,0" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" Style="{StaticResource ButtonPrimary}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="{StaticResource IconExport}" Style="{StaticResource IconText16}" />
+                  <TextBlock Text="Esporta elenco permessi (Excel)" />
+                </StackPanel>
+              </Button>
+              <Button Margin="0,0,8,0" Command="{Binding ExportAnalysisCommand}" IsEnabled="{Binding CanExport}" Style="{StaticResource ButtonPrimary}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="{StaticResource IconExport}" Style="{StaticResource IconText16}" />
+                  <TextBlock Text="Salva report completo (.ntaudit)" />
+                </StackPanel>
+              </Button>
+              <Button Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" Style="{StaticResource ButtonSecondary}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="{StaticResource IconImport}" Style="{StaticResource IconText16}" />
+                  <TextBlock Text="Import Analisi" />
+                </StackPanel>
+              </Button>
             </StackPanel>
           </Border>
 
-          <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+          <Border Grid.Row="0" BorderBrush="{StaticResource ColorBorderSubtle}" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
-              <Button Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" Background="#FF616161" Foreground="White" />
+              <Button Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" Style="{StaticResource ButtonSecondary}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="{StaticResource IconImport}" Style="{StaticResource IconText16}" />
+                  <TextBlock Text="Import Analisi" />
+                </StackPanel>
+              </Button>
             </StackPanel>
           </Border>
 
-          <Border Grid.Row="1" Background="#FFFFF3CD" BorderBrush="#FFFFEEBA" BorderThickness="1" CornerRadius="10" Padding="6,2"
+          <Border Grid.Row="1" Background="{StaticResource ColorWarningSurface}" BorderBrush="{StaticResource ColorWarningBorder}" BorderThickness="1" CornerRadius="10" Padding="6,2"
                   HorizontalAlignment="Left"
                   Visibility="{Binding IsNotElevated, Converter={StaticResource BooleanToVisibilityConverter}}">
             <TextBlock Text="Non amministratore"
-                       Foreground="#FF856404"
+                       Foreground="{StaticResource ColorWarningText}"
                        FontWeight="SemiBold" />
           </Border>
         </Grid>
@@ -201,7 +195,7 @@
           <ColumnDefinition Width="320" />
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="12" Margin="12,12,6,12" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Column="0" BorderBrush="{StaticResource ColorBorderSubtle}" BorderThickness="1" Padding="12" Margin="12,12,6,12" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
@@ -219,31 +213,31 @@
                   <TextBlock Text="🔎 Filtri Tree" Style="{StaticResource SubsectionHeaderText}" />
                   <WrapPanel Margin="0,0,0,4">
                     <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con permessi NTFS espliciti.">
-                                            <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="N" Foreground="White" FontSize="10" /></Border>
+                                            <Border Background="{StaticResource ColorRiskRead}" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="N" Foreground="White" FontSize="10" /></Border>
                       <CheckBox Content="NTFS espliciti" IsChecked="{Binding TreeFilterExplicitOnly}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi protetti (ereditarietà disabilitata).">
-                                            <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="P" Foreground="White" FontSize="10" /></Border>
+                                            <Border Background="{StaticResource ColorDangerDark}" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="P" Foreground="White" FontSize="10" /></Border>
                       <CheckBox Content="Protetto" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con differenze ACL rispetto alla cartella padre immediata (confronto gerarchico).">
-                                            <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="Δ" Foreground="White" FontSize="10" /></Border>
+                                            <Border Background="{StaticResource ColorSlate700}" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="Δ" Foreground="White" FontSize="10" /></Border>
                       <CheckBox Content="Diff vs padre" IsChecked="{Binding TreeFilterDiffOnly}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con regole Deny esplicite.">
-                                            <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="D" Foreground="White" FontSize="10" /></Border>
+                                            <Border Background="{StaticResource ColorDangerAccent}" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="D" Foreground="White" FontSize="10" /></Border>
                       <CheckBox Content="Deny espliciti" IsChecked="{Binding TreeFilterExplicitDenyOnly}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con differenze ACL rispetto alla baseline/policy attesa (confronto assoluto).">
-                                            <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="B" Foreground="White" FontSize="10" /></Border>
+                                            <Border Background="{StaticResource ColorSlate700}" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="B" Foreground="White" FontSize="10" /></Border>
                       <CheckBox Content="Mismatch baseline" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi che contengono file analizzati.">
-                                            <Border Background="#FF616161" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="F" Foreground="White" FontSize="10" /></Border>
+                                            <Border Background="{StaticResource ColorNeutral600}" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="F" Foreground="White" FontSize="10" /></Border>
                       <CheckBox Content="Con file" IsChecked="{Binding TreeFilterFilesOnly}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi di tipo cartella.">
-                                            <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="C" Foreground="White" FontSize="10" /></Border>
+                                            <Border Background="{StaticResource ColorSlate700}" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="C" Foreground="White" FontSize="10" /></Border>
                       <CheckBox Content="Solo cartelle" IsChecked="{Binding TreeFilterFoldersOnly}" />
                     </StackPanel>
                   </WrapPanel>
@@ -258,11 +252,11 @@
                   <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
                   <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                   <Setter Property="Background" Value="Transparent" />
-                  <Setter Property="Foreground" Value="#FF212121" />
+                  <Setter Property="Foreground" Value="{StaticResource ColorNeutral800}" />
                   <Style.Triggers>
                     <Trigger Property="IsSelected" Value="True">
-                      <Setter Property="Background" Value="#FFBBDEFB" />
-                      <Setter Property="Foreground" Value="#FF0D47A1" />
+                      <Setter Property="Background" Value="{StaticResource ColorInfoBorder}" />
+                      <Setter Property="Foreground" Value="{StaticResource ColorRiskPath}" />
                       <Setter Property="FontWeight" Value="SemiBold" />
                     </Trigger>
                   </Style.Triggers>
@@ -273,7 +267,7 @@
                   <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📁" Margin="0,0,6,0" />
                     <TextBlock Text="{Binding DisplayName}" />
-                    <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Protetto (ereditarietà disabilitata)"><Border.Style>
+                    <Border Background="{StaticResource ColorDangerDark}" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Protetto (ereditarietà disabilitata)"><Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
                           <Style.Triggers>
@@ -289,7 +283,7 @@
                       </Border.Style>
                       <TextBlock Text="P" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Differenze rispetto alla cartella padre">
+                    <Border Background="{StaticResource ColorSlate700}" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Differenze rispetto alla cartella padre">
                       <Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
@@ -306,7 +300,7 @@
                       </Border.Style>
                       <TextBlock Text="{Binding DiffLabel}" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Accesso negato (Deny espliciti)">
+                    <Border Background="{StaticResource ColorDangerAccent}" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Accesso negato (Deny espliciti)">
                       <Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
@@ -323,7 +317,7 @@
                       </Border.Style>
                       <TextBlock Text="{Binding DenyExplicitLabel}" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Differenze rispetto alla baseline">
+                    <Border Background="{StaticResource ColorSlate700}" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Differenze rispetto alla baseline">
                       <Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
@@ -340,7 +334,7 @@
                       </Border.Style>
                       <TextBlock Text="{Binding BaselineMismatchLabel}" Foreground="White" FontSize="10" />
                     </Border>
-                    <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Permessi NTFS espliciti">
+                    <Border Background="{StaticResource ColorRiskRead}" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Permessi NTFS espliciti">
                       <Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
@@ -364,9 +358,9 @@
           </Grid>
         </Border>
 
-        <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FFE0E0E0" />
+        <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{StaticResource ColorBorderDefault}" />
 
-        <Border Grid.Column="2" BorderBrush="#DDDDDD" BorderThickness="1" Padding="12" Margin="6,12" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Column="2" BorderBrush="{StaticResource ColorBorderSubtle}" BorderThickness="1" Padding="12" Margin="6,12" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
@@ -379,33 +373,33 @@
             <StackPanel Grid.Row="1" Margin="0,8,0,8" IsEnabled="{Binding HasScanResult}">
               <TextBlock Text="🏷️ Legenda diritti" Style="{StaticResource SubsectionHeaderText}" />
               <WrapPanel Margin="0,0,0,6">
-                <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Permesso di lettura" Style="{StaticResource BadgeToolTipBorder}">
+                <Border Background="{StaticResource ColorInfo}" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Permesso di lettura" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="👁 Read" Foreground="White" FontSize="10" />
                 </Border>
-                <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Visualizza elenco contenuti" Style="{StaticResource BadgeToolTipBorder}">
+                <Border Background="{StaticResource ColorInfo}" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Visualizza elenco contenuti" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="📄 List" Foreground="White" FontSize="10" />
                 </Border>
-                <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Lettura ed esecuzione" Style="{StaticResource BadgeToolTipBorder}">
+                <Border Background="{StaticResource ColorInfo}" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Lettura ed esecuzione" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="⚙ R&amp;E" Foreground="White" FontSize="10" />
                 </Border>
-                <Border Background="#FF27AE60" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Scrittura" Style="{StaticResource BadgeToolTipBorder}">
+                <Border Background="{StaticResource ColorSuccess}" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Scrittura" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="✍ Write" Foreground="White" FontSize="10" />
                 </Border>
-                <Border Background="#FFF2994A" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Modifica" Style="{StaticResource BadgeToolTipBorder}">
+                <Border Background="{StaticResource ColorWarning}" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Modifica" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="🛠 Modify" Foreground="White" FontSize="10" />
                 </Border>
-                <Border Background="#FF9B51E0" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Controllo completo" Style="{StaticResource BadgeToolTipBorder}">
+                <Border Background="{StaticResource ColorRiskFullControl}" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Controllo completo" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="👑 Full" Foreground="White" FontSize="10" />
                 </Border>
-                <Border Background="#FFEB5757" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Accesso negato (Deny)" Style="{StaticResource BadgeToolTipBorder}">
+                <Border Background="{StaticResource ColorDanger}" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Accesso negato (Deny)" Style="{StaticResource BadgeToolTipBorder}">
                   <TextBlock Text="⛔ Deny" Foreground="White" FontSize="10" />
                 </Border>
               </WrapPanel>
-              <TextBlock Text="Cartella trattata" FontSize="11" Foreground="#FF546E7A" FontWeight="SemiBold" />
-              <TextBlock Text="{Binding SelectedFolderName}" FontWeight="SemiBold" FontSize="13" Foreground="#FF0D47A1" TextTrimming="CharacterEllipsis" />
-              <TextBlock Text="{Binding SelectedFolderPath}" FontSize="11" Foreground="#FF546E7A" TextTrimming="CharacterEllipsis" Margin="0,0,0,6" />
+              <TextBlock Text="Cartella trattata" FontSize="11" Foreground="{StaticResource ColorSlate600}" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding SelectedFolderName}" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource ColorRiskPath}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Text="{Binding SelectedFolderPath}" FontSize="11" Foreground="{StaticResource ColorSlate600}" TextTrimming="CharacterEllipsis" Margin="0,0,0,6" />
 
-              <Expander Header="Filtri persistenti" IsExpanded="False" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10">
+              <Expander Header="Filtri persistenti" IsExpanded="False" BorderBrush="{StaticResource ColorBorderSubtle}" BorderThickness="1" Padding="10">
                 <StackPanel>
                   <TextBlock Text="Ricerca ACL / Gruppo / Utente" Style="{StaticResource SubsectionHeaderText}" />
                   <Grid Margin="0,0,0,6">
@@ -612,18 +606,18 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                   <StackPanel Margin="8">
                     <TextBlock Text="Oggetto" Style="{StaticResource SubsectionHeaderText}" />
-                    <Border Background="#FFF5F5F5" BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,8">
+                    <Border Background="{StaticResource ColorSurfaceAlt}" BorderBrush="{StaticResource ColorBorderDefault}" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,8">
                       <TextBlock Text="{Binding SelectedFolderPath}" FontWeight="SemiBold" TextWrapping="Wrap" />
                     </Border>
 
                     <TextBlock Text="Sicurezza avanzata" Style="{StaticResource SubsectionHeaderText}" />
-                    <Border BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,6">
+                    <Border BorderBrush="{StaticResource ColorBorderDefault}" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,6">
                       <Border.Style>
                         <Style TargetType="Border">
-                          <Setter Property="Background" Value="#FFE8F5E9" />
+                          <Setter Property="Background" Value="{StaticResource ColorSuccessSurface}" />
                           <Style.Triggers>
                             <DataTrigger Binding="{Binding SelectedOwnerSummary}" Value="-">
-                              <Setter Property="Background" Value="#FFFFEBEE" />
+                              <Setter Property="Background" Value="{StaticResource ColorDangerSurface}" />
                             </DataTrigger>
                           </Style.Triggers>
                         </Style>
@@ -631,13 +625,13 @@
                       <TextBlock Text="{Binding SelectedOwnerSummary, StringFormat=Owner: {0}}" />
                     </Border>
 
-                    <Border BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,10">
+                    <Border BorderBrush="{StaticResource ColorBorderDefault}" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,10">
                       <Border.Style>
                         <Style TargetType="Border">
-                          <Setter Property="Background" Value="#FFE8F5E9" />
+                          <Setter Property="Background" Value="{StaticResource ColorSuccessSurface}" />
                           <Style.Triggers>
                             <DataTrigger Binding="{Binding SelectedInheritanceSummary}" Value="Ereditarietà disabilitata">
-                              <Setter Property="Background" Value="#FFFFEBEE" />
+                              <Setter Property="Background" Value="{StaticResource ColorDangerSurface}" />
                             </DataTrigger>
                           </Style.Triggers>
                         </Style>
@@ -647,45 +641,45 @@
 
                     <TextBlock Text="Riepilogo autorizzazioni" Style="{StaticResource SubsectionHeaderText}" />
                     <WrapPanel>
-                      <Border Background="#FFE3F2FD" BorderBrush="#FFBBDEFB" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                      <Border Background="{StaticResource ColorInfoSurface}" BorderBrush="{StaticResource ColorInfoBorder}" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
                         <TextBlock Text="{Binding SelectedTotalAceCount, StringFormat=Totali: {0}}" />
                       </Border>
-                      <Border BorderBrush="#FFBBDEFB" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                      <Border BorderBrush="{StaticResource ColorInfoBorder}" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
                         <Border.Style>
                           <Style TargetType="Border">
-                            <Setter Property="Background" Value="#FFE3F2FD" />
+                            <Setter Property="Background" Value="{StaticResource ColorInfoSurface}" />
                             <Style.Triggers>
                               <DataTrigger Binding="{Binding SelectedExplicitAceCount}" Value="0">
-                                <Setter Property="Background" Value="#FFF5F5F5" />
-                                <Setter Property="BorderBrush" Value="#FFE0E0E0" />
+                                <Setter Property="Background" Value="{StaticResource ColorSurfaceAlt}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource ColorBorderDefault}" />
                               </DataTrigger>
                             </Style.Triggers>
                           </Style>
                         </Border.Style>
                         <TextBlock Text="{Binding SelectedExplicitAceCount, StringFormat=Esplicite: {0}}" />
                       </Border>
-                      <Border BorderBrush="#FFC8E6C9" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                      <Border BorderBrush="{StaticResource ColorSuccessBorder}" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
                         <Border.Style>
                           <Style TargetType="Border">
-                            <Setter Property="Background" Value="#FFE8F5E9" />
+                            <Setter Property="Background" Value="{StaticResource ColorSuccessSurface}" />
                             <Style.Triggers>
                               <DataTrigger Binding="{Binding SelectedInheritedAceCount}" Value="0">
-                                <Setter Property="Background" Value="#FFFFF8E1" />
-                                <Setter Property="BorderBrush" Value="#FFFFE082" />
+                                <Setter Property="Background" Value="{StaticResource ColorWarningSurfaceMuted}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource ColorWarningBorderStrong}" />
                               </DataTrigger>
                             </Style.Triggers>
                           </Style>
                         </Border.Style>
                         <TextBlock Text="{Binding SelectedInheritedAceCount, StringFormat=Ereditate: {0}}" />
                       </Border>
-                      <Border BorderBrush="#FFFFCDD2" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                      <Border BorderBrush="{StaticResource ColorDangerBorder}" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
                         <Border.Style>
                           <Style TargetType="Border">
-                            <Setter Property="Background" Value="#FFFFEBEE" />
+                            <Setter Property="Background" Value="{StaticResource ColorDangerSurface}" />
                             <Style.Triggers>
                               <DataTrigger Binding="{Binding SelectedDenyAceCount}" Value="0">
-                                <Setter Property="Background" Value="#FFF5F5F5" />
-                                <Setter Property="BorderBrush" Value="#FFE0E0E0" />
+                                <Setter Property="Background" Value="{StaticResource ColorSurfaceAlt}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource ColorBorderDefault}" />
                               </DataTrigger>
                             </Style.Triggers>
                           </Style>
@@ -722,12 +716,12 @@
           </Grid>
         </Border>
 
-        <GridSplitter Grid.Column="3" Width="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FFE0E0E0" />
+        <GridSplitter Grid.Column="3" Width="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{StaticResource ColorBorderDefault}" />
 
-        <Border Grid.Column="4" BorderBrush="#DDDDDD" BorderThickness="1" Padding="12" Margin="6,12,12,12" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Column="4" BorderBrush="{StaticResource ColorBorderSubtle}" BorderThickness="1" Padding="12" Margin="6,12,12,12" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
           <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
-              <GroupBox Header="Stato scansione" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10">
+              <GroupBox Header="Stato scansione" BorderBrush="{StaticResource ColorBorderSubtle}" BorderThickness="1" Padding="10">
                 <StackPanel>
                   <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                     <Border Width="14" Height="14" Background="{Binding StatusBrush}" CornerRadius="2" Margin="0,0,6,0" />
@@ -737,25 +731,25 @@
                     <TextBlock Text="{Binding CurrentPathText}" TextTrimming="CharacterEllipsis" />
                   </Border>
                   <WrapPanel Margin="0,0,0,6">
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFE8F5E9">
+                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="{StaticResource ColorSuccessSurface}">
                       <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Cartelle analizzate: " VerticalAlignment="Center" />
                         <TextBlock Text="{Binding ProcessedCount}" VerticalAlignment="Center" />
                       </StackPanel>
                     </Border>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFE3F2FD">
+                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="{StaticResource ColorInfoSurface}">
                       <StackPanel Orientation="Horizontal">
                         <TextBlock Text="File analizzati: " VerticalAlignment="Center" />
                         <TextBlock Text="{Binding ProcessedFilesCount}" VerticalAlignment="Center" />
                       </StackPanel>
                     </Border>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFFFEBEE">
+                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="{StaticResource ColorDangerSurface}">
                       <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Errori: " VerticalAlignment="Center" />
                         <TextBlock Text="{Binding ErrorCount}" VerticalAlignment="Center" />
                       </StackPanel>
                     </Border>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFF5F5F5">
+                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="{StaticResource ColorSurfaceAlt}">
                       <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Tempo: " VerticalAlignment="Center" />
                         <TextBlock Text="{Binding ElapsedText}" VerticalAlignment="Center" />
@@ -765,7 +759,7 @@
                 </StackPanel>
               </GroupBox>
 
-              <GroupBox Header="Scansione" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10" Margin="0,10,0,0" IsEnabled="{Binding IsScanConfigEnabled}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+              <GroupBox Header="Scansione" BorderBrush="{StaticResource ColorBorderSubtle}" BorderThickness="1" Padding="10" Margin="0,10,0,0" IsEnabled="{Binding IsScanConfigEnabled}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel>
                   <TextBlock Text="Selezione cartella" Style="{StaticResource SubsectionHeaderText}" />
                   <Grid Margin="0,0,0,8">
@@ -773,7 +767,12 @@
                       <ColumnDefinition Width="Auto" />
                       <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Margin="0,0,8,0" Padding="10,4" Content="Sfoglia..." Command="{Binding BrowseCommand}" />
+                    <Button Grid.Column="0" Margin="0,0,8,0" Command="{Binding BrowseCommand}" Style="{StaticResource ButtonSecondary}">
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{StaticResource IconBrowse}" Style="{StaticResource IconText16}" />
+                        <TextBlock Text="Sfoglia..." />
+                      </StackPanel>
+                    </Button>
                     <TextBox Grid.Column="1" Height="26" VerticalAlignment="Center" MinWidth="160" Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}" />
                   </Grid>
                   <Grid Margin="0,0,0,6" Visibility="{Binding HasDfsTargets, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -806,7 +805,7 @@
                 </StackPanel>
               </GroupBox>
 
-              <GroupBox Header="Opzioni" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10" Margin="0,10,0,0" IsEnabled="{Binding IsScanConfigEnabled}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+              <GroupBox Header="Opzioni" BorderBrush="{StaticResource ColorBorderSubtle}" BorderThickness="1" Padding="10" Margin="0,10,0,0" IsEnabled="{Binding IsScanConfigEnabled}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel>
                   <TextBlock Text="Identità" Style="{StaticResource SubsectionHeaderText}" />
                   <CheckBox Margin="0,0,0,4" Content="Risolvi identità" IsChecked="{Binding ResolveIdentities}" />
@@ -835,7 +834,7 @@
         </Border>
       </Grid>
     </Grid>
-    <Border Background="#80000000" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+    <Border Background="{StaticResource ColorOverlay}" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
       <Border Background="White" Padding="24" CornerRadius="6" HorizontalAlignment="Center" VerticalAlignment="Center">
         <StackPanel>
           <TextBlock Text="Operazione in corso..." FontWeight="SemiBold" Margin="0,0,0,12" HorizontalAlignment="Center" />

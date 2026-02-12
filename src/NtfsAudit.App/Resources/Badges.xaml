@@ -1,0 +1,12 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style x:Key="BadgeToolTipBorder" TargetType="Border">
+    <Setter Property="ToolTipService.InitialShowDelay" Value="250" />
+    <Setter Property="ToolTipService.ShowDuration" Value="8000" />
+    <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+  </Style>
+  <Style x:Key="BadgeTextStyle" TargetType="TextBlock">
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="FontSize" Value="10" />
+  </Style>
+</ResourceDictionary>
