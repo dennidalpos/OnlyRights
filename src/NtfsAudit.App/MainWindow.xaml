@@ -134,31 +134,31 @@
             <StackPanel Orientation="Horizontal">
               <Button Margin="0,0,8,0" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" Style="{StaticResource ButtonSuccess}">
                 <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="{StaticResource IconScan}" Style="{StaticResource IconText16}" />
+                  <TextBlock Style="{StaticResource IconScan16}" />
                   <TextBlock Text="Avvia analisi" />
                 </StackPanel>
               </Button>
               <Button Margin="0,0,8,0" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" Style="{StaticResource ButtonDanger}">
                 <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="{StaticResource IconStop}" Style="{StaticResource IconText16}" />
+                  <TextBlock Style="{StaticResource IconStop16}" />
                   <TextBlock Text="Stop" />
                 </StackPanel>
               </Button>
               <Button Margin="0,0,8,0" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" Style="{StaticResource ButtonPrimary}">
                 <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="{StaticResource IconExport}" Style="{StaticResource IconText16}" />
+                  <TextBlock Style="{StaticResource IconExport16}" />
                   <TextBlock Text="Esporta elenco permessi (Excel)" />
                 </StackPanel>
               </Button>
               <Button Margin="0,0,8,0" Command="{Binding ExportAnalysisCommand}" IsEnabled="{Binding CanExport}" Style="{StaticResource ButtonPrimary}">
                 <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="{StaticResource IconExport}" Style="{StaticResource IconText16}" />
+                  <TextBlock Style="{StaticResource IconExport16}" />
                   <TextBlock Text="Salva report completo (.ntaudit)" />
                 </StackPanel>
               </Button>
               <Button Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" Style="{StaticResource ButtonSecondary}">
                 <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="{StaticResource IconImport}" Style="{StaticResource IconText16}" />
+                  <TextBlock Style="{StaticResource IconImport16}" />
                   <TextBlock Text="Import Analisi" />
                 </StackPanel>
               </Button>
@@ -169,7 +169,7 @@
             <StackPanel Orientation="Horizontal">
               <Button Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" Style="{StaticResource ButtonSecondary}">
                 <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="{StaticResource IconImport}" Style="{StaticResource IconText16}" />
+                  <TextBlock Style="{StaticResource IconImport16}" />
                   <TextBlock Text="Import Analisi" />
                 </StackPanel>
               </Button>
@@ -769,7 +769,7 @@
                     </Grid.ColumnDefinitions>
                     <Button Grid.Column="0" Margin="0,0,8,0" Command="{Binding BrowseCommand}" Style="{StaticResource ButtonSecondary}">
                       <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{StaticResource IconBrowse}" Style="{StaticResource IconText16}" />
+                        <TextBlock Style="{StaticResource IconBrowse16}" />
                         <TextBlock Text="Sfoglia..." />
                       </StackPanel>
                     </Button>

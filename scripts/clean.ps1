@@ -35,7 +35,12 @@ function Get-TempRoot {
 function Remove-PathIfExists {
     param([string]$PathToRemove)
     if (-not [string]::IsNullOrWhiteSpace($PathToRemove) -and (Test-Path $PathToRemove)) {
-        Remove-Item $PathToRemove -Recurse -Force
+        try {
+            Remove-Item $PathToRemove -Recurse -Force -ErrorAction Stop
+        }
+        catch {
+            Write-Warning ("Unable to remove path '{0}': {1}" -f $PathToRemove, $_.Exception.Message)
+        }
     }
 }
 
