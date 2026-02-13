@@ -36,6 +36,7 @@ namespace NtfsAudit.App.ViewModels
         private bool _isBusy;
         private bool _isViewerMode;
         private DispatcherTimer _scanTimer;
+        private DispatcherTimer _serviceStatusTimer;
         private DateTime _scanStart;
         private bool _hasExported;
         private string _rootPath;
@@ -118,6 +119,8 @@ namespace NtfsAudit.App.ViewModels
         private string _selectedRiskSummary = "-";
         private string _selectedAcquisitionWarnings = "-";
         private string _selectedScannedAtText = "-";
+        private string _serviceRuntimeStatusText = "Servizio: in attesa";
+        private bool _isServiceRuntimeRunning;
         private const string ServiceName = "NtfsAuditWorker";
 
         public MainViewModel(bool viewerMode = false)
@@ -168,6 +171,7 @@ namespace NtfsAudit.App.ViewModels
 
             LoadCache();
             InitializeScanTimer();
+            InitializeServiceStatusMonitor();
         }
 
         public bool IsElevated
@@ -178,6 +182,26 @@ namespace NtfsAudit.App.ViewModels
         public bool IsNotElevated
         {
             get { return !_isElevated; }
+        }
+
+        public bool IsServiceRuntimeRunning
+        {
+            get { return _isServiceRuntimeRunning; }
+            private set
+            {
+                _isServiceRuntimeRunning = value;
+                OnPropertyChanged("IsServiceRuntimeRunning");
+            }
+        }
+
+        public string ServiceRuntimeStatusText
+        {
+            get { return _serviceRuntimeStatusText; }
+            private set
+            {
+                _serviceRuntimeStatusText = value;
+                OnPropertyChanged("ServiceRuntimeStatusText");
+            }
         }
 
         public ObservableCollection<FolderNodeViewModel> FolderTree { get; private set; }
@@ -1858,6 +1882,7 @@ namespace NtfsAudit.App.ViewModels
                 File.WriteAllText(jobFile, JsonConvert.SerializeObject(job, Formatting.Indented));
                 ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
                 ProgressText = "Job inviato al servizio Windows. La scansione continua anche dopo il logout utente.";
+                RefreshServiceRuntimeStatus();
             }
             catch (Exception ex)
             {
@@ -3445,6 +3470,66 @@ namespace NtfsAudit.App.ViewModels
                 if (!_isScanning) return;
                 ElapsedText = FormatElapsed(DateTime.Now - _scanStart);
             };
+        }
+
+        private void InitializeServiceStatusMonitor()
+        {
+            _serviceStatusTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(5)
+            };
+            _serviceStatusTimer.Tick += (_, __) => RefreshServiceRuntimeStatus();
+            _serviceStatusTimer.Start();
+            RefreshServiceRuntimeStatus();
+        }
+
+        private void RefreshServiceRuntimeStatus()
+        {
+            var statusPath = GetServiceStatusPath();
+            if (!File.Exists(statusPath))
+            {
+                IsServiceRuntimeRunning = false;
+                ServiceRuntimeStatusText = "Servizio: in attesa";
+                return;
+            }
+
+            try
+            {
+                var status = JsonConvert.DeserializeObject<ServiceRuntimeStatus>(File.ReadAllText(statusPath));
+                if (status == null)
+                {
+                    IsServiceRuntimeRunning = false;
+                    ServiceRuntimeStatusText = "Servizio: stato non disponibile";
+                    return;
+                }
+
+                IsServiceRuntimeRunning = status.IsRunning;
+                if (status.IsRunning)
+                {
+                    var rootLabel = string.IsNullOrWhiteSpace(status.CurrentRootPath) ? "root sconosciuta" : status.CurrentRootPath;
+                    var progress = status.TotalRoots > 0
+                        ? string.Format("{0}/{1}", status.CurrentRootIndex, status.TotalRoots)
+                        : "?/?";
+                    ServiceRuntimeStatusText = string.Format("Servizio in esecuzione: {0} (root {1})", rootLabel, progress);
+                }
+                else
+                {
+                    ServiceRuntimeStatusText = string.IsNullOrWhiteSpace(status.LastMessage)
+                        ? "Servizio: in attesa"
+                        : string.Format("Servizio: {0}", status.LastMessage);
+                }
+            }
+            catch
+            {
+                IsServiceRuntimeRunning = false;
+                ServiceRuntimeStatusText = "Servizio: stato non leggibile";
+            }
+        }
+
+        private static string GetServiceStatusPath()
+        {
+            var programData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+            return Path.Combine(programData, "NtfsAudit", "service-status.json");
         }
 
         private void StartElapsedTimer()
