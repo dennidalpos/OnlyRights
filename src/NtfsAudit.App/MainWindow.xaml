@@ -788,6 +788,18 @@
                     <ListBox Grid.Column="0" Height="90" ItemsSource="{Binding ScanRoots}" SelectedItem="{Binding SelectedScanRoot}" />
                     <Button Grid.Column="1" Margin="8,0,0,0" Padding="10,4" Content="Rimuovi" VerticalAlignment="Top" Command="{Binding RemoveScanRootCommand}" />
                   </Grid>
+                  <Grid Margin="0,0,0,6" Visibility="{Binding HasSelectedScanRootDfsTargets, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Target DFS cartella selezionata" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <ComboBox Grid.Column="1"
+                              Height="24"
+                              Background="#FFE3F2FD"
+                              ItemsSource="{Binding SelectedScanRootDfsTargets}"
+                              SelectedItem="{Binding SelectedScanRootDfsTarget, UpdateSourceTrigger=PropertyChanged}" />
+                  </Grid>
                   <TextBlock Text="Output report .ntaudit" Style="{StaticResource SubsectionHeaderText}" />
                   <Grid Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
@@ -797,7 +809,7 @@
                     <Button Grid.Column="0" Margin="0,0,8,0" Padding="10,4" Content="Sfoglia..." Command="{Binding BrowseOutputDirectoryCommand}" />
                     <TextBox Grid.Column="1" Height="26" VerticalAlignment="Center" MinWidth="160" Text="{Binding AuditOutputDirectory, UpdateSourceTrigger=PropertyChanged}" />
                   </Grid>
-                  <CheckBox Margin="0,0,0,6" Content="Esegui tramite servizio Windows (richiede NtfsAudit.Service.exe)" IsChecked="{Binding UseWindowsServiceMode}" />
+                  <CheckBox Margin="0,0,0,6" Content="Esegui tramite servizio Windows (cerca NtfsAudit.Service.exe / .dll)" IsChecked="{Binding UseWindowsServiceMode}" />
                   <Grid Margin="0,0,0,6" Visibility="{Binding HasDfsTargets, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="Auto" />
