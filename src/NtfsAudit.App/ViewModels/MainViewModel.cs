@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Forms;
+using WinForms = System.Windows.Forms;
 using System.Windows.Threading;
 using Win32 = Microsoft.Win32;
 using Newtonsoft.Json;
@@ -38,6 +39,13 @@ namespace NtfsAudit.App.ViewModels
         private DateTime _scanStart;
         private bool _hasExported;
         private string _rootPath;
+        private string _selectedScanRoot;
+        private readonly Dictionary<string, string> _scanRootDfsTargets = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, string> _scanRootNamespacePaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private ObservableCollection<string> _selectedScanRootDfsTargets = new ObservableCollection<string>();
+        private string _selectedScanRootDfsTarget;
+        private string _auditOutputDirectory;
+        private bool _useWindowsServiceMode;
         private int _maxDepth = 5;
         private bool _scanAllDepths = true;
         private bool _includeInherited = true;
@@ -110,6 +118,7 @@ namespace NtfsAudit.App.ViewModels
         private string _selectedRiskSummary = "-";
         private string _selectedAcquisitionWarnings = "-";
         private string _selectedScannedAtText = "-";
+        private const string ServiceName = "NtfsAuditWorker";
 
         public MainViewModel(bool viewerMode = false)
         {
@@ -121,6 +130,7 @@ namespace NtfsAudit.App.ViewModels
             _analysisArchive = new AnalysisArchive();
 
             FolderTree = new ObservableCollection<FolderNodeViewModel>();
+            ScanRoots = new ObservableCollection<string>();
             GroupEntries = new ObservableCollection<AceEntry>();
             UserEntries = new ObservableCollection<AceEntry>();
             AllEntries = new ObservableCollection<AceEntry>();
@@ -144,6 +154,11 @@ namespace NtfsAudit.App.ViewModels
             _isElevated = IsProcessElevated();
 
             BrowseCommand = new RelayCommand(Browse);
+            AddScanRootCommand = new RelayCommand(AddScanRoot, () => !_isViewerMode && !string.IsNullOrWhiteSpace(RootPath));
+            RemoveScanRootCommand = new RelayCommand(RemoveScanRoot, () => !_isViewerMode && !string.IsNullOrWhiteSpace(SelectedScanRoot));
+            BrowseOutputDirectoryCommand = new RelayCommand(BrowseOutputDirectory);
+            InstallServiceCommand = new RelayCommand(InstallService, () => !_isViewerMode && !IsBusy);
+            UninstallServiceCommand = new RelayCommand(UninstallService, () => !_isViewerMode && !IsBusy);
             StartCommand = new RelayCommand(StartScan, () => CanStart);
             StopCommand = new RelayCommand(StopScan, () => CanStop);
             ExportCommand = new RelayCommand(Export, () => CanExport);
@@ -166,6 +181,7 @@ namespace NtfsAudit.App.ViewModels
         }
 
         public ObservableCollection<FolderNodeViewModel> FolderTree { get; private set; }
+        public ObservableCollection<string> ScanRoots { get; private set; }
         public ObservableCollection<AceEntry> GroupEntries { get; private set; }
         public ObservableCollection<AceEntry> UserEntries { get; private set; }
         public ObservableCollection<AceEntry> AllEntries { get; private set; }
@@ -180,6 +196,11 @@ namespace NtfsAudit.App.ViewModels
         public ICollectionView FilteredEffectiveEntries { get; private set; }
 
         public RelayCommand BrowseCommand { get; private set; }
+        public RelayCommand AddScanRootCommand { get; private set; }
+        public RelayCommand RemoveScanRootCommand { get; private set; }
+        public RelayCommand BrowseOutputDirectoryCommand { get; private set; }
+        public RelayCommand InstallServiceCommand { get; private set; }
+        public RelayCommand UninstallServiceCommand { get; private set; }
         public RelayCommand StartCommand { get; private set; }
         public RelayCommand StopCommand { get; private set; }
         public RelayCommand ExportCommand { get; private set; }
@@ -196,7 +217,109 @@ namespace NtfsAudit.App.ViewModels
                 OnPropertyChanged("RootPath");
                 UpdateDfsTargets();
                 OnPropertyChanged("CanStart");
+                AddScanRootCommand.RaiseCanExecuteChanged();
                 StartCommand.RaiseCanExecuteChanged();
+            }
+        }
+
+        public string SelectedScanRoot
+        {
+            get { return _selectedScanRoot; }
+            set
+            {
+                _selectedScanRoot = value;
+                OnPropertyChanged("SelectedScanRoot");
+                LoadSelectedScanRootDfsTargets();
+                RemoveScanRootCommand.RaiseCanExecuteChanged();
+            }
+        }
+
+        public ObservableCollection<string> SelectedScanRootDfsTargets
+        {
+            get { return _selectedScanRootDfsTargets; }
+            private set
+            {
+                _selectedScanRootDfsTargets = value;
+                OnPropertyChanged("SelectedScanRootDfsTargets");
+                OnPropertyChanged("HasSelectedScanRootDfsTargets");
+            }
+        }
+
+        public bool HasSelectedScanRootDfsTargets
+        {
+            get { return SelectedScanRootDfsTargets != null && SelectedScanRootDfsTargets.Count > 0; }
+        }
+
+        public string SelectedScanRootDfsTarget
+        {
+            get { return _selectedScanRootDfsTarget; }
+            set
+            {
+                _selectedScanRootDfsTarget = value;
+                if (!string.IsNullOrWhiteSpace(SelectedScanRoot))
+                {
+                    var key = GetScanRootKey(SelectedScanRoot);
+                    string namespacePath;
+                    if (_scanRootNamespacePaths.TryGetValue(key, out namespacePath) && !string.IsNullOrWhiteSpace(value))
+                    {
+                        var newKey = GetScanRootKey(value);
+                        var index = ScanRoots.IndexOf(SelectedScanRoot);
+                        if (index >= 0 && !string.Equals(newKey, key, StringComparison.OrdinalIgnoreCase))
+                        {
+                            var duplicate = ScanRoots
+                                .Where((_, idx) => idx != index)
+                                .Any(path => string.Equals(GetScanRootKey(path), newKey, StringComparison.OrdinalIgnoreCase));
+                            if (duplicate)
+                            {
+                                WpfMessageBox.Show("Il target DFS selezionato è già presente in elenco.", "Target DFS", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                                return;
+                            }
+
+                            ScanRoots[index] = value;
+                            _scanRootNamespacePaths.Remove(key);
+                            _scanRootNamespacePaths[newKey] = namespacePath;
+                            _scanRootDfsTargets.Remove(key);
+                            _scanRootDfsTargets[newKey] = value;
+                            _selectedScanRoot = value;
+                            OnPropertyChanged("SelectedScanRoot");
+                            LoadSelectedScanRootDfsTargets();
+                            OnPropertyChanged("SelectedScanRootDfsTarget");
+                            OnPropertyChanged("CanStart");
+                            StartCommand.RaiseCanExecuteChanged();
+                            return;
+                        }
+                    }
+
+                    if (string.IsNullOrWhiteSpace(value))
+                    {
+                        _scanRootDfsTargets.Remove(key);
+                    }
+                    else
+                    {
+                        _scanRootDfsTargets[key] = value;
+                    }
+                }
+                OnPropertyChanged("SelectedScanRootDfsTarget");
+            }
+        }
+
+        public string AuditOutputDirectory
+        {
+            get { return _auditOutputDirectory; }
+            set
+            {
+                _auditOutputDirectory = value;
+                OnPropertyChanged("AuditOutputDirectory");
+            }
+        }
+
+        public bool UseWindowsServiceMode
+        {
+            get { return _useWindowsServiceMode; }
+            set
+            {
+                _useWindowsServiceMode = value;
+                OnPropertyChanged("UseWindowsServiceMode");
             }
         }
 
@@ -837,7 +960,7 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        public bool CanStart { get { return !_isViewerMode && !_isScanning && !IsBusy && !string.IsNullOrWhiteSpace(RootPath); } }
+        public bool CanStart { get { return !_isViewerMode && !_isScanning && !IsBusy && (ScanRoots.Count > 0 || !string.IsNullOrWhiteSpace(RootPath)); } }
         public bool CanStop { get { return !_isViewerMode && _isScanning && !IsBusy; } }
         public bool CanExport { get { return !_isViewerMode && !_isScanning && !IsBusy && _scanResult != null; } }
         public bool HasUnexportedData { get { return !_isViewerMode && _scanResult != null && !_hasExported; } }
@@ -923,6 +1046,260 @@ namespace NtfsAudit.App.ViewModels
             {
                 RootPath = selectedPath;
             }
+        }
+
+        private void BrowseOutputDirectory()
+        {
+            if (_isViewerMode) return;
+            var previousRoot = RootPath;
+            RootPath = AuditOutputDirectory;
+            if (TryPickFolder(out var selectedPath))
+            {
+                AuditOutputDirectory = selectedPath;
+            }
+            RootPath = previousRoot;
+        }
+
+        private void AddScanRoot()
+        {
+            if (string.IsNullOrWhiteSpace(RootPath)) return;
+            var rootToAdd = RootPath;
+            var namespacePath = string.Empty;
+            var targets = PathResolver.GetDfsTargets(RootPath);
+            if (targets != null && targets.Count > 0)
+            {
+                namespacePath = RootPath;
+                var selectedTarget = PromptDfsTargetSelection(RootPath, targets);
+                if (string.IsNullOrWhiteSpace(selectedTarget))
+                {
+                    return;
+                }
+                rootToAdd = selectedTarget;
+            }
+
+            var normalizedRoot = GetScanRootKey(rootToAdd);
+            if (ScanRoots.Any(path => string.Equals(GetScanRootKey(path), normalizedRoot, StringComparison.OrdinalIgnoreCase))) return;
+
+            ScanRoots.Add(rootToAdd);
+            SelectedScanRoot = rootToAdd;
+            if (!string.IsNullOrWhiteSpace(namespacePath))
+            {
+                _scanRootNamespacePaths[normalizedRoot] = namespacePath;
+                _scanRootDfsTargets[normalizedRoot] = rootToAdd;
+            }
+            OnPropertyChanged("CanStart");
+            StartCommand.RaiseCanExecuteChanged();
+        }
+
+        private void RemoveScanRoot()
+        {
+            if (string.IsNullOrWhiteSpace(SelectedScanRoot)) return;
+            var key = GetScanRootKey(SelectedScanRoot);
+            _scanRootDfsTargets.Remove(key);
+            _scanRootNamespacePaths.Remove(key);
+            ScanRoots.Remove(SelectedScanRoot);
+            SelectedScanRoot = ScanRoots.Count > 0 ? ScanRoots[0] : null;
+            OnPropertyChanged("CanStart");
+            StartCommand.RaiseCanExecuteChanged();
+        }
+
+        private string PromptDfsTargetSelection(string namespacePath, IList<string> targets)
+        {
+            if (targets == null || targets.Count == 0) return null;
+            if (targets.Count == 1) return targets[0];
+
+            using (var form = new WinForms.Form())
+            using (var combo = new WinForms.ComboBox())
+            using (var okButton = new WinForms.Button())
+            using (var cancelButton = new WinForms.Button())
+            using (var label = new WinForms.Label())
+            {
+                form.Text = "Seleziona target DFS";
+                form.FormBorderStyle = WinForms.FormBorderStyle.FixedDialog;
+                form.StartPosition = WinForms.FormStartPosition.CenterScreen;
+                form.ClientSize = new System.Drawing.Size(760, 130);
+                form.MaximizeBox = false;
+                form.MinimizeBox = false;
+
+                label.Text = string.Format("Namespace: {0}", namespacePath);
+                label.AutoSize = false;
+                label.SetBounds(12, 10, 736, 22);
+
+                combo.DropDownStyle = WinForms.ComboBoxStyle.DropDownList;
+                combo.SetBounds(12, 38, 736, 24);
+                foreach (var target in targets) combo.Items.Add(target);
+                combo.SelectedIndex = 0;
+
+                okButton.Text = "OK";
+                okButton.SetBounds(592, 84, 75, 30);
+                okButton.DialogResult = WinForms.DialogResult.OK;
+
+                cancelButton.Text = "Annulla";
+                cancelButton.SetBounds(673, 84, 75, 30);
+                cancelButton.DialogResult = WinForms.DialogResult.Cancel;
+
+                form.Controls.Add(label);
+                form.Controls.Add(combo);
+                form.Controls.Add(okButton);
+                form.Controls.Add(cancelButton);
+                form.AcceptButton = okButton;
+                form.CancelButton = cancelButton;
+
+                var result = form.ShowDialog();
+                if (result != WinForms.DialogResult.OK || combo.SelectedItem == null)
+                {
+                    return null;
+                }
+
+                return combo.SelectedItem.ToString();
+            }
+        }
+
+        private void LoadSelectedScanRootDfsTargets()
+        {
+            if (string.IsNullOrWhiteSpace(SelectedScanRoot))
+            {
+                SelectedScanRootDfsTargets = new ObservableCollection<string>();
+                SelectedScanRootDfsTarget = string.Empty;
+                return;
+            }
+
+            var selectedKey = GetScanRootKey(SelectedScanRoot);
+            string namespacePath;
+            var sourcePath = _scanRootNamespacePaths.TryGetValue(selectedKey, out namespacePath) && !string.IsNullOrWhiteSpace(namespacePath)
+                ? namespacePath
+                : SelectedScanRoot;
+            var targets = PathResolver.GetDfsTargets(sourcePath) ?? new List<string>();
+            SelectedScanRootDfsTargets = new ObservableCollection<string>(targets);
+            if (SelectedScanRootDfsTargets.Count == 0)
+            {
+                SelectedScanRootDfsTarget = string.Empty;
+                return;
+            }
+
+            string target;
+            if (_scanRootDfsTargets.TryGetValue(selectedKey, out target)
+                && SelectedScanRootDfsTargets.Any(item => string.Equals(item, target, StringComparison.OrdinalIgnoreCase)))
+            {
+                SelectedScanRootDfsTarget = target;
+                return;
+            }
+
+            if (SelectedScanRootDfsTargets.Any(item => string.Equals(item, SelectedScanRoot, StringComparison.OrdinalIgnoreCase)))
+            {
+                SelectedScanRootDfsTarget = SelectedScanRoot;
+                return;
+            }
+
+            SelectedScanRootDfsTarget = SelectedScanRootDfsTargets[0];
+        }
+
+        private string GetEffectiveScanRoot(string root)
+        {
+            if (string.IsNullOrWhiteSpace(root)) return root;
+            string target;
+            return _scanRootDfsTargets.TryGetValue(GetScanRootKey(root), out target) && !string.IsNullOrWhiteSpace(target)
+                ? target
+                : root;
+        }
+
+        private static string GetScanRootKey(string root)
+        {
+            if (string.IsNullOrWhiteSpace(root)) return string.Empty;
+            return root.Trim().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        }
+
+        private void InstallService()
+        {
+            try
+            {
+                var serviceCommand = ResolveServiceInstallCommand();
+                if (string.IsNullOrWhiteSpace(serviceCommand))
+                {
+                    WpfMessageBox.Show("NtfsAudit.Service.exe (o NtfsAudit.Service.dll) non trovato. Compila/publisha il progetto service e copia l'output vicino all'app, oppure usa una build che includa il service.", "Installazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    return;
+                }
+                ExecuteScCommand(string.Format("create {0} binPath= \"{1}\" start= auto", ServiceName, serviceCommand));
+                ExecuteScCommand(string.Format("description {0} \"Servizio scansione NTFS Audit\"", ServiceName));
+                ExecuteScCommand(string.Format("start {0}", ServiceName));
+                ProgressText = "Servizio Windows installato.";
+            }
+            catch (Exception ex)
+            {
+                WpfMessageBox.Show(string.Format("Errore installazione servizio: {0}", ex.Message), "Installazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private void UninstallService()
+        {
+            try
+            {
+                ExecuteScCommand(string.Format("stop {0}", ServiceName), false);
+                ExecuteScCommand(string.Format("delete {0}", ServiceName));
+                ProgressText = "Servizio Windows disinstallato.";
+            }
+            catch (Exception ex)
+            {
+                WpfMessageBox.Show(string.Format("Errore disinstallazione servizio: {0}", ex.Message), "Disinstallazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private static void ExecuteScCommand(string arguments, bool throwOnError = true)
+        {
+            var process = Process.Start(new ProcessStartInfo
+            {
+                FileName = "sc.exe",
+                Arguments = arguments,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            });
+            if (process == null) throw new InvalidOperationException("Impossibile avviare sc.exe");
+            process.WaitForExit();
+            if (throwOnError && process.ExitCode != 0)
+            {
+                var error = process.StandardError.ReadToEnd();
+                if (string.IsNullOrWhiteSpace(error))
+                {
+                    error = process.StandardOutput.ReadToEnd();
+                }
+                throw new InvalidOperationException(error);
+            }
+        }
+
+        private string ResolveServiceInstallCommand()
+        {
+            var appBase = AppDomain.CurrentDomain.BaseDirectory;
+            var candidates = new List<string>
+            {
+                Path.Combine(appBase, "NtfsAudit.Service.exe"),
+                Path.Combine(appBase, "NtfsAudit.Service", "NtfsAudit.Service.exe"),
+                Path.Combine(appBase, "Service", "NtfsAudit.Service.exe"),
+                Path.Combine(appBase, "NtfsAudit.Service.dll"),
+                Path.Combine(appBase, "NtfsAudit.Service", "NtfsAudit.Service.dll"),
+                Path.Combine(appBase, "Service", "NtfsAudit.Service.dll")
+            };
+
+            var parent = Directory.GetParent(appBase);
+            for (var i = 0; i < 4 && parent != null; i++)
+            {
+                candidates.Add(Path.Combine(parent.FullName, "NtfsAudit.Service", "bin", "Release", "net8.0-windows", "NtfsAudit.Service.exe"));
+                candidates.Add(Path.Combine(parent.FullName, "NtfsAudit.Service", "bin", "Debug", "net8.0-windows", "NtfsAudit.Service.exe"));
+                candidates.Add(Path.Combine(parent.FullName, "NtfsAudit.Service", "bin", "Release", "net8.0-windows", "NtfsAudit.Service.dll"));
+                candidates.Add(Path.Combine(parent.FullName, "NtfsAudit.Service", "bin", "Debug", "net8.0-windows", "NtfsAudit.Service.dll"));
+                parent = parent.Parent;
+            }
+
+            var serviceBinary = candidates.FirstOrDefault(path => !string.IsNullOrWhiteSpace(path) && File.Exists(path));
+            if (string.IsNullOrWhiteSpace(serviceBinary)) return null;
+
+            if (serviceBinary.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            {
+                return serviceBinary;
+            }
+
+            return string.Format("dotnet \"{0}\"", serviceBinary);
         }
 
         private bool TryPickFolder(out string selectedPath)
@@ -1072,21 +1449,31 @@ namespace NtfsAudit.App.ViewModels
         private void StartScan()
         {
             if (_isViewerMode) return;
-            var inputRoot = string.IsNullOrWhiteSpace(SelectedDfsTarget) ? RootPath : SelectedDfsTarget;
-            if (!string.IsNullOrWhiteSpace(inputRoot) && inputRoot.StartsWith(@"\\", StringComparison.Ordinal))
+            var roots = ScanRoots.Count > 0
+                ? ScanRoots.Select(GetEffectiveScanRoot).ToList()
+                : new List<string> { string.IsNullOrWhiteSpace(SelectedDfsTarget) ? RootPath : SelectedDfsTarget };
+            roots = roots.Where(path => !string.IsNullOrWhiteSpace(path)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            if (roots.Count == 0)
             {
-                var normalizedRoot = PathResolver.NormalizeRootPath(inputRoot, string.IsNullOrWhiteSpace(SelectedDfsTarget));
-                if (!string.IsNullOrWhiteSpace(normalizedRoot) &&
-                    !string.Equals(normalizedRoot, inputRoot, StringComparison.OrdinalIgnoreCase))
-                {
-                    inputRoot = normalizedRoot;
-                }
+                ProgressText = "Aggiungi almeno una cartella da analizzare.";
+                return;
             }
 
-            var ioRootPath = PathResolver.ToExtendedPath(inputRoot);
-            if (!Directory.Exists(ioRootPath))
+            var invalidRoot = roots.FirstOrDefault(path => !Directory.Exists(PathResolver.ToExtendedPath(path)));
+            if (!string.IsNullOrWhiteSpace(invalidRoot))
             {
-                ProgressText = "Percorso non valido";
+                ProgressText = string.Format("Percorso non valido: {0}", invalidRoot);
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(AuditOutputDirectory) && !Directory.Exists(PathResolver.ToExtendedPath(AuditOutputDirectory)))
+            {
+                Directory.CreateDirectory(PathResolver.ToExtendedPath(AuditOutputDirectory));
+            }
+
+            if (UseWindowsServiceMode)
+            {
+                EnqueueServiceScan(roots);
                 return;
             }
 
@@ -1098,9 +1485,8 @@ namespace NtfsAudit.App.ViewModels
             ClearResults();
 
             _cts = new CancellationTokenSource();
-            var options = new ScanOptions
+            var optionsTemplate = new ScanOptions
             {
-                RootPath = inputRoot,
                 MaxDepth = ScanAllDepths ? int.MaxValue : MaxDepth,
                 ScanAllDepths = ScanAllDepths,
                 IncludeInherited = IncludeInherited,
@@ -1114,10 +1500,104 @@ namespace NtfsAudit.App.ViewModels
                 IncludeSharePermissions = EnableAdvancedAudit && IncludeSharePermissions,
                 IncludeFiles = EnableAdvancedAudit && IncludeFiles,
                 ReadOwnerAndSacl = EnableAdvancedAudit && ReadOwnerAndSacl,
-                CompareBaseline = EnableAdvancedAudit && CompareBaseline
+                CompareBaseline = EnableAdvancedAudit && CompareBaseline,
+                OutputDirectory = AuditOutputDirectory
             };
 
-            Task.Run(() => ExecuteScan(options, _cts.Token));
+            Task.Run(() => ExecuteBatchScan(roots, optionsTemplate, _cts.Token));
+        }
+
+        private void EnqueueServiceScan(List<string> roots)
+        {
+            try
+            {
+                var jobsRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "NtfsAudit", "jobs");
+                Directory.CreateDirectory(jobsRoot);
+                var optionsTemplate = new ScanOptions
+                {
+                    MaxDepth = ScanAllDepths ? int.MaxValue : MaxDepth,
+                    ScanAllDepths = ScanAllDepths,
+                    IncludeInherited = IncludeInherited,
+                    ResolveIdentities = ResolveIdentities,
+                    ExcludeServiceAccounts = ResolveIdentities && ExcludeServiceAccounts,
+                    ExcludeAdminAccounts = ResolveIdentities && ExcludeAdminAccounts,
+                    ExpandGroups = ResolveIdentities && ExpandGroups,
+                    UsePowerShell = ResolveIdentities && UsePowerShell,
+                    EnableAdvancedAudit = EnableAdvancedAudit,
+                    ComputeEffectiveAccess = EnableAdvancedAudit && ComputeEffectiveAccess,
+                    IncludeSharePermissions = EnableAdvancedAudit && IncludeSharePermissions,
+                    IncludeFiles = EnableAdvancedAudit && IncludeFiles,
+                    ReadOwnerAndSacl = EnableAdvancedAudit && ReadOwnerAndSacl,
+                    CompareBaseline = EnableAdvancedAudit && CompareBaseline,
+                    OutputDirectory = AuditOutputDirectory
+                };
+                var job = new ServiceScanJob
+                {
+                    JobId = Guid.NewGuid().ToString("N"),
+                    CreatedAtUtc = DateTime.UtcNow,
+                    ScanOptions = roots.Select(root => CloneOptions(optionsTemplate, root)).ToList()
+                };
+                var jobFile = Path.Combine(jobsRoot, string.Format("job_{0}.json", job.JobId));
+                File.WriteAllText(jobFile, JsonConvert.SerializeObject(job, Formatting.Indented));
+                ExecuteScCommand(string.Format("start {0}", ServiceName), false);
+                ProgressText = "Job inviato al servizio Windows. La scansione continua anche dopo il logout utente.";
+            }
+            catch (Exception ex)
+            {
+                ProgressText = string.Format("Errore invio job al servizio: {0}", ex.Message);
+                WpfMessageBox.Show(ProgressText, "Servizio Windows", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private void ExecuteBatchScan(List<string> roots, ScanOptions optionsTemplate, CancellationToken token)
+        {
+            foreach (var root in roots)
+            {
+                token.ThrowIfCancellationRequested();
+                var options = CloneOptions(optionsTemplate, root);
+                ExecuteScan(options, token);
+
+                if (_scanResult != null && !string.IsNullOrWhiteSpace(options.OutputDirectory))
+                {
+                    var safeName = SanitizeFileName(Path.GetFileName(root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)));
+                    if (string.IsNullOrWhiteSpace(safeName)) safeName = "scan";
+                    var outputFile = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", safeName, DateTime.Now.ToString("yyyyMMdd_HHmmss")));
+                    _analysisArchive.Export(_scanResult, root, outputFile);
+                }
+            }
+        }
+
+        private static ScanOptions CloneOptions(ScanOptions template, string root)
+        {
+            return new ScanOptions
+            {
+                RootPath = root,
+                OutputDirectory = template.OutputDirectory,
+                MaxDepth = template.MaxDepth,
+                ScanAllDepths = template.ScanAllDepths,
+                IncludeInherited = template.IncludeInherited,
+                ResolveIdentities = template.ResolveIdentities,
+                ExcludeServiceAccounts = template.ExcludeServiceAccounts,
+                ExcludeAdminAccounts = template.ExcludeAdminAccounts,
+                ExpandGroups = template.ExpandGroups,
+                UsePowerShell = template.UsePowerShell,
+                EnableAdvancedAudit = template.EnableAdvancedAudit,
+                ComputeEffectiveAccess = template.ComputeEffectiveAccess,
+                IncludeSharePermissions = template.IncludeSharePermissions,
+                IncludeFiles = template.IncludeFiles,
+                ReadOwnerAndSacl = template.ReadOwnerAndSacl,
+                CompareBaseline = template.CompareBaseline
+            };
+        }
+
+        private static string SanitizeFileName(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+            foreach (var c in Path.GetInvalidFileNameChars())
+            {
+                value = value.Replace(c, '_');
+            }
+            return value;
         }
 
         private void StopScan()
@@ -2305,10 +2785,14 @@ namespace NtfsAudit.App.ViewModels
             OnPropertyChanged("IsBusy");
             OnPropertyChanged("IsNotBusy");
             StartCommand.RaiseCanExecuteChanged();
+            AddScanRootCommand.RaiseCanExecuteChanged();
+            RemoveScanRootCommand.RaiseCanExecuteChanged();
             StopCommand.RaiseCanExecuteChanged();
             ExportCommand.RaiseCanExecuteChanged();
             ExportAnalysisCommand.RaiseCanExecuteChanged();
             ImportAnalysisCommand.RaiseCanExecuteChanged();
+            InstallServiceCommand.RaiseCanExecuteChanged();
+            UninstallServiceCommand.RaiseCanExecuteChanged();
             ResetTreeFiltersCommand.RaiseCanExecuteChanged();
         }
 
@@ -2499,6 +2983,34 @@ namespace NtfsAudit.App.ViewModels
                 TreeFilterBaselineMismatchOnly = prefs.TreeFilterBaselineMismatchOnly;
                 TreeFilterFilesOnly = prefs.TreeFilterFilesOnly;
                 TreeFilterFoldersOnly = prefs.TreeFilterFoldersOnly;
+                AuditOutputDirectory = prefs.AuditOutputDirectory;
+                UseWindowsServiceMode = prefs.UseWindowsServiceMode;
+                ScanRoots.Clear();
+                _scanRootDfsTargets.Clear();
+                _scanRootNamespacePaths.Clear();
+                if (prefs.ScanRoots != null)
+                {
+                    foreach (var root in prefs.ScanRoots.Where(path => !string.IsNullOrWhiteSpace(path)).Distinct(StringComparer.OrdinalIgnoreCase))
+                    {
+                        ScanRoots.Add(root);
+                    }
+                }
+                if (prefs.ScanRootTargets != null)
+                {
+                    foreach (var target in prefs.ScanRootTargets.Where(item => item != null && !string.IsNullOrWhiteSpace(item.RootPath)))
+                    {
+                        var key = GetScanRootKey(target.RootPath);
+                        _scanRootDfsTargets[key] = target.DfsTarget;
+                        if (!string.IsNullOrWhiteSpace(target.NamespacePath))
+                        {
+                            _scanRootNamespacePaths[key] = target.NamespacePath;
+                        }
+                    }
+                }
+                if (ScanRoots.Count > 0)
+                {
+                    SelectedScanRoot = ScanRoots[0];
+                }
             }
             catch
             {
@@ -2529,7 +3041,16 @@ namespace NtfsAudit.App.ViewModels
                     TreeFilterExplicitDenyOnly = TreeFilterExplicitDenyOnly,
                     TreeFilterBaselineMismatchOnly = TreeFilterBaselineMismatchOnly,
                     TreeFilterFilesOnly = TreeFilterFilesOnly,
-                    TreeFilterFoldersOnly = TreeFilterFoldersOnly
+                    TreeFilterFoldersOnly = TreeFilterFoldersOnly,
+                    AuditOutputDirectory = AuditOutputDirectory,
+                    UseWindowsServiceMode = UseWindowsServiceMode,
+                    ScanRoots = ScanRoots.ToList(),
+                    ScanRootTargets = _scanRootDfsTargets.Select(item => new ScanRootTargetPreference
+                    {
+                        RootPath = GetScanRootKey(item.Key),
+                        DfsTarget = item.Value,
+                        NamespacePath = _scanRootNamespacePaths.ContainsKey(item.Key) ? _scanRootNamespacePaths[item.Key] : null
+                    }).ToList()
                 };
                 File.WriteAllText(_uiPreferencesPath, JsonConvert.SerializeObject(prefs, Formatting.Indented));
             }
@@ -2558,6 +3079,17 @@ namespace NtfsAudit.App.ViewModels
             public bool TreeFilterBaselineMismatchOnly { get; set; }
             public bool TreeFilterFilesOnly { get; set; } = true;
             public bool TreeFilterFoldersOnly { get; set; } = true;
+            public string AuditOutputDirectory { get; set; }
+            public bool UseWindowsServiceMode { get; set; }
+            public List<string> ScanRoots { get; set; }
+            public List<ScanRootTargetPreference> ScanRootTargets { get; set; }
+        }
+
+        private sealed class ScanRootTargetPreference
+        {
+            public string RootPath { get; set; }
+            public string DfsTarget { get; set; }
+            public string NamespacePath { get; set; }
         }
 
         private void OnPropertyChanged(string propertyName)

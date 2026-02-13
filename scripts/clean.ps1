@@ -83,6 +83,8 @@ $paths = @(
     (Join-Path $root "src\NtfsAudit.App\obj"),
     (Join-Path $root "src\NtfsAudit.Viewer\bin"),
     (Join-Path $root "src\NtfsAudit.Viewer\obj"),
+    (Join-Path $root "src\NtfsAudit.Service\bin"),
+    (Join-Path $root "src\NtfsAudit.Service\obj"),
     (Join-Path $root "tests\NtfsAudit.App.Tests\bin"),
     (Join-Path $root "tests\NtfsAudit.App.Tests\obj")
 )
