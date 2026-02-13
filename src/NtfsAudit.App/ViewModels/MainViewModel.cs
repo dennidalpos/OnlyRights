@@ -1244,9 +1244,20 @@ namespace NtfsAudit.App.ViewModels
                     WpfMessageBox.Show("NtfsAudit.Service.exe (o NtfsAudit.Service.dll) non trovato. Compila/publisha il progetto service e copia l'output vicino all'app, oppure usa una build che includa il service.", "Installazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                     return;
                 }
-                ExecuteScCommand(string.Format("create {0} binPath= {1} start= auto", ServiceName, BuildServiceBinPathForSc(serviceCommand)), "create");
+
+                var createArguments = string.Format("create {0} binPath= {1} start= auto", ServiceName, BuildServiceBinPathForSc(serviceCommand));
+                var createResult = ExecuteScCommand(createArguments, "create", false);
+                if (createResult.ExitCode == 1073)
+                {
+                    ExecuteScCommand(string.Format("config {0} binPath= {1} start= auto", ServiceName, BuildServiceBinPathForSc(serviceCommand)), "config");
+                }
+                else if (createResult.ExitCode != 0)
+                {
+                    ThrowScOperationFailed("create", createResult);
+                }
+
                 ExecuteScCommand(string.Format("description {0} \"Servizio scansione NTFS Audit\"", ServiceName), "description");
-                ExecuteScCommand(string.Format("start {0}", ServiceName), "start");
+                ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
                 ProgressText = "Servizio Windows installato.";
             }
             catch (Exception ex)
@@ -1259,8 +1270,18 @@ namespace NtfsAudit.App.ViewModels
         {
             try
             {
-                ExecuteScCommand(string.Format("stop {0}", ServiceName), "stop", false);
-                ExecuteScCommand(string.Format("delete {0}", ServiceName), "delete");
+                var stopResult = ExecuteScCommand(string.Format("stop {0}", ServiceName), "stop", false);
+                if (stopResult.ExitCode != 0 && stopResult.ExitCode != 1060 && stopResult.ExitCode != 1062)
+                {
+                    ThrowScOperationFailed("stop", stopResult);
+                }
+
+                var deleteResult = ExecuteScCommand(string.Format("delete {0}", ServiceName), "delete", false);
+                if (deleteResult.ExitCode != 0 && deleteResult.ExitCode != 1060)
+                {
+                    ThrowScOperationFailed("delete", deleteResult);
+                }
+
                 ProgressText = "Servizio Windows disinstallato.";
             }
             catch (Exception ex)
@@ -1269,12 +1290,12 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        private static void ExecuteScCommand(string arguments, string operation = null, bool throwOnError = true)
+        private static ScCommandResult ExecuteScCommand(string arguments, string operation = null, bool throwOnError = true)
         {
             var result = RunScCommand(arguments, false);
             if (result.ExitCode == 0)
             {
-                return;
+                return result;
             }
 
             var errorText = string.IsNullOrWhiteSpace(result.Error) ? result.Output : result.Error;
@@ -1283,22 +1304,32 @@ namespace NtfsAudit.App.ViewModels
                 var elevated = RunScCommand(arguments, true);
                 if (elevated.ExitCode == 0)
                 {
-                    return;
+                    return elevated;
                 }
 
-                errorText = string.IsNullOrWhiteSpace(elevated.Error) ? elevated.Output : elevated.Error;
+                result = elevated;
             }
 
             if (throwOnError)
             {
-                if (string.IsNullOrWhiteSpace(errorText))
-                {
-                    errorText = "Errore sconosciuto durante esecuzione di sc.exe";
-                }
-                var op = string.IsNullOrWhiteSpace(operation) ? "sc" : operation;
-                throw new InvalidOperationException(string.Format("Operazione servizio '{0}' non riuscita: {1}", op, errorText));
+                ThrowScOperationFailed(operation, result);
             }
+
+            return result;
         }
+
+        private static void ThrowScOperationFailed(string operation, ScCommandResult result)
+        {
+            var errorText = string.IsNullOrWhiteSpace(result.Error) ? result.Output : result.Error;
+            if (string.IsNullOrWhiteSpace(errorText))
+            {
+                errorText = "Errore sconosciuto durante esecuzione di sc.exe";
+            }
+
+            var op = string.IsNullOrWhiteSpace(operation) ? "sc" : operation;
+            throw new InvalidOperationException(string.Format("Operazione servizio '{0}' non riuscita (exit code {1}): {2}", op, result.ExitCode, errorText));
+        }
+
         private static ScCommandResult RunScCommand(string arguments, bool runAsAdmin)
         {
             var startInfo = new ProcessStartInfo
