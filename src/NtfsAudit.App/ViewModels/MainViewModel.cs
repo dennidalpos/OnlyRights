@@ -1356,23 +1356,27 @@ namespace NtfsAudit.App.ViewModels
 
         private static ScCommandResult RunScCommand(string arguments, bool runAsAdmin)
         {
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = ResolveScExecutablePath(),
-                Arguments = arguments,
-                UseShellExecute = runAsAdmin,
-                CreateNoWindow = !runAsAdmin
-            };
-
+            var scPath = ResolveScExecutablePath();
             if (runAsAdmin)
             {
-                startInfo.Verb = "runas";
+                var elevated = RunScCommandElevatedWithPowerShell(scPath, arguments);
+                if (elevated != null)
+                {
+                    return elevated;
+                }
+
+                return RunScCommandElevatedDirect(scPath, arguments);
             }
-            else
+
+            var startInfo = new ProcessStartInfo
             {
-                startInfo.RedirectStandardOutput = true;
-                startInfo.RedirectStandardError = true;
-            }
+                FileName = scPath,
+                Arguments = arguments,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
 
             try
             {
@@ -1387,8 +1391,8 @@ namespace NtfsAudit.App.ViewModels
                     return new ScCommandResult
                     {
                         ExitCode = process.ExitCode,
-                        Output = runAsAdmin ? string.Empty : process.StandardOutput.ReadToEnd(),
-                        Error = runAsAdmin ? string.Empty : process.StandardError.ReadToEnd()
+                        Output = process.StandardOutput.ReadToEnd(),
+                        Error = process.StandardError.ReadToEnd()
                     };
                 }
             }
@@ -1396,6 +1400,96 @@ namespace NtfsAudit.App.ViewModels
             {
                 return new ScCommandResult { ExitCode = -1, Error = ex.Message };
             }
+        }
+
+        private static ScCommandResult RunScCommandElevatedWithPowerShell(string scPath, string arguments)
+        {
+            var powerShellPath = ResolvePowerShellExecutablePath();
+            if (string.IsNullOrWhiteSpace(powerShellPath))
+            {
+                return null;
+            }
+
+            var escapedScPath = EscapePowerShellSingleQuoted(scPath);
+            var escapedArguments = EscapePowerShellSingleQuoted(arguments);
+            var psArguments = string.Format(
+                "-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"& {{ $p = Start-Process -FilePath '{0}' -ArgumentList '{1}' -Verb RunAs -Wait -PassThru; exit $p.ExitCode }}\"",
+                escapedScPath,
+                escapedArguments);
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = powerShellPath,
+                Arguments = psArguments,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            try
+            {
+                using (var process = Process.Start(startInfo))
+                {
+                    if (process == null)
+                    {
+                        return new ScCommandResult { ExitCode = -1, Error = "Impossibile avviare PowerShell per elevare sc.exe" };
+                    }
+
+                    process.WaitForExit();
+                    return new ScCommandResult
+                    {
+                        ExitCode = process.ExitCode,
+                        Output = process.StandardOutput.ReadToEnd(),
+                        Error = process.StandardError.ReadToEnd()
+                    };
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static ScCommandResult RunScCommandElevatedDirect(string scPath, string arguments)
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = scPath,
+                Arguments = arguments,
+                UseShellExecute = true,
+                CreateNoWindow = false,
+                Verb = "runas"
+            };
+
+            try
+            {
+                using (var process = Process.Start(startInfo))
+                {
+                    if (process == null)
+                    {
+                        return new ScCommandResult { ExitCode = -1, Error = "Impossibile avviare sc.exe in elevazione" };
+                    }
+
+                    process.WaitForExit();
+                    return new ScCommandResult
+                    {
+                        ExitCode = process.ExitCode,
+                        Output = string.Empty,
+                        Error = string.Empty
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ScCommandResult { ExitCode = -1, Error = ex.Message };
+            }
+        }
+
+        private static string EscapePowerShellSingleQuoted(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            return value.Replace("'", "''");
         }
 
         private static string ResolveScExecutablePath()
@@ -1421,6 +1515,27 @@ namespace NtfsAudit.App.ViewModels
             }
 
             return "sc.exe";
+        }
+
+        private static string ResolvePowerShellExecutablePath()
+        {
+            var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            if (!string.IsNullOrWhiteSpace(systemDir))
+            {
+                var powershellPath = Path.Combine(systemDir, "WindowsPowerShell", "v1.0", "powershell.exe");
+                if (File.Exists(powershellPath))
+                {
+                    return powershellPath;
+                }
+            }
+
+            var windir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+            if (!string.IsNullOrWhiteSpace(windir))
+            {
+                return Path.Combine(windir, "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
+            }
+
+            return "powershell.exe";
         }
 
         private sealed class ScCommandResult
@@ -2248,6 +2363,12 @@ namespace NtfsAudit.App.ViewModels
             var system = Environment.GetFolderPath(Environment.SpecialFolder.System);
             var candidate = Path.Combine(system, "WindowsPowerShell", "v1.0", "powershell.exe");
             if (File.Exists(candidate)) return candidate;
+            var windir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+            if (!string.IsNullOrWhiteSpace(windir))
+            {
+                return Path.Combine(windir, "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
+            }
+
             return "powershell.exe";
         }
 
