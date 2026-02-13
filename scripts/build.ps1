@@ -4,6 +4,7 @@ param(
     [switch]$SkipBuild,
     [switch]$SkipPublish,
     [switch]$SkipViewerPublish,
+    [switch]$SkipServicePublish,
     [switch]$SkipPublishClean,
     [switch]$CleanAllTemp,
     [switch]$CleanTemp,
@@ -29,6 +30,7 @@ $root = Resolve-Path (Join-Path $PSScriptRoot "..")
 $solution = Join-Path $root "NtfsAudit.sln"
 $project = Join-Path $root "src\NtfsAudit.App\NtfsAudit.App.csproj"
 $viewerProject = Join-Path $root "src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj"
+$serviceProject = Join-Path $root "src\NtfsAudit.Service\NtfsAudit.Service.csproj"
 $distRoot = if ($OutputPath) {
     if ([System.IO.Path]::IsPathRooted($OutputPath)) { $OutputPath } else { Join-Path $root $OutputPath }
 } else {
@@ -72,6 +74,7 @@ function Remove-ExportFiles {
 if (!(Test-Path $solution)) { throw "Solution not found" }
 if (!(Test-Path $project)) { throw "Project not found" }
 if (!(Test-Path $viewerProject)) { throw "Viewer project not found" }
+if (!(Test-Path $serviceProject)) { throw "Service project not found" }
 if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) { throw "dotnet SDK not found." }
 
 if ($RunClean) {
@@ -239,5 +242,38 @@ if (-not $SkipPublish) {
 
         & dotnet @viewerPublishArgs
         if ($LASTEXITCODE -ne 0) { throw "Viewer publish failed." }
+    }
+
+    if (-not $SkipServicePublish) {
+        $serviceDist = Join-Path $dist "Service"
+        if (!(Test-Path $serviceDist)) {
+            New-Item -ItemType Directory -Path $serviceDist | Out-Null
+        }
+
+        $serviceFramework = if ($Framework) { $Framework } else { "net8.0-windows" }
+        if ($serviceFramework -ne "net8.0-windows") {
+            Write-Warning "Il service supporta solo net8.0-windows. Uso net8.0-windows per publish service."
+            $serviceFramework = "net8.0-windows"
+        }
+
+        $servicePublishArgs = @("publish", $serviceProject, "-c", $Configuration, "--nologo", "-o", $serviceDist)
+        if ($buildCompleted -and $serviceFramework -eq $Framework) {
+            $servicePublishArgs += "--no-build"
+        }
+        $servicePublishArgs += @("-f", $serviceFramework)
+
+        if ($Runtime) {
+            $servicePublishArgs += @("-r", $Runtime)
+            $servicePublishArgs += @("--self-contained", $SelfContained.IsPresent.ToString().ToLowerInvariant())
+        }
+        if ($PublishSingleFile) {
+            $servicePublishArgs += "-p:PublishSingleFile=true"
+        }
+        if ($PublishReadyToRun) {
+            $servicePublishArgs += "-p:PublishReadyToRun=true"
+        }
+
+        & dotnet @servicePublishArgs
+        if ($LASTEXITCODE -ne 0) { throw "Service publish failed." }
     }
 }

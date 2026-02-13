@@ -1,99 +1,76 @@
 # NTFS Audit
 
-NTFS Audit è una suite WPF per analizzare permessi NTFS/SMB su percorsi locali, UNC e DFS. La soluzione è composta da:
+NTFS Audit è una suite Windows (WPF + Worker Service) per analizzare ACL NTFS/SMB su percorsi locali, UNC e DFS, esportare risultati in Excel e archivi `.ntaudit`, e (opzionalmente) far girare scansioni tramite servizio Windows anche dopo logout utente.
 
-- **NtfsAudit.App**: scansione, analisi interattiva, export Excel e archivio `.ntaudit`.
-- **NtfsAudit.Viewer**: sola consultazione/import di analisi salvate.
-- **NtfsAudit.App.Tests**: test unitari sui servizi di calcolo ACL.
+## Componenti della soluzione
 
----
-
-## 1) Cosa fa l’applicazione
-
-L’applicazione acquisisce ACL NTFS, opzionalmente integra layer Share SMB ed Effective Access, risolve SID/identità AD e produce:
-
-- vista ad albero del percorso analizzato;
-- tabelle ACL per gruppi/utenti/tutte le entry;
-- pannello errori;
-- riepilogo rischio (deny, everyone, authenticated users, baseline mismatch).
-
-È pensata per attività operative di audit e hardening su file server Windows.
+- **NtfsAudit.App** (`src/NtfsAudit.App`): applicazione principale con scansione, filtri, export/import e gestione servizio.
+- **NtfsAudit.Viewer** (`src/NtfsAudit.Viewer`): viewer leggero per aprire analisi `.ntaudit` in sola consultazione.
+- **NtfsAudit.Service** (`src/NtfsAudit.Service`): worker eseguibile come Windows Service per processare job di scansione in background.
+- **NtfsAudit.App.Tests** (`tests/NtfsAudit.App.Tests`): test unitari servizi core.
 
 ---
 
-## 2) Funzioni principali
+## Funzionalità principali
 
-## Scansione
+### 1) Scansione ACL
 
-- Selezione cartella root locale/UNC.
-- Profondità configurabile (`MaxDepth`) o scansione completa (`ScanAllDepths`).
-- Inclusione ACL ereditate (`IncludeInherited`).
-- Opzione scansione file (`IncludeFiles`) oltre alle cartelle.
-- Lettura Owner e SACL (`ReadOwnerAndSacl`) se permessi/contesto lo consentono.
+- scansione cartelle locali/UNC/DFS;
+- profondità limitata (`MaxDepth`) o completa (`ScanAllDepths`);
+- inclusione ACL ereditate (`IncludeInherited`);
+- scansione file opzionale (`IncludeFiles`);
+- lettura owner/SACL opzionale (`ReadOwnerAndSacl`) con privilegi adeguati.
 
-## Risoluzione identità
+### 2) Identità e Active Directory
 
-- Risoluzione SID con cache locale.
-- Risoluzione AD con provider composito (PowerShell + Directory Services).
-- Espansione gruppi annidati (`ExpandGroups`).
-- Classificazione account di servizio/amministrativi.
+- risoluzione SID -> nome con cache locale;
+- risoluzione AD con provider Directory Services / PowerShell;
+- espansione gruppi annidati (`ExpandGroups`);
+- classificazione account di servizio/admin per filtri rapidi.
 
-## Audit avanzato
+### 3) Audit avanzato
 
 Con `EnableAdvancedAudit` attivo:
 
-- acquisizione ACL Share (`IncludeSharePermissions`);
-- calcolo Effective Access (`ComputeEffectiveAccess`);
+- acquisizione permessi share SMB (`IncludeSharePermissions`);
+- calcolo effective access (`ComputeEffectiveAccess`);
 - confronto baseline (`CompareBaseline`).
 
-## Export e import
+### 4) Export / Import
 
-- **Export Excel (`.xlsx`)** con dataset ACL per analisi esterna.
-- **Export archivio (`.ntaudit`)** con dati scansione completi.
-- **Import archivio (`.ntaudit`)** in App o Viewer, con validazione struttura e recovery dei metadati principali.
+- export Excel (`.xlsx`);
+- export analisi completa (`.ntaudit`);
+- import `.ntaudit` in App e Viewer.
 
----
+### 5) Multi-root + DFS target per voce
 
-## 3) Logica filtri e checkbox
+Nella UI puoi:
 
-## Filtri ACL (griglie)
+- aggiungere più cartelle in elenco scansione;
+- selezionare una cartella in elenco e scegliere il **target DFS specifico** per quella voce;
+- usare un path unico di output `.ntaudit`, con un archivio separato per ogni root elaborata.
 
-Le checkbox in area filtri ACL applicano restrizioni immediate su tutte le griglie ACL:
+### 6) Modalità servizio Windows
 
-- `Allow` / `Deny`: tipo ACE;
-- `Ereditato` / `Esplicito`: provenienza della regola;
-- `Protetto`: nodi con ereditarietà disabilitata;
-- `Disabilitato`: ACE disattivate;
-- `Everyone`, `Authenticated Users`, `Utenti di servizio`, `Admin`, `Altri`: segmentazione principale.
-
-Il filtro testuale (`AclFilter`) ricerca su campi principali (principal, SID, rights, path, share, risk, source e membership).
-
-## Filtri Tree
-
-I filtri Tree sono **inclusivi**:
-
-- `NTFS espliciti`: mostra solo nodi con permessi espliciti;
-- `Protetto`: mostra solo nodi con inheritance disabilitata;
-- `Diff vs padre`: mostra solo nodi con differenze ACL rispetto al padre;
-- `Deny espliciti`: mostra solo nodi con deny espliciti;
-- `Mismatch baseline`: mostra solo nodi con mismatch baseline;
-- `Con file` / `Solo cartelle`: controllo visibilità per nodi con contenuto file o cartella.
-
-`Reset filtri tree` riporta la configurazione predefinita neutra.
+- pulsanti UI per installare/disinstallare servizio;
+- coda job in `%ProgramData%\NtfsAudit\jobs`;
+- il service processa i job e salva i `.ntaudit` nell’output configurato;
+- scansioni continuano senza sessione utente attiva (scenario logout/RDP disconnected).
 
 ---
 
-## 4) Requisiti
+## Requisiti
 
-- Windows 10/11 o Server con supporto WPF.
-- .NET SDK 8.x consigliato.
-- Accesso ai percorsi target e, per audit avanzato completo, esecuzione elevata.
+- Windows 10/11 o Windows Server con WPF;
+- .NET SDK 8.x (consigliato) per build/publish;
+- privilegi adeguati ai percorsi target;
+- per installare servizio: shell elevata (Run as Administrator).
 
 ---
 
-## 5) Build, test, publish
+## Build, test e publish
 
-## Comandi dotnet
+## Comandi dotnet essenziali
 
 ```powershell
 dotnet restore NtfsAudit.sln
@@ -103,15 +80,24 @@ dotnet test NtfsAudit.sln -c Release
 
 ## Script build (`scripts/build.ps1`)
 
-Flusso base:
+Esecuzione tipica:
 
 ```powershell
 ./scripts/build.ps1 -Configuration Release
 ```
 
-Supporta restore/build/test/publish app + viewer e gestione clean integrata.
+Cosa fa (default):
 
-Opzioni più usate:
+1. restore soluzione;
+2. build soluzione;
+3. test soluzione;
+4. publish App;
+5. publish Viewer;
+6. publish Service.
+
+Output publish default: `dist/<Configuration>/...`
+
+### Opzioni principali build
 
 - `-Framework net8.0-windows`
 - `-Runtime win-x64`
@@ -119,37 +105,82 @@ Opzioni più usate:
 - `-PublishSingleFile`
 - `-PublishReadyToRun`
 - `-SkipRestore`, `-SkipBuild`, `-SkipTests`, `-SkipPublish`
-- `-RunClean` con switch pulizia (`-CleanTemp`, `-CleanImports`, `-CleanCache`, `-CleanLogs`, `-CleanExports`, `-CleanDist`, `-CleanArtifacts`)
+- `-SkipViewerPublish`
+- `-SkipServicePublish`
+- `-RunClean` (invoca `clean.ps1` prima della build)
+
+Esempio publish completo self-contained:
+
+```powershell
+./scripts/build.ps1 -Configuration Release -Framework net8.0-windows -Runtime win-x64 -SelfContained -PublishSingleFile -PublishReadyToRun
+```
+
+---
+
+## Clean e housekeeping
 
 ## Script clean (`scripts/clean.ps1`)
 
-Pulizia completa predefinita:
+Pulizia completa standard:
 
 ```powershell
 ./scripts/clean.ps1
 ```
 
-Rimuove binari/obj, `.vs`, dist/artifacts (in base ai flag), cache locale, temp import/export e log.
+Pulisce:
+
+- `.vs`
+- `bin/obj` di:
+  - `NtfsAudit.App`
+  - `NtfsAudit.Viewer`
+  - `NtfsAudit.Service`
+  - `NtfsAudit.App.Tests`
+- `dist` / `artifacts` (in base ai flag)
+- cache locale / temp import / log / export temporanei (opzionali via flag)
+
+Flag utili:
+
+- `-CleanAllTemp`
+- `-CleanImports`
+- `-CleanCache`
+- `-CleanLogs`
+- `-CleanExports`
+- `-KeepDist`
+- `-KeepArtifacts`
 
 ---
 
-## 6) Flusso operativo consigliato
+## Deploy servizio Windows
 
-1. Selezionare root da analizzare.
-2. Configurare opzioni scansione (profondità, identity resolution, audit avanzato).
-3. Avviare scansione.
-4. Applicare filtri tree/ACL per isolare criticità.
-5. Esportare Excel per audit tabellare.
-6. Salvare archivio `.ntaudit` per review successiva e condivisione con Viewer.
+### 1) Build/publish
+
+Pubblica anche il service con `scripts/build.ps1` (default, salvo `-SkipServicePublish`).
+
+### 2) Installazione da UI
+
+L’app cerca automaticamente:
+
+- `NtfsAudit.Service.exe`
+- `NtfsAudit.Service.dll`
+
+in cartella applicazione e path build/publish comuni del repository.
+
+Se trova solo `.dll`, usa comando `dotnet "...\NtfsAudit.Service.dll"` come `binPath` del servizio.
+
+### 3) Esecuzione job
+
+Con “Esegui tramite servizio Windows” attivo, la UI serializza job in `%ProgramData%\NtfsAudit\jobs`.
+Il service legge i job, esegue la scansione e produce un `.ntaudit` per ciascuna root.
 
 ---
 
-## 7) Struttura repository
+## Struttura repository
 
 - `src/NtfsAudit.App/`
-  - `ViewModels/MainViewModel.cs`: orchestrazione UI, comandi, filtri, import/export.
-  - `Services/`: scan, risoluzione identità, diff ACL, archivio analisi.
-  - `Export/`: serializzazione record ACL + export Excel.
-- `src/NtfsAudit.Viewer/`: shell viewer e bootstrap.
-- `tests/NtfsAudit.App.Tests/`: test unitari dei servizi core.
+  - `ViewModels/MainViewModel.cs`: orchestrazione UI, comandi scansione, gestione servizio, filtri.
+  - `Services/`: scan engine, resolver AD, archive import/export, baseline diff.
+  - `Models/`: DTO ACL, opzioni scansione, job service.
+- `src/NtfsAudit.Viewer/`: viewer `.ntaudit`.
+- `src/NtfsAudit.Service/`: worker service per scansioni background.
+- `tests/NtfsAudit.App.Tests/`: test unitari.
 - `scripts/`: automazione build/clean.
