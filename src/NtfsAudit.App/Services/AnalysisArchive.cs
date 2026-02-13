@@ -43,28 +43,46 @@ namespace NtfsAudit.App.Services
             {
                 Directory.CreateDirectory(outputDirectory);
             }
-            if (File.Exists(ioOutputPath))
+
+            var tempOutput = ioOutputPath + ".tmp_" + Guid.NewGuid().ToString("N");
+            if (File.Exists(tempOutput))
             {
-                File.Delete(ioOutputPath);
+                File.Delete(tempOutput);
             }
 
-            using (var archive = ZipFile.Open(ioOutputPath, ZipArchiveMode.Create))
+            try
             {
-                AddFileEntry(archive, DataEntryName, result.TempDataPath);
-                if (!AddFileEntry(archive, ErrorsEntryName, result.ErrorPath))
+                using (var archive = ZipFile.Open(tempOutput, ZipArchiveMode.Create))
                 {
-                    AddEmptyEntry(archive, ErrorsEntryName);
+                    AddFileEntry(archive, DataEntryName, result.TempDataPath);
+                    if (!AddFileEntry(archive, ErrorsEntryName, result.ErrorPath))
+                    {
+                        AddEmptyEntry(archive, ErrorsEntryName);
+                    }
+                    AddJsonEntry(archive, TreeEntryName, exportTreeMap);
+                    AddJsonEntry(archive, FolderFlagsEntryName, BuildFolderFlags(result.Details));
+                    AddJsonEntry(archive, MetaEntryName, new ArchiveMeta
+                    {
+                        RootPath = resolvedRootPath,
+                        RootPathKind = resolvedPathKind,
+                        CreatedAt = result.ScannedAtUtc == default(DateTime) ? DateTime.UtcNow : result.ScannedAtUtc,
+                        Version = CurrentArchiveVersion,
+                        ScanOptions = exportOptions
+                    });
                 }
-                AddJsonEntry(archive, TreeEntryName, exportTreeMap);
-                AddJsonEntry(archive, FolderFlagsEntryName, BuildFolderFlags(result.Details));
-                AddJsonEntry(archive, MetaEntryName, new ArchiveMeta
+
+                if (File.Exists(ioOutputPath))
                 {
-                    RootPath = resolvedRootPath,
-                    RootPathKind = resolvedPathKind,
-                    CreatedAt = result.ScannedAtUtc == default(DateTime) ? DateTime.UtcNow : result.ScannedAtUtc,
-                    Version = CurrentArchiveVersion,
-                    ScanOptions = exportOptions
-                });
+                    File.Delete(ioOutputPath);
+                }
+                File.Move(tempOutput, ioOutputPath);
+            }
+            finally
+            {
+                if (File.Exists(tempOutput))
+                {
+                    File.Delete(tempOutput);
+                }
             }
         }
 

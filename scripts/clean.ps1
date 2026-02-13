@@ -71,6 +71,9 @@ if ($CleanAllTemp) {
     $KeepTemp = $false
     $KeepImportTemp = $false
     $KeepCache = $false
+    $CleanLogs = $true
+    $CleanExports = $true
+    $CleanServiceJobs = $true
 }
 
 if ($CleanServiceJobs) {

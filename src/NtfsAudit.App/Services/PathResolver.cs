@@ -141,10 +141,26 @@ namespace NtfsAudit.App.Services
 
         private static string TryGetUncPath(string drive)
         {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return null;
+            }
+
             var length = 512;
             var builder = new StringBuilder(length);
-            var result = WNetGetConnection(drive, builder, ref length);
-            return result == 0 ? builder.ToString() : null;
+            try
+            {
+                var result = WNetGetConnection(drive, builder, ref length);
+                return result == 0 ? builder.ToString() : null;
+            }
+            catch (DllNotFoundException)
+            {
+                return null;
+            }
+            catch (EntryPointNotFoundException)
+            {
+                return null;
+            }
         }
 
         private static string BuildUncFromDrive(string normalized)

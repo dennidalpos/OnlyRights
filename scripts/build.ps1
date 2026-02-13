@@ -120,6 +120,9 @@ if ($CleanAllTemp) {
     $CleanTemp = $true
     $CleanImports = $true
     $CleanCache = $true
+    $CleanLogs = $true
+    $CleanExports = $true
+    $CleanServiceJobs = $true
 }
 
 if ($CleanTemp) {

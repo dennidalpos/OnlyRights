@@ -13,6 +13,9 @@ namespace NtfsAudit.Service
 {
     public class ScanWorker : BackgroundService
     {
+        private static readonly string ServiceDataRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "NtfsAudit");
+        private static readonly string JobsRoot = Path.Combine(ServiceDataRoot, "jobs");
+        private static readonly string StatusPath = Path.Combine(ServiceDataRoot, "service-status.json");
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
@@ -31,10 +34,27 @@ namespace NtfsAudit.Service
 
         private void ProcessJobs(CancellationToken token)
         {
-            var jobsRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "NtfsAudit", "jobs");
-            if (!Directory.Exists(jobsRoot)) return;
+            if (!Directory.Exists(JobsRoot))
+            {
+                WriteServiceStatus(new ServiceRuntimeStatus
+                {
+                    IsRunning = false,
+                    PendingJobs = 0,
+                    LastUpdateUtc = DateTime.UtcNow,
+                    LastMessage = "In attesa di job"
+                });
+                return;
+            }
 
-            var files = Directory.GetFiles(jobsRoot, "job_*.json").OrderBy(path => path).ToArray();
+            var files = Directory.GetFiles(JobsRoot, "job_*.json").OrderBy(path => path).ToArray();
+            WriteServiceStatus(new ServiceRuntimeStatus
+            {
+                IsRunning = false,
+                PendingJobs = files.Length,
+                LastUpdateUtc = DateTime.UtcNow,
+                LastMessage = files.Length > 0 ? "Job in coda" : "In attesa di job"
+            });
+
             foreach (var file in files)
             {
                 token.ThrowIfCancellationRequested();
@@ -52,9 +72,30 @@ namespace NtfsAudit.Service
                     continue;
                 }
 
-                foreach (var options in job.ScanOptions.Where(option => option != null && !string.IsNullOrWhiteSpace(option.RootPath)))
+                var optionsList = job.ScanOptions.Where(option => option != null && !string.IsNullOrWhiteSpace(option.RootPath)).ToList();
+                if (optionsList.Count == 0)
+                {
+                    continue;
+                }
+
+                var startedAt = DateTime.UtcNow;
+                for (var index = 0; index < optionsList.Count; index++)
                 {
                     token.ThrowIfCancellationRequested();
+                    var options = optionsList[index];
+                    WriteServiceStatus(new ServiceRuntimeStatus
+                    {
+                        IsRunning = true,
+                        CurrentJobId = job.JobId,
+                        CurrentRootPath = options.RootPath,
+                        CurrentRootIndex = index + 1,
+                        TotalRoots = optionsList.Count,
+                        PendingJobs = Math.Max(0, files.Length - 1),
+                        StartedAtUtc = startedAt,
+                        LastUpdateUtc = DateTime.UtcNow,
+                        LastMessage = string.Format("Scansione root {0}/{1}", index + 1, optionsList.Count)
+                    });
+
                     try
                     {
                         RunSingleScan(options, token);
@@ -69,6 +110,29 @@ namespace NtfsAudit.Service
                 }
 
                 File.Delete(file);
+                var pending = Directory.Exists(JobsRoot)
+                    ? Directory.GetFiles(JobsRoot, "job_*.json").Length
+                    : 0;
+                WriteServiceStatus(new ServiceRuntimeStatus
+                {
+                    IsRunning = false,
+                    PendingJobs = pending,
+                    LastUpdateUtc = DateTime.UtcNow,
+                    LastMessage = pending > 0 ? "Job completato, altri job in coda" : "Ultimo job completato"
+                });
+            }
+        }
+
+        private static void WriteServiceStatus(ServiceRuntimeStatus status)
+        {
+            try
+            {
+                if (status == null) return;
+                Directory.CreateDirectory(ServiceDataRoot);
+                File.WriteAllText(StatusPath, JsonConvert.SerializeObject(status, Formatting.Indented));
+            }
+            catch
+            {
             }
         }
 

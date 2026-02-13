@@ -36,6 +36,7 @@ namespace NtfsAudit.App.ViewModels
         private bool _isBusy;
         private bool _isViewerMode;
         private DispatcherTimer _scanTimer;
+        private DispatcherTimer _serviceStatusTimer;
         private DateTime _scanStart;
         private bool _hasExported;
         private string _rootPath;
@@ -118,6 +119,8 @@ namespace NtfsAudit.App.ViewModels
         private string _selectedRiskSummary = "-";
         private string _selectedAcquisitionWarnings = "-";
         private string _selectedScannedAtText = "-";
+        private string _serviceRuntimeStatusText = "Servizio: in attesa";
+        private bool _isServiceRuntimeRunning;
         private const string ServiceName = "NtfsAuditWorker";
 
         public MainViewModel(bool viewerMode = false)
@@ -168,6 +171,7 @@ namespace NtfsAudit.App.ViewModels
 
             LoadCache();
             InitializeScanTimer();
+            InitializeServiceStatusMonitor();
         }
 
         public bool IsElevated
@@ -178,6 +182,26 @@ namespace NtfsAudit.App.ViewModels
         public bool IsNotElevated
         {
             get { return !_isElevated; }
+        }
+
+        public bool IsServiceRuntimeRunning
+        {
+            get { return _isServiceRuntimeRunning; }
+            private set
+            {
+                _isServiceRuntimeRunning = value;
+                OnPropertyChanged("IsServiceRuntimeRunning");
+            }
+        }
+
+        public string ServiceRuntimeStatusText
+        {
+            get { return _serviceRuntimeStatusText; }
+            private set
+            {
+                _serviceRuntimeStatusText = value;
+                OnPropertyChanged("ServiceRuntimeStatusText");
+            }
         }
 
         public ObservableCollection<FolderNodeViewModel> FolderTree { get; private set; }
@@ -1244,10 +1268,22 @@ namespace NtfsAudit.App.ViewModels
                     WpfMessageBox.Show("NtfsAudit.Service.exe (o NtfsAudit.Service.dll) non trovato. Compila/publisha il progetto service e copia l'output vicino all'app, oppure usa una build che includa il service.", "Installazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                     return;
                 }
-                ExecuteScCommand(string.Format("create {0} binPath= {1} start= auto", ServiceName, BuildServiceBinPathForSc(serviceCommand)), "create");
+
+                var createArguments = string.Format("create {0} binPath= {1} start= auto", ServiceName, BuildServiceBinPathForSc(serviceCommand));
+                var createResult = ExecuteScCommand(createArguments, "create", false);
+                if (createResult.ExitCode == 1073)
+                {
+                    ExecuteScCommand(string.Format("config {0} binPath= {1} start= auto", ServiceName, BuildServiceBinPathForSc(serviceCommand)), "config");
+                }
+                else if (createResult.ExitCode != 0)
+                {
+                    ThrowScOperationFailed("create", createResult);
+                }
+
                 ExecuteScCommand(string.Format("description {0} \"Servizio scansione NTFS Audit\"", ServiceName), "description");
-                ExecuteScCommand(string.Format("start {0}", ServiceName), "start");
+                ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
                 ProgressText = "Servizio Windows installato.";
+                WpfMessageBox.Show("Servizio Windows installato correttamente.", "Installazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -1259,9 +1295,20 @@ namespace NtfsAudit.App.ViewModels
         {
             try
             {
-                ExecuteScCommand(string.Format("stop {0}", ServiceName), "stop", false);
-                ExecuteScCommand(string.Format("delete {0}", ServiceName), "delete");
+                var stopResult = ExecuteScCommand(string.Format("stop {0}", ServiceName), "stop", false);
+                if (stopResult.ExitCode != 0 && stopResult.ExitCode != 1060 && stopResult.ExitCode != 1062)
+                {
+                    ThrowScOperationFailed("stop", stopResult);
+                }
+
+                var deleteResult = ExecuteScCommand(string.Format("delete {0}", ServiceName), "delete", false);
+                if (deleteResult.ExitCode != 0 && deleteResult.ExitCode != 1060)
+                {
+                    ThrowScOperationFailed("delete", deleteResult);
+                }
+
                 ProgressText = "Servizio Windows disinstallato.";
+                WpfMessageBox.Show("Servizio Windows disinstallato correttamente.", "Disinstallazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -1269,55 +1316,91 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        private static void ExecuteScCommand(string arguments, string operation = null, bool throwOnError = true)
+        private static ScCommandResult ExecuteScCommand(string arguments, string operation = null, bool throwOnError = true)
         {
             var result = RunScCommand(arguments, false);
             if (result.ExitCode == 0)
             {
-                return;
+                return result;
             }
 
-            var errorText = string.IsNullOrWhiteSpace(result.Error) ? result.Output : result.Error;
-            if (result.ExitCode == 5 || (!string.IsNullOrWhiteSpace(errorText) && errorText.IndexOf("accesso negato", StringComparison.OrdinalIgnoreCase) >= 0))
+            var initialErrorText = string.IsNullOrWhiteSpace(result.Error) ? result.Output : result.Error;
+            if (result.ExitCode == 5 || (!string.IsNullOrWhiteSpace(initialErrorText) && initialErrorText.IndexOf("accesso negato", StringComparison.OrdinalIgnoreCase) >= 0))
             {
                 var elevated = RunScCommand(arguments, true);
                 if (elevated.ExitCode == 0)
                 {
-                    return;
+                    return elevated;
                 }
 
-                errorText = string.IsNullOrWhiteSpace(elevated.Error) ? elevated.Output : elevated.Error;
+                if (string.IsNullOrWhiteSpace(elevated.Error) && string.IsNullOrWhiteSpace(elevated.Output) && !string.IsNullOrWhiteSpace(initialErrorText))
+                {
+                    elevated.Error = initialErrorText;
+                }
+
+                result = elevated;
             }
 
             if (throwOnError)
             {
-                if (string.IsNullOrWhiteSpace(errorText))
-                {
-                    errorText = "Errore sconosciuto durante esecuzione di sc.exe";
-                }
-                var op = string.IsNullOrWhiteSpace(operation) ? "sc" : operation;
-                throw new InvalidOperationException(string.Format("Operazione servizio '{0}' non riuscita: {1}", op, errorText));
+                ThrowScOperationFailed(operation, result);
+            }
+
+            return result;
+        }
+
+        private static void ThrowScOperationFailed(string operation, ScCommandResult result)
+        {
+            var errorText = string.IsNullOrWhiteSpace(result.Error) ? result.Output : result.Error;
+            if (string.IsNullOrWhiteSpace(errorText))
+            {
+                errorText = BuildScFallbackError(result.ExitCode);
+            }
+
+            var op = string.IsNullOrWhiteSpace(operation) ? "sc" : operation;
+            throw new InvalidOperationException(string.Format("Operazione servizio '{0}' non riuscita (exit code {1}): {2}", op, result.ExitCode, errorText));
+        }
+
+        private static string BuildScFallbackError(int exitCode)
+        {
+            switch (exitCode)
+            {
+                case 5:
+                    return "Accesso negato. Esegui NtfsAudit.App come amministratore e conferma il prompt UAC.";
+                case 1060:
+                    return "Il servizio specificato non esiste come servizio installato.";
+                case 1073:
+                    return "Il servizio esiste già.";
+                case -1:
+                    return "Impossibile avviare sc.exe o richiesta UAC annullata.";
+                default:
+                    return "Errore sconosciuto durante esecuzione di sc.exe";
             }
         }
+
         private static ScCommandResult RunScCommand(string arguments, bool runAsAdmin)
         {
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = ResolveScExecutablePath(),
-                Arguments = arguments,
-                UseShellExecute = runAsAdmin,
-                CreateNoWindow = !runAsAdmin
-            };
-
+            var scPath = ResolveScExecutablePath();
             if (runAsAdmin)
             {
-                startInfo.Verb = "runas";
+                var elevated = RunScCommandElevatedWithPowerShell(scPath, arguments);
+                if (elevated != null)
+                {
+                    return elevated;
+                }
+
+                return RunScCommandElevatedDirect(scPath, arguments);
             }
-            else
+
+            var startInfo = new ProcessStartInfo
             {
-                startInfo.RedirectStandardOutput = true;
-                startInfo.RedirectStandardError = true;
-            }
+                FileName = scPath,
+                Arguments = arguments,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
 
             try
             {
@@ -1332,8 +1415,8 @@ namespace NtfsAudit.App.ViewModels
                     return new ScCommandResult
                     {
                         ExitCode = process.ExitCode,
-                        Output = runAsAdmin ? string.Empty : process.StandardOutput.ReadToEnd(),
-                        Error = runAsAdmin ? string.Empty : process.StandardError.ReadToEnd()
+                        Output = process.StandardOutput.ReadToEnd(),
+                        Error = process.StandardError.ReadToEnd()
                     };
                 }
             }
@@ -1341,6 +1424,96 @@ namespace NtfsAudit.App.ViewModels
             {
                 return new ScCommandResult { ExitCode = -1, Error = ex.Message };
             }
+        }
+
+        private static ScCommandResult RunScCommandElevatedWithPowerShell(string scPath, string arguments)
+        {
+            var powerShellPath = ResolvePowerShellExecutablePath();
+            if (string.IsNullOrWhiteSpace(powerShellPath))
+            {
+                return null;
+            }
+
+            var escapedScPath = EscapePowerShellSingleQuoted(scPath);
+            var escapedArguments = EscapePowerShellSingleQuoted(arguments);
+            var psArguments = string.Format(
+                "-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"& {{ $p = Start-Process -FilePath '{0}' -ArgumentList '{1}' -Verb RunAs -Wait -PassThru; exit $p.ExitCode }}\"",
+                escapedScPath,
+                escapedArguments);
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = powerShellPath,
+                Arguments = psArguments,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            try
+            {
+                using (var process = Process.Start(startInfo))
+                {
+                    if (process == null)
+                    {
+                        return new ScCommandResult { ExitCode = -1, Error = "Impossibile avviare PowerShell per elevare sc.exe" };
+                    }
+
+                    process.WaitForExit();
+                    return new ScCommandResult
+                    {
+                        ExitCode = process.ExitCode,
+                        Output = process.StandardOutput.ReadToEnd(),
+                        Error = process.StandardError.ReadToEnd()
+                    };
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static ScCommandResult RunScCommandElevatedDirect(string scPath, string arguments)
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = scPath,
+                Arguments = arguments,
+                UseShellExecute = true,
+                CreateNoWindow = false,
+                Verb = "runas"
+            };
+
+            try
+            {
+                using (var process = Process.Start(startInfo))
+                {
+                    if (process == null)
+                    {
+                        return new ScCommandResult { ExitCode = -1, Error = "Impossibile avviare sc.exe in elevazione" };
+                    }
+
+                    process.WaitForExit();
+                    return new ScCommandResult
+                    {
+                        ExitCode = process.ExitCode,
+                        Output = string.Empty,
+                        Error = string.Empty
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ScCommandResult { ExitCode = -1, Error = ex.Message };
+            }
+        }
+
+        private static string EscapePowerShellSingleQuoted(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            return value.Replace("'", "''");
         }
 
         private static string ResolveScExecutablePath()
@@ -1366,6 +1539,27 @@ namespace NtfsAudit.App.ViewModels
             }
 
             return "sc.exe";
+        }
+
+        private static string ResolvePowerShellExecutablePath()
+        {
+            var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            if (!string.IsNullOrWhiteSpace(systemDir))
+            {
+                var powershellPath = Path.Combine(systemDir, "WindowsPowerShell", "v1.0", "powershell.exe");
+                if (File.Exists(powershellPath))
+                {
+                    return powershellPath;
+                }
+            }
+
+            var windir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+            if (!string.IsNullOrWhiteSpace(windir))
+            {
+                return Path.Combine(windir, "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
+            }
+
+            return "powershell.exe";
         }
 
         private sealed class ScCommandResult
@@ -1416,7 +1610,17 @@ namespace NtfsAudit.App.ViewModels
             }
 
             var dotnetHost = ResolveDotnetHostPath();
-            return string.Format("{0} {1}", QuoteForSc(dotnetHost), QuoteForSc(serviceCommand));
+            // Per sc.exe il valore binPath con due token (host + dll) deve essere una singola stringa,
+            // con virgolette interne escaped e valore esterno quotato.
+            return string.Format("\"\\\"{0}\\\" \\\"{1}\\\"\"",
+                SanitizeForSc(dotnetHost),
+                SanitizeForSc(serviceCommand));
+        }
+
+        private static string SanitizeForSc(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+            return value.Replace("\"", string.Empty);
         }
 
         private static string QuoteForSc(string value)
@@ -1678,6 +1882,7 @@ namespace NtfsAudit.App.ViewModels
                 File.WriteAllText(jobFile, JsonConvert.SerializeObject(job, Formatting.Indented));
                 ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
                 ProgressText = "Job inviato al servizio Windows. La scansione continua anche dopo il logout utente.";
+                RefreshServiceRuntimeStatus();
             }
             catch (Exception ex)
             {
@@ -1908,13 +2113,7 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_isViewerMode) return;
             if (_scanResult == null) return;
-            var ioTempDataPath = PathResolver.ToExtendedPath(_scanResult.TempDataPath);
-            if (string.IsNullOrWhiteSpace(_scanResult.TempDataPath) || !File.Exists(ioTempDataPath))
-            {
-                ProgressText = "Export non disponibile: file dati scansione mancante.";
-                WpfMessageBox.Show(ProgressText, "Export non disponibile", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-                return;
-            }
+            if (!TryEnsureScanDataAvailableForExport("Export non disponibile")) return;
             var dialog = new Win32.SaveFileDialog
             {
                 Filter = "Excel (*.xlsx)|*.xlsx",
@@ -1955,6 +2154,7 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_isViewerMode) return;
             if (_scanResult == null) return;
+            if (!TryEnsureScanDataAvailableForExport("Export analisi non disponibile")) return;
             var dialog = new Win32.SaveFileDialog
             {
                 Filter = "Analisi NtfsAudit (*.ntaudit)|*.ntaudit",
@@ -2046,6 +2246,24 @@ namespace NtfsAudit.App.ViewModels
             {
                 SetBusy(false);
             }
+        }
+
+        private bool TryEnsureScanDataAvailableForExport(string messageTitle)
+        {
+            if (_scanResult == null)
+            {
+                return false;
+            }
+
+            var ioTempDataPath = PathResolver.ToExtendedPath(_scanResult.TempDataPath);
+            if (string.IsNullOrWhiteSpace(_scanResult.TempDataPath) || !File.Exists(ioTempDataPath))
+            {
+                ProgressText = "Export non disponibile: file dati scansione mancante.";
+                WpfMessageBox.Show(ProgressText, messageTitle, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return false;
+            }
+
+            return true;
         }
 
         private async Task RunExportActionAsync(Action exportAction, string errorLabel, string outputPath = null)
@@ -2170,6 +2388,12 @@ namespace NtfsAudit.App.ViewModels
             var system = Environment.GetFolderPath(Environment.SpecialFolder.System);
             var candidate = Path.Combine(system, "WindowsPowerShell", "v1.0", "powershell.exe");
             if (File.Exists(candidate)) return candidate;
+            var windir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+            if (!string.IsNullOrWhiteSpace(windir))
+            {
+                return Path.Combine(windir, "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
+            }
+
             return "powershell.exe";
         }
 
@@ -2433,8 +2657,8 @@ namespace NtfsAudit.App.ViewModels
             var hasBaselineMismatch = detail.BaselineSummary != null && (detail.BaselineSummary.Added.Count > 0 || detail.BaselineSummary.Removed.Count > 0);
 
             var hasTypeMatch = true;
-            var hasFiles = detail.AllEntries.Any(e => string.Equals(e.ResourceType, "File", StringComparison.OrdinalIgnoreCase));
-            var hasFolders = detail.AllEntries.Any(e => string.Equals(e.ResourceType, "Cartella", StringComparison.OrdinalIgnoreCase));
+            var hasFiles = detail.AllEntries.Any(e => IsFileResourceType(e.ResourceType));
+            var hasFolders = detail.AllEntries.Any(e => IsFolderResourceType(e.ResourceType));
             if (TreeFilterFilesOnly && !TreeFilterFoldersOnly)
             {
                 hasTypeMatch = hasFiles;
@@ -2483,6 +2707,18 @@ namespace NtfsAudit.App.ViewModels
             }
 
             return !categoryFilterSelected || includeByCategory;
+        }
+
+        private static bool IsFileResourceType(string resourceType)
+        {
+            return string.Equals(resourceType, "File", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsFolderResourceType(string resourceType)
+        {
+            return string.Equals(resourceType, "Folder", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(resourceType, "Cartella", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(resourceType, "Directory", StringComparison.OrdinalIgnoreCase);
         }
 
         private bool AnyTreeFilterEnabled()
@@ -3234,6 +3470,66 @@ namespace NtfsAudit.App.ViewModels
                 if (!_isScanning) return;
                 ElapsedText = FormatElapsed(DateTime.Now - _scanStart);
             };
+        }
+
+        private void InitializeServiceStatusMonitor()
+        {
+            _serviceStatusTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(5)
+            };
+            _serviceStatusTimer.Tick += (_, __) => RefreshServiceRuntimeStatus();
+            _serviceStatusTimer.Start();
+            RefreshServiceRuntimeStatus();
+        }
+
+        private void RefreshServiceRuntimeStatus()
+        {
+            var statusPath = GetServiceStatusPath();
+            if (!File.Exists(statusPath))
+            {
+                IsServiceRuntimeRunning = false;
+                ServiceRuntimeStatusText = "Servizio: in attesa";
+                return;
+            }
+
+            try
+            {
+                var status = JsonConvert.DeserializeObject<ServiceRuntimeStatus>(File.ReadAllText(statusPath));
+                if (status == null)
+                {
+                    IsServiceRuntimeRunning = false;
+                    ServiceRuntimeStatusText = "Servizio: stato non disponibile";
+                    return;
+                }
+
+                IsServiceRuntimeRunning = status.IsRunning;
+                if (status.IsRunning)
+                {
+                    var rootLabel = string.IsNullOrWhiteSpace(status.CurrentRootPath) ? "root sconosciuta" : status.CurrentRootPath;
+                    var progress = status.TotalRoots > 0
+                        ? string.Format("{0}/{1}", status.CurrentRootIndex, status.TotalRoots)
+                        : "?/?";
+                    ServiceRuntimeStatusText = string.Format("Servizio in esecuzione: {0} (root {1})", rootLabel, progress);
+                }
+                else
+                {
+                    ServiceRuntimeStatusText = string.IsNullOrWhiteSpace(status.LastMessage)
+                        ? "Servizio: in attesa"
+                        : string.Format("Servizio: {0}", status.LastMessage);
+                }
+            }
+            catch
+            {
+                IsServiceRuntimeRunning = false;
+                ServiceRuntimeStatusText = "Servizio: stato non leggibile";
+            }
+        }
+
+        private static string GetServiceStatusPath()
+        {
+            var programData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+            return Path.Combine(programData, "NtfsAudit", "service-status.json");
         }
 
         private void StartElapsedTimer()

@@ -169,6 +169,7 @@
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
@@ -193,6 +194,14 @@
                   Visibility="{Binding IsNotElevated, Converter={StaticResource BooleanToVisibilityConverter}}">
             <TextBlock Text="Non amministratore"
                        Foreground="#FF856404"
+                       FontWeight="SemiBold" />
+          </Border>
+          <Border Grid.Row="2" Background="#FFE8F5E9" BorderBrush="#FFC8E6C9" BorderThickness="1" CornerRadius="10" Padding="8,3"
+                  Margin="0,6,0,0"
+                  HorizontalAlignment="Left"
+                  Visibility="{Binding IsServiceRuntimeRunning, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <TextBlock Text="{Binding ServiceRuntimeStatusText}"
+                       Foreground="#FF1B5E20"
                        FontWeight="SemiBold" />
           </Border>
         </Grid>
