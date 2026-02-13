@@ -1154,8 +1154,10 @@ namespace NtfsAudit.App.ViewModels
             {
                 Path.Combine(appBase, "NtfsAudit.Service.exe"),
                 Path.Combine(appBase, "NtfsAudit.Service", "NtfsAudit.Service.exe"),
+                Path.Combine(appBase, "Service", "NtfsAudit.Service.exe"),
                 Path.Combine(appBase, "NtfsAudit.Service.dll"),
-                Path.Combine(appBase, "NtfsAudit.Service", "NtfsAudit.Service.dll")
+                Path.Combine(appBase, "NtfsAudit.Service", "NtfsAudit.Service.dll"),
+                Path.Combine(appBase, "Service", "NtfsAudit.Service.dll")
             };
 
             var parent = Directory.GetParent(appBase);
