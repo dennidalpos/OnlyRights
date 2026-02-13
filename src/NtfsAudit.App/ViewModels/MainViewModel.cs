@@ -1244,7 +1244,7 @@ namespace NtfsAudit.App.ViewModels
                     WpfMessageBox.Show("NtfsAudit.Service.exe (o NtfsAudit.Service.dll) non trovato. Compila/publisha il progetto service e copia l'output vicino all'app, oppure usa una build che includa il service.", "Installazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                     return;
                 }
-                ExecuteScCommand(string.Format("create {0} binPath= \"{1}\" start= auto", ServiceName, serviceCommand), "create");
+                ExecuteScCommand(string.Format("create {0} binPath= {1} start= auto", ServiceName, BuildServiceBinPathForSc(serviceCommand)), "create");
                 ExecuteScCommand(string.Format("description {0} \"Servizio scansione NTFS Audit\"", ServiceName), "description");
                 ExecuteScCommand(string.Format("start {0}", ServiceName), "start");
                 ProgressText = "Servizio Windows installato.";
@@ -1291,6 +1291,10 @@ namespace NtfsAudit.App.ViewModels
 
             if (throwOnError)
             {
+                if (string.IsNullOrWhiteSpace(errorText))
+                {
+                    errorText = "Errore sconosciuto durante esecuzione di sc.exe";
+                }
                 var op = string.IsNullOrWhiteSpace(operation) ? "sc" : operation;
                 throw new InvalidOperationException(string.Format("Operazione servizio '{0}' non riuscita: {1}", op, errorText));
             }
@@ -1372,13 +1376,43 @@ namespace NtfsAudit.App.ViewModels
 
             var serviceBinary = candidates.FirstOrDefault(path => !string.IsNullOrWhiteSpace(path) && File.Exists(path));
             if (string.IsNullOrWhiteSpace(serviceBinary)) return null;
+            return serviceBinary;
+        }
 
-            if (serviceBinary.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+        private string BuildServiceBinPathForSc(string serviceCommand)
+        {
+            if (string.IsNullOrWhiteSpace(serviceCommand))
             {
-                return serviceBinary;
+                throw new InvalidOperationException("Percorso servizio non valido.");
             }
 
-            return string.Format("dotnet \"{0}\"", serviceBinary);
+            if (serviceCommand.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            {
+                return QuoteForSc(serviceCommand);
+            }
+
+            var dotnetHost = ResolveDotnetHostPath();
+            return string.Format("{0} {1}", QuoteForSc(dotnetHost), QuoteForSc(serviceCommand));
+        }
+
+        private static string QuoteForSc(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return "\"\"";
+            return string.Format("\"{0}\"", value.Replace("\"", string.Empty));
+        }
+
+        private static string ResolveDotnetHostPath()
+        {
+            var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            var preferred = string.IsNullOrWhiteSpace(programFiles)
+                ? null
+                : Path.Combine(programFiles, "dotnet", "dotnet.exe");
+            if (!string.IsNullOrWhiteSpace(preferred) && File.Exists(preferred))
+            {
+                return preferred;
+            }
+
+            return "dotnet.exe";
         }
 
         private bool TryPickFolder(out string selectedPath)
