@@ -170,6 +170,8 @@
             <StackPanel Orientation="Horizontal">
               <Button Margin="0,0,8,0" Padding="12,4" Content="Avvia analisi" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" Background="#FF2E7D32" Foreground="White" />
               <Button Margin="0,0,8,0" Padding="12,4" Content="Stop" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" Background="#FFC62828" Foreground="White" />
+              <Button Margin="0,0,8,0" Padding="12,4" Content="Installa servizio Windows" Command="{Binding InstallServiceCommand}" Background="#FF6A1B9A" Foreground="White" />
+              <Button Margin="0,0,8,0" Padding="12,4" Content="Disinstalla servizio Windows" Command="{Binding UninstallServiceCommand}" Background="#FF8E24AA" Foreground="White" />
               <Button Margin="0,0,8,0" Padding="12,4" Content="Esporta elenco permessi (Excel)" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
               <Button Margin="0,0,8,0" Padding="12,4" Content="Salva report completo (.ntaudit)" Command="{Binding ExportAnalysisCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
               <Button Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" Background="#FF616161" Foreground="White" />
@@ -767,15 +769,35 @@
 
               <GroupBox Header="Scansione" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10" Margin="0,10,0,0" IsEnabled="{Binding IsScanConfigEnabled}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel>
-                  <TextBlock Text="Selezione cartella" Style="{StaticResource SubsectionHeaderText}" />
+                  <TextBlock Text="Cartelle da scansionare" Style="{StaticResource SubsectionHeaderText}" />
+                  <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Margin="0,0,8,0" Padding="10,4" Content="Sfoglia..." Command="{Binding BrowseCommand}" />
+                    <TextBox Grid.Column="1" Height="26" VerticalAlignment="Center" MinWidth="160" Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}" />
+                    <Button Grid.Column="2" Margin="8,0,0,0" Padding="10,4" Content="Aggiungi" Command="{Binding AddScanRootCommand}" />
+                  </Grid>
+                  <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ListBox Grid.Column="0" Height="90" ItemsSource="{Binding ScanRoots}" SelectedItem="{Binding SelectedScanRoot}" />
+                    <Button Grid.Column="1" Margin="8,0,0,0" Padding="10,4" Content="Rimuovi" VerticalAlignment="Top" Command="{Binding RemoveScanRootCommand}" />
+                  </Grid>
+                  <TextBlock Text="Output report .ntaudit" Style="{StaticResource SubsectionHeaderText}" />
                   <Grid Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="Auto" />
                       <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Margin="0,0,8,0" Padding="10,4" Content="Sfoglia..." Command="{Binding BrowseCommand}" />
-                    <TextBox Grid.Column="1" Height="26" VerticalAlignment="Center" MinWidth="160" Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}" />
+                    <Button Grid.Column="0" Margin="0,0,8,0" Padding="10,4" Content="Sfoglia..." Command="{Binding BrowseOutputDirectoryCommand}" />
+                    <TextBox Grid.Column="1" Height="26" VerticalAlignment="Center" MinWidth="160" Text="{Binding AuditOutputDirectory, UpdateSourceTrigger=PropertyChanged}" />
                   </Grid>
+                  <CheckBox Margin="0,0,0,6" Content="Esegui tramite servizio Windows (richiede NtfsAudit.Service.exe)" IsChecked="{Binding UseWindowsServiceMode}" />
                   <Grid Margin="0,0,0,6" Visibility="{Binding HasDfsTargets, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="Auto" />
