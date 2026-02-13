@@ -1,186 +1,159 @@
 # NTFS Audit
 
-NTFS Audit è una suite Windows (WPF + Worker Service) per analizzare ACL NTFS/SMB su percorsi locali, UNC e DFS, esportare risultati in Excel e archivi `.ntaudit`, e (opzionalmente) far girare scansioni tramite servizio Windows anche dopo logout utente.
+NTFS Audit è una suite Windows composta da:
+- **NtfsAudit.App**: applicazione WPF per scansione ACL e analisi.
+- **NtfsAudit.Service**: servizio Windows per esecuzione job in background.
+- **NtfsAudit.Viewer**: viewer in sola lettura per aprire archivi `.ntaudit`.
 
-## Componenti della soluzione
+Supporta percorsi locali, UNC/SMB, DFS e NFS (con limiti noti su metadati disponibili da Windows).
 
-- **NtfsAudit.App** (`src/NtfsAudit.App`): applicazione principale con scansione, filtri, export/import e gestione servizio.
-- **NtfsAudit.Viewer** (`src/NtfsAudit.Viewer`): viewer leggero per aprire analisi `.ntaudit` in sola consultazione.
-- **NtfsAudit.Service** (`src/NtfsAudit.Service`): worker eseguibile come Windows Service per processare job di scansione in background.
-- **NtfsAudit.App.Tests** (`tests/NtfsAudit.App.Tests`): test unitari servizi core.
+## Architettura repository
 
----
+- `src/NtfsAudit.App`: UI, orchestrazione scansione, export/import, filtri, persistenza preferenze.
+- `src/NtfsAudit.Service`: worker che legge i job e lancia scansioni batch.
+- `src/NtfsAudit.Viewer`: apertura analisi archiviate.
+- `tests/NtfsAudit.App.Tests`: test unitari (servizi e calcolo permessi).
+- `scripts/build.ps1`: pipeline locale build/test/publish + pulizia opzionale.
+- `scripts/clean.ps1`: pulizia selettiva artefatti, cache, import/export, job servizio.
 
-## Funzionalità principali
+## Scansione
 
-### 1) Scansione ACL
+### Modalità
 
-- scansione cartelle locali/UNC/DFS;
-- profondità limitata (`MaxDepth`) o completa (`ScanAllDepths`);
-- inclusione ACL ereditate (`IncludeInherited`);
-- scansione file opzionale (`IncludeFiles`);
-- lettura owner/SACL opzionale (`ReadOwnerAndSacl`) con privilegi adeguati.
+1. **Interattiva (App)**
+   - selezione una o più root;
+   - esecuzione immediata;
+   - visualizzazione progress e risultati nella UI.
 
-### 2) Identità e Active Directory
+2. **Servizio Windows**
+   - l’App serializza un job JSON in `%ProgramData%\\NtfsAudit\\jobs`;
+   - il service processa tutte le root presenti nel job;
+   - una root in errore non interrompe le successive;
+   - per ogni root viene esportato un `.ntaudit` dedicato (se output configurato).
 
-- risoluzione SID -> nome con cache locale;
-- risoluzione AD con provider Directory Services / PowerShell;
-- espansione gruppi annidati (`ExpandGroups`);
-- classificazione account di servizio/admin per filtri rapidi.
+### Naming output `.ntaudit`
 
-### 3) Audit avanzato
+Per export automatici batch (App e Service):
 
-Con `EnableAdvancedAudit` attivo:
+`<nome_cartella_scansionata>_yyyy_MM_dd_HH_mm.ntaudit`
 
-- acquisizione permessi share SMB (`IncludeSharePermissions`);
-- calcolo effective access (`ComputeEffectiveAccess`);
-- confronto baseline (`CompareBaseline`).
+Esempi:
+- `Finance_2026_02_13_09_45.ntaudit`
+- `Engineering_2026_02_13_10_02.ntaudit`
 
-### 4) Export / Import
+## Import / Export
 
-- export Excel (`.xlsx`);
-- export analisi completa (`.ntaudit`);
-- import `.ntaudit` in App e Viewer.
+### Export Excel (`.xlsx`)
 
-### 5) Multi-root + DFS target per voce
+- disponibile da App su scansione caricata;
+- include dati ACL e metadati utili per analisi;
+- filename proposto con root sanitizzata + timestamp `yyyy_MM_dd_HH_mm`.
 
-Nella UI puoi:
+### Export analisi (`.ntaudit`)
 
-- aggiungere più cartelle in elenco scansione;
-- selezionare una cartella in elenco e scegliere il **target DFS specifico** per quella voce;
-- usare un path unico di output `.ntaudit`, con un archivio separato per ogni root elaborata.
+- crea archivio zip con:
+  - `data.jsonl`
+  - `errors.jsonl`
+  - `tree.json`
+  - `folderflags.json`
+  - `meta.json`
+- il metadata include root, path kind, opzioni scansione e timestamp scansione.
 
-### 6) Modalità servizio Windows
+### Import analisi (`.ntaudit`)
 
-- pulsanti UI per installare/disinstallare servizio;
-- coda job in `%ProgramData%\NtfsAudit\jobs`;
-- il service processa i job e salva i `.ntaudit` nell’output configurato;
-- scansioni continuano senza sessione utente attiva (scenario logout/RDP disconnected).
+- valida struttura archivio;
+- ricostruisce dettaglio ACL e mappa albero;
+- applica opzioni importate (quando presenti);
+- usa una cartella temp per import con naming leggibile:
+  - `<nome_archivio>_yyyy_MM_dd_HH_mm_<guid>`.
 
----
+## Logica checkbox e filtri
 
-## Requisiti
+## Opzioni scansione
 
-- Windows 10/11 o Windows Server con WPF;
-- .NET SDK 8.x (consigliato) per build/publish;
-- privilegi adeguati ai percorsi target;
-- per installare servizio: shell elevata (Run as Administrator).
+- `ResolveIdentities` abilita/disabilita blocco identity resolution.
+  - quando disattivata, forzano OFF:
+    - `ExpandGroups`
+    - `UsePowerShell`
+    - `ExcludeServiceAccounts`
+    - `ExcludeAdminAccounts`
+- `EnableAdvancedAudit` abilita/disabilita funzioni avanzate.
+  - quando disattivata, forzano OFF:
+    - `ComputeEffectiveAccess`
+    - `IncludeSharePermissions`
+    - `IncludeFiles`
+    - `ReadOwnerAndSacl`
+    - `CompareBaseline`
 
----
+## Filtri ACL (grid)
 
-## Build, test e publish
+- Coppie con vincolo “almeno una attiva”:
+  - `ShowAllow` / `ShowDeny`
+  - `ShowInherited` / `ShowExplicit`
+- Categorie principal con vincolo “almeno una attiva”:
+  - `ShowEveryone`
+  - `ShowAuthenticatedUsers`
+  - `ShowServiceAccounts`
+  - `ShowAdminAccounts`
+  - `ShowOtherPrincipals`
+- Se l’utente tenta di spegnere tutte le categorie principal, viene riattivata automaticamente `ShowOtherPrincipals`.
 
-## Comandi dotnet essenziali
+## Filtri albero
 
-```powershell
-dotnet restore NtfsAudit.sln
-dotnet build NtfsAudit.sln -c Release
-dotnet test NtfsAudit.sln -c Release
-```
+- `TreeFilterFilesOnly` e `TreeFilterFoldersOnly` non possono essere entrambi OFF.
+- Filtri cumulativi:
+  - solo ACE esplicite,
+  - solo inheritance disabilitata,
+  - solo differenze baseline,
+  - solo deny espliciti,
+  - solo mismatch baseline,
+  - files/folders.
 
-## Script build (`scripts/build.ps1`)
+## Evidenziazione tipo percorso
 
-Esecuzione tipica:
+Nella lista root dell’App:
+- badge `DFS`, `SMB Share`, `NFS`, `Locale`;
+- colore di sfondo differenziato per tipo percorso;
+- badge `DFS multi-server` quando la namespace DFS risolve più target server.
 
-```powershell
-./scripts/build.ps1 -Configuration Release
-```
+## Script build e clean
 
-Cosa fa (default):
+## `scripts/build.ps1`
 
-1. restore soluzione;
-2. build soluzione;
-3. test soluzione;
-4. publish App;
-5. publish Viewer;
-6. publish Service.
+Supporta:
+- restore/build/test/publish;
+- publish App + Viewer + Service;
+- clean integrato (`-RunClean`) con forwarding opzioni.
 
-Output publish default: `dist/<Configuration>/...`
-
-### Opzioni principali build
-
-- `-Framework net8.0-windows`
-- `-Runtime win-x64`
-- `-SelfContained`
-- `-PublishSingleFile`
-- `-PublishReadyToRun`
-- `-SkipRestore`, `-SkipBuild`, `-SkipTests`, `-SkipPublish`
-- `-SkipViewerPublish`
-- `-SkipServicePublish`
-- `-RunClean` (invoca `clean.ps1` prima della build)
-
-Esempio publish completo self-contained:
-
-```powershell
-./scripts/build.ps1 -Configuration Release -Framework net8.0-windows -Runtime win-x64 -SelfContained -PublishSingleFile -PublishReadyToRun
-```
-
----
-
-## Clean e housekeeping
-
-## Script clean (`scripts/clean.ps1`)
-
-Pulizia completa standard:
-
-```powershell
-./scripts/clean.ps1
-```
-
-Pulisce:
-
-- `.vs`
-- `bin/obj` di:
-  - `NtfsAudit.App`
-  - `NtfsAudit.Viewer`
-  - `NtfsAudit.Service`
-  - `NtfsAudit.App.Tests`
-- `dist` / `artifacts` (in base ai flag)
-- cache locale / temp import / log / export temporanei (opzionali via flag)
-
-Flag utili:
-
+Opzioni clean rilevanti:
 - `-CleanAllTemp`
 - `-CleanImports`
 - `-CleanCache`
 - `-CleanLogs`
 - `-CleanExports`
-- `-KeepDist`
-- `-KeepArtifacts`
+- `-CleanServiceJobs` (nuovo): rimuove `job_*.json` da `%ProgramData%\\NtfsAudit\\jobs`.
 
----
+## `scripts/clean.ps1`
 
-## Deploy servizio Windows
+Pulizia selettiva di:
+- bin/obj e dist/artifacts;
+- temp import/export;
+- cache locale;
+- log;
+- export `.xlsx`/`.ntaudit`;
+- job servizio (`-CleanServiceJobs`).
 
-### 1) Build/publish
+## Build rapida
 
-Pubblica anche il service con `scripts/build.ps1` (default, salvo `-SkipServicePublish`).
+```powershell
+# build + test
+powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1 -Configuration Release
 
-### 2) Installazione da UI
+# build + publish + clean profondo
+powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1 -Configuration Release -RunClean -CleanAllTemp -CleanExports -CleanServiceJobs
+```
 
-L’app cerca automaticamente:
+## Note operative
 
-- `NtfsAudit.Service.exe`
-- `NtfsAudit.Service.dll`
-
-in cartella applicazione e path build/publish comuni del repository.
-
-Se trova solo `.dll`, usa comando `dotnet "...\NtfsAudit.Service.dll"` come `binPath` del servizio.
-
-### 3) Esecuzione job
-
-Con “Esegui tramite servizio Windows” attivo, la UI serializza job in `%ProgramData%\NtfsAudit\jobs`.
-Il service legge i job, esegue la scansione e produce un `.ntaudit` per ciascuna root.
-
----
-
-## Struttura repository
-
-- `src/NtfsAudit.App/`
-  - `ViewModels/MainViewModel.cs`: orchestrazione UI, comandi scansione, gestione servizio, filtri.
-  - `Services/`: scan engine, resolver AD, archive import/export, baseline diff.
-  - `Models/`: DTO ACL, opzioni scansione, job service.
-- `src/NtfsAudit.Viewer/`: viewer `.ntaudit`.
-- `src/NtfsAudit.Service/`: worker service per scansioni background.
-- `tests/NtfsAudit.App.Tests/`: test unitari.
-- `scripts/`: automazione build/clean.
+- Il repository è orientato a Windows (.NET desktop + ACL NTFS).
+- In ambienti non Windows alcune funzionalità non sono eseguibili (UI WPF, service install, ACL native).

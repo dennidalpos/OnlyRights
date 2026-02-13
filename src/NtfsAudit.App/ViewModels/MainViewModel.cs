@@ -643,6 +643,11 @@ namespace NtfsAudit.App.ViewModels
             set
             {
                 _showAllow = value;
+                if (!_showAllow && !_showDeny)
+                {
+                    _showDeny = true;
+                    OnPropertyChanged("ShowDeny");
+                }
                 OnPropertyChanged("ShowAllow");
                 RefreshAclFilters();
             }
@@ -654,6 +659,11 @@ namespace NtfsAudit.App.ViewModels
             set
             {
                 _showDeny = value;
+                if (!_showDeny && !_showAllow)
+                {
+                    _showAllow = true;
+                    OnPropertyChanged("ShowAllow");
+                }
                 OnPropertyChanged("ShowDeny");
                 RefreshAclFilters();
             }
@@ -665,6 +675,11 @@ namespace NtfsAudit.App.ViewModels
             set
             {
                 _showInherited = value;
+                if (!_showInherited && !_showExplicit)
+                {
+                    _showExplicit = true;
+                    OnPropertyChanged("ShowExplicit");
+                }
                 OnPropertyChanged("ShowInherited");
                 RefreshAclFilters();
             }
@@ -676,6 +691,11 @@ namespace NtfsAudit.App.ViewModels
             set
             {
                 _showExplicit = value;
+                if (!_showExplicit && !_showInherited)
+                {
+                    _showInherited = true;
+                    OnPropertyChanged("ShowInherited");
+                }
                 OnPropertyChanged("ShowExplicit");
                 RefreshAclFilters();
             }
@@ -709,6 +729,7 @@ namespace NtfsAudit.App.ViewModels
             set
             {
                 _showEveryone = value;
+                EnsureAtLeastOnePrincipalCategoryEnabled();
                 OnPropertyChanged("ShowEveryone");
                 RefreshAclFilters();
             }
@@ -720,6 +741,7 @@ namespace NtfsAudit.App.ViewModels
             set
             {
                 _showAuthenticatedUsers = value;
+                EnsureAtLeastOnePrincipalCategoryEnabled();
                 OnPropertyChanged("ShowAuthenticatedUsers");
                 RefreshAclFilters();
             }
@@ -731,6 +753,7 @@ namespace NtfsAudit.App.ViewModels
             set
             {
                 _showServiceAccounts = value;
+                EnsureAtLeastOnePrincipalCategoryEnabled();
                 OnPropertyChanged("ShowServiceAccounts");
                 RefreshAclFilters();
             }
@@ -742,6 +765,7 @@ namespace NtfsAudit.App.ViewModels
             set
             {
                 _showAdminAccounts = value;
+                EnsureAtLeastOnePrincipalCategoryEnabled();
                 OnPropertyChanged("ShowAdminAccounts");
                 RefreshAclFilters();
             }
@@ -753,6 +777,7 @@ namespace NtfsAudit.App.ViewModels
             set
             {
                 _showOtherPrincipals = value;
+                EnsureAtLeastOnePrincipalCategoryEnabled();
                 OnPropertyChanged("ShowOtherPrincipals");
                 RefreshAclFilters();
             }
@@ -1613,7 +1638,8 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_isViewerMode) return;
             if (_scanResult == null) return;
-            if (string.IsNullOrWhiteSpace(_scanResult.TempDataPath) || !File.Exists(_scanResult.TempDataPath))
+            var ioTempDataPath = PathResolver.ToExtendedPath(_scanResult.TempDataPath);
+            if (string.IsNullOrWhiteSpace(_scanResult.TempDataPath) || !File.Exists(ioTempDataPath))
             {
                 ProgressText = "Export non disponibile: file dati scansione mancante.";
                 WpfMessageBox.Show(ProgressText, "Export non disponibile", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
@@ -2459,6 +2485,17 @@ namespace NtfsAudit.App.ViewModels
             FilteredEffectiveEntries.Refresh();
         }
 
+        private void EnsureAtLeastOnePrincipalCategoryEnabled()
+        {
+            if (_showEveryone || _showAuthenticatedUsers || _showServiceAccounts || _showAdminAccounts || _showOtherPrincipals)
+            {
+                return;
+            }
+
+            _showOtherPrincipals = true;
+            OnPropertyChanged("ShowOtherPrincipals");
+        }
+
         private bool FilterErrors(object item)
         {
             var error = item as ErrorEntry;
@@ -2817,7 +2854,8 @@ namespace NtfsAudit.App.ViewModels
             var safeRoot = rootPath ?? string.Empty;
             var baseName = Path.GetFileName(safeRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
             if (string.IsNullOrWhiteSpace(baseName)) baseName = "Root";
-            var timestamp = DateTime.Now.ToString("dd-MM-yyyy-HH-mm");
+            baseName = SanitizeFileName(baseName);
+            var timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm");
             return string.Format("{0}_{1}.{2}", baseName, timestamp, extension);
         }
 

@@ -15,7 +15,8 @@ param(
     [switch]$CleanImports,
     [switch]$CleanCache,
     [switch]$CleanLogs,
-    [switch]$CleanExports
+    [switch]$CleanExports,
+    [switch]$CleanServiceJobs
 )
 
 $ErrorActionPreference = "Stop"
@@ -36,6 +37,16 @@ function Remove-PathIfExists {
     param([string]$PathToRemove)
     if (-not [string]::IsNullOrWhiteSpace($PathToRemove) -and (Test-Path $PathToRemove)) {
         Remove-Item $PathToRemove -Recurse -Force
+    }
+}
+
+function Remove-ServiceJobs {
+    $programData = if ($env:ProgramData) { $env:ProgramData } else { [Environment]::GetFolderPath("CommonApplicationData") }
+    if ([string]::IsNullOrWhiteSpace($programData)) { return }
+    $jobsPath = Join-Path $programData "NtfsAudit\jobs"
+    if (Test-Path $jobsPath) {
+        Get-ChildItem -Path $jobsPath -Filter "job_*.json" -File -ErrorAction SilentlyContinue |
+            ForEach-Object { Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue }
     }
 }
 
@@ -60,6 +71,10 @@ if ($CleanAllTemp) {
     $KeepTemp = $false
     $KeepImportTemp = $false
     $KeepCache = $false
+}
+
+if ($CleanServiceJobs) {
+    Remove-ServiceJobs
 }
 
 if ($CleanExports) {
