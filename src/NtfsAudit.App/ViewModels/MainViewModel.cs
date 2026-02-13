@@ -1259,6 +1259,7 @@ namespace NtfsAudit.App.ViewModels
                 ExecuteScCommand(string.Format("description {0} \"Servizio scansione NTFS Audit\"", ServiceName), "description");
                 ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
                 ProgressText = "Servizio Windows installato.";
+                WpfMessageBox.Show("Servizio Windows installato correttamente.", "Installazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -1283,6 +1284,7 @@ namespace NtfsAudit.App.ViewModels
                 }
 
                 ProgressText = "Servizio Windows disinstallato.";
+                WpfMessageBox.Show("Servizio Windows disinstallato correttamente.", "Disinstallazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -1469,7 +1471,17 @@ namespace NtfsAudit.App.ViewModels
             }
 
             var dotnetHost = ResolveDotnetHostPath();
-            return string.Format("{0} {1}", QuoteForSc(dotnetHost), QuoteForSc(serviceCommand));
+            // Per sc.exe il valore binPath con due token (host + dll) deve essere una singola stringa,
+            // con virgolette interne escaped e valore esterno quotato.
+            return string.Format("\"\\\"{0}\\\" \\\"{1}\\\"\"",
+                SanitizeForSc(dotnetHost),
+                SanitizeForSc(serviceCommand));
+        }
+
+        private static string SanitizeForSc(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+            return value.Replace("\"", string.Empty);
         }
 
         private static string QuoteForSc(string value)
