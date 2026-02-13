@@ -1298,13 +1298,18 @@ namespace NtfsAudit.App.ViewModels
                 return result;
             }
 
-            var errorText = string.IsNullOrWhiteSpace(result.Error) ? result.Output : result.Error;
-            if (result.ExitCode == 5 || (!string.IsNullOrWhiteSpace(errorText) && errorText.IndexOf("accesso negato", StringComparison.OrdinalIgnoreCase) >= 0))
+            var initialErrorText = string.IsNullOrWhiteSpace(result.Error) ? result.Output : result.Error;
+            if (result.ExitCode == 5 || (!string.IsNullOrWhiteSpace(initialErrorText) && initialErrorText.IndexOf("accesso negato", StringComparison.OrdinalIgnoreCase) >= 0))
             {
                 var elevated = RunScCommand(arguments, true);
                 if (elevated.ExitCode == 0)
                 {
                     return elevated;
+                }
+
+                if (string.IsNullOrWhiteSpace(elevated.Error) && string.IsNullOrWhiteSpace(elevated.Output) && !string.IsNullOrWhiteSpace(initialErrorText))
+                {
+                    elevated.Error = initialErrorText;
                 }
 
                 result = elevated;
@@ -1323,11 +1328,28 @@ namespace NtfsAudit.App.ViewModels
             var errorText = string.IsNullOrWhiteSpace(result.Error) ? result.Output : result.Error;
             if (string.IsNullOrWhiteSpace(errorText))
             {
-                errorText = "Errore sconosciuto durante esecuzione di sc.exe";
+                errorText = BuildScFallbackError(result.ExitCode);
             }
 
             var op = string.IsNullOrWhiteSpace(operation) ? "sc" : operation;
             throw new InvalidOperationException(string.Format("Operazione servizio '{0}' non riuscita (exit code {1}): {2}", op, result.ExitCode, errorText));
+        }
+
+        private static string BuildScFallbackError(int exitCode)
+        {
+            switch (exitCode)
+            {
+                case 5:
+                    return "Accesso negato. Esegui NtfsAudit.App come amministratore e conferma il prompt UAC.";
+                case 1060:
+                    return "Il servizio specificato non esiste come servizio installato.";
+                case 1073:
+                    return "Il servizio esiste già.";
+                case -1:
+                    return "Impossibile avviare sc.exe o richiesta UAC annullata.";
+                default:
+                    return "Errore sconosciuto durante esecuzione di sc.exe";
+            }
         }
 
         private static ScCommandResult RunScCommand(string arguments, bool runAsAdmin)
