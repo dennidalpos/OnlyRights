@@ -108,10 +108,11 @@ namespace NtfsAudit.App.Services
                 }
             }
 
-            var members = _adResolver.GetGroupMembers(groupSid);
+            var members = _adResolver.GetGroupMembers(groupSid) ?? new List<ResolvedPrincipal>();
             var membersToCache = new List<ResolvedPrincipal>();
             foreach (var member in members)
             {
+                if (member == null) continue;
                 EnsureSid(member, member.Sid);
                 var isServiceAccount = SidClassifier.IsServiceAccountSid(member.Sid);
                 var isAdminAccount = SidClassifier.IsPrivilegedGroupSid(member.Sid);
