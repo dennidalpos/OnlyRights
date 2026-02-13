@@ -2224,36 +2224,43 @@ namespace NtfsAudit.App.ViewModels
                 return;
             }
 
-            var filteredTreeMap = ApplyTreeFilters(treeMap, result.Details, ResolveTreeRoot(treeMap, RootPath));
+            var preferredRoot = ResolveTreeRoot(treeMap, RootPath);
+            var filteredTreeMap = ApplyTreeFilters(treeMap, result.Details, preferredRoot);
             _currentFilteredTreeMap = filteredTreeMap;
             var provider = new FolderTreeProvider(filteredTreeMap, result.Details);
-            var rootPath = ResolveTreeRoot(filteredTreeMap, RootPath);
-            if (string.IsNullOrWhiteSpace(rootPath)) return;
+            var roots = ResolveTreeRoots(filteredTreeMap, preferredRoot);
+            if (roots.Count == 0) return;
 
-            var rootName = Path.GetFileName(rootPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-            if (string.IsNullOrWhiteSpace(rootName)) rootName = rootPath;
-            var rootDetail = result.Details != null && result.Details.TryGetValue(rootPath, out var detail) ? detail : null;
-            var rootSummary = rootDetail == null ? null : rootDetail.DiffSummary;
-            var rootNode = new FolderNodeViewModel(
-                rootPath,
-                rootName,
-                provider,
-                rootDetail != null && rootDetail.HasExplicitPermissions,
-                rootDetail != null && rootDetail.IsInheritanceDisabled,
-                rootSummary == null ? 0 : rootSummary.Added.Count(key => !key.IsInherited),
-                rootSummary == null ? 0 : rootSummary.Removed.Count,
-                rootSummary == null ? 0 : rootSummary.DenyExplicitCount,
-                rootSummary != null && rootSummary.IsProtected,
-                rootDetail == null || rootDetail.BaselineSummary == null ? 0 : rootDetail.BaselineSummary.Added.Count,
-                rootDetail == null || rootDetail.BaselineSummary == null ? 0 : rootDetail.BaselineSummary.Removed.Count,
-                rootDetail != null && rootDetail.HasExplicitNtfs,
-                rootDetail != null && rootDetail.HasExplicitShare,
-                rootDetail != null && rootDetail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase)),
-                rootDetail != null && rootDetail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase)),
-                rootDetail != null && rootDetail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase)));
-            rootNode.IsExpanded = true;
-            rootNode.IsSelected = true;
-            FolderTree.Add(rootNode);
+            foreach (var rootPath in roots)
+            {
+                var rootName = Path.GetFileName(rootPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                if (string.IsNullOrWhiteSpace(rootName)) rootName = rootPath;
+                var rootDetail = result.Details != null && result.Details.TryGetValue(rootPath, out var detail) ? detail : null;
+                var rootSummary = rootDetail == null ? null : rootDetail.DiffSummary;
+                var rootNode = new FolderNodeViewModel(
+                    rootPath,
+                    rootName,
+                    provider,
+                    rootDetail != null && rootDetail.HasExplicitPermissions,
+                    rootDetail != null && rootDetail.IsInheritanceDisabled,
+                    rootSummary == null ? 0 : rootSummary.Added.Count(key => !key.IsInherited),
+                    rootSummary == null ? 0 : rootSummary.Removed.Count,
+                    rootSummary == null ? 0 : rootSummary.DenyExplicitCount,
+                    rootSummary != null && rootSummary.IsProtected,
+                    rootDetail == null || rootDetail.BaselineSummary == null ? 0 : rootDetail.BaselineSummary.Added.Count,
+                    rootDetail == null || rootDetail.BaselineSummary == null ? 0 : rootDetail.BaselineSummary.Removed.Count,
+                    rootDetail != null && rootDetail.HasExplicitNtfs,
+                    rootDetail != null && rootDetail.HasExplicitShare,
+                    rootDetail != null && rootDetail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase)),
+                    rootDetail != null && rootDetail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase)),
+                    rootDetail != null && rootDetail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase)));
+                rootNode.IsExpanded = true;
+                if (FolderTree.Count == 0)
+                {
+                    rootNode.IsSelected = true;
+                }
+                FolderTree.Add(rootNode);
+            }
         }
 
         private void ReloadTreeWithFilters()
@@ -2289,8 +2296,13 @@ namespace NtfsAudit.App.ViewModels
         {
             if (treeMap == null || treeMap.Count == 0) return new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
             var filtered = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-            if (string.IsNullOrWhiteSpace(rootPath)) rootPath = treeMap.Keys.FirstOrDefault();
-            bool IncludeNode(string node)
+            var roots = ResolveTreeRoots(treeMap, rootPath);
+            if (roots.Count == 0)
+            {
+                return filtered;
+            }
+
+            bool IncludeNode(string node, string root)
             {
                 if (string.IsNullOrWhiteSpace(node)) return false;
                 var direct = NodeMatchesTreeFilters(node, details);
@@ -2303,17 +2315,67 @@ namespace NtfsAudit.App.ViewModels
                 var includedChildren = new List<string>();
                 foreach (var child in children)
                 {
-                    if (IncludeNode(child)) includedChildren.Add(child);
+                    if (IncludeNode(child, root)) includedChildren.Add(child);
                 }
-                if (direct || includedChildren.Count > 0 || string.Equals(node, rootPath, StringComparison.OrdinalIgnoreCase))
+                if (direct || includedChildren.Count > 0 || string.Equals(node, root, StringComparison.OrdinalIgnoreCase))
                 {
                     filtered[node] = includedChildren;
                     return true;
                 }
                 return false;
             }
-            IncludeNode(rootPath);
+
+            foreach (var root in roots)
+            {
+                IncludeNode(root, root);
+            }
+
             return filtered;
+        }
+
+        private List<string> ResolveTreeRoots(Dictionary<string, List<string>> treeMap, string preferredRoot)
+        {
+            var roots = new List<string>();
+            if (treeMap == null || treeMap.Count == 0)
+            {
+                return roots;
+            }
+
+            var childSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var entry in treeMap)
+            {
+                if (entry.Value == null) continue;
+                foreach (var child in entry.Value)
+                {
+                    if (!string.IsNullOrWhiteSpace(child))
+                    {
+                        childSet.Add(NormalizeTreePath(child));
+                    }
+                }
+            }
+
+            roots = treeMap.Keys
+                .Where(key => !childSet.Contains(NormalizeTreePath(key)))
+                .OrderBy(key => NormalizeTreePath(key))
+                .ToList();
+
+            if (roots.Count == 0)
+            {
+                roots.AddRange(treeMap.Keys.OrderBy(key => NormalizeTreePath(key)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(preferredRoot))
+            {
+                var normalizedPreferred = NormalizeTreePath(preferredRoot);
+                var preferred = roots.FirstOrDefault(root => string.Equals(NormalizeTreePath(root), normalizedPreferred, StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrWhiteSpace(preferred))
+                {
+                    roots.Remove(preferred);
+                    roots.Insert(0, preferred);
+                }
+            }
+
+            return roots;
         }
 
         private Dictionary<string, List<string>> ResolveFullTreeMap(ScanResult result)
