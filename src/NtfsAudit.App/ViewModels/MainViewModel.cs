@@ -40,6 +40,7 @@ namespace NtfsAudit.App.ViewModels
         private string _rootPath;
         private string _selectedScanRoot;
         private readonly Dictionary<string, string> _scanRootDfsTargets = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, string> _scanRootNamespacePaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private ObservableCollection<string> _selectedScanRootDfsTargets = new ObservableCollection<string>();
         private string _selectedScanRootDfsTarget;
         private string _auditOutputDirectory;
@@ -257,6 +258,37 @@ namespace NtfsAudit.App.ViewModels
                 if (!string.IsNullOrWhiteSpace(SelectedScanRoot))
                 {
                     var key = GetScanRootKey(SelectedScanRoot);
+                    string namespacePath;
+                    if (_scanRootNamespacePaths.TryGetValue(key, out namespacePath) && !string.IsNullOrWhiteSpace(value))
+                    {
+                        var newKey = GetScanRootKey(value);
+                        var index = ScanRoots.IndexOf(SelectedScanRoot);
+                        if (index >= 0 && !string.Equals(newKey, key, StringComparison.OrdinalIgnoreCase))
+                        {
+                            var duplicate = ScanRoots
+                                .Where((_, idx) => idx != index)
+                                .Any(path => string.Equals(GetScanRootKey(path), newKey, StringComparison.OrdinalIgnoreCase));
+                            if (duplicate)
+                            {
+                                WpfMessageBox.Show("Il target DFS selezionato è già presente in elenco.", "Target DFS", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                                return;
+                            }
+
+                            ScanRoots[index] = value;
+                            _scanRootNamespacePaths.Remove(key);
+                            _scanRootNamespacePaths[newKey] = namespacePath;
+                            _scanRootDfsTargets.Remove(key);
+                            _scanRootDfsTargets[newKey] = value;
+                            _selectedScanRoot = value;
+                            OnPropertyChanged("SelectedScanRoot");
+                            LoadSelectedScanRootDfsTargets();
+                            OnPropertyChanged("SelectedScanRootDfsTarget");
+                            OnPropertyChanged("CanStart");
+                            StartCommand.RaiseCanExecuteChanged();
+                            return;
+                        }
+                    }
+
                     if (string.IsNullOrWhiteSpace(value))
                     {
                         _scanRootDfsTargets.Remove(key);
@@ -1030,14 +1062,29 @@ namespace NtfsAudit.App.ViewModels
         private void AddScanRoot()
         {
             if (string.IsNullOrWhiteSpace(RootPath)) return;
-            var normalizedRoot = GetScanRootKey(RootPath);
-            if (ScanRoots.Any(path => string.Equals(GetScanRootKey(path), normalizedRoot, StringComparison.OrdinalIgnoreCase))) return;
-            ScanRoots.Add(RootPath);
-            SelectedScanRoot = RootPath;
+            var rootToAdd = RootPath;
+            var namespacePath = string.Empty;
             var targets = PathResolver.GetDfsTargets(RootPath);
             if (targets != null && targets.Count > 0)
             {
-                _scanRootDfsTargets[normalizedRoot] = targets[0];
+                namespacePath = RootPath;
+                var selectedTarget = PromptDfsTargetSelection(RootPath, targets);
+                if (string.IsNullOrWhiteSpace(selectedTarget))
+                {
+                    return;
+                }
+                rootToAdd = selectedTarget;
+            }
+
+            var normalizedRoot = GetScanRootKey(rootToAdd);
+            if (ScanRoots.Any(path => string.Equals(GetScanRootKey(path), normalizedRoot, StringComparison.OrdinalIgnoreCase))) return;
+
+            ScanRoots.Add(rootToAdd);
+            SelectedScanRoot = rootToAdd;
+            if (!string.IsNullOrWhiteSpace(namespacePath))
+            {
+                _scanRootNamespacePaths[normalizedRoot] = namespacePath;
+                _scanRootDfsTargets[normalizedRoot] = rootToAdd;
             }
             OnPropertyChanged("CanStart");
             StartCommand.RaiseCanExecuteChanged();
@@ -1046,11 +1093,65 @@ namespace NtfsAudit.App.ViewModels
         private void RemoveScanRoot()
         {
             if (string.IsNullOrWhiteSpace(SelectedScanRoot)) return;
-            _scanRootDfsTargets.Remove(GetScanRootKey(SelectedScanRoot));
+            var key = GetScanRootKey(SelectedScanRoot);
+            _scanRootDfsTargets.Remove(key);
+            _scanRootNamespacePaths.Remove(key);
             ScanRoots.Remove(SelectedScanRoot);
             SelectedScanRoot = ScanRoots.Count > 0 ? ScanRoots[0] : null;
             OnPropertyChanged("CanStart");
             StartCommand.RaiseCanExecuteChanged();
+        }
+
+        private string PromptDfsTargetSelection(string namespacePath, IList<string> targets)
+        {
+            if (targets == null || targets.Count == 0) return null;
+            if (targets.Count == 1) return targets[0];
+
+            using (var form = new WinForms.Form())
+            using (var combo = new WinForms.ComboBox())
+            using (var okButton = new WinForms.Button())
+            using (var cancelButton = new WinForms.Button())
+            using (var label = new WinForms.Label())
+            {
+                form.Text = "Seleziona target DFS";
+                form.FormBorderStyle = WinForms.FormBorderStyle.FixedDialog;
+                form.StartPosition = WinForms.FormStartPosition.CenterScreen;
+                form.ClientSize = new System.Drawing.Size(760, 130);
+                form.MaximizeBox = false;
+                form.MinimizeBox = false;
+
+                label.Text = string.Format("Namespace: {0}", namespacePath);
+                label.AutoSize = false;
+                label.SetBounds(12, 10, 736, 22);
+
+                combo.DropDownStyle = WinForms.ComboBoxStyle.DropDownList;
+                combo.SetBounds(12, 38, 736, 24);
+                foreach (var target in targets) combo.Items.Add(target);
+                combo.SelectedIndex = 0;
+
+                okButton.Text = "OK";
+                okButton.SetBounds(592, 84, 75, 30);
+                okButton.DialogResult = WinForms.DialogResult.OK;
+
+                cancelButton.Text = "Annulla";
+                cancelButton.SetBounds(673, 84, 75, 30);
+                cancelButton.DialogResult = WinForms.DialogResult.Cancel;
+
+                form.Controls.Add(label);
+                form.Controls.Add(combo);
+                form.Controls.Add(okButton);
+                form.Controls.Add(cancelButton);
+                form.AcceptButton = okButton;
+                form.CancelButton = cancelButton;
+
+                var result = form.ShowDialog();
+                if (result != WinForms.DialogResult.OK || combo.SelectedItem == null)
+                {
+                    return null;
+                }
+
+                return combo.SelectedItem.ToString();
+            }
         }
 
         private void LoadSelectedScanRootDfsTargets()
@@ -1062,7 +1163,12 @@ namespace NtfsAudit.App.ViewModels
                 return;
             }
 
-            var targets = PathResolver.GetDfsTargets(SelectedScanRoot) ?? new List<string>();
+            var selectedKey = GetScanRootKey(SelectedScanRoot);
+            string namespacePath;
+            var sourcePath = _scanRootNamespacePaths.TryGetValue(selectedKey, out namespacePath) && !string.IsNullOrWhiteSpace(namespacePath)
+                ? namespacePath
+                : SelectedScanRoot;
+            var targets = PathResolver.GetDfsTargets(sourcePath) ?? new List<string>();
             SelectedScanRootDfsTargets = new ObservableCollection<string>(targets);
             if (SelectedScanRootDfsTargets.Count == 0)
             {
@@ -1071,10 +1177,16 @@ namespace NtfsAudit.App.ViewModels
             }
 
             string target;
-            if (_scanRootDfsTargets.TryGetValue(GetScanRootKey(SelectedScanRoot), out target)
+            if (_scanRootDfsTargets.TryGetValue(selectedKey, out target)
                 && SelectedScanRootDfsTargets.Any(item => string.Equals(item, target, StringComparison.OrdinalIgnoreCase)))
             {
                 SelectedScanRootDfsTarget = target;
+                return;
+            }
+
+            if (SelectedScanRootDfsTargets.Any(item => string.Equals(item, SelectedScanRoot, StringComparison.OrdinalIgnoreCase)))
+            {
+                SelectedScanRootDfsTarget = SelectedScanRoot;
                 return;
             }
 
@@ -2874,6 +2986,7 @@ namespace NtfsAudit.App.ViewModels
                 UseWindowsServiceMode = prefs.UseWindowsServiceMode;
                 ScanRoots.Clear();
                 _scanRootDfsTargets.Clear();
+                _scanRootNamespacePaths.Clear();
                 if (prefs.ScanRoots != null)
                 {
                     foreach (var root in prefs.ScanRoots.Where(path => !string.IsNullOrWhiteSpace(path)).Distinct(StringComparer.OrdinalIgnoreCase))
@@ -2885,7 +2998,12 @@ namespace NtfsAudit.App.ViewModels
                 {
                     foreach (var target in prefs.ScanRootTargets.Where(item => item != null && !string.IsNullOrWhiteSpace(item.RootPath)))
                     {
-                        _scanRootDfsTargets[GetScanRootKey(target.RootPath)] = target.DfsTarget;
+                        var key = GetScanRootKey(target.RootPath);
+                        _scanRootDfsTargets[key] = target.DfsTarget;
+                        if (!string.IsNullOrWhiteSpace(target.NamespacePath))
+                        {
+                            _scanRootNamespacePaths[key] = target.NamespacePath;
+                        }
                     }
                 }
                 if (ScanRoots.Count > 0)
@@ -2929,7 +3047,8 @@ namespace NtfsAudit.App.ViewModels
                     ScanRootTargets = _scanRootDfsTargets.Select(item => new ScanRootTargetPreference
                     {
                         RootPath = GetScanRootKey(item.Key),
-                        DfsTarget = item.Value
+                        DfsTarget = item.Value,
+                        NamespacePath = _scanRootNamespacePaths.ContainsKey(item.Key) ? _scanRootNamespacePaths[item.Key] : null
                     }).ToList()
                 };
                 File.WriteAllText(_uiPreferencesPath, JsonConvert.SerializeObject(prefs, Formatting.Indented));
@@ -2969,6 +3088,7 @@ namespace NtfsAudit.App.ViewModels
         {
             public string RootPath { get; set; }
             public string DfsTarget { get; set; }
+            public string NamespacePath { get; set; }
         }
 
         private void OnPropertyChanged(string propertyName)
