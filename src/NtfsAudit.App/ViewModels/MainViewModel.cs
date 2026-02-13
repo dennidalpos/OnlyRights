@@ -1244,9 +1244,9 @@ namespace NtfsAudit.App.ViewModels
                     WpfMessageBox.Show("NtfsAudit.Service.exe (o NtfsAudit.Service.dll) non trovato. Compila/publisha il progetto service e copia l'output vicino all'app, oppure usa una build che includa il service.", "Installazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                     return;
                 }
-                ExecuteScCommand(string.Format("create {0} binPath= \"{1}\" start= auto", ServiceName, serviceCommand));
-                ExecuteScCommand(string.Format("description {0} \"Servizio scansione NTFS Audit\"", ServiceName));
-                ExecuteScCommand(string.Format("start {0}", ServiceName));
+                ExecuteScCommand(string.Format("create {0} binPath= \"{1}\" start= auto", ServiceName, serviceCommand), "create");
+                ExecuteScCommand(string.Format("description {0} \"Servizio scansione NTFS Audit\"", ServiceName), "description");
+                ExecuteScCommand(string.Format("start {0}", ServiceName), "start");
                 ProgressText = "Servizio Windows installato.";
             }
             catch (Exception ex)
@@ -1259,8 +1259,8 @@ namespace NtfsAudit.App.ViewModels
         {
             try
             {
-                ExecuteScCommand(string.Format("stop {0}", ServiceName), false);
-                ExecuteScCommand(string.Format("delete {0}", ServiceName));
+                ExecuteScCommand(string.Format("stop {0}", ServiceName), "stop", false);
+                ExecuteScCommand(string.Format("delete {0}", ServiceName), "delete");
                 ProgressText = "Servizio Windows disinstallato.";
             }
             catch (Exception ex)
@@ -1269,28 +1269,82 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        private static void ExecuteScCommand(string arguments, bool throwOnError = true)
+        private static void ExecuteScCommand(string arguments, string operation = null, bool throwOnError = true)
         {
-            var process = Process.Start(new ProcessStartInfo
+            var result = RunScCommand(arguments, false);
+            if (result.ExitCode == 0)
+            {
+                return;
+            }
+
+            var errorText = string.IsNullOrWhiteSpace(result.Error) ? result.Output : result.Error;
+            if (result.ExitCode == 5 || (!string.IsNullOrWhiteSpace(errorText) && errorText.IndexOf("accesso negato", StringComparison.OrdinalIgnoreCase) >= 0))
+            {
+                var elevated = RunScCommand(arguments, true);
+                if (elevated.ExitCode == 0)
+                {
+                    return;
+                }
+
+                errorText = string.IsNullOrWhiteSpace(elevated.Error) ? elevated.Output : elevated.Error;
+            }
+
+            if (throwOnError)
+            {
+                var op = string.IsNullOrWhiteSpace(operation) ? "sc" : operation;
+                throw new InvalidOperationException(string.Format("Operazione servizio '{0}' non riuscita: {1}", op, errorText));
+            }
+        }
+
+        private static ScCommandResult RunScCommand(string arguments, bool runAsAdmin)
+        {
+            var startInfo = new ProcessStartInfo
             {
                 FileName = "sc.exe",
                 Arguments = arguments,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true
-            });
-            if (process == null) throw new InvalidOperationException("Impossibile avviare sc.exe");
-            process.WaitForExit();
-            if (throwOnError && process.ExitCode != 0)
+                UseShellExecute = runAsAdmin,
+                CreateNoWindow = !runAsAdmin
+            };
+
+            if (runAsAdmin)
             {
-                var error = process.StandardError.ReadToEnd();
-                if (string.IsNullOrWhiteSpace(error))
-                {
-                    error = process.StandardOutput.ReadToEnd();
-                }
-                throw new InvalidOperationException(error);
+                startInfo.Verb = "runas";
             }
+            else
+            {
+                startInfo.RedirectStandardOutput = true;
+                startInfo.RedirectStandardError = true;
+            }
+
+            try
+            {
+                using (var process = Process.Start(startInfo))
+                {
+                    if (process == null)
+                    {
+                        return new ScCommandResult { ExitCode = -1, Error = "Impossibile avviare sc.exe" };
+                    }
+
+                    process.WaitForExit();
+                    return new ScCommandResult
+                    {
+                        ExitCode = process.ExitCode,
+                        Output = runAsAdmin ? string.Empty : process.StandardOutput.ReadToEnd(),
+                        Error = runAsAdmin ? string.Empty : process.StandardError.ReadToEnd()
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ScCommandResult { ExitCode = -1, Error = ex.Message };
+            }
+        }
+
+        private sealed class ScCommandResult
+        {
+            public int ExitCode { get; set; }
+            public string Output { get; set; }
+            public string Error { get; set; }
         }
 
         private string ResolveServiceInstallCommand()
@@ -1564,7 +1618,7 @@ namespace NtfsAudit.App.ViewModels
                 };
                 var jobFile = Path.Combine(jobsRoot, string.Format("job_{0}.json", job.JobId));
                 File.WriteAllText(jobFile, JsonConvert.SerializeObject(job, Formatting.Indented));
-                ExecuteScCommand(string.Format("start {0}", ServiceName), false);
+                ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
                 ProgressText = "Job inviato al servizio Windows. La scansione continua anche dopo il logout utente.";
             }
             catch (Exception ex)
@@ -1576,19 +1630,30 @@ namespace NtfsAudit.App.ViewModels
 
         private void ExecuteBatchScan(List<string> roots, ScanOptions optionsTemplate, CancellationToken token)
         {
-            foreach (var root in roots)
+            try
             {
-                token.ThrowIfCancellationRequested();
-                var options = CloneOptions(optionsTemplate, root);
-                ExecuteScan(options, token);
-
-                if (_scanResult != null && !string.IsNullOrWhiteSpace(options.OutputDirectory))
+                foreach (var root in roots)
                 {
-                    var safeName = SanitizeFileName(Path.GetFileName(root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)));
-                    if (string.IsNullOrWhiteSpace(safeName)) safeName = "scan";
-                    var outputFile = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", safeName, DateTime.Now.ToString("yyyy_MM_dd_HH_mm")));
-                    _analysisArchive.Export(_scanResult, root, outputFile);
+                    token.ThrowIfCancellationRequested();
+                    var options = CloneOptions(optionsTemplate, root);
+                    var result = ExecuteScan(options, token);
+
+                    if (result != null && !string.IsNullOrWhiteSpace(options.OutputDirectory))
+                    {
+                        var safeName = BuildScanNameFromRoot(root);
+                        var outputFile = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", safeName, DateTime.Now.ToString("yyyy_MM_dd_HH_mm")));
+                        _analysisArchive.Export(result, root, outputFile);
+                    }
                 }
+            }
+            finally
+            {
+                RunOnUi(() =>
+                {
+                    _isScanning = false;
+                    StopElapsedTimer();
+                    UpdateCommands();
+                });
             }
         }
 
@@ -1623,6 +1688,31 @@ namespace NtfsAudit.App.ViewModels
                 value = value.Replace(c, '_');
             }
             return value;
+        }
+
+        private static string BuildScanNameFromRoot(string root)
+        {
+            if (string.IsNullOrWhiteSpace(root)) return "scan";
+            var normalized = root.Trim().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            if (string.IsNullOrWhiteSpace(normalized)) return "scan";
+
+            string name;
+            if (normalized.StartsWith("\\", StringComparison.Ordinal))
+            {
+                var segments = normalized.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
+                name = segments.Length > 0 ? segments[segments.Length - 1] : string.Empty;
+            }
+            else
+            {
+                name = Path.GetFileName(normalized);
+                if (string.IsNullOrWhiteSpace(name) && normalized.Length >= 2 && normalized[1] == ':')
+                {
+                    name = normalized.Substring(0, 1);
+                }
+            }
+
+            name = SanitizeFileName(name);
+            return string.IsNullOrWhiteSpace(name) ? "scan" : name;
         }
 
         private void StopScan()
@@ -1832,7 +1922,7 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        private void ExecuteScan(ScanOptions options, CancellationToken token)
+        private ScanResult ExecuteScan(ScanOptions options, CancellationToken token)
         {
             try
             {
@@ -1859,6 +1949,7 @@ namespace NtfsAudit.App.ViewModels
                     SelectFolder(options.RootPath);
                 });
 
+                return result;
             }
             catch (OperationCanceledException)
             {
@@ -1867,6 +1958,7 @@ namespace NtfsAudit.App.ViewModels
                     ProgressText = "Scansione annullata";
                     CurrentPathText = string.Empty;
                 });
+                throw;
             }
             catch (Exception ex)
             {
@@ -1875,15 +1967,7 @@ namespace NtfsAudit.App.ViewModels
                     ProgressText = string.Format("Errore scansione: {0}", ex.Message);
                     CurrentPathText = string.Empty;
                 });
-            }
-            finally
-            {
-                RunOnUi(() =>
-                {
-                    _isScanning = false;
-                    StopElapsedTimer();
-                    UpdateCommands();
-                });
+                return null;
             }
         }
 
@@ -2852,9 +2936,8 @@ namespace NtfsAudit.App.ViewModels
         private string BuildExportFileName(string rootPath, string extension)
         {
             var safeRoot = rootPath ?? string.Empty;
-            var baseName = Path.GetFileName(safeRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            var baseName = BuildScanNameFromRoot(safeRoot);
             if (string.IsNullOrWhiteSpace(baseName)) baseName = "Root";
-            baseName = SanitizeFileName(baseName);
             var timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm");
             return string.Format("{0}_{1}.{2}", baseName, timestamp, extension);
         }
