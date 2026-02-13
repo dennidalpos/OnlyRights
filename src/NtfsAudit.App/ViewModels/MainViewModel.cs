@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Forms;
+using WinForms = System.Windows.Forms;
 using System.Windows.Threading;
 using Win32 = Microsoft.Win32;
 using Newtonsoft.Json;
