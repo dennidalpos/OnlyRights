@@ -1299,12 +1299,11 @@ namespace NtfsAudit.App.ViewModels
                 throw new InvalidOperationException(string.Format("Operazione servizio '{0}' non riuscita: {1}", op, errorText));
             }
         }
-
         private static ScCommandResult RunScCommand(string arguments, bool runAsAdmin)
         {
             var startInfo = new ProcessStartInfo
             {
-                FileName = "sc.exe",
+                FileName = ResolveScExecutablePath(),
                 Arguments = arguments,
                 UseShellExecute = runAsAdmin,
                 CreateNoWindow = !runAsAdmin
@@ -1342,6 +1341,31 @@ namespace NtfsAudit.App.ViewModels
             {
                 return new ScCommandResult { ExitCode = -1, Error = ex.Message };
             }
+        }
+
+        private static string ResolveScExecutablePath()
+        {
+            var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            if (!string.IsNullOrWhiteSpace(systemDir))
+            {
+                var scPath = Path.Combine(systemDir, "sc.exe");
+                if (File.Exists(scPath))
+                {
+                    return scPath;
+                }
+            }
+
+            var windir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+            if (!string.IsNullOrWhiteSpace(windir))
+            {
+                var sysnative = Path.Combine(windir, "sysnative", "sc.exe");
+                if (File.Exists(sysnative))
+                {
+                    return sysnative;
+                }
+            }
+
+            return "sc.exe";
         }
 
         private sealed class ScCommandResult
