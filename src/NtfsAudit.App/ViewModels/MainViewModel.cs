@@ -1561,7 +1561,7 @@ namespace NtfsAudit.App.ViewModels
                 {
                     var safeName = SanitizeFileName(Path.GetFileName(root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)));
                     if (string.IsNullOrWhiteSpace(safeName)) safeName = "scan";
-                    var outputFile = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", safeName, DateTime.Now.ToString("yyyyMMdd_HHmmss")));
+                    var outputFile = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", safeName, DateTime.Now.ToString("yyyy_MM_dd_HH_mm")));
                     _analysisArchive.Export(_scanResult, root, outputFile);
                 }
             }

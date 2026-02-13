@@ -55,7 +55,17 @@ namespace NtfsAudit.Service
                 foreach (var options in job.ScanOptions.Where(option => option != null && !string.IsNullOrWhiteSpace(option.RootPath)))
                 {
                     token.ThrowIfCancellationRequested();
-                    RunSingleScan(options, token);
+                    try
+                    {
+                        RunSingleScan(options, token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch
+                    {
+                    }
                 }
 
                 File.Delete(file);
@@ -80,7 +90,7 @@ namespace NtfsAudit.Service
             var name = Path.GetFileName(options.RootPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
             if (string.IsNullOrWhiteSpace(name)) name = "scan";
             foreach (var c in Path.GetInvalidFileNameChars()) name = name.Replace(c, '_');
-            var output = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", name, DateTime.Now.ToString("yyyyMMdd_HHmmss")));
+            var output = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", name, DateTime.Now.ToString("yyyy_MM_dd_HH_mm")));
             archive.Export(result, options.RootPath, output);
         }
     }
