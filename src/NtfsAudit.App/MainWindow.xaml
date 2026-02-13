@@ -810,18 +810,6 @@
                     <TextBox Grid.Column="1" Height="26" VerticalAlignment="Center" MinWidth="160" Text="{Binding AuditOutputDirectory, UpdateSourceTrigger=PropertyChanged}" />
                   </Grid>
                   <CheckBox Margin="0,0,0,6" Content="Esegui tramite servizio Windows (cerca NtfsAudit.Service.exe / .dll)" IsChecked="{Binding UseWindowsServiceMode}" />
-                  <Grid Margin="0,0,0,6" Visibility="{Binding HasDfsTargets, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="Auto" />
-                      <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="Target DFS" VerticalAlignment="Center" Margin="0,0,6,0" />
-                    <ComboBox Grid.Column="1"
-                              Height="24"
-                              Background="{Binding DfsTargetBackground}"
-                              ItemsSource="{Binding DfsTargets}"
-                              SelectedItem="{Binding SelectedDfsTarget, UpdateSourceTrigger=PropertyChanged}" />
-                  </Grid>
                   <Expander Header="Opzioni principali" IsExpanded="True">
                     <StackPanel Margin="0,6,0,0">
                       <Grid Margin="0,0,0,6">

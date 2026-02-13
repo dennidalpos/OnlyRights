@@ -256,13 +256,14 @@ namespace NtfsAudit.App.ViewModels
                 _selectedScanRootDfsTarget = value;
                 if (!string.IsNullOrWhiteSpace(SelectedScanRoot))
                 {
+                    var key = GetScanRootKey(SelectedScanRoot);
                     if (string.IsNullOrWhiteSpace(value))
                     {
-                        _scanRootDfsTargets.Remove(SelectedScanRoot);
+                        _scanRootDfsTargets.Remove(key);
                     }
                     else
                     {
-                        _scanRootDfsTargets[SelectedScanRoot] = value;
+                        _scanRootDfsTargets[key] = value;
                     }
                 }
                 OnPropertyChanged("SelectedScanRootDfsTarget");
@@ -1029,13 +1030,14 @@ namespace NtfsAudit.App.ViewModels
         private void AddScanRoot()
         {
             if (string.IsNullOrWhiteSpace(RootPath)) return;
-            if (ScanRoots.Any(path => string.Equals(path, RootPath, StringComparison.OrdinalIgnoreCase))) return;
+            var normalizedRoot = GetScanRootKey(RootPath);
+            if (ScanRoots.Any(path => string.Equals(GetScanRootKey(path), normalizedRoot, StringComparison.OrdinalIgnoreCase))) return;
             ScanRoots.Add(RootPath);
             SelectedScanRoot = RootPath;
             var targets = PathResolver.GetDfsTargets(RootPath);
             if (targets != null && targets.Count > 0)
             {
-                _scanRootDfsTargets[RootPath] = targets[0];
+                _scanRootDfsTargets[normalizedRoot] = targets[0];
             }
             OnPropertyChanged("CanStart");
             StartCommand.RaiseCanExecuteChanged();
@@ -1044,7 +1046,7 @@ namespace NtfsAudit.App.ViewModels
         private void RemoveScanRoot()
         {
             if (string.IsNullOrWhiteSpace(SelectedScanRoot)) return;
-            _scanRootDfsTargets.Remove(SelectedScanRoot);
+            _scanRootDfsTargets.Remove(GetScanRootKey(SelectedScanRoot));
             ScanRoots.Remove(SelectedScanRoot);
             SelectedScanRoot = ScanRoots.Count > 0 ? ScanRoots[0] : null;
             OnPropertyChanged("CanStart");
@@ -1069,7 +1071,7 @@ namespace NtfsAudit.App.ViewModels
             }
 
             string target;
-            if (_scanRootDfsTargets.TryGetValue(SelectedScanRoot, out target)
+            if (_scanRootDfsTargets.TryGetValue(GetScanRootKey(SelectedScanRoot), out target)
                 && SelectedScanRootDfsTargets.Any(item => string.Equals(item, target, StringComparison.OrdinalIgnoreCase)))
             {
                 SelectedScanRootDfsTarget = target;
@@ -1083,9 +1085,15 @@ namespace NtfsAudit.App.ViewModels
         {
             if (string.IsNullOrWhiteSpace(root)) return root;
             string target;
-            return _scanRootDfsTargets.TryGetValue(root, out target) && !string.IsNullOrWhiteSpace(target)
+            return _scanRootDfsTargets.TryGetValue(GetScanRootKey(root), out target) && !string.IsNullOrWhiteSpace(target)
                 ? target
                 : root;
+        }
+
+        private static string GetScanRootKey(string root)
+        {
+            if (string.IsNullOrWhiteSpace(root)) return string.Empty;
+            return root.Trim().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         }
 
         private void InstallService()
@@ -2877,7 +2885,7 @@ namespace NtfsAudit.App.ViewModels
                 {
                     foreach (var target in prefs.ScanRootTargets.Where(item => item != null && !string.IsNullOrWhiteSpace(item.RootPath)))
                     {
-                        _scanRootDfsTargets[target.RootPath] = target.DfsTarget;
+                        _scanRootDfsTargets[GetScanRootKey(target.RootPath)] = target.DfsTarget;
                     }
                 }
                 if (ScanRoots.Count > 0)
@@ -2920,7 +2928,7 @@ namespace NtfsAudit.App.ViewModels
                     ScanRoots = ScanRoots.ToList(),
                     ScanRootTargets = _scanRootDfsTargets.Select(item => new ScanRootTargetPreference
                     {
-                        RootPath = item.Key,
+                        RootPath = GetScanRootKey(item.Key),
                         DfsTarget = item.Value
                     }).ToList()
                 };
