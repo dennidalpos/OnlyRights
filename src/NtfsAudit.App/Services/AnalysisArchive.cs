@@ -75,7 +75,7 @@ namespace NtfsAudit.App.Services
             if (!File.Exists(ioArchivePath)) throw new FileNotFoundException("Analysis archive not found.", archivePath);
             var archiveName = Path.GetFileNameWithoutExtension(archivePath);
             if (string.IsNullOrWhiteSpace(archiveName)) archiveName = "import";
-            foreach (var invalid in Path.GetInvalidFileNameChars()) archiveName = archiveName.Replace(invalid, "_");
+            foreach (var invalid in Path.GetInvalidFileNameChars()) archiveName = archiveName.Replace(invalid, '_');
             var tempFolderName = string.Format("{0}_{1}_{2}", archiveName, DateTime.Now.ToString("yyyy_MM_dd_HH_mm"), Guid.NewGuid().ToString("N"));
             var tempDir = Path.Combine(Path.GetTempPath(), "NtfsAudit", "imports", tempFolderName);
             Directory.CreateDirectory(tempDir);
