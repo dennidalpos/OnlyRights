@@ -1939,13 +1939,7 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_isViewerMode) return;
             if (_scanResult == null) return;
-            var ioTempDataPath = PathResolver.ToExtendedPath(_scanResult.TempDataPath);
-            if (string.IsNullOrWhiteSpace(_scanResult.TempDataPath) || !File.Exists(ioTempDataPath))
-            {
-                ProgressText = "Export non disponibile: file dati scansione mancante.";
-                WpfMessageBox.Show(ProgressText, "Export non disponibile", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-                return;
-            }
+            if (!TryEnsureScanDataAvailableForExport("Export non disponibile")) return;
             var dialog = new Win32.SaveFileDialog
             {
                 Filter = "Excel (*.xlsx)|*.xlsx",
@@ -1986,6 +1980,7 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_isViewerMode) return;
             if (_scanResult == null) return;
+            if (!TryEnsureScanDataAvailableForExport("Export analisi non disponibile")) return;
             var dialog = new Win32.SaveFileDialog
             {
                 Filter = "Analisi NtfsAudit (*.ntaudit)|*.ntaudit",
@@ -2077,6 +2072,24 @@ namespace NtfsAudit.App.ViewModels
             {
                 SetBusy(false);
             }
+        }
+
+        private bool TryEnsureScanDataAvailableForExport(string messageTitle)
+        {
+            if (_scanResult == null)
+            {
+                return false;
+            }
+
+            var ioTempDataPath = PathResolver.ToExtendedPath(_scanResult.TempDataPath);
+            if (string.IsNullOrWhiteSpace(_scanResult.TempDataPath) || !File.Exists(ioTempDataPath))
+            {
+                ProgressText = "Export non disponibile: file dati scansione mancante.";
+                WpfMessageBox.Show(ProgressText, messageTitle, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return false;
+            }
+
+            return true;
         }
 
         private async Task RunExportActionAsync(Action exportAction, string errorLabel, string outputPath = null)
@@ -2464,8 +2477,8 @@ namespace NtfsAudit.App.ViewModels
             var hasBaselineMismatch = detail.BaselineSummary != null && (detail.BaselineSummary.Added.Count > 0 || detail.BaselineSummary.Removed.Count > 0);
 
             var hasTypeMatch = true;
-            var hasFiles = detail.AllEntries.Any(e => string.Equals(e.ResourceType, "File", StringComparison.OrdinalIgnoreCase));
-            var hasFolders = detail.AllEntries.Any(e => string.Equals(e.ResourceType, "Cartella", StringComparison.OrdinalIgnoreCase));
+            var hasFiles = detail.AllEntries.Any(e => IsFileResourceType(e.ResourceType));
+            var hasFolders = detail.AllEntries.Any(e => IsFolderResourceType(e.ResourceType));
             if (TreeFilterFilesOnly && !TreeFilterFoldersOnly)
             {
                 hasTypeMatch = hasFiles;
@@ -2514,6 +2527,18 @@ namespace NtfsAudit.App.ViewModels
             }
 
             return !categoryFilterSelected || includeByCategory;
+        }
+
+        private static bool IsFileResourceType(string resourceType)
+        {
+            return string.Equals(resourceType, "File", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsFolderResourceType(string resourceType)
+        {
+            return string.Equals(resourceType, "Folder", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(resourceType, "Cartella", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(resourceType, "Directory", StringComparison.OrdinalIgnoreCase);
         }
 
         private bool AnyTreeFilterEnabled()
