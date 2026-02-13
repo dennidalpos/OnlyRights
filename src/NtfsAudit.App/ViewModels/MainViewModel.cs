@@ -1311,21 +1311,18 @@ namespace NtfsAudit.App.ViewModels
 
         private void ExecuteBatchScan(List<string> roots, ScanOptions optionsTemplate, CancellationToken token)
         {
-            try
+            foreach (var root in roots)
             {
-                foreach (var root in roots)
-                {
-                    token.ThrowIfCancellationRequested();
-                    var options = CloneOptions(optionsTemplate, root);
-                    ExecuteScan(options, token);
+                token.ThrowIfCancellationRequested();
+                var options = CloneOptions(optionsTemplate, root);
+                ExecuteScan(options, token);
 
-                    if (_scanResult != null && !string.IsNullOrWhiteSpace(options.OutputDirectory))
-                    {
-                        var safeName = SanitizeFileName(Path.GetFileName(root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)));
-                        if (string.IsNullOrWhiteSpace(safeName)) safeName = "scan";
-                        var outputFile = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", safeName, DateTime.Now.ToString("yyyyMMdd_HHmmss")));
-                        _analysisArchive.Export(_scanResult, root, outputFile);
-                    }
+                if (_scanResult != null && !string.IsNullOrWhiteSpace(options.OutputDirectory))
+                {
+                    var safeName = SanitizeFileName(Path.GetFileName(root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)));
+                    if (string.IsNullOrWhiteSpace(safeName)) safeName = "scan";
+                    var outputFile = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", safeName, DateTime.Now.ToString("yyyyMMdd_HHmmss")));
+                    _analysisArchive.Export(_scanResult, root, outputFile);
                 }
             }
         }
