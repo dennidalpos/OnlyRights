@@ -1664,6 +1664,15 @@ namespace NtfsAudit.App.ViewModels
 
         private void ExecuteBatchScan(List<string> roots, ScanOptions optionsTemplate, CancellationToken token)
         {
+            var aggregateResult = new ScanResult
+            {
+                RootPath = roots == null || roots.Count == 0 ? RootPath : roots[0],
+                Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase),
+                TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase),
+                ScanOptions = CloneOptions(optionsTemplate, roots == null || roots.Count == 0 ? RootPath : roots[0]),
+                ScannedAtUtc = DateTime.UtcNow
+            };
+
             try
             {
                 foreach (var root in roots)
@@ -1671,8 +1680,19 @@ namespace NtfsAudit.App.ViewModels
                     token.ThrowIfCancellationRequested();
                     var options = CloneOptions(optionsTemplate, root);
                     var result = ExecuteScan(options, token);
+                    if (result == null)
+                    {
+                        continue;
+                    }
 
-                    if (result != null && !string.IsNullOrWhiteSpace(options.OutputDirectory))
+                    if (result.TreeMap == null || result.TreeMap.Count == 0)
+                    {
+                        result.TreeMap = BuildTreeMapFromDetails(result.Details, result.RootPath);
+                    }
+
+                    MergeScanResult(aggregateResult, result);
+
+                    if (!string.IsNullOrWhiteSpace(options.OutputDirectory))
                     {
                         var safeName = BuildScanNameFromRoot(root);
                         var outputFile = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", safeName, DateTime.Now.ToString("yyyy_MM_dd_HH_mm")));
@@ -1684,10 +1704,112 @@ namespace NtfsAudit.App.ViewModels
             {
                 RunOnUi(() =>
                 {
+                    if (aggregateResult.Details != null && aggregateResult.Details.Count > 0)
+                    {
+                        _scanResult = aggregateResult;
+                        _hasExported = false;
+                        _fullTreeMap = null;
+                        LoadTree(_scanResult);
+                        var rootToSelect = ResolveTreeRoot(_scanResult.TreeMap, _scanResult.RootPath);
+                        if (!string.IsNullOrWhiteSpace(rootToSelect))
+                        {
+                            RootPath = rootToSelect;
+                            SelectFolder(rootToSelect);
+                        }
+                    }
+
                     _isScanning = false;
                     StopElapsedTimer();
                     UpdateCommands();
                 });
+            }
+        }
+
+        private static void MergeScanResult(ScanResult aggregate, ScanResult current)
+        {
+            if (aggregate == null || current == null)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(current.TempDataPath)) aggregate.TempDataPath = current.TempDataPath;
+            if (!string.IsNullOrWhiteSpace(current.ErrorPath)) aggregate.ErrorPath = current.ErrorPath;
+            if (!string.IsNullOrWhiteSpace(current.RootPath) && string.IsNullOrWhiteSpace(aggregate.RootPath)) aggregate.RootPath = current.RootPath;
+            if (aggregate.RootPathKind == PathKind.Unknown && current.RootPathKind != PathKind.Unknown) aggregate.RootPathKind = current.RootPathKind;
+            if (current.ScannedAtUtc != default(DateTime)) aggregate.ScannedAtUtc = current.ScannedAtUtc;
+
+            if (aggregate.Details == null) aggregate.Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase);
+            if (current.Details != null)
+            {
+                foreach (var detailPair in current.Details)
+                {
+                    if (detailPair.Value == null) continue;
+                    FolderDetail existing;
+                    if (!aggregate.Details.TryGetValue(detailPair.Key, out existing))
+                    {
+                        aggregate.Details[detailPair.Key] = detailPair.Value;
+                        continue;
+                    }
+
+                    MergeFolderDetail(existing, detailPair.Value);
+                }
+            }
+
+            if (aggregate.TreeMap == null) aggregate.TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            if (current.TreeMap != null)
+            {
+                MergeTreeMap(aggregate.TreeMap, current.TreeMap);
+            }
+        }
+
+        private static void MergeFolderDetail(FolderDetail target, FolderDetail source)
+        {
+            if (target == null || source == null)
+            {
+                return;
+            }
+
+            target.AllEntries.AddRange(source.AllEntries);
+            target.GroupEntries.AddRange(source.GroupEntries);
+            target.UserEntries.AddRange(source.UserEntries);
+            target.ShareEntries.AddRange(source.ShareEntries);
+            target.EffectiveEntries.AddRange(source.EffectiveEntries);
+            target.HasExplicitPermissions = target.HasExplicitPermissions || source.HasExplicitPermissions;
+            target.HasExplicitNtfs = target.HasExplicitNtfs || source.HasExplicitNtfs;
+            target.HasExplicitShare = target.HasExplicitShare || source.HasExplicitShare;
+            target.IsInheritanceDisabled = target.IsInheritanceDisabled || source.IsInheritanceDisabled;
+            if (source.DiffSummary != null) target.DiffSummary = source.DiffSummary;
+            if (source.BaselineSummary != null) target.BaselineSummary = source.BaselineSummary;
+        }
+
+        private static void MergeTreeMap(Dictionary<string, List<string>> target, Dictionary<string, List<string>> source)
+        {
+            if (target == null || source == null)
+            {
+                return;
+            }
+
+            foreach (var node in source)
+            {
+                List<string> children;
+                if (!target.TryGetValue(node.Key, out children) || children == null)
+                {
+                    target[node.Key] = node.Value == null ? new List<string>() : new List<string>(node.Value);
+                    continue;
+                }
+
+                if (node.Value == null)
+                {
+                    continue;
+                }
+
+                foreach (var child in node.Value)
+                {
+                    if (!children.Contains(child, StringComparer.OrdinalIgnoreCase))
+                    {
+                        children.Add(child);
+                    }
+                }
             }
         }
 
