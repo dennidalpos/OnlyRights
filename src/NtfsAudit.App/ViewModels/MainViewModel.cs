@@ -46,7 +46,7 @@ namespace NtfsAudit.App.ViewModels
         private ObservableCollection<string> _selectedScanRootDfsTargets = new ObservableCollection<string>();
         private string _selectedScanRootDfsTarget;
         private string _auditOutputDirectory;
-        private bool _useWindowsServiceMode;
+        private bool _useWindowsServiceMode = true;
         private int _maxDepth = 5;
         private bool _scanAllDepths = true;
         private bool _includeInherited = true;
@@ -3659,6 +3659,10 @@ namespace NtfsAudit.App.ViewModels
                         ? string.Format("{0}/{1}", status.CurrentRootIndex, status.TotalRoots)
                         : "?/?";
                     ServiceRuntimeStatusText = string.Format("Servizio in esecuzione: {0} (root {1}){2}", rootLabel, progress, queueText);
+                    if (!_isScanning)
+                    {
+                        ProgressText = ServiceRuntimeStatusText;
+                    }
                 }
                 else
                 {
