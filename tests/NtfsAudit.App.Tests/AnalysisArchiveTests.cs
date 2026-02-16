@@ -279,7 +279,7 @@ namespace NtfsAudit.App.Tests
                 var workspace = Path.Combine(Path.GetTempPath(), "NtfsAudit", "imports");
                 var obsoleteDir = Path.Combine(workspace, string.Format("stale_{0}", Guid.NewGuid().ToString("N")));
                 Directory.CreateDirectory(obsoleteDir);
-                File.SetLastWriteTimeUtc(obsoleteDir, DateTime.UtcNow.AddDays(-10));
+                Directory.SetLastWriteTimeUtc(obsoleteDir, DateTime.UtcNow.AddDays(-10));
 
                 archive.Import(archivePath);
 
