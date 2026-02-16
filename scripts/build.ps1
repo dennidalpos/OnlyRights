@@ -27,7 +27,8 @@ param(
     [switch]$CleanScanData,
     [switch]$CleanAnalysisImports,
     [switch]$CleanAnalysisExports,
-    [switch]$CleanAnalysisWorkspace
+    [switch]$CleanAnalysisWorkspace,
+    [switch]$CleanImportExportData
 )
 
 $ErrorActionPreference = "Stop"
@@ -113,6 +114,7 @@ if ($RunClean) {
     if ($CleanAnalysisImports) { $cleanArgs += "-CleanAnalysisImports" }
     if ($CleanAnalysisExports) { $cleanArgs += "-CleanAnalysisExports" }
     if ($CleanAnalysisWorkspace) { $cleanArgs += "-CleanAnalysisWorkspace" }
+    if ($CleanImportExportData) { $cleanArgs += "-CleanImportExportData" }
 
     if (-not $CleanDist) { $cleanArgs += "-KeepDist" }
     if (-not $CleanArtifacts) { $cleanArgs += "-KeepArtifacts" }
@@ -125,6 +127,13 @@ if ($RunClean) {
 }
 
 if ($CleanAnalysisWorkspace) {
+    $CleanAnalysisImports = $true
+    $CleanAnalysisExports = $true
+}
+
+if ($CleanImportExportData) {
+    $CleanImports = $true
+    $CleanExports = $true
     $CleanAnalysisImports = $true
     $CleanAnalysisExports = $true
 }

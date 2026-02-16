@@ -20,6 +20,8 @@ namespace NtfsAudit.App.Services
         private const string AnalysisWorkspaceRoot = "NtfsAudit";
         private const string AnalysisExportsDir = "exports";
         private const string AnalysisImportsDir = "imports";
+        private static readonly TimeSpan AnalysisImportRetention = TimeSpan.FromDays(7);
+        private static readonly TimeSpan AnalysisExportRetention = TimeSpan.FromDays(7);
 
         public void Export(ScanResult result, string rootPath, string outputPath)
         {
@@ -47,6 +49,7 @@ namespace NtfsAudit.App.Services
                 Directory.CreateDirectory(outputDirectory);
             }
 
+            CleanupAnalysisWorkspace(AnalysisExportsDir, AnalysisExportRetention);
             var exportWorkspace = GetAnalysisWorkspace(AnalysisExportsDir);
             var tempOutput = Path.Combine(exportWorkspace, string.Format("archive_{0}.tmp", Guid.NewGuid().ToString("N")));
             if (File.Exists(tempOutput))
@@ -98,6 +101,7 @@ namespace NtfsAudit.App.Services
             var archiveName = Path.GetFileNameWithoutExtension(archivePath);
             if (string.IsNullOrWhiteSpace(archiveName)) archiveName = "import";
             foreach (var invalid in Path.GetInvalidFileNameChars()) archiveName = archiveName.Replace(invalid, '_');
+            CleanupAnalysisWorkspace(AnalysisImportsDir, AnalysisImportRetention);
             var tempFolderName = string.Format("{0}_{1}_{2}", archiveName, DateTime.Now.ToString("yyyy_MM_dd_HH_mm"), Guid.NewGuid().ToString("N"));
             var tempDir = Path.Combine(GetAnalysisWorkspace(AnalysisImportsDir), tempFolderName);
             Directory.CreateDirectory(tempDir);
@@ -712,6 +716,60 @@ namespace NtfsAudit.App.Services
             using (var writer = new StreamWriter(stream))
             {
                 writer.Write(string.Empty);
+            }
+        }
+
+
+        private static void CleanupAnalysisWorkspace(string leafDirectory, TimeSpan retention)
+        {
+            if (retention <= TimeSpan.Zero)
+            {
+                return;
+            }
+
+            try
+            {
+                var workspace = Path.Combine(Path.GetTempPath(), AnalysisWorkspaceRoot, leafDirectory);
+                if (!Directory.Exists(workspace))
+                {
+                    return;
+                }
+
+                var thresholdUtc = DateTime.UtcNow.Subtract(retention);
+                foreach (var directory in Directory.GetDirectories(workspace))
+                {
+                    try
+                    {
+                        var info = new DirectoryInfo(directory);
+                        var timestamp = info.LastWriteTimeUtc;
+                        if (timestamp <= thresholdUtc)
+                        {
+                            Directory.Delete(directory, true);
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                foreach (var file in Directory.GetFiles(workspace))
+                {
+                    try
+                    {
+                        var info = new FileInfo(file);
+                        var timestamp = info.LastWriteTimeUtc;
+                        if (timestamp <= thresholdUtc)
+                        {
+                            File.Delete(file);
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+            catch
+            {
             }
         }
 

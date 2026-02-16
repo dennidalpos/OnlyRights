@@ -3798,12 +3798,14 @@ namespace NtfsAudit.App.ViewModels
                     return;
                 }
 
-                IsServiceRuntimeRunning = status.IsRunning || serviceState.IsRunning;
+                var isScanRunning = status.IsRunning;
+                var isServiceRunning = serviceState.IsRunning;
+                IsServiceRuntimeRunning = isScanRunning;
                 var queueText = status.PendingJobs > 0
                     ? string.Format(" | code scansioni: {0}", status.PendingJobs)
                     : " | code scansioni: 0";
 
-                if (IsServiceRuntimeRunning)
+                if (isScanRunning)
                 {
                     ServiceBadgeText = "Servizio attivo";
                     ServiceBadgeBackground = "#FF2E7D32";
@@ -3819,8 +3821,8 @@ namespace NtfsAudit.App.ViewModels
                 }
                 else
                 {
-                    ServiceBadgeText = "Servizio installato";
-                    ServiceBadgeBackground = "#FF1565C0";
+                    ServiceBadgeText = isServiceRunning ? "Servizio attivo" : "Servizio installato";
+                    ServiceBadgeBackground = isServiceRunning ? "#FF2E7D32" : "#FF1565C0";
                     ServiceRuntimeStatusText = string.IsNullOrWhiteSpace(status.LastMessage)
                         ? string.Format("Servizio: in attesa{0}", queueText)
                         : string.Format("Servizio: {0}{1}", status.LastMessage, queueText);

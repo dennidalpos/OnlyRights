@@ -51,7 +51,8 @@ Pipeline aggiornata:
 2. risoluzione root/path kind e fallback su opzioni scansione;
 3. build tree map (se non già disponibile in memoria);
 4. creazione archivio zip in workspace temporaneo `%TEMP%\NtfsAudit\exports`;
-5. replace atomico sul file output finale.
+5. cleanup automatico file temporanei obsoleti nel workspace export;
+6. replace atomico sul file output finale.
 
 Contenuto archivio:
 - `data.jsonl`
@@ -69,12 +70,13 @@ Metadati salvati:
 
 ## Import analisi (`.ntaudit`)
 Pipeline aggiornata:
-1. estrazione in workspace `%TEMP%\NtfsAudit\imports\<nome_archivio>_<timestamp>_<guid>`;
-2. verifica presenza dati minimi (`data.jsonl`, fallback su `errors.jsonl` vuoto);
-3. caricamento metadati con fallback compatibile;
-4. ricostruzione dettagli ACL (`Details`), albero (`TreeMap`) e flag cartella;
-5. normalizzazione timestamp importato (UTC) con fallback su `LastWriteTimeUtc` archivio;
-6. applicazione opzioni importate al ViewModel.
+1. cleanup automatico cartelle import obsolete in `%TEMP%\NtfsAudit\imports`;
+2. estrazione in workspace `%TEMP%\NtfsAudit\imports\<nome_archivio>_<timestamp>_<guid>`;
+3. verifica presenza dati minimi (`data.jsonl`, fallback su `errors.jsonl` vuoto);
+4. caricamento metadati con fallback compatibile;
+5. ricostruzione dettagli ACL (`Details`), albero (`TreeMap`) e flag cartella;
+6. normalizzazione timestamp importato (UTC) con fallback su `LastWriteTimeUtc` archivio;
+7. applicazione opzioni importate al ViewModel.
 
 Regole di robustezza:
 - path normalizzati (anche con slash misti);
@@ -175,6 +177,7 @@ Pulizia integrata supportata:
 - `-CleanAnalysisImports`
 - `-CleanAnalysisExports`
 - `-CleanAnalysisWorkspace` (shortcut: abilita sia import che export workspace analisi)
+- `-CleanImportExportData` (shortcut: pulisce temp import app + file export + workspace analisi import/export)
 
 ## `scripts/clean.ps1`
 Pulizia selettiva di:
@@ -189,6 +192,7 @@ Pulizia selettiva di:
 
 Nuovo shortcut:
 - `-CleanAnalysisWorkspace` => pulisce `%TEMP%\NtfsAudit\imports` e `%TEMP%\NtfsAudit\exports`.
+- `-CleanImportExportData` => pulisce import temporanei, file `.xlsx`/`.ntaudit` e workspace analisi import/export.
 
 ## Comandi rapidi
 
@@ -201,6 +205,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1 -Configuration Rele
 
 # pulizia solo workspace analisi
 powershell -ExecutionPolicy Bypass -File .\scripts\clean.ps1 -CleanAnalysisWorkspace
+
+
+# pulizia completa flussi import/export
+powershell -ExecutionPolicy Bypass -File .\scripts\clean.ps1 -CleanImportExportData
 ```
 
 ## Note operative
