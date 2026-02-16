@@ -1807,23 +1807,17 @@ namespace NtfsAudit.App.ViewModels
             var roots = ScanRoots.Count > 0
                 ? ScanRoots.Select(GetEffectiveScanRoot).ToList()
                 : new List<string> { string.IsNullOrWhiteSpace(SelectedDfsTarget) ? RootPath : SelectedDfsTarget };
-            roots = roots.Where(path => !string.IsNullOrWhiteSpace(path)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-            if (roots.Count == 0)
-            {
-                ProgressText = "Aggiungi almeno una cartella da analizzare.";
-                return;
-            }
+            roots = roots
+                .Select(path => string.IsNullOrWhiteSpace(path) ? string.Empty : PathResolver.FromExtendedPath(path).Trim())
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
-            var invalidRoot = roots.FirstOrDefault(path => !Directory.Exists(PathResolver.ToExtendedPath(path)));
-            if (!string.IsNullOrWhiteSpace(invalidRoot))
+            if (!TryValidateScanInputs(roots, out var validationMessage))
             {
-                ProgressText = string.Format("Percorso non valido: {0}", invalidRoot);
+                ProgressText = validationMessage;
+                WpfMessageBox.Show(validationMessage, "Validazione scansione", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 return;
-            }
-
-            if (!string.IsNullOrWhiteSpace(AuditOutputDirectory) && !Directory.Exists(PathResolver.ToExtendedPath(AuditOutputDirectory)))
-            {
-                Directory.CreateDirectory(PathResolver.ToExtendedPath(AuditOutputDirectory));
             }
 
             if (UseWindowsServiceMode)
@@ -3722,7 +3716,15 @@ namespace NtfsAudit.App.ViewModels
 
             if (!isNotInstalled)
             {
-                return true;
+                ProgressText = string.Format(
+                    "Impossibile verificare lo stato del servizio Windows (exit code {0}). Esegui l'app come amministratore o verifica la configurazione del servizio.",
+                    queryResult.ExitCode);
+                WpfMessageBox.Show(
+                    ProgressText,
+                    "Verifica servizio Windows",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Warning);
+                return false;
             }
 
             ProgressText = "Servizio Windows non installato: installa NtfsAuditWorker o disattiva 'Esegui tramite servizio Windows'.";
@@ -3732,6 +3734,60 @@ namespace NtfsAudit.App.ViewModels
                 System.Windows.MessageBoxButton.OK,
                 System.Windows.MessageBoxImage.Warning);
             return false;
+        }
+
+        private bool TryValidateScanInputs(IReadOnlyCollection<string> roots, out string message)
+        {
+            if (roots == null || roots.Count == 0)
+            {
+                message = "Aggiungi almeno una cartella da analizzare.";
+                return false;
+            }
+
+            foreach (var root in roots)
+            {
+                if (string.IsNullOrWhiteSpace(root))
+                {
+                    message = "È presente una cartella vuota nell'elenco scansione.";
+                    return false;
+                }
+
+                var ioRoot = PathResolver.ToExtendedPath(root);
+                if (File.Exists(ioRoot))
+                {
+                    message = string.Format("Il percorso selezionato è un file e non una cartella: {0}", root);
+                    return false;
+                }
+
+                if (!Directory.Exists(ioRoot))
+                {
+                    message = string.Format("Percorso non valido o non raggiungibile: {0}", root);
+                    return false;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(AuditOutputDirectory))
+            {
+                message = null;
+                return true;
+            }
+
+            try
+            {
+                Directory.CreateDirectory(PathResolver.ToExtendedPath(AuditOutputDirectory));
+            }
+            catch (Exception ex) when (
+                ex is UnauthorizedAccessException
+                || ex is IOException
+                || ex is NotSupportedException
+                || ex is ArgumentException)
+            {
+                message = string.Format("Directory output non valida o non accessibile: {0}", AuditOutputDirectory);
+                return false;
+            }
+
+            message = null;
+            return true;
         }
 
         private static string GetServiceStatusPath()
