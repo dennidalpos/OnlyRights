@@ -71,6 +71,7 @@ Suite Windows per analisi ACL NTFS/SMB con UI interattiva, coda job via servizio
 - **Analizza tutte le sottocartelle** (`ScanAllDepths`)
   - se attivo, `MaxDepth = int.MaxValue`.
   - se disattivo, è abilitato l’input profondità (`IsMaxDepthEnabled = true`) e il valore viene clampato a limiti validi.
+- Le cartelle di sistema DFSR/DFRS vengono escluse automaticamente dalla scansione (es. `System Volume Information\DFSR`, `DfsrPrivate`, `ConflictAndDeleted`, `Staging`, `PreExisting`).
 
 ### Identità
 
