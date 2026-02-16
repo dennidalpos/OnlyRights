@@ -20,6 +20,8 @@ namespace NtfsAudit.App.Tests
         [InlineData(@"C:\data\DfsrPrivate")]
         [InlineData(@"C:\data\DfsrPrivate\ConflictAndDeleted")]
         [InlineData(@"C:\data\DFSR\Staging")]
+        [InlineData(@"C:/System Volume Information/DFSR")]
+        [InlineData(@"C:/data/DfsrPrivate/Staging/")]
         public void IsDfsCachePath_ReturnsTrue_ForSystemDfsrFolders(string path)
         {
             Assert.True(InvokeIsDfsCachePath(path));

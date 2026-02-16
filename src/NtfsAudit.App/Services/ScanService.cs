@@ -1215,8 +1215,9 @@ namespace NtfsAudit.App.Services
         private static bool IsDfsCachePath(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) return false;
-            var trimmed = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            var folderName = Path.GetFileName(trimmed);
+            var normalized = path.Replace('/', '\\');
+            var trimmed = normalized.TrimEnd('\\');
+            var folderName = GetLastPathSegment(trimmed);
             if (string.IsNullOrWhiteSpace(folderName)) return false;
 
             if (string.Equals(folderName, "System Volume Information", StringComparison.OrdinalIgnoreCase))
@@ -1240,10 +1241,7 @@ namespace NtfsAudit.App.Services
                 || string.Equals(folderName, "Staging", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(folderName, "Staging Areas", StringComparison.OrdinalIgnoreCase))
             {
-                var parent = Path.GetDirectoryName(trimmed);
-                var parentName = string.IsNullOrWhiteSpace(parent)
-                    ? string.Empty
-                    : Path.GetFileName(parent.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                var parentName = GetParentPathSegment(trimmed);
                 if (string.Equals(parentName, "DfsrPrivate", StringComparison.OrdinalIgnoreCase)
                     || string.Equals(parentName, "DFSR", StringComparison.OrdinalIgnoreCase))
                 {
@@ -1253,12 +1251,39 @@ namespace NtfsAudit.App.Services
 
             if (string.Equals(folderName, "DFSR", StringComparison.OrdinalIgnoreCase))
             {
-                var parent = Path.GetDirectoryName(trimmed);
-                var parentName = string.IsNullOrWhiteSpace(parent) ? string.Empty : Path.GetFileName(parent.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                var parentName = GetParentPathSegment(trimmed);
                 return string.Equals(parentName, "System Volume Information", StringComparison.OrdinalIgnoreCase);
             }
 
             return false;
+        }
+
+        private static string GetParentPathSegment(string normalizedPath)
+        {
+            if (string.IsNullOrWhiteSpace(normalizedPath))
+            {
+                return string.Empty;
+            }
+
+            var lastSeparator = normalizedPath.LastIndexOf('\\');
+            if (lastSeparator <= 0)
+            {
+                return string.Empty;
+            }
+
+            var parentPath = normalizedPath.Substring(0, lastSeparator).TrimEnd('\\');
+            return GetLastPathSegment(parentPath) ?? string.Empty;
+        }
+
+        private static string GetLastPathSegment(string normalizedPath)
+        {
+            if (string.IsNullOrWhiteSpace(normalizedPath))
+            {
+                return string.Empty;
+            }
+
+            var index = normalizedPath.LastIndexOf('\\');
+            return index >= 0 ? normalizedPath.Substring(index + 1) : normalizedPath;
         }
 
         private static bool TryEnableSecurityPrivilege()
