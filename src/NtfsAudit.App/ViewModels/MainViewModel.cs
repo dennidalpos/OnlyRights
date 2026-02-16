@@ -99,6 +99,7 @@ namespace NtfsAudit.App.ViewModels
         private string _lastExportDirectory;
         private string _lastImportDirectory;
         private string _uiPreferencesPath;
+        private bool _suspendUiPreferencePersistence;
         private Dictionary<string, List<string>> _fullTreeMap;
         private Dictionary<string, List<string>> _currentFilteredTreeMap;
         private bool _treeFilterExplicitOnly;
@@ -193,6 +194,13 @@ namespace NtfsAudit.App.ViewModels
             {
                 _isServiceRuntimeRunning = value;
                 OnPropertyChanged("IsServiceRuntimeRunning");
+                OnPropertyChanged("StatusText");
+                OnPropertyChanged("StatusBrush");
+                OnPropertyChanged("CanStop");
+                if (StopCommand != null)
+                {
+                    StopCommand.RaiseCanExecuteChanged();
+                }
             }
         }
 
@@ -920,31 +928,31 @@ namespace NtfsAudit.App.ViewModels
         public bool TreeFilterExplicitOnly
         {
             get { return _treeFilterExplicitOnly; }
-            set { _treeFilterExplicitOnly = value; OnPropertyChanged("TreeFilterExplicitOnly"); ReloadTreeWithFilters(); }
+            set { _treeFilterExplicitOnly = value; OnPropertyChanged("TreeFilterExplicitOnly"); ReloadTreeWithFilters(); SaveUiPreferences(); }
         }
 
         public bool TreeFilterInheritanceDisabledOnly
         {
             get { return _treeFilterInheritanceDisabledOnly; }
-            set { _treeFilterInheritanceDisabledOnly = value; OnPropertyChanged("TreeFilterInheritanceDisabledOnly"); ReloadTreeWithFilters(); }
+            set { _treeFilterInheritanceDisabledOnly = value; OnPropertyChanged("TreeFilterInheritanceDisabledOnly"); ReloadTreeWithFilters(); SaveUiPreferences(); }
         }
 
         public bool TreeFilterDiffOnly
         {
             get { return _treeFilterDiffOnly; }
-            set { _treeFilterDiffOnly = value; OnPropertyChanged("TreeFilterDiffOnly"); ReloadTreeWithFilters(); }
+            set { _treeFilterDiffOnly = value; OnPropertyChanged("TreeFilterDiffOnly"); ReloadTreeWithFilters(); SaveUiPreferences(); }
         }
 
         public bool TreeFilterExplicitDenyOnly
         {
             get { return _treeFilterExplicitDenyOnly; }
-            set { _treeFilterExplicitDenyOnly = value; OnPropertyChanged("TreeFilterExplicitDenyOnly"); ReloadTreeWithFilters(); }
+            set { _treeFilterExplicitDenyOnly = value; OnPropertyChanged("TreeFilterExplicitDenyOnly"); ReloadTreeWithFilters(); SaveUiPreferences(); }
         }
 
         public bool TreeFilterBaselineMismatchOnly
         {
             get { return _treeFilterBaselineMismatchOnly; }
-            set { _treeFilterBaselineMismatchOnly = value; OnPropertyChanged("TreeFilterBaselineMismatchOnly"); ReloadTreeWithFilters(); }
+            set { _treeFilterBaselineMismatchOnly = value; OnPropertyChanged("TreeFilterBaselineMismatchOnly"); ReloadTreeWithFilters(); SaveUiPreferences(); }
         }
 
         public bool TreeFilterFilesOnly
@@ -960,6 +968,7 @@ namespace NtfsAudit.App.ViewModels
                     OnPropertyChanged("TreeFilterFoldersOnly");
                 }
                 ReloadTreeWithFilters();
+                SaveUiPreferences();
             }
         }
 
@@ -976,6 +985,7 @@ namespace NtfsAudit.App.ViewModels
                     OnPropertyChanged("TreeFilterFilesOnly");
                 }
                 ReloadTreeWithFilters();
+                SaveUiPreferences();
             }
         }
 
@@ -998,18 +1008,18 @@ namespace NtfsAudit.App.ViewModels
         {
             get
             {
-                if (_isScanning) return "RUNNING";
+                if (_isScanning || IsServiceRuntimeRunning) return "RUNNING";
                 if (_scanResult == null) return "IDLE";
-                return "STOPPED";
+                return "FINISHED";
             }
         }
         public string StatusBrush
         {
             get
             {
-                if (_isScanning) return "#FF2E7D32";
+                if (_isScanning || IsServiceRuntimeRunning) return "#FF2E7D32";
                 if (_scanResult == null) return "#FFFFB300";
-                return "#FFC62828";
+                return "#FF1565C0";
             }
         }
 
@@ -1797,23 +1807,17 @@ namespace NtfsAudit.App.ViewModels
             var roots = ScanRoots.Count > 0
                 ? ScanRoots.Select(GetEffectiveScanRoot).ToList()
                 : new List<string> { string.IsNullOrWhiteSpace(SelectedDfsTarget) ? RootPath : SelectedDfsTarget };
-            roots = roots.Where(path => !string.IsNullOrWhiteSpace(path)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-            if (roots.Count == 0)
-            {
-                ProgressText = "Aggiungi almeno una cartella da analizzare.";
-                return;
-            }
+            roots = roots
+                .Select(path => string.IsNullOrWhiteSpace(path) ? string.Empty : PathResolver.FromExtendedPath(path).Trim())
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
-            var invalidRoot = roots.FirstOrDefault(path => !Directory.Exists(PathResolver.ToExtendedPath(path)));
-            if (!string.IsNullOrWhiteSpace(invalidRoot))
+            if (!TryValidateScanInputs(roots, out var validationMessage))
             {
-                ProgressText = string.Format("Percorso non valido: {0}", invalidRoot);
+                ProgressText = validationMessage;
+                WpfMessageBox.Show(validationMessage, "Validazione scansione", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 return;
-            }
-
-            if (!string.IsNullOrWhiteSpace(AuditOutputDirectory) && !Directory.Exists(PathResolver.ToExtendedPath(AuditOutputDirectory)))
-            {
-                Directory.CreateDirectory(PathResolver.ToExtendedPath(AuditOutputDirectory));
             }
 
             if (UseWindowsServiceMode)
@@ -1882,6 +1886,12 @@ namespace NtfsAudit.App.ViewModels
                     CreatedAtUtc = DateTime.UtcNow,
                     ScanOptions = roots.Select(root => CloneOptions(optionsTemplate, root)).ToList()
                 };
+
+                if (!TryEnsureServiceInstalledForScan())
+                {
+                    return;
+                }
+
                 var jobFile = Path.Combine(jobsRoot, string.Format("job_{0}.json", job.JobId));
                 File.WriteAllText(jobFile, JsonConvert.SerializeObject(job, Formatting.Indented));
                 ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
@@ -3181,7 +3191,10 @@ namespace NtfsAudit.App.ViewModels
 
         private void RefreshAclFilters()
         {
-            SaveUiPreferences();
+            if (!_suspendUiPreferencePersistence)
+            {
+                SaveUiPreferences();
+            }
             FilteredGroupEntries.Refresh();
             FilteredUserEntries.Refresh();
             FilteredAllEntries.Refresh();
@@ -3344,36 +3357,46 @@ namespace NtfsAudit.App.ViewModels
 
         private void ClearResults()
         {
-            FolderTree.Clear();
-            _fullTreeMap = null;
-            _currentFilteredTreeMap = null;
-            GroupEntries.Clear();
-            UserEntries.Clear();
-            AllEntries.Clear();
-            ShareEntries.Clear();
-            EffectiveEntries.Clear();
-            Errors.Clear();
-            SelectedFolderPath = string.Empty;
-            ProcessedCount = 0;
-            ProcessedFilesCount = 0;
-            ErrorCount = 0;
-            ElapsedText = "00:00:00";
-            CurrentPathText = string.Empty;
-            CurrentPathBackground = "Transparent";
-            AclFilter = string.Empty;
-            ShowAllow = true;
-            ShowDeny = true;
-            ShowInherited = true;
-            ShowExplicit = true;
-            ShowProtected = true;
-            ShowDisabled = true;
-            ShowEveryone = true;
-            ShowAuthenticatedUsers = true;
-            ShowServiceAccounts = true;
-            ShowAdminAccounts = true;
-            ShowOtherPrincipals = true;
-            ResetTreeFilters(false);
-            UpdateSummary(null);
+            _suspendUiPreferencePersistence = true;
+            try
+            {
+                FolderTree.Clear();
+                _fullTreeMap = null;
+                _currentFilteredTreeMap = null;
+                GroupEntries.Clear();
+                UserEntries.Clear();
+                AllEntries.Clear();
+                ShareEntries.Clear();
+                EffectiveEntries.Clear();
+                Errors.Clear();
+                SelectedFolderPath = string.Empty;
+                ProcessedCount = 0;
+                ProcessedFilesCount = 0;
+                ErrorCount = 0;
+                ElapsedText = "00:00:00";
+                CurrentPathText = string.Empty;
+                CurrentPathBackground = "Transparent";
+                AclFilter = string.Empty;
+                ShowAllow = true;
+                ShowDeny = true;
+                ShowInherited = true;
+                ShowExplicit = true;
+                ShowProtected = true;
+                ShowDisabled = true;
+                ShowEveryone = true;
+                ShowAuthenticatedUsers = true;
+                ShowServiceAccounts = true;
+                ShowAdminAccounts = true;
+                ShowOtherPrincipals = true;
+                ResetTreeFilters(false);
+                UpdateSummary(null);
+            }
+            finally
+            {
+                _suspendUiPreferencePersistence = false;
+            }
+
+            SaveUiPreferences();
         }
 
         private void ResetTreeFilters()
@@ -3678,6 +3701,95 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
+        private bool TryEnsureServiceInstalledForScan()
+        {
+            var queryResult = ExecuteScCommand(string.Format("query {0}", ServiceName), "query", false);
+            if (queryResult.ExitCode == 0)
+            {
+                return true;
+            }
+
+            var output = (queryResult.Output ?? string.Empty) + " " + (queryResult.Error ?? string.Empty);
+            var isNotInstalled = queryResult.ExitCode == 1060
+                || output.IndexOf("does not exist", StringComparison.OrdinalIgnoreCase) >= 0
+                || output.IndexOf("non esiste", StringComparison.OrdinalIgnoreCase) >= 0;
+
+            if (!isNotInstalled)
+            {
+                ProgressText = string.Format(
+                    "Impossibile verificare lo stato del servizio Windows (exit code {0}). Esegui l'app come amministratore o verifica la configurazione del servizio.",
+                    queryResult.ExitCode);
+                WpfMessageBox.Show(
+                    ProgressText,
+                    "Verifica servizio Windows",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Warning);
+                return false;
+            }
+
+            ProgressText = "Servizio Windows non installato: installa NtfsAuditWorker o disattiva 'Esegui tramite servizio Windows'.";
+            WpfMessageBox.Show(
+                ProgressText,
+                "Servizio non installato",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Warning);
+            return false;
+        }
+
+        private bool TryValidateScanInputs(IReadOnlyCollection<string> roots, out string message)
+        {
+            if (roots == null || roots.Count == 0)
+            {
+                message = "Aggiungi almeno una cartella da analizzare.";
+                return false;
+            }
+
+            foreach (var root in roots)
+            {
+                if (string.IsNullOrWhiteSpace(root))
+                {
+                    message = "È presente una cartella vuota nell'elenco scansione.";
+                    return false;
+                }
+
+                var ioRoot = PathResolver.ToExtendedPath(root);
+                if (File.Exists(ioRoot))
+                {
+                    message = string.Format("Il percorso selezionato è un file e non una cartella: {0}", root);
+                    return false;
+                }
+
+                if (!Directory.Exists(ioRoot))
+                {
+                    message = string.Format("Percorso non valido o non raggiungibile: {0}", root);
+                    return false;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(AuditOutputDirectory))
+            {
+                message = null;
+                return true;
+            }
+
+            try
+            {
+                Directory.CreateDirectory(PathResolver.ToExtendedPath(AuditOutputDirectory));
+            }
+            catch (Exception ex) when (
+                ex is UnauthorizedAccessException
+                || ex is IOException
+                || ex is NotSupportedException
+                || ex is ArgumentException)
+            {
+                message = string.Format("Directory output non valida o non accessibile: {0}", AuditOutputDirectory);
+                return false;
+            }
+
+            message = null;
+            return true;
+        }
+
         private static string GetServiceStatusPath()
         {
             var programData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
@@ -3776,6 +3888,8 @@ namespace NtfsAudit.App.ViewModels
                 var prefs = JsonConvert.DeserializeObject<UiPreferences>(json);
                 if (prefs == null) return;
 
+                _suspendUiPreferencePersistence = true;
+
                 ShowAllow = prefs.ShowAllow;
                 ShowDeny = prefs.ShowDeny;
                 ShowInherited = prefs.ShowInherited;
@@ -3825,6 +3939,10 @@ namespace NtfsAudit.App.ViewModels
             }
             catch
             {
+            }
+            finally
+            {
+                _suspendUiPreferencePersistence = false;
             }
         }
 

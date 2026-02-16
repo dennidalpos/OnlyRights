@@ -17,6 +17,9 @@ namespace NtfsAudit.App.Services
         private const string TreeEntryName = "tree.json";
         private const string MetaEntryName = "meta.json";
         private const string FolderFlagsEntryName = "folderflags.json";
+        private const string AnalysisWorkspaceRoot = "NtfsAudit";
+        private const string AnalysisExportsDir = "exports";
+        private const string AnalysisImportsDir = "imports";
 
         public void Export(ScanResult result, string rootPath, string outputPath)
         {
@@ -44,7 +47,8 @@ namespace NtfsAudit.App.Services
                 Directory.CreateDirectory(outputDirectory);
             }
 
-            var tempOutput = ioOutputPath + ".tmp_" + Guid.NewGuid().ToString("N");
+            var exportWorkspace = GetAnalysisWorkspace(AnalysisExportsDir);
+            var tempOutput = Path.Combine(exportWorkspace, string.Format("archive_{0}.tmp", Guid.NewGuid().ToString("N")));
             if (File.Exists(tempOutput))
             {
                 File.Delete(tempOutput);
@@ -95,7 +99,7 @@ namespace NtfsAudit.App.Services
             if (string.IsNullOrWhiteSpace(archiveName)) archiveName = "import";
             foreach (var invalid in Path.GetInvalidFileNameChars()) archiveName = archiveName.Replace(invalid, '_');
             var tempFolderName = string.Format("{0}_{1}_{2}", archiveName, DateTime.Now.ToString("yyyy_MM_dd_HH_mm"), Guid.NewGuid().ToString("N"));
-            var tempDir = Path.Combine(Path.GetTempPath(), "NtfsAudit", "imports", tempFolderName);
+            var tempDir = Path.Combine(GetAnalysisWorkspace(AnalysisImportsDir), tempFolderName);
             Directory.CreateDirectory(tempDir);
             var importSucceeded = false;
 
@@ -709,6 +713,13 @@ namespace NtfsAudit.App.Services
             {
                 writer.Write(string.Empty);
             }
+        }
+
+        private static string GetAnalysisWorkspace(string leafDirectory)
+        {
+            var workspace = Path.Combine(Path.GetTempPath(), AnalysisWorkspaceRoot, leafDirectory);
+            Directory.CreateDirectory(workspace);
+            return workspace;
         }
 
         private class ArchiveMeta

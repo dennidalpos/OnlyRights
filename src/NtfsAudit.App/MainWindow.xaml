@@ -746,47 +746,53 @@
         <GridSplitter Grid.Column="3" Width="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FFE0E0E0" />
 
         <Border Grid.Column="4" BorderBrush="#DDDDDD" BorderThickness="1" Padding="12" Margin="6,12,12,12" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-          <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-              <GroupBox Header="Stato scansione" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10">
-                <StackPanel>
-                  <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                    <Border Width="14" Height="14" Background="{Binding StatusBrush}" CornerRadius="2" Margin="0,0,6,0" />
-                    <TextBlock Text="{Binding StatusText}" FontWeight="SemiBold" VerticalAlignment="Center" />
-                  </StackPanel>
-                  <Border Background="{Binding CurrentPathBackground}" Padding="6" CornerRadius="4" Margin="0,0,0,8">
-                    <TextBlock Text="{Binding CurrentPathText}" TextTrimming="CharacterEllipsis" />
-                  </Border>
-                  <WrapPanel Margin="0,0,0,6">
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFE8F5E9">
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Cartelle analizzate: " VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding ProcessedCount}" VerticalAlignment="Center" />
-                      </StackPanel>
-                    </Border>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFE3F2FD">
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="File analizzati: " VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding ProcessedFilesCount}" VerticalAlignment="Center" />
-                      </StackPanel>
-                    </Border>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFFFEBEE">
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Errori: " VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding ErrorCount}" VerticalAlignment="Center" />
-                      </StackPanel>
-                    </Border>
-                    <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFF5F5F5">
-                      <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Tempo: " VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding ElapsedText}" VerticalAlignment="Center" />
-                      </StackPanel>
-                    </Border>
-                  </WrapPanel>
-                </StackPanel>
-              </GroupBox>
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-              <GroupBox Header="Scansione" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10" Margin="0,10,0,0" IsEnabled="{Binding IsScanConfigEnabled}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <GroupBox Grid.Row="0" Header="Stato scansione" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10">
+              <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                  <Border Width="14" Height="14" Background="{Binding StatusBrush}" CornerRadius="2" Margin="0,0,6,0" />
+                  <TextBlock Text="{Binding StatusText}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
+                <Border Background="{Binding CurrentPathBackground}" Padding="6" CornerRadius="4" Margin="0,0,0,8">
+                  <TextBlock Text="{Binding CurrentPathText}" TextTrimming="CharacterEllipsis" />
+                </Border>
+                <WrapPanel Margin="0,0,0,6">
+                  <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFE8F5E9">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Cartelle analizzate: " VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding ProcessedCount}" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Border>
+                  <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFE3F2FD">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="File analizzati: " VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding ProcessedFilesCount}" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Border>
+                  <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFFFEBEE">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Errori: " VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding ErrorCount}" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Border>
+                  <Border Padding="6,4" CornerRadius="4" Margin="0,0,8,6" Background="#FFF5F5F5">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Tempo: " VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding ElapsedText}" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Border>
+                </WrapPanel>
+              </StackPanel>
+            </GroupBox>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
+              <StackPanel>
+              <GroupBox Header="Scansione" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10" Margin="0,0,0,0" IsEnabled="{Binding IsScanConfigEnabled}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel>
                   <TextBlock Text="Cartelle da scansionare" Style="{StaticResource SubsectionHeaderText}" />
                   <TextBlock Text="Puoi fermare la scansione/job (con pulizia residui), modificare questo elenco e riavviare con nuove cartelle." Style="{StaticResource MicrocopyText}" />
@@ -891,8 +897,9 @@
                   <CheckBox Content="Escludi utenti admin" IsChecked="{Binding ExcludeAdminAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
                 </StackPanel>
               </GroupBox>
-            </StackPanel>
-          </ScrollViewer>
+              </StackPanel>
+            </ScrollViewer>
+          </Grid>
         </Border>
       </Grid>
     </Grid>

@@ -26,7 +26,8 @@ param(
     [switch]$CleanServiceJobs,
     [switch]$CleanScanData,
     [switch]$CleanAnalysisImports,
-    [switch]$CleanAnalysisExports
+    [switch]$CleanAnalysisExports,
+    [switch]$CleanAnalysisWorkspace
 )
 
 $ErrorActionPreference = "Stop"
@@ -111,6 +112,7 @@ if ($RunClean) {
     if ($CleanScanData) { $cleanArgs += "-CleanScanData" }
     if ($CleanAnalysisImports) { $cleanArgs += "-CleanAnalysisImports" }
     if ($CleanAnalysisExports) { $cleanArgs += "-CleanAnalysisExports" }
+    if ($CleanAnalysisWorkspace) { $cleanArgs += "-CleanAnalysisWorkspace" }
 
     if (-not $CleanDist) { $cleanArgs += "-KeepDist" }
     if (-not $CleanArtifacts) { $cleanArgs += "-KeepArtifacts" }
@@ -120,6 +122,11 @@ if ($RunClean) {
 
     & $cleanScript @cleanArgs
     if ($LASTEXITCODE -ne 0) { throw "Clean failed." }
+}
+
+if ($CleanAnalysisWorkspace) {
+    $CleanAnalysisImports = $true
+    $CleanAnalysisExports = $true
 }
 
 if ($CleanAllTemp) {
