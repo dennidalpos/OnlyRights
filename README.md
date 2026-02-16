@@ -1,209 +1,180 @@
 # NTFS Audit
 
-NTFS Audit è una suite Windows per analisi ACL NTFS/SMB con modalità interattiva e batch via servizio.
+Suite Windows per analisi ACL NTFS/SMB con UI interattiva, coda job via servizio Windows e viewer in sola lettura.
 
-Componenti:
-- **NtfsAudit.App** (WPF): scansione, filtri, export/import, invio job al servizio.
-- **NtfsAudit.Service** (Windows Service): esecuzione job in background da `%ProgramData%\NtfsAudit\jobs`.
-- **NtfsAudit.Viewer**: apertura in sola lettura degli archivi `.ntaudit`.
+## Componenti
+
+- **NtfsAudit.App (WPF)**
+  - configurazione multi-root,
+  - scansione locale o invio job al servizio,
+  - tray icon con stato runtime,
+  - export `.xlsx` e archivio `.ntaudit`,
+  - pulizia dati scansione, cache e residui operativi.
+- **NtfsAudit.Service (Windows Service)**
+  - polling job queue in `%ProgramData%\NtfsAudit\jobs`,
+  - esecuzione sequenziale delle root,
+  - pubblicazione stato runtime in `%ProgramData%\NtfsAudit\service-status.json`.
+- **NtfsAudit.Viewer**
+  - apertura archivi `.ntaudit` in modalità sola lettura.
 
 ---
 
-## 1) Architettura repository
+## Architettura repository
 
 - `src/NtfsAudit.App`
-  - ViewModel/UI, orchestrazione scansione, import/export.
-  - Servizi di risoluzione path (locale/UNC/DFS/NFS) e risoluzione identità.
+  - `ViewModels/MainViewModel.cs`: orchestrazione scansione, gestione job servizio, comandi UI/tray, cleanup.
+  - `MainWindow.xaml` + `MainWindow.xaml.cs`: shell UI, tray icon/menu, eventi finestra.
+  - `Services/*`: scanning ACL, resolver identità, import/export archivi.
+  - `Cache/*`: gestione cache locale SID e membership.
 - `src/NtfsAudit.Service`
-  - Worker che legge i job JSON e processa più root in sequenza.
+  - `ScanWorker.cs`: loop servizio, lettura job e aggiornamento stato runtime.
 - `src/NtfsAudit.Viewer`
-  - Viewer dedicato per consultazione analisi archiviate.
+  - bootstrap viewer read-only.
 - `tests/NtfsAudit.App.Tests`
-  - Test unitari servizi (permessi, baseline, resolver).
+  - unit test su servizi core.
 - `scripts/build.ps1`
-  - Pipeline restore/build/test/publish con clean opzionale.
+  - restore/build/test/publish + clean opzionale integrato.
 - `scripts/clean.ps1`
-  - Pulizia selettiva artefatti locali, cache, import/export e job servizio.
+  - pulizia selettiva build output, cache, temp, export, job, stato servizio.
 
 ---
 
-## 2) Flussi di scansione
+## Logica servizio e tray icon
 
-### Modalità App (interattiva)
-1. Selezione di una o più root.
-2. Scansione immediata.
-3. Rendering albero + griglie ACL + errori.
-4. Export opzionale in `.xlsx` e/o `.ntaudit`.
+### Stato servizio
 
-### Modalità servizio Windows
-1. App serializza un job JSON in `%ProgramData%\NtfsAudit\jobs`.
-2. Service legge i file `job_*.json` in ordine.
-3. Ogni root del job viene elaborata indipendentemente.
-4. Se configurato `OutputDirectory`, viene prodotto un archivio `.ntaudit` per root.
+- L’app legge periodicamente `%ProgramData%\NtfsAudit\service-status.json`.
+- In UI mostra badge runtime (`ServiceRuntimeStatusText`) con:
+  - in attesa,
+  - job in coda,
+  - root corrente,
+  - completamento job.
 
----
+### Tray icon
 
-## 3) Installazione/disinstallazione servizio
-
-Dalla UI App:
-- **Installazione**
-  - Ricerca `NtfsAudit.Service.exe` / `.dll` in percorsi noti.
-  - `sc create ...` con fallback robusto:
-    - se il servizio esiste già (`1073`), esegue `sc config` per aggiornare `binPath` e startup.
-  - Applica descrizione (`sc description`) e tenta avvio (`sc start`).
-- **Disinstallazione**
-  - `sc stop` e `sc delete` con gestione idempotente:
-    - ignora stati attesi (es. servizio già fermo/inesistente).
-
-L’esecuzione di `sc` gestisce fallback con elevazione (`runas`) in caso di access denied.
+- La tray icon è visibile quando:
+  - finestra minimizzata, oppure
+  - servizio in esecuzione.
+- Context menu tray:
+  - **Apri**,
+  - **Ferma scansione / job**,
+  - **Pulisci cache/residui**,
+  - **Esci**.
+- Chiusura finestra:
+  - se il servizio è in esecuzione, la finestra non termina il processo ma resta in tray.
 
 ---
 
-## 4) Import / Export
+## Esecuzione a istanza singola
 
-## 4.1 Export Excel (`.xlsx`)
-- Origine: `data.jsonl` + `errors.jsonl` della scansione corrente.
-- Pre-check obbligatorio: file dati scansione presente e non mancante.
-- Post-check obbligatorio: file output creato e non vuoto.
-- Split automatico in più sheet se superato il limite righe Excel.
+`NtfsAudit.App` usa un mutex nominato globale (`Global\NtfsAudit.App.SingleInstance`) per impedire avvii multipli della UI.
 
-## 4.2 Export analisi (`.ntaudit`)
-- Formato: archivio zip con entry:
-  - `data.jsonl`
-  - `errors.jsonl`
-  - `tree.json`
-  - `folderflags.json`
-  - `meta.json`
-- Export atomico:
-  - scrittura su file temporaneo;
-  - sostituzione finale output solo a export completato.
-- `meta.json` include root, path kind, timestamp e opzioni scansione.
-
-## 4.3 Import analisi (`.ntaudit`)
-- Estrazione in temp folder dedicata:
-  - `%TEMP%\NtfsAudit\imports\<archive>_yyyy_MM_dd_HH_mm_<guid>`
-- Gestione robusta archivi legacy/parziali:
-  - se manca una entry opzionale, usa fallback ricostruzione (es. tree da export records).
-- Validazioni post-import:
-  - presenza file dati,
-  - dataset non vuoto,
-  - struttura `TreeMap` / `Details` coerente.
+Comportamento:
+- se esiste già un’istanza attiva, il nuovo avvio mostra un messaggio informativo e termina.
 
 ---
 
-## 5) Logica checkbox e filtri
+## Flussi scansione
 
-## 5.1 Filtri ACL (griglie)
-Vincoli “almeno una opzione attiva”:
-- `ShowAllow` / `ShowDeny`
-- `ShowInherited` / `ShowExplicit`
+### Modalità locale (app)
 
-Categorie principal (almeno una attiva):
-- `ShowEveryone`
-- `ShowAuthenticatedUsers`
-- `ShowServiceAccounts`
-- `ShowAdminAccounts`
-- `ShowOtherPrincipals`
+1. Seleziona una o più root.
+2. Avvia scansione.
+3. Analizza risultati su tree + griglie ACL + errori.
+4. Esporta in `.xlsx` o `.ntaudit`.
 
-Se l’utente spegne tutte le categorie principal, viene riattivata automaticamente `ShowOtherPrincipals`.
+### Modalità servizio
 
-Ricerca testuale (`AclFilter`) applicata su:
-- nome/SID principal,
-- layer, tipo allow/deny,
-- rights summary,
-- path/cartella,
-- owner/share/server/source/risk,
-- membri gruppo (se presenti).
+1. L’app serializza un job JSON in `%ProgramData%\NtfsAudit\jobs`.
+2. Il servizio processa i file `job_*.json` in ordine lessicografico.
+3. Ogni root viene eseguita indipendentemente.
+4. Se `OutputDirectory` è valorizzato, il servizio crea un archivio `.ntaudit` per root.
 
-## 5.2 Filtri albero
-Filtri supportati:
-- `TreeFilterExplicitOnly`
-- `TreeFilterInheritanceDisabledOnly`
-- `TreeFilterDiffOnly`
-- `TreeFilterExplicitDenyOnly`
-- `TreeFilterBaselineMismatchOnly`
-- `TreeFilterFilesOnly`
-- `TreeFilterFoldersOnly`
+### Stop scansione per aggiornare il job
 
-Regole:
-- `FilesOnly` e `FoldersOnly` non possono essere entrambi OFF.
-- I filtri categoria sono in OR tra loro (nodo incluso se soddisfa almeno un criterio attivo).
-- I filtri tipo risorsa supportano valori localizzati (`Folder`/`Cartella`/`Directory`, `File`).
+- Pulsante **Stop** e voce tray **Ferma scansione / job**:
+  - annullano scansione locale in corso,
+  - fermano il servizio (se running),
+  - rimuovono i job pendenti (`job_*.json`),
+  - consentono di aggiornare subito la lista cartelle e rilanciare.
 
 ---
 
-## 6) Tipi percorso e visualizzazione root
+## Pulizia dati scansione, cache e residui
 
-Rilevazione tipo percorso:
-- `Local`
-- `UNC/SMB`
-- `DFS`
-- `NFS`
+### Da interfaccia
 
-In UI:
-- badge tipo percorso;
-- colore differenziato per tipo;
-- badge `DFS multi-server` se namespace risolve più target.
+- **Cancella scansione corrente**
+  - elimina file temporanei `scan_*.jsonl` / `errors_*.jsonl` della sessione corrente,
+  - resetta i risultati caricati in UI.
+- **Pulisci cache/residui**
+  - pulisce `%TEMP%\NtfsAudit`,
+  - pulisce `%LOCALAPPDATA%\NtfsAudit\Cache`,
+  - rimuove `%ProgramData%\NtfsAudit\jobs` e `service-status.json`.
+
+### Da script
+
+- `scripts/clean.ps1` e `scripts/build.ps1 -RunClean` supportano anche `-CleanScanData` per pulizia completa dati scansione runtime.
 
 ---
 
-## 7) Script build/clean
+## Script build e clean
 
 ## `scripts/build.ps1`
-Pipeline:
+
+Pipeline standard:
 - restore
 - build
 - test
-- publish App/Viewer/Service
+- publish (App / Viewer / Service)
 
-Opzioni principali:
+Flag principali:
 - `-Configuration Release|Debug`
 - `-SkipRestore`, `-SkipBuild`, `-SkipTests`, `-SkipPublish`
 - `-Framework`, `-Runtime`, `-SelfContained`
 - `-PublishSingleFile`, `-PublishReadyToRun`
-- `-RunClean` + flag clean forwardati a `clean.ps1`
+- `-RunClean` (forward a `clean.ps1`)
 
-Pulizie disponibili anche in build:
+Pulizie forwardabili:
 - `-CleanAllTemp`
 - `-CleanImports`
 - `-CleanCache`
 - `-CleanLogs`
 - `-CleanExports`
 - `-CleanServiceJobs`
-
-Nota: `-CleanAllTemp` abilita automaticamente anche pulizia log/export/job servizio.
+- `-CleanScanData`
 
 ## `scripts/clean.ps1`
-Pulizia selettiva:
-- bin/obj, `.vs`, `dist`, `artifacts`
-- `%TEMP%\NtfsAudit` (import/export/log)
-- `%LOCALAPPDATA%\NtfsAudit\Cache`
-- `%LOCALAPPDATA%\NtfsAudit\Logs`
-- file export `.xlsx`/`.ntaudit`
-- `%ProgramData%\NtfsAudit\jobs\job_*.json`
 
-Modalità specifiche:
-- `-ImportsOnly`
-- `-CacheOnly`
-- `-CleanAllTemp`
-- combinazioni con `-Keep*` per preservare aree specifiche.
+Pulizia selettiva:
+- output build (`bin/obj`, `.vs`, `dist`, `artifacts`),
+- `%TEMP%\NtfsAudit`,
+- `%LOCALAPPDATA%\NtfsAudit\Cache`,
+- `%LOCALAPPDATA%\NtfsAudit\Logs`,
+- export `.xlsx` e `.ntaudit`,
+- queue job servizio,
+- stato runtime servizio,
+- dati scansione runtime (`-CleanScanData`).
 
 ---
 
-## 8) Comandi rapidi
+## Comandi rapidi
 
 ```powershell
 # build + test
 powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1 -Configuration Release
 
-# build + publish + clean esteso
-powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1 -Configuration Release -RunClean -CleanAllTemp
+# clean esteso + build
+powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1 -Configuration Release -RunClean -CleanAllTemp -CleanScanData
+
+# solo pulizia dati runtime scansione
+powershell -ExecutionPolicy Bypass -File .\scripts\clean.ps1 -CleanScanData -CleanServiceJobs -CleanCache
 ```
 
 ---
 
-## 9) Note operative
+## Note operative
 
-- Repository orientato a Windows (.NET desktop + ACL NTFS native).
-- In ambienti non Windows alcune funzionalità non sono eseguibili (WPF, service, ACL native).
-- I resolver path includono fallback difensivi per ambienti non Windows quando API di rete Windows non sono disponibili.
+- Progetto orientato a Windows (WPF, ACL NTFS native, service control manager).
+- In ambienti Linux/macOS parte delle funzionalità non è eseguibile.
+- I resolver path includono fallback difensivi quando API Windows non sono disponibili.

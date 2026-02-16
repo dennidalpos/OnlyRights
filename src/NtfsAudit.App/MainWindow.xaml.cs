@@ -38,6 +38,22 @@ namespace NtfsAudit.App
 
             var trayMenu = new WinForms.ContextMenuStrip();
             trayMenu.Items.Add("Apri", null, (_, __) => RestoreFromTray());
+            trayMenu.Items.Add("Ferma scansione / job", null, (_, __) =>
+            {
+                var viewModel = DataContext as MainViewModel;
+                if (viewModel != null && viewModel.StopCommand.CanExecute(null))
+                {
+                    viewModel.StopCommand.Execute(null);
+                }
+            });
+            trayMenu.Items.Add("Pulisci cache/residui", null, (_, __) =>
+            {
+                var viewModel = DataContext as MainViewModel;
+                if (viewModel != null && viewModel.CleanupResidualFilesCommand.CanExecute(null))
+                {
+                    viewModel.CleanupResidualFilesCommand.Execute(null);
+                }
+            });
             trayMenu.Items.Add("Esci", null, (_, __) =>
             {
                 _forceClose = true;

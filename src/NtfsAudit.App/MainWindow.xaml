@@ -179,6 +179,8 @@
               <Button Margin="0,0,8,0" Padding="12,4" Content="Disinstalla servizio Windows" Command="{Binding UninstallServiceCommand}" Background="#FF8E24AA" Foreground="White" />
               <Button Margin="0,0,8,0" Padding="12,4" Content="Esporta elenco permessi (Excel)" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
               <Button Margin="0,0,8,0" Padding="12,4" Content="Salva report completo (.ntaudit)" Command="{Binding ExportAnalysisCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
+              <Button Margin="0,0,8,0" Padding="12,4" Content="Cancella scansione corrente" Command="{Binding ClearScanDataCommand}" Background="#FF5D4037" Foreground="White" />
+              <Button Margin="0,0,8,0" Padding="12,4" Content="Pulisci cache/residui" Command="{Binding CleanupResidualFilesCommand}" Background="#FF455A64" Foreground="White" />
               <Button Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" Background="#FF616161" Foreground="White" />
             </StackPanel>
           </Border>
@@ -783,6 +785,7 @@
               <GroupBox Header="Scansione" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10" Margin="0,10,0,0" IsEnabled="{Binding IsScanConfigEnabled}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel>
                   <TextBlock Text="Cartelle da scansionare" Style="{StaticResource SubsectionHeaderText}" />
+                  <TextBlock Text="Puoi fermare la scansione/job, modificare questo elenco e riavviare con nuove cartelle." Style="{StaticResource MicrocopyText}" />
                   <Grid Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="Auto" />

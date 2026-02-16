@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
@@ -9,11 +10,18 @@ namespace NtfsAudit.App
 {
     public partial class App : Application
     {
+        private Mutex _singleInstanceMutex;
         private Logger _logger;
+        private const string SingleInstanceMutexName = "Global\\NtfsAudit.App.SingleInstance";
 
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+            if (!EnsureSingleInstance())
+            {
+                Shutdown();
+                return;
+            }
             InitializeLogger();
             DispatcherUnhandledException += OnDispatcherUnhandledException;
             AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
@@ -23,7 +31,34 @@ namespace NtfsAudit.App
         protected override void OnExit(ExitEventArgs e)
         {
             base.OnExit(e);
+            if (_singleInstanceMutex != null)
+            {
+                _singleInstanceMutex.ReleaseMutex();
+                _singleInstanceMutex.Dispose();
+                _singleInstanceMutex = null;
+            }
             CleanupTemporaryFiles();
+        }
+
+        private bool EnsureSingleInstance()
+        {
+            try
+            {
+                var createdNew = false;
+                _singleInstanceMutex = new Mutex(true, SingleInstanceMutexName, out createdNew);
+                if (!createdNew)
+                {
+                    _singleInstanceMutex.Dispose();
+                    _singleInstanceMutex = null;
+                    MessageBox.Show("NTFS Audit è già in esecuzione.", "Istanza già attiva", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return false;
+                }
+                return true;
+            }
+            catch
+            {
+                return true;
+            }
         }
 
         private void InitializeLogger()
