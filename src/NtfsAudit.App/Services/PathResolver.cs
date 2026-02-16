@@ -66,7 +66,7 @@ namespace NtfsAudit.App.Services
 
             var suffix = normalized.Length > 2 ? normalized.Substring(2) : string.Empty;
             var relative = suffix.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            var combined = string.IsNullOrEmpty(relative) ? uncRoot : Path.Combine(uncRoot, relative);
+            var combined = CombineUncPath(uncRoot, relative);
             if (resolveDfs)
             {
                 var dfsResolvedCombined = TryResolveDfsPath(combined);
@@ -120,7 +120,7 @@ namespace NtfsAudit.App.Services
             server = null;
             share = null;
             if (string.IsNullOrWhiteSpace(path)) return false;
-            var normalized = FromExtendedPath(path).Trim();
+            var normalized = FromExtendedPath(path).Trim().Replace('/', '\\');
             if (!normalized.StartsWith("\\\\", StringComparison.Ordinal)) return false;
             var parts = normalized.TrimStart('\\').Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length < 2) return false;
@@ -173,7 +173,7 @@ namespace NtfsAudit.App.Services
 
             var suffix = normalized.Length > 2 ? normalized.Substring(2) : string.Empty;
             var relative = suffix.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            return string.IsNullOrEmpty(relative) ? uncRoot : Path.Combine(uncRoot, relative);
+            return CombineUncPath(uncRoot, relative);
         }
 
         [DllImport("mpr.dll", CharSet = CharSet.Unicode)]
@@ -266,7 +266,7 @@ namespace NtfsAudit.App.Services
                 .Select(storage =>
                 {
                     var root = string.Format("\\\\{0}\\{1}", storage.ServerName, storage.ShareName);
-                    return string.IsNullOrEmpty(remainder) ? root : Path.Combine(root, remainder);
+                    return CombineUncPath(root, remainder);
                 })
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
@@ -336,7 +336,7 @@ namespace NtfsAudit.App.Services
             foreach (var storage in storages)
             {
                 var root = string.Format("\\\\{0}\\{1}", storage.ServerName, storage.ShareName);
-                var candidate = string.IsNullOrEmpty(remainder) ? root : Path.Combine(root, remainder);
+                var candidate = CombineUncPath(root, remainder);
                 if (Directory.Exists(candidate))
                 {
                     return candidate;
@@ -345,7 +345,23 @@ namespace NtfsAudit.App.Services
 
             var preferred = storages[0];
             var preferredRoot = string.Format("\\\\{0}\\{1}", preferred.ServerName, preferred.ShareName);
-            return string.IsNullOrEmpty(remainder) ? preferredRoot : Path.Combine(preferredRoot, remainder);
+            return CombineUncPath(preferredRoot, remainder);
+
+        }
+
+        private static string CombineUncPath(string root, string remainder)
+        {
+            if (string.IsNullOrWhiteSpace(root)) return root;
+            if (string.IsNullOrWhiteSpace(remainder)) return root;
+
+            var normalizedRoot = root.TrimEnd('\\', '/');
+            var normalizedRemainder = remainder.TrimStart('\\', '/');
+            if (string.IsNullOrEmpty(normalizedRemainder))
+            {
+                return normalizedRoot;
+            }
+
+            return string.Format("{0}\\{1}", normalizedRoot, normalizedRemainder.Replace('/', '\\'));
         }
 
         private static void CacheDfs(string key, string value)
