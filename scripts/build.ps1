@@ -23,7 +23,8 @@ param(
     [switch]$SkipTests,
     [switch]$CleanLogs,
     [switch]$CleanExports,
-    [switch]$CleanServiceJobs
+    [switch]$CleanServiceJobs,
+    [switch]$CleanScanData
 )
 
 $ErrorActionPreference = "Stop"
@@ -105,6 +106,7 @@ if ($RunClean) {
     if ($CleanLogs) { $cleanArgs += "-CleanLogs" }
     if ($CleanExports) { $cleanArgs += "-CleanExports" }
     if ($CleanServiceJobs) { $cleanArgs += "-CleanServiceJobs" }
+    if ($CleanScanData) { $cleanArgs += "-CleanScanData" }
 
     if (-not $CleanDist) { $cleanArgs += "-KeepDist" }
     if (-not $CleanArtifacts) { $cleanArgs += "-KeepArtifacts" }
@@ -123,6 +125,7 @@ if ($CleanAllTemp) {
     $CleanLogs = $true
     $CleanExports = $true
     $CleanServiceJobs = $true
+    $CleanScanData = $true
 }
 
 if ($CleanTemp) {
@@ -161,6 +164,16 @@ if ($CleanExports) {
 
 if ($CleanServiceJobs) {
     Remove-ServiceJobs
+}
+
+if ($CleanScanData) {
+    $baseTemp = Get-TempRoot $TempRoot
+    Remove-PathIfExists (Join-Path $baseTemp "NtfsAudit")
+
+    $programData = if ($env:ProgramData) { $env:ProgramData } else { [Environment]::GetFolderPath("CommonApplicationData") }
+    if (-not [string]::IsNullOrWhiteSpace($programData)) {
+        Remove-PathIfExists (Join-Path $programData "NtfsAudit\service-status.json")
+    }
 }
 
 if ($CleanLogs) {

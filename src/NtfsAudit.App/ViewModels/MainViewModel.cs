@@ -168,6 +168,8 @@ namespace NtfsAudit.App.ViewModels
             ExportAnalysisCommand = new RelayCommand(ExportAnalysis, () => CanExport);
             ImportAnalysisCommand = new RelayCommand(ImportAnalysis, () => !_isScanning && !IsBusy);
             ResetTreeFiltersCommand = new RelayCommand(ResetTreeFilters, () => HasScanResult);
+            ClearScanDataCommand = new RelayCommand(ClearScanData, () => !_isViewerMode && !_isScanning && !IsBusy && HasScanResult);
+            CleanupResidualFilesCommand = new RelayCommand(CleanupResidualFiles, () => !_isViewerMode && !IsBusy);
 
             LoadCache();
             InitializeScanTimer();
@@ -231,6 +233,8 @@ namespace NtfsAudit.App.ViewModels
         public RelayCommand ExportAnalysisCommand { get; private set; }
         public RelayCommand ImportAnalysisCommand { get; private set; }
         public RelayCommand ResetTreeFiltersCommand { get; private set; }
+        public RelayCommand ClearScanDataCommand { get; private set; }
+        public RelayCommand CleanupResidualFilesCommand { get; private set; }
 
         public string RootPath
         {
@@ -1010,7 +1014,7 @@ namespace NtfsAudit.App.ViewModels
         }
 
         public bool CanStart { get { return !_isViewerMode && !_isScanning && !IsBusy && (ScanRoots.Count > 0 || !string.IsNullOrWhiteSpace(RootPath)); } }
-        public bool CanStop { get { return !_isViewerMode && _isScanning && !IsBusy; } }
+        public bool CanStop { get { return !_isViewerMode && !IsBusy && (_isScanning || IsServiceRuntimeRunning); } }
         public bool CanExport { get { return !_isViewerMode && !_isScanning && !IsBusy && _scanResult != null; } }
         public bool HasUnexportedData { get { return !_isViewerMode && _scanResult != null && !_hasExported; } }
 
@@ -2103,9 +2107,145 @@ namespace NtfsAudit.App.ViewModels
         private void StopScan()
         {
             if (_isViewerMode) return;
-            if (_cts != null)
+
+            var hasRunningLocalScan = _cts != null;
+            if (hasRunningLocalScan)
             {
                 _cts.Cancel();
+            }
+
+            if (IsServiceRuntimeRunning)
+            {
+                StopServiceRuntimeAndClearQueue();
+            }
+
+            CleanupResidualFiles(true);
+
+            if (hasRunningLocalScan)
+            {
+                ProgressText = "Richiesta di stop inviata. Pulizia cache/residui completata; puoi aggiungere nuove cartelle al job.";
+            }
+        }
+
+        private void StopServiceRuntimeAndClearQueue()
+        {
+            try
+            {
+                var stopResult = ExecuteScCommand(string.Format("stop {0}", ServiceName), "stop", false);
+                if (stopResult.ExitCode != 0 && stopResult.ExitCode != 1060 && stopResult.ExitCode != 1062)
+                {
+                    ThrowScOperationFailed("stop", stopResult);
+                }
+
+                var jobsRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "NtfsAudit", "jobs");
+                if (Directory.Exists(jobsRoot))
+                {
+                    foreach (var file in Directory.GetFiles(jobsRoot, "job_*.json"))
+                    {
+                        TryDeleteFile(file);
+                    }
+                }
+
+                ProgressText = "Scansione servizio fermata. Puoi aggiornare l'elenco cartelle e rilanciare il job.";
+            }
+            catch (Exception ex)
+            {
+                ProgressText = string.Format("Errore stop servizio: {0}", ex.Message);
+            }
+            finally
+            {
+                RefreshServiceRuntimeStatus();
+                UpdateCommands();
+            }
+        }
+
+        private void ClearScanData()
+        {
+            if (_scanResult != null)
+            {
+                TryDeleteFile(_scanResult.TempDataPath);
+                TryDeleteFile(_scanResult.ErrorPath);
+            }
+
+            _scanResult = null;
+            _hasExported = false;
+            ClearResults();
+            ProgressText = "Dati scansione corrente eliminati.";
+            UpdateCommands();
+        }
+
+        private void CleanupResidualFiles()
+        {
+            CleanupResidualFiles(false);
+        }
+
+        private void CleanupResidualFiles(bool triggeredByStop)
+        {
+            var removedEntries = 0;
+
+            var tempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit");
+            removedEntries += TryDeleteDirectory(tempRoot);
+
+            var localCache = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NtfsAudit", "Cache");
+            removedEntries += TryDeleteDirectory(localCache);
+
+            var programDataRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "NtfsAudit");
+            var jobsRoot = Path.Combine(programDataRoot, "jobs");
+            removedEntries += TryDeleteDirectory(jobsRoot);
+            removedEntries += TryDeleteFile(Path.Combine(programDataRoot, "service-status.json"));
+
+            if (triggeredByStop)
+            {
+                ProgressText = removedEntries > 0
+                    ? string.Format("Analisi fermata: rimossi {0} elementi residui (cache/job/temp).", removedEntries)
+                    : "Analisi fermata: nessun residuo da pulire.";
+                return;
+            }
+
+            ProgressText = removedEntries > 0
+                ? string.Format("Pulizia completata: rimossi {0} elementi residui.", removedEntries)
+                : "Pulizia completata: nessun file residuo trovato.";
+        }
+
+        private static int TryDeleteDirectory(string directoryPath)
+        {
+            if (string.IsNullOrWhiteSpace(directoryPath) || !Directory.Exists(directoryPath))
+            {
+                return 0;
+            }
+
+            try
+            {
+                Directory.Delete(directoryPath, true);
+                return 1;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        private static int TryDeleteFile(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return 0;
+            }
+
+            var ioPath = PathResolver.ToExtendedPath(path);
+            if (!File.Exists(ioPath))
+            {
+                return 0;
+            }
+
+            try
+            {
+                File.Delete(ioPath);
+                return 1;
+            }
+            catch
+            {
+                return 0;
             }
         }
 
@@ -3393,6 +3533,8 @@ namespace NtfsAudit.App.ViewModels
             InstallServiceCommand.RaiseCanExecuteChanged();
             UninstallServiceCommand.RaiseCanExecuteChanged();
             ResetTreeFiltersCommand.RaiseCanExecuteChanged();
+            ClearScanDataCommand.RaiseCanExecuteChanged();
+            CleanupResidualFilesCommand.RaiseCanExecuteChanged();
         }
 
         private string FormatElapsed(TimeSpan elapsed)
@@ -3504,19 +3646,23 @@ namespace NtfsAudit.App.ViewModels
                 }
 
                 IsServiceRuntimeRunning = status.IsRunning;
+                var queueText = status.PendingJobs > 0
+                    ? string.Format(" | code scansioni: {0}", status.PendingJobs)
+                    : " | code scansioni: 0";
+
                 if (status.IsRunning)
                 {
                     var rootLabel = string.IsNullOrWhiteSpace(status.CurrentRootPath) ? "root sconosciuta" : status.CurrentRootPath;
                     var progress = status.TotalRoots > 0
                         ? string.Format("{0}/{1}", status.CurrentRootIndex, status.TotalRoots)
                         : "?/?";
-                    ServiceRuntimeStatusText = string.Format("Servizio in esecuzione: {0} (root {1})", rootLabel, progress);
+                    ServiceRuntimeStatusText = string.Format("Servizio in esecuzione: {0} (root {1}){2}", rootLabel, progress, queueText);
                 }
                 else
                 {
                     ServiceRuntimeStatusText = string.IsNullOrWhiteSpace(status.LastMessage)
-                        ? "Servizio: in attesa"
-                        : string.Format("Servizio: {0}", status.LastMessage);
+                        ? string.Format("Servizio: in attesa{0}", queueText)
+                        : string.Format("Servizio: {0}{1}", status.LastMessage, queueText);
                 }
             }
             catch
