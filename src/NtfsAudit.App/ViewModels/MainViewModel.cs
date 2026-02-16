@@ -194,6 +194,13 @@ namespace NtfsAudit.App.ViewModels
             {
                 _isServiceRuntimeRunning = value;
                 OnPropertyChanged("IsServiceRuntimeRunning");
+                OnPropertyChanged("StatusText");
+                OnPropertyChanged("StatusBrush");
+                OnPropertyChanged("CanStop");
+                if (StopCommand != null)
+                {
+                    StopCommand.RaiseCanExecuteChanged();
+                }
             }
         }
 
@@ -1001,18 +1008,18 @@ namespace NtfsAudit.App.ViewModels
         {
             get
             {
-                if (_isScanning) return "RUNNING";
+                if (_isScanning || IsServiceRuntimeRunning) return "RUNNING";
                 if (_scanResult == null) return "IDLE";
-                return "STOPPED";
+                return "FINISHED";
             }
         }
         public string StatusBrush
         {
             get
             {
-                if (_isScanning) return "#FF2E7D32";
+                if (_isScanning || IsServiceRuntimeRunning) return "#FF2E7D32";
                 if (_scanResult == null) return "#FFFFB300";
-                return "#FFC62828";
+                return "#FF1565C0";
             }
         }
 
@@ -1885,6 +1892,12 @@ namespace NtfsAudit.App.ViewModels
                     CreatedAtUtc = DateTime.UtcNow,
                     ScanOptions = roots.Select(root => CloneOptions(optionsTemplate, root)).ToList()
                 };
+
+                if (!TryEnsureServiceInstalledForScan())
+                {
+                    return;
+                }
+
                 var jobFile = Path.Combine(jobsRoot, string.Format("job_{0}.json", job.JobId));
                 File.WriteAllText(jobFile, JsonConvert.SerializeObject(job, Formatting.Indented));
                 ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
@@ -3692,6 +3705,33 @@ namespace NtfsAudit.App.ViewModels
                 IsServiceRuntimeRunning = false;
                 ServiceRuntimeStatusText = "Servizio: stato non leggibile";
             }
+        }
+
+        private bool TryEnsureServiceInstalledForScan()
+        {
+            var queryResult = ExecuteScCommand(string.Format("query {0}", ServiceName), "query", false);
+            if (queryResult.ExitCode == 0)
+            {
+                return true;
+            }
+
+            var output = (queryResult.Output ?? string.Empty) + " " + (queryResult.Error ?? string.Empty);
+            var isNotInstalled = queryResult.ExitCode == 1060
+                || output.IndexOf("does not exist", StringComparison.OrdinalIgnoreCase) >= 0
+                || output.IndexOf("non esiste", StringComparison.OrdinalIgnoreCase) >= 0;
+
+            if (!isNotInstalled)
+            {
+                return true;
+            }
+
+            ProgressText = "Servizio Windows non installato: installa NtfsAuditWorker o disattiva 'Esegui tramite servizio Windows'.";
+            WpfMessageBox.Show(
+                ProgressText,
+                "Servizio non installato",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Warning);
+            return false;
         }
 
         private static string GetServiceStatusPath()
