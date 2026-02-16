@@ -7,6 +7,7 @@ Suite Windows per analisi ACL NTFS/SMB con UI interattiva, coda job via servizio
 - **NtfsAudit.App (WPF)**
   - configurazione multi-root,
   - scansione locale o invio job al servizio,
+  - modalità servizio abilitata di default per mantenere l'analisi attiva anche dopo logout,
   - filtri ACL e filtri albero,
   - export `.xlsx` e archivio `.ntaudit`,
   - import archivio `.ntaudit` con ripristino stato analisi.
