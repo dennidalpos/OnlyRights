@@ -176,8 +176,8 @@
               <WrapPanel Margin="0,0,0,6">
                 <Button Margin="0,0,8,6" Padding="12,4" Content="Avvia analisi" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" Background="#FF2E7D32" Foreground="White" />
                 <Button Margin="0,0,8,6" Padding="12,4" Content="Stop + pulizia" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" Background="#FFC62828" Foreground="White" />
-                <Button Margin="0,0,8,6" Padding="12,4" Content="Installa servizio Windows" Command="{Binding InstallServiceCommand}" Background="#FF6A1B9A" Foreground="White" />
-                <Button Margin="0,0,8,6" Padding="12,4" Content="Disinstalla servizio Windows" Command="{Binding UninstallServiceCommand}" Background="#FF8E24AA" Foreground="White" />
+                <Button Margin="0,0,8,6" Padding="12,4" Content="Installa servizio Windows" Command="{Binding InstallServiceCommand}" Background="#FF6A1B9A" Foreground="White" ToolTip="Disponibile solo se il servizio non è installato." />
+                <Button Margin="0,0,8,6" Padding="12,4" Content="Disinstalla servizio Windows" Command="{Binding UninstallServiceCommand}" Background="#FF8E24AA" Foreground="White" ToolTip="Termina processi attivi, pulisce cache/job e rimuove il servizio." />
                 <Button Margin="0,0,8,6" Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" Background="#FF616161" Foreground="White" />
               </WrapPanel>
               <WrapPanel>
@@ -202,14 +202,12 @@
                        Foreground="#FF856404"
                        FontWeight="SemiBold" />
           </Border>
-          <Border Grid.Row="2" Background="#FFE8F5E9" BorderBrush="#FFC8E6C9" BorderThickness="1" CornerRadius="10" Padding="8,3"
-                  Margin="0,6,0,0"
-                  HorizontalAlignment="Left"
-                  Visibility="{Binding IsServiceRuntimeRunning, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <TextBlock Text="{Binding ServiceRuntimeStatusText}"
-                       Foreground="#FF1B5E20"
-                       FontWeight="SemiBold" />
-          </Border>
+          <StackPanel Grid.Row="2" Margin="0,6,0,0" Orientation="Vertical" HorizontalAlignment="Left">
+            <Border Background="{Binding ServiceBadgeBackground}" BorderBrush="#FFCFD8DC" BorderThickness="1" CornerRadius="10" Padding="8,3">
+              <TextBlock Text="{Binding ServiceBadgeText}" Foreground="White" FontWeight="SemiBold" />
+            </Border>
+            <TextBlock Margin="2,4,0,0" Text="{Binding ServiceRuntimeStatusText}" Foreground="#FF37474F" FontSize="11" />
+          </StackPanel>
         </Grid>
       </Border>
 

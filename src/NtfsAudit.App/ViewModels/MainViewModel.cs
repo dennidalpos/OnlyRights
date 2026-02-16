@@ -122,6 +122,9 @@ namespace NtfsAudit.App.ViewModels
         private string _selectedScannedAtText = "-";
         private string _serviceRuntimeStatusText = "Servizio: in attesa";
         private bool _isServiceRuntimeRunning;
+        private bool _isServiceInstalled;
+        private string _serviceBadgeText = "Servizio non installato";
+        private string _serviceBadgeBackground = "#FF9E9E9E";
         private const string ServiceName = "NtfsAuditWorker";
 
         public MainViewModel(bool viewerMode = false)
@@ -161,8 +164,8 @@ namespace NtfsAudit.App.ViewModels
             AddScanRootCommand = new RelayCommand(AddScanRoot, () => !_isViewerMode && !string.IsNullOrWhiteSpace(RootPath));
             RemoveScanRootCommand = new RelayCommand(RemoveScanRoot, () => !_isViewerMode && !string.IsNullOrWhiteSpace(SelectedScanRoot));
             BrowseOutputDirectoryCommand = new RelayCommand(BrowseOutputDirectory);
-            InstallServiceCommand = new RelayCommand(InstallService, () => !_isViewerMode && !IsBusy);
-            UninstallServiceCommand = new RelayCommand(UninstallService, () => !_isViewerMode && !IsBusy);
+            InstallServiceCommand = new RelayCommand(InstallService, () => !_isViewerMode && !IsBusy && !IsServiceInstalled);
+            UninstallServiceCommand = new RelayCommand(UninstallService, () => !_isViewerMode && !IsBusy && IsServiceInstalled);
             StartCommand = new RelayCommand(StartScan, () => CanStart);
             StopCommand = new RelayCommand(StopScan, () => CanStop);
             ExportCommand = new RelayCommand(Export, () => CanExport);
@@ -204,6 +207,24 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
+        public bool IsServiceInstalled
+        {
+            get { return _isServiceInstalled; }
+            private set
+            {
+                _isServiceInstalled = value;
+                OnPropertyChanged("IsServiceInstalled");
+                if (InstallServiceCommand != null)
+                {
+                    InstallServiceCommand.RaiseCanExecuteChanged();
+                }
+                if (UninstallServiceCommand != null)
+                {
+                    UninstallServiceCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
         public string ServiceRuntimeStatusText
         {
             get { return _serviceRuntimeStatusText; }
@@ -211,6 +232,26 @@ namespace NtfsAudit.App.ViewModels
             {
                 _serviceRuntimeStatusText = value;
                 OnPropertyChanged("ServiceRuntimeStatusText");
+            }
+        }
+
+        public string ServiceBadgeText
+        {
+            get { return _serviceBadgeText; }
+            private set
+            {
+                _serviceBadgeText = value;
+                OnPropertyChanged("ServiceBadgeText");
+            }
+        }
+
+        public string ServiceBadgeBackground
+        {
+            get { return _serviceBadgeBackground; }
+            private set
+            {
+                _serviceBadgeBackground = value;
+                OnPropertyChanged("ServiceBadgeBackground");
             }
         }
 
@@ -1276,6 +1317,14 @@ namespace NtfsAudit.App.ViewModels
         {
             try
             {
+                var serviceState = QueryServiceState();
+                if (serviceState.IsInstalled && serviceState.IsRunning)
+                {
+                    ProgressText = "Servizio Windows già installato e attivo.";
+                    RefreshServiceRuntimeStatus();
+                    return;
+                }
+
                 var serviceCommand = ResolveServiceInstallCommand();
                 if (string.IsNullOrWhiteSpace(serviceCommand))
                 {
@@ -1297,6 +1346,7 @@ namespace NtfsAudit.App.ViewModels
                 ExecuteScCommand(string.Format("description {0} \"Servizio scansione NTFS Audit\"", ServiceName), "description");
                 ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
                 ProgressText = "Servizio Windows installato.";
+                RefreshServiceRuntimeStatus();
                 WpfMessageBox.Show("Servizio Windows installato correttamente.", "Installazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             catch (Exception ex)
@@ -1309,11 +1359,15 @@ namespace NtfsAudit.App.ViewModels
         {
             try
             {
+                TerminateServiceProcesses();
+
                 var stopResult = ExecuteScCommand(string.Format("stop {0}", ServiceName), "stop", false);
                 if (stopResult.ExitCode != 0 && stopResult.ExitCode != 1060 && stopResult.ExitCode != 1062)
                 {
                     ThrowScOperationFailed("stop", stopResult);
                 }
+
+                CleanupResidualFiles(false, true);
 
                 var deleteResult = ExecuteScCommand(string.Format("delete {0}", ServiceName), "delete", false);
                 if (deleteResult.ExitCode != 0 && deleteResult.ExitCode != 1060)
@@ -1322,11 +1376,50 @@ namespace NtfsAudit.App.ViewModels
                 }
 
                 ProgressText = "Servizio Windows disinstallato.";
+                RefreshServiceRuntimeStatus();
                 WpfMessageBox.Show("Servizio Windows disinstallato correttamente.", "Disinstallazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 WpfMessageBox.Show(string.Format("Errore disinstallazione servizio: {0}", ex.Message), "Disinstallazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            finally
+            {
+                RefreshServiceRuntimeStatus();
+                UpdateCommands();
+            }
+        }
+
+        private void TerminateServiceProcesses()
+        {
+            var serviceProcessNames = new[] { "NtfsAudit.Service", "NtfsAuditWorker" };
+            foreach (var processName in serviceProcessNames)
+            {
+                Process[] processes;
+                try
+                {
+                    processes = Process.GetProcessesByName(processName);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                foreach (var process in processes)
+                {
+                    try
+                    {
+                        if (!process.HasExited)
+                        {
+                            process.Kill();
+                            process.WaitForExit(5000);
+                        }
+                    }
+                    catch
+                    {
+                        // Ignora processi non terminabili e prosegue con la disinstallazione.
+                    }
+                }
             }
         }
 
@@ -1574,6 +1667,12 @@ namespace NtfsAudit.App.ViewModels
             }
 
             return "powershell.exe";
+        }
+
+        private sealed class ServiceStateSnapshot
+        {
+            public bool IsInstalled { get; set; }
+            public bool IsRunning { get; set; }
         }
 
         private sealed class ScCommandResult
@@ -2141,6 +2240,8 @@ namespace NtfsAudit.App.ViewModels
         {
             try
             {
+                TerminateServiceProcesses();
+
                 var stopResult = ExecuteScCommand(string.Format("stop {0}", ServiceName), "stop", false);
                 if (stopResult.ExitCode != 0 && stopResult.ExitCode != 1060 && stopResult.ExitCode != 1062)
                 {
@@ -2186,10 +2287,15 @@ namespace NtfsAudit.App.ViewModels
 
         private void CleanupResidualFiles()
         {
-            CleanupResidualFiles(false);
+            CleanupResidualFiles(false, false);
         }
 
         private void CleanupResidualFiles(bool triggeredByStop)
+        {
+            CleanupResidualFiles(triggeredByStop, false);
+        }
+
+        private void CleanupResidualFiles(bool triggeredByStop, bool triggeredByServiceUninstall)
         {
             var removedEntries = 0;
 
@@ -2203,6 +2309,14 @@ namespace NtfsAudit.App.ViewModels
             var jobsRoot = Path.Combine(programDataRoot, "jobs");
             removedEntries += TryDeleteDirectory(jobsRoot);
             removedEntries += TryDeleteFile(Path.Combine(programDataRoot, "service-status.json"));
+
+            if (triggeredByServiceUninstall)
+            {
+                ProgressText = removedEntries > 0
+                    ? string.Format("Disinstallazione servizio: rimossi {0} elementi residui (cache/job/temp).", removedEntries)
+                    : "Disinstallazione servizio: nessun residuo da pulire.";
+                return;
+            }
 
             if (triggeredByStop)
             {
@@ -3652,11 +3766,24 @@ namespace NtfsAudit.App.ViewModels
 
         private void RefreshServiceRuntimeStatus()
         {
+            var serviceState = QueryServiceState();
+            IsServiceInstalled = serviceState.IsInstalled;
+            IsServiceRuntimeRunning = serviceState.IsRunning;
+
+            if (!serviceState.IsInstalled)
+            {
+                ServiceBadgeText = "Servizio non installato";
+                ServiceBadgeBackground = "#FF9E9E9E";
+                ServiceRuntimeStatusText = "Servizio: non installato";
+                return;
+            }
+
             var statusPath = GetServiceStatusPath();
             if (!File.Exists(statusPath))
             {
-                IsServiceRuntimeRunning = false;
-                ServiceRuntimeStatusText = "Servizio: in attesa";
+                ServiceBadgeText = serviceState.IsRunning ? "Servizio attivo" : "Servizio installato";
+                ServiceBadgeBackground = serviceState.IsRunning ? "#FF2E7D32" : "#FF1565C0";
+                ServiceRuntimeStatusText = serviceState.IsRunning ? "Servizio: avviato (stato dettagliato non disponibile)" : "Servizio: installato e fermo";
                 return;
             }
 
@@ -3665,18 +3792,21 @@ namespace NtfsAudit.App.ViewModels
                 var status = JsonConvert.DeserializeObject<ServiceRuntimeStatus>(File.ReadAllText(statusPath));
                 if (status == null)
                 {
-                    IsServiceRuntimeRunning = false;
+                    ServiceBadgeText = serviceState.IsRunning ? "Servizio attivo" : "Servizio installato";
+                    ServiceBadgeBackground = serviceState.IsRunning ? "#FF2E7D32" : "#FF1565C0";
                     ServiceRuntimeStatusText = "Servizio: stato non disponibile";
                     return;
                 }
 
-                IsServiceRuntimeRunning = status.IsRunning;
+                IsServiceRuntimeRunning = status.IsRunning || serviceState.IsRunning;
                 var queueText = status.PendingJobs > 0
                     ? string.Format(" | code scansioni: {0}", status.PendingJobs)
                     : " | code scansioni: 0";
 
-                if (status.IsRunning)
+                if (IsServiceRuntimeRunning)
                 {
+                    ServiceBadgeText = "Servizio attivo";
+                    ServiceBadgeBackground = "#FF2E7D32";
                     var rootLabel = string.IsNullOrWhiteSpace(status.CurrentRootPath) ? "root sconosciuta" : status.CurrentRootPath;
                     var progress = status.TotalRoots > 0
                         ? string.Format("{0}/{1}", status.CurrentRootIndex, status.TotalRoots)
@@ -3689,6 +3819,8 @@ namespace NtfsAudit.App.ViewModels
                 }
                 else
                 {
+                    ServiceBadgeText = "Servizio installato";
+                    ServiceBadgeBackground = "#FF1565C0";
                     ServiceRuntimeStatusText = string.IsNullOrWhiteSpace(status.LastMessage)
                         ? string.Format("Servizio: in attesa{0}", queueText)
                         : string.Format("Servizio: {0}{1}", status.LastMessage, queueText);
@@ -3696,35 +3828,43 @@ namespace NtfsAudit.App.ViewModels
             }
             catch
             {
-                IsServiceRuntimeRunning = false;
+                ServiceBadgeText = serviceState.IsRunning ? "Servizio attivo" : "Servizio installato";
+                ServiceBadgeBackground = serviceState.IsRunning ? "#FF2E7D32" : "#FF1565C0";
                 ServiceRuntimeStatusText = "Servizio: stato non leggibile";
             }
         }
 
-        private bool TryEnsureServiceInstalledForScan()
+        private ServiceStateSnapshot QueryServiceState()
         {
             var queryResult = ExecuteScCommand(string.Format("query {0}", ServiceName), "query", false);
-            if (queryResult.ExitCode == 0)
+            if (queryResult.ExitCode == 1060)
             {
-                return true;
+                return new ServiceStateSnapshot { IsInstalled = false, IsRunning = false };
             }
 
-            var output = (queryResult.Output ?? string.Empty) + " " + (queryResult.Error ?? string.Empty);
-            var isNotInstalled = queryResult.ExitCode == 1060
-                || output.IndexOf("does not exist", StringComparison.OrdinalIgnoreCase) >= 0
-                || output.IndexOf("non esiste", StringComparison.OrdinalIgnoreCase) >= 0;
-
-            if (!isNotInstalled)
+            var combinedOutput = string.Format("{0} {1}", queryResult.Output ?? string.Empty, queryResult.Error ?? string.Empty);
+            if (queryResult.ExitCode != 0)
             {
-                ProgressText = string.Format(
-                    "Impossibile verificare lo stato del servizio Windows (exit code {0}). Esegui l'app come amministratore o verifica la configurazione del servizio.",
-                    queryResult.ExitCode);
-                WpfMessageBox.Show(
-                    ProgressText,
-                    "Verifica servizio Windows",
-                    System.Windows.MessageBoxButton.OK,
-                    System.Windows.MessageBoxImage.Warning);
-                return false;
+                var isNotInstalled = combinedOutput.IndexOf("does not exist", StringComparison.OrdinalIgnoreCase) >= 0
+                    || combinedOutput.IndexOf("non esiste", StringComparison.OrdinalIgnoreCase) >= 0;
+                if (isNotInstalled)
+                {
+                    return new ServiceStateSnapshot { IsInstalled = false, IsRunning = false };
+                }
+
+                return new ServiceStateSnapshot { IsInstalled = true, IsRunning = false };
+            }
+
+            var running = combinedOutput.IndexOf("RUNNING", StringComparison.OrdinalIgnoreCase) >= 0;
+            return new ServiceStateSnapshot { IsInstalled = true, IsRunning = running };
+        }
+
+        private bool TryEnsureServiceInstalledForScan()
+        {
+            var serviceState = QueryServiceState();
+            if (serviceState.IsInstalled)
+            {
+                return true;
             }
 
             ProgressText = "Servizio Windows non installato: installa NtfsAuditWorker o disattiva 'Esegui tramite servizio Windows'.";
