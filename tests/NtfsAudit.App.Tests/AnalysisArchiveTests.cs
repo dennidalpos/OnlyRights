@@ -176,5 +176,122 @@ namespace NtfsAudit.App.Tests
                 }
             }
         }
+
+        [Fact]
+        public void Export_CleansObsoleteAnalysisExportWorkspaceEntries()
+        {
+            var tempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit.Tests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempRoot);
+
+            try
+            {
+                var workspace = Path.Combine(Path.GetTempPath(), "NtfsAudit", "exports");
+                Directory.CreateDirectory(workspace);
+                var obsoleteFile = Path.Combine(workspace, string.Format("stale_{0}.tmp", Guid.NewGuid().ToString("N")));
+                File.WriteAllText(obsoleteFile, "stale");
+                File.SetLastWriteTimeUtc(obsoleteFile, DateTime.UtcNow.AddDays(-10));
+
+                var dataPath = Path.Combine(tempRoot, "scan.jsonl");
+                var errorPath = Path.Combine(tempRoot, "errors.jsonl");
+                var archivePath = Path.Combine(tempRoot, "analysis.ntaudit");
+
+                var record = new ExportRecord
+                {
+                    FolderPath = @"C:\data",
+                    PrincipalName = "Everyone",
+                    PrincipalSid = "S-1-1-0",
+                    PrincipalType = "Group",
+                    PermissionLayer = PermissionLayer.Ntfs,
+                    AllowDeny = "Allow",
+                    RightsSummary = "Read",
+                    EffectiveRightsSummary = "Read",
+                    HasExplicitPermissions = true
+                };
+
+                File.WriteAllText(dataPath, Newtonsoft.Json.JsonConvert.SerializeObject(record) + Environment.NewLine);
+                File.WriteAllText(errorPath, string.Empty);
+
+                var archive = new AnalysisArchive();
+                archive.Export(new ScanResult
+                {
+                    TempDataPath = dataPath,
+                    ErrorPath = errorPath,
+                    RootPath = @"C:\data",
+                    RootPathKind = PathKind.Local,
+                    Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase),
+                    TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase),
+                    ScanOptions = new ScanOptions { RootPath = @"C:\data" },
+                    ScannedAtUtc = DateTime.UtcNow
+                }, @"C:\data", archivePath);
+
+                Assert.False(File.Exists(obsoleteFile));
+            }
+            finally
+            {
+                if (Directory.Exists(tempRoot))
+                {
+                    Directory.Delete(tempRoot, true);
+                }
+            }
+        }
+
+        [Fact]
+        public void Import_CleansObsoleteAnalysisImportWorkspaceEntries()
+        {
+            var tempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit.Tests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempRoot);
+
+            try
+            {
+                var dataPath = Path.Combine(tempRoot, "scan.jsonl");
+                var errorPath = Path.Combine(tempRoot, "errors.jsonl");
+                var archivePath = Path.Combine(tempRoot, "analysis.ntaudit");
+
+                var record = new ExportRecord
+                {
+                    FolderPath = @"C:\data",
+                    PrincipalName = "Everyone",
+                    PrincipalSid = "S-1-1-0",
+                    PrincipalType = "Group",
+                    PermissionLayer = PermissionLayer.Ntfs,
+                    AllowDeny = "Allow",
+                    RightsSummary = "Read",
+                    EffectiveRightsSummary = "Read",
+                    HasExplicitPermissions = true
+                };
+
+                File.WriteAllText(dataPath, Newtonsoft.Json.JsonConvert.SerializeObject(record) + Environment.NewLine);
+                File.WriteAllText(errorPath, string.Empty);
+
+                var archive = new AnalysisArchive();
+                archive.Export(new ScanResult
+                {
+                    TempDataPath = dataPath,
+                    ErrorPath = errorPath,
+                    RootPath = @"C:\data",
+                    RootPathKind = PathKind.Local,
+                    Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase),
+                    TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase),
+                    ScanOptions = new ScanOptions { RootPath = @"C:\data" },
+                    ScannedAtUtc = DateTime.UtcNow
+                }, @"C:\data", archivePath);
+
+                var workspace = Path.Combine(Path.GetTempPath(), "NtfsAudit", "imports");
+                var obsoleteDir = Path.Combine(workspace, string.Format("stale_{0}", Guid.NewGuid().ToString("N")));
+                Directory.CreateDirectory(obsoleteDir);
+                File.SetLastWriteTimeUtc(obsoleteDir, DateTime.UtcNow.AddDays(-10));
+
+                archive.Import(archivePath);
+
+                Assert.False(Directory.Exists(obsoleteDir));
+            }
+            finally
+            {
+                if (Directory.Exists(tempRoot))
+                {
+                    Directory.Delete(tempRoot, true);
+                }
+            }
+        }
     }
 }
