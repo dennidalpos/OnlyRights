@@ -11,7 +11,7 @@ namespace NtfsAudit.App.Services
 {
     public class AnalysisArchive
     {
-        private const int CurrentArchiveVersion = 3;
+        private const int CurrentArchiveVersion = 4;
         private const string DataEntryName = "data.jsonl";
         private const string ErrorsEntryName = "errors.jsonl";
         private const string TreeEntryName = "tree.json";
@@ -141,7 +141,7 @@ namespace NtfsAudit.App.Services
                     RootPath = resolvedRootPath,
                     RootPathKind = meta.RootPathKind == PathKind.Unknown ? PathResolver.DetectPathKind(resolvedRootPath) : meta.RootPathKind,
                     ScanOptions = scanOptions,
-                    ScannedAtUtc = meta.CreatedAt
+                    ScannedAtUtc = NormalizeImportedTimestamp(meta.CreatedAt, ioArchivePath)
                 };
 
                 importSucceeded = true;
@@ -167,7 +167,7 @@ namespace NtfsAudit.App.Services
         {
             if (!string.IsNullOrWhiteSpace(rootPath))
             {
-                return PathResolver.FromExtendedPath(rootPath);
+                return NormalizeExportPath(rootPath);
             }
 
             if (scanOptions == null && !string.IsNullOrWhiteSpace(dataPath))
@@ -177,7 +177,7 @@ namespace NtfsAudit.App.Services
 
             if (scanOptions != null && !string.IsNullOrWhiteSpace(scanOptions.RootPath))
             {
-                return PathResolver.FromExtendedPath(scanOptions.RootPath);
+                return NormalizeExportPath(scanOptions.RootPath);
             }
 
             return string.Empty;
@@ -244,7 +244,8 @@ namespace NtfsAudit.App.Services
                     continue;
                 }
                 if (record == null) continue;
-                if (string.IsNullOrWhiteSpace(record.FolderPath)) continue;
+                var folderPath = NormalizeExportPath(record.FolderPath);
+                if (string.IsNullOrWhiteSpace(folderPath)) continue;
                 if (string.Equals(record.PrincipalType, "Meta", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(record.PrincipalName, "SCAN_OPTIONS", StringComparison.OrdinalIgnoreCase))
                 {
@@ -252,18 +253,18 @@ namespace NtfsAudit.App.Services
                 }
 
                 FolderDetail detail;
-                if (!details.TryGetValue(record.FolderPath, out detail))
+                if (!details.TryGetValue(folderPath, out detail))
                 {
                     detail = new FolderDetail();
-                    details[record.FolderPath] = detail;
+                    details[folderPath] = detail;
                 }
 
                 var entryKey = BuildEntryKey(record);
                 HashSet<string> folderKeys;
-                if (!dedupe.TryGetValue(record.FolderPath, out folderKeys))
+                if (!dedupe.TryGetValue(folderPath, out folderKeys))
                 {
                     folderKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    dedupe[record.FolderPath] = folderKeys;
+                    dedupe[folderPath] = folderKeys;
                 }
                 if (!folderKeys.Add(entryKey))
                 {
@@ -272,7 +273,7 @@ namespace NtfsAudit.App.Services
 
                 var entry = new AceEntry
                 {
-                    FolderPath = record.FolderPath,
+                    FolderPath = folderPath,
                     PrincipalName = record.PrincipalName,
                     PrincipalSid = record.PrincipalSid,
                     PrincipalType = record.PrincipalType,
@@ -294,15 +295,15 @@ namespace NtfsAudit.App.Services
                     PathKind = record.PathKind,
                     Depth = record.Depth,
                     ResourceType = record.ResourceType,
-                    TargetPath = record.TargetPath,
+                    TargetPath = NormalizeExportPath(record.TargetPath),
                     Owner = record.Owner,
                     ShareName = record.ShareName,
                     ShareServer = record.ShareServer,
                     AuditSummary = record.AuditSummary,
                     RiskLevel = record.RiskLevel,
                     IsDisabled = record.IsDisabled,
-                    IsServiceAccount = SidClassifier.IsServiceAccountSid(record.PrincipalSid),
-                    IsAdminAccount = SidClassifier.IsPrivilegedGroupSid(record.PrincipalSid),
+                    IsServiceAccount = record.IsServiceAccount || SidClassifier.IsServiceAccountSid(record.PrincipalSid),
+                    IsAdminAccount = record.IsAdminAccount || SidClassifier.IsPrivilegedGroupSid(record.PrincipalSid),
                     HasExplicitPermissions = record.HasExplicitPermissions,
                     IsInheritanceDisabled = record.IsInheritanceDisabled,
                     MemberNames = record.MemberNames == null ? null : new List<string>(record.MemberNames)
@@ -476,7 +477,7 @@ namespace NtfsAudit.App.Services
                 record.Source ?? string.Empty,
                 record.Depth,
                 record.ResourceType ?? string.Empty,
-                record.TargetPath ?? string.Empty,
+                NormalizeExportPath(record.TargetPath) ?? string.Empty,
                 record.Owner ?? string.Empty,
                 record.ShareName ?? string.Empty,
                 record.ShareServer ?? string.Empty,
@@ -511,16 +512,18 @@ namespace NtfsAudit.App.Services
                     continue;
                 }
                 if (record == null || string.IsNullOrWhiteSpace(record.FolderPath)) continue;
+                var folderPath = NormalizeExportPath(record.FolderPath);
+                if (string.IsNullOrWhiteSpace(folderPath)) continue;
                 if (string.Equals(record.PrincipalType, "Meta", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(record.PrincipalName, "SCAN_OPTIONS", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
-                if (!IsWithinRoot(NormalizeTreePath(record.FolderPath), normalizedRoot))
+                if (!IsWithinRoot(NormalizeTreePath(folderPath), normalizedRoot))
                 {
                     continue;
                 }
-                folders.Add(record.FolderPath);
+                folders.Add(folderPath);
             }
 
             var parentCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -588,6 +591,33 @@ namespace NtfsAudit.App.Services
             }
 
             return treeMap;
+        }
+
+
+        private static DateTime NormalizeImportedTimestamp(DateTime importedTimestamp, string archivePath)
+        {
+            if (importedTimestamp != default(DateTime))
+            {
+                return importedTimestamp.Kind == DateTimeKind.Unspecified
+                    ? DateTime.SpecifyKind(importedTimestamp, DateTimeKind.Utc)
+                    : importedTimestamp.ToUniversalTime();
+            }
+
+            try
+            {
+                var fallback = File.GetLastWriteTimeUtc(archivePath);
+                return fallback == default(DateTime) ? DateTime.UtcNow : fallback;
+            }
+            catch
+            {
+                return DateTime.UtcNow;
+            }
+        }
+
+        private static string NormalizeExportPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return path;
+            return PathResolver.FromExtendedPath(path).Replace('/', '\\').Trim();
         }
 
         private static string NormalizeTreePath(string path)
