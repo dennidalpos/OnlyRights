@@ -92,11 +92,12 @@ namespace NtfsAudit.App
             _notifyIcon.Visible = showTray;
             _notifyIcon.Text = TruncateForNotifyIcon(string.IsNullOrWhiteSpace(status) ? "NTFS Audit" : status);
 
-            if (viewModel.IsServiceRuntimeRunning
+            if (WindowState == WindowState.Minimized
+                && viewModel.IsServiceRuntimeRunning
                 && !string.IsNullOrWhiteSpace(status)
                 && !string.Equals(_lastTrayStatus, status, StringComparison.OrdinalIgnoreCase))
             {
-                _notifyIcon.ShowBalloonTip(3000, "NTFS Audit", status, WinForms.ToolTipIcon.Info);
+                _notifyIcon.ShowBalloonTip(2500, "NTFS Audit - servizio", status, WinForms.ToolTipIcon.Info);
             }
 
             _lastTrayStatus = status;
@@ -111,7 +112,7 @@ namespace NtfsAudit.App
 
             Hide();
             UpdateTrayStatus();
-            _notifyIcon.ShowBalloonTip(2500, "NTFS Audit", "App ridotta in tray. Monitoraggio servizio attivo.", WinForms.ToolTipIcon.Info);
+            _notifyIcon.ShowBalloonTip(2500, "NTFS Audit", "App ridotta in tray. Il servizio continua in background.", WinForms.ToolTipIcon.Info);
         }
 
         private void RestoreFromTray()
@@ -136,7 +137,7 @@ namespace NtfsAudit.App
                 WindowState = WindowState.Minimized;
                 Hide();
                 UpdateTrayStatus();
-                _notifyIcon.ShowBalloonTip(2500, "NTFS Audit", "Scansione servizio in corso: app mantenuta in tray.", WinForms.ToolTipIcon.Info);
+                _notifyIcon.ShowBalloonTip(2500, "NTFS Audit", "Servizio attivo: l'app resta nel tray finché la scansione è in corso.", WinForms.ToolTipIcon.Info);
             }
         }
 
