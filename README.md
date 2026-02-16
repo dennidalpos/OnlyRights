@@ -45,10 +45,9 @@ Suite Windows per analisi ACL NTFS/SMB con UI interattiva, coda job via servizio
 
 - L’app legge periodicamente `%ProgramData%\NtfsAudit\service-status.json`.
 - In UI mostra badge runtime (`ServiceRuntimeStatusText`) con:
-  - in attesa,
-  - job in coda,
-  - root corrente,
-  - completamento job.
+  - root corrente e progress `root i/n`,
+  - **code scansioni** (`PendingJobs`) sempre esplicitate,
+  - ultimo messaggio operativo del servizio.
 
 ### Tray icon
 
@@ -92,10 +91,11 @@ Comportamento:
 
 ### Stop scansione per aggiornare il job
 
-- Pulsante **Stop** e voce tray **Ferma scansione / job**:
+- Pulsante **Stop + pulizia** e voce tray **Ferma scansione / job**:
   - annullano scansione locale in corso,
   - fermano il servizio (se running),
   - rimuovono i job pendenti (`job_*.json`),
+  - eseguono automaticamente la pulizia cache/residui (temp, cache locale, stato servizio),
   - consentono di aggiornare subito la lista cartelle e rilanciare.
 
 ---

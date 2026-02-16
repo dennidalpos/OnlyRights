@@ -2107,15 +2107,23 @@ namespace NtfsAudit.App.ViewModels
         private void StopScan()
         {
             if (_isViewerMode) return;
-            if (_cts != null)
+
+            var hasRunningLocalScan = _cts != null;
+            if (hasRunningLocalScan)
             {
                 _cts.Cancel();
-                ProgressText = "Richiesta di stop inviata. Puoi aggiungere nuove cartelle quando la scansione termina.";
             }
 
             if (IsServiceRuntimeRunning)
             {
                 StopServiceRuntimeAndClearQueue();
+            }
+
+            CleanupResidualFiles(true);
+
+            if (hasRunningLocalScan)
+            {
+                ProgressText = "Richiesta di stop inviata. Pulizia cache/residui completata; puoi aggiungere nuove cartelle al job.";
             }
         }
 
@@ -2168,6 +2176,11 @@ namespace NtfsAudit.App.ViewModels
 
         private void CleanupResidualFiles()
         {
+            CleanupResidualFiles(false);
+        }
+
+        private void CleanupResidualFiles(bool triggeredByStop)
+        {
             var removedEntries = 0;
 
             var tempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit");
@@ -2180,6 +2193,14 @@ namespace NtfsAudit.App.ViewModels
             var jobsRoot = Path.Combine(programDataRoot, "jobs");
             removedEntries += TryDeleteDirectory(jobsRoot);
             removedEntries += TryDeleteFile(Path.Combine(programDataRoot, "service-status.json"));
+
+            if (triggeredByStop)
+            {
+                ProgressText = removedEntries > 0
+                    ? string.Format("Analisi fermata: rimossi {0} elementi residui (cache/job/temp).", removedEntries)
+                    : "Analisi fermata: nessun residuo da pulire.";
+                return;
+            }
 
             ProgressText = removedEntries > 0
                 ? string.Format("Pulizia completata: rimossi {0} elementi residui.", removedEntries)
@@ -3625,19 +3646,23 @@ namespace NtfsAudit.App.ViewModels
                 }
 
                 IsServiceRuntimeRunning = status.IsRunning;
+                var queueText = status.PendingJobs > 0
+                    ? string.Format(" | code scansioni: {0}", status.PendingJobs)
+                    : " | code scansioni: 0";
+
                 if (status.IsRunning)
                 {
                     var rootLabel = string.IsNullOrWhiteSpace(status.CurrentRootPath) ? "root sconosciuta" : status.CurrentRootPath;
                     var progress = status.TotalRoots > 0
                         ? string.Format("{0}/{1}", status.CurrentRootIndex, status.TotalRoots)
                         : "?/?";
-                    ServiceRuntimeStatusText = string.Format("Servizio in esecuzione: {0} (root {1})", rootLabel, progress);
+                    ServiceRuntimeStatusText = string.Format("Servizio in esecuzione: {0} (root {1}){2}", rootLabel, progress, queueText);
                 }
                 else
                 {
                     ServiceRuntimeStatusText = string.IsNullOrWhiteSpace(status.LastMessage)
-                        ? "Servizio: in attesa"
-                        : string.Format("Servizio: {0}", status.LastMessage);
+                        ? string.Format("Servizio: in attesa{0}", queueText)
+                        : string.Format("Servizio: {0}{1}", status.LastMessage, queueText);
                 }
             }
             catch
