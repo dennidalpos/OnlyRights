@@ -19,7 +19,8 @@ param(
     [switch]$CleanServiceJobs,
     [switch]$CleanScanData,
     [switch]$CleanAnalysisImports,
-    [switch]$CleanAnalysisExports
+    [switch]$CleanAnalysisExports,
+    [switch]$CleanAnalysisWorkspace
 )
 
 $ErrorActionPreference = "Stop"
@@ -78,6 +79,11 @@ if ($CleanAllTemp) {
     $CleanExports = $true
     $CleanServiceJobs = $true
     $CleanScanData = $true
+    $CleanAnalysisImports = $true
+    $CleanAnalysisExports = $true
+}
+
+if ($CleanAnalysisWorkspace) {
     $CleanAnalysisImports = $true
     $CleanAnalysisExports = $true
 }

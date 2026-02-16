@@ -99,6 +99,7 @@ namespace NtfsAudit.App.ViewModels
         private string _lastExportDirectory;
         private string _lastImportDirectory;
         private string _uiPreferencesPath;
+        private bool _suspendUiPreferencePersistence;
         private Dictionary<string, List<string>> _fullTreeMap;
         private Dictionary<string, List<string>> _currentFilteredTreeMap;
         private bool _treeFilterExplicitOnly;
@@ -920,31 +921,31 @@ namespace NtfsAudit.App.ViewModels
         public bool TreeFilterExplicitOnly
         {
             get { return _treeFilterExplicitOnly; }
-            set { _treeFilterExplicitOnly = value; OnPropertyChanged("TreeFilterExplicitOnly"); ReloadTreeWithFilters(); }
+            set { _treeFilterExplicitOnly = value; OnPropertyChanged("TreeFilterExplicitOnly"); ReloadTreeWithFilters(); SaveUiPreferences(); }
         }
 
         public bool TreeFilterInheritanceDisabledOnly
         {
             get { return _treeFilterInheritanceDisabledOnly; }
-            set { _treeFilterInheritanceDisabledOnly = value; OnPropertyChanged("TreeFilterInheritanceDisabledOnly"); ReloadTreeWithFilters(); }
+            set { _treeFilterInheritanceDisabledOnly = value; OnPropertyChanged("TreeFilterInheritanceDisabledOnly"); ReloadTreeWithFilters(); SaveUiPreferences(); }
         }
 
         public bool TreeFilterDiffOnly
         {
             get { return _treeFilterDiffOnly; }
-            set { _treeFilterDiffOnly = value; OnPropertyChanged("TreeFilterDiffOnly"); ReloadTreeWithFilters(); }
+            set { _treeFilterDiffOnly = value; OnPropertyChanged("TreeFilterDiffOnly"); ReloadTreeWithFilters(); SaveUiPreferences(); }
         }
 
         public bool TreeFilterExplicitDenyOnly
         {
             get { return _treeFilterExplicitDenyOnly; }
-            set { _treeFilterExplicitDenyOnly = value; OnPropertyChanged("TreeFilterExplicitDenyOnly"); ReloadTreeWithFilters(); }
+            set { _treeFilterExplicitDenyOnly = value; OnPropertyChanged("TreeFilterExplicitDenyOnly"); ReloadTreeWithFilters(); SaveUiPreferences(); }
         }
 
         public bool TreeFilterBaselineMismatchOnly
         {
             get { return _treeFilterBaselineMismatchOnly; }
-            set { _treeFilterBaselineMismatchOnly = value; OnPropertyChanged("TreeFilterBaselineMismatchOnly"); ReloadTreeWithFilters(); }
+            set { _treeFilterBaselineMismatchOnly = value; OnPropertyChanged("TreeFilterBaselineMismatchOnly"); ReloadTreeWithFilters(); SaveUiPreferences(); }
         }
 
         public bool TreeFilterFilesOnly
@@ -960,6 +961,7 @@ namespace NtfsAudit.App.ViewModels
                     OnPropertyChanged("TreeFilterFoldersOnly");
                 }
                 ReloadTreeWithFilters();
+                SaveUiPreferences();
             }
         }
 
@@ -976,6 +978,7 @@ namespace NtfsAudit.App.ViewModels
                     OnPropertyChanged("TreeFilterFilesOnly");
                 }
                 ReloadTreeWithFilters();
+                SaveUiPreferences();
             }
         }
 
@@ -3181,7 +3184,10 @@ namespace NtfsAudit.App.ViewModels
 
         private void RefreshAclFilters()
         {
-            SaveUiPreferences();
+            if (!_suspendUiPreferencePersistence)
+            {
+                SaveUiPreferences();
+            }
             FilteredGroupEntries.Refresh();
             FilteredUserEntries.Refresh();
             FilteredAllEntries.Refresh();
@@ -3344,36 +3350,46 @@ namespace NtfsAudit.App.ViewModels
 
         private void ClearResults()
         {
-            FolderTree.Clear();
-            _fullTreeMap = null;
-            _currentFilteredTreeMap = null;
-            GroupEntries.Clear();
-            UserEntries.Clear();
-            AllEntries.Clear();
-            ShareEntries.Clear();
-            EffectiveEntries.Clear();
-            Errors.Clear();
-            SelectedFolderPath = string.Empty;
-            ProcessedCount = 0;
-            ProcessedFilesCount = 0;
-            ErrorCount = 0;
-            ElapsedText = "00:00:00";
-            CurrentPathText = string.Empty;
-            CurrentPathBackground = "Transparent";
-            AclFilter = string.Empty;
-            ShowAllow = true;
-            ShowDeny = true;
-            ShowInherited = true;
-            ShowExplicit = true;
-            ShowProtected = true;
-            ShowDisabled = true;
-            ShowEveryone = true;
-            ShowAuthenticatedUsers = true;
-            ShowServiceAccounts = true;
-            ShowAdminAccounts = true;
-            ShowOtherPrincipals = true;
-            ResetTreeFilters(false);
-            UpdateSummary(null);
+            _suspendUiPreferencePersistence = true;
+            try
+            {
+                FolderTree.Clear();
+                _fullTreeMap = null;
+                _currentFilteredTreeMap = null;
+                GroupEntries.Clear();
+                UserEntries.Clear();
+                AllEntries.Clear();
+                ShareEntries.Clear();
+                EffectiveEntries.Clear();
+                Errors.Clear();
+                SelectedFolderPath = string.Empty;
+                ProcessedCount = 0;
+                ProcessedFilesCount = 0;
+                ErrorCount = 0;
+                ElapsedText = "00:00:00";
+                CurrentPathText = string.Empty;
+                CurrentPathBackground = "Transparent";
+                AclFilter = string.Empty;
+                ShowAllow = true;
+                ShowDeny = true;
+                ShowInherited = true;
+                ShowExplicit = true;
+                ShowProtected = true;
+                ShowDisabled = true;
+                ShowEveryone = true;
+                ShowAuthenticatedUsers = true;
+                ShowServiceAccounts = true;
+                ShowAdminAccounts = true;
+                ShowOtherPrincipals = true;
+                ResetTreeFilters(false);
+                UpdateSummary(null);
+            }
+            finally
+            {
+                _suspendUiPreferencePersistence = false;
+            }
+
+            SaveUiPreferences();
         }
 
         private void ResetTreeFilters()
@@ -3776,6 +3792,8 @@ namespace NtfsAudit.App.ViewModels
                 var prefs = JsonConvert.DeserializeObject<UiPreferences>(json);
                 if (prefs == null) return;
 
+                _suspendUiPreferencePersistence = true;
+
                 ShowAllow = prefs.ShowAllow;
                 ShowDeny = prefs.ShowDeny;
                 ShowInherited = prefs.ShowInherited;
@@ -3825,6 +3843,10 @@ namespace NtfsAudit.App.ViewModels
             }
             catch
             {
+            }
+            finally
+            {
+                _suspendUiPreferencePersistence = false;
             }
         }
 

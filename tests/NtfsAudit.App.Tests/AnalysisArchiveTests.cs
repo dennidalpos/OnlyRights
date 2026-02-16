@@ -121,5 +121,60 @@ namespace NtfsAudit.App.Tests
                 }
             }
         }
+
+        [Fact]
+        public void Import_UsesDedicatedAnalysisImportWorkspace()
+        {
+            var tempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit.Tests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempRoot);
+
+            try
+            {
+                var dataPath = Path.Combine(tempRoot, "scan.jsonl");
+                var errorPath = Path.Combine(tempRoot, "errors.jsonl");
+                var archivePath = Path.Combine(tempRoot, "analysis.ntaudit");
+
+                var record = new ExportRecord
+                {
+                    FolderPath = @"C:\data",
+                    PrincipalName = "Everyone",
+                    PrincipalSid = "S-1-1-0",
+                    PrincipalType = "Group",
+                    PermissionLayer = PermissionLayer.Ntfs,
+                    AllowDeny = "Allow",
+                    RightsSummary = "Read",
+                    EffectiveRightsSummary = "Read",
+                    HasExplicitPermissions = true
+                };
+
+                File.WriteAllText(dataPath, Newtonsoft.Json.JsonConvert.SerializeObject(record) + Environment.NewLine);
+                File.WriteAllText(errorPath, string.Empty);
+
+                var archive = new AnalysisArchive();
+                archive.Export(new ScanResult
+                {
+                    TempDataPath = dataPath,
+                    ErrorPath = errorPath,
+                    RootPath = @"C:\data",
+                    RootPathKind = PathKind.Local,
+                    Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase),
+                    TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase),
+                    ScanOptions = new ScanOptions { RootPath = @"C:\data" },
+                    ScannedAtUtc = DateTime.UtcNow
+                }, @"C:\data", archivePath);
+
+                var imported = archive.Import(archivePath);
+
+                Assert.NotNull(imported.ScanResult);
+                Assert.Contains(Path.Combine("NtfsAudit", "imports"), imported.ScanResult.TempDataPath, StringComparison.OrdinalIgnoreCase);
+            }
+            finally
+            {
+                if (Directory.Exists(tempRoot))
+                {
+                    Directory.Delete(tempRoot, true);
+                }
+            }
+        }
     }
 }
