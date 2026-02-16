@@ -17,7 +17,9 @@ param(
     [switch]$CleanLogs,
     [switch]$CleanExports,
     [switch]$CleanServiceJobs,
-    [switch]$CleanScanData
+    [switch]$CleanScanData,
+    [switch]$CleanAnalysisImports,
+    [switch]$CleanAnalysisExports
 )
 
 $ErrorActionPreference = "Stop"
@@ -76,6 +78,8 @@ if ($CleanAllTemp) {
     $CleanExports = $true
     $CleanServiceJobs = $true
     $CleanScanData = $true
+    $CleanAnalysisImports = $true
+    $CleanAnalysisExports = $true
 }
 
 if ($CleanServiceJobs) {
@@ -90,6 +94,17 @@ if ($CleanScanData) {
     if (-not [string]::IsNullOrWhiteSpace($programData)) {
         Remove-PathIfExists (Join-Path $programData "NtfsAudit\service-status.json")
     }
+}
+
+
+if ($CleanAnalysisImports) {
+    $baseTemp = Get-TempRoot $TempRoot
+    Remove-PathIfExists (Join-Path (Join-Path $baseTemp "NtfsAudit") "imports")
+}
+
+if ($CleanAnalysisExports) {
+    $baseTemp = Get-TempRoot $TempRoot
+    Remove-PathIfExists (Join-Path (Join-Path $baseTemp "NtfsAudit") "exports")
 }
 
 if ($CleanExports) {

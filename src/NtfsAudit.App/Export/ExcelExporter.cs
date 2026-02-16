@@ -81,9 +81,12 @@ namespace NtfsAudit.App.Export
             }
 
             var result = new ExcelExportResult();
+            var tempOutputPath = ioOutputPath + ".tmp_" + Guid.NewGuid().ToString("N");
 
-            using (var document = SpreadsheetDocument.Create(ioOutputPath, SpreadsheetDocumentType.Workbook))
+            try
             {
+                using (var document = SpreadsheetDocument.Create(tempOutputPath, SpreadsheetDocumentType.Workbook))
+                {
                 var workbookPart = document.AddWorkbookPart();
                 workbookPart.Workbook = new Workbook();
                 var sheets = workbookPart.Workbook.AppendChild(new Sheets());
@@ -120,9 +123,23 @@ namespace NtfsAudit.App.Export
                 sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(errorSheet), SheetId = sheetId, Name = "Errors" });
 
                 workbookPart.Workbook.Save();
-            }
+                }
 
-            return result;
+                if (File.Exists(ioOutputPath))
+                {
+                    File.Delete(ioOutputPath);
+                }
+                File.Move(tempOutputPath, ioOutputPath);
+
+                return result;
+            }
+            finally
+            {
+                if (File.Exists(tempOutputPath))
+                {
+                    File.Delete(tempOutputPath);
+                }
+            }
         }
 
         private IEnumerable<ExportRecord> ReadFolderPermissions(string tempDataPath)
@@ -227,7 +244,7 @@ namespace NtfsAudit.App.Export
             {
                 GetFolderName(record.FolderPath),
                 record.PrincipalName,
-                record.TargetPath,
+                NormalizeExportPath(record.TargetPath),
                 record.EffectiveRightsSummary,
                 record.Source,
                 record.PathKind.ToString(),
@@ -255,6 +272,13 @@ namespace NtfsAudit.App.Export
                 record.IsAdminAccount.ToString(),
                 record.PrincipalSid
             };
+        }
+
+
+        private static string NormalizeExportPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return path;
+            return PathResolver.FromExtendedPath(path).Replace('/', '\\');
         }
 
         private string BuildSheetName(string prefix, int index)

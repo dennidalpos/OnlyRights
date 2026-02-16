@@ -24,7 +24,9 @@ param(
     [switch]$CleanLogs,
     [switch]$CleanExports,
     [switch]$CleanServiceJobs,
-    [switch]$CleanScanData
+    [switch]$CleanScanData,
+    [switch]$CleanAnalysisImports,
+    [switch]$CleanAnalysisExports
 )
 
 $ErrorActionPreference = "Stop"
@@ -107,6 +109,8 @@ if ($RunClean) {
     if ($CleanExports) { $cleanArgs += "-CleanExports" }
     if ($CleanServiceJobs) { $cleanArgs += "-CleanServiceJobs" }
     if ($CleanScanData) { $cleanArgs += "-CleanScanData" }
+    if ($CleanAnalysisImports) { $cleanArgs += "-CleanAnalysisImports" }
+    if ($CleanAnalysisExports) { $cleanArgs += "-CleanAnalysisExports" }
 
     if (-not $CleanDist) { $cleanArgs += "-KeepDist" }
     if (-not $CleanArtifacts) { $cleanArgs += "-KeepArtifacts" }
@@ -126,6 +130,8 @@ if ($CleanAllTemp) {
     $CleanExports = $true
     $CleanServiceJobs = $true
     $CleanScanData = $true
+    $CleanAnalysisImports = $true
+    $CleanAnalysisExports = $true
 }
 
 if ($CleanTemp) {
@@ -149,6 +155,17 @@ if ($CleanArtifacts) {
 
 if ($CleanDist) {
     Remove-PathIfExists $distRoot
+}
+
+
+if ($CleanAnalysisImports) {
+    $baseTemp = Get-TempRoot $TempRoot
+    Remove-PathIfExists (Join-Path (Join-Path $baseTemp "NtfsAudit") "imports")
+}
+
+if ($CleanAnalysisExports) {
+    $baseTemp = Get-TempRoot $TempRoot
+    Remove-PathIfExists (Join-Path (Join-Path $baseTemp "NtfsAudit") "exports")
 }
 
 if ($CleanExports) {

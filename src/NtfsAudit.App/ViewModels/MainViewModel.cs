@@ -2269,6 +2269,7 @@ namespace NtfsAudit.App.ViewModels
                 EnsureExportOutput(outputPath);
                 _hasExported = true;
                 UpdateLastDirectory(ref _lastExportDirectory, outputPath);
+                ProgressText = string.Format("Export Excel completato: {0}", outputPath);
                 var warningMessage = BuildExcelWarningMessage(result);
                 if (!string.IsNullOrWhiteSpace(warningMessage))
                 {
@@ -2375,6 +2376,7 @@ namespace NtfsAudit.App.ViewModels
                     SelectFolder(root);
                 }
                 UpdateLastDirectory(ref _lastImportDirectory, dialog.FileName);
+                ProgressText = string.Format("Analisi importata: {0} cartelle, {1} errori", _scanResult.Details == null ? 0 : _scanResult.Details.Count, ErrorCount);
                 UpdateCommands();
             }
             catch (Exception ex)
@@ -3250,8 +3252,8 @@ namespace NtfsAudit.App.ViewModels
 
             var isEveryone = IsEveryone(entry.PrincipalSid, entry.PrincipalName);
             var isAuthUsers = IsAuthenticatedUsers(entry.PrincipalSid, entry.PrincipalName);
-            var isService = entry.IsServiceAccount;
-            var isAdmin = entry.IsAdminAccount;
+            var isService = entry.IsServiceAccount || SidClassifier.IsServiceAccountSid(entry.PrincipalSid);
+            var isAdmin = entry.IsAdminAccount || SidClassifier.IsPrivilegedGroupSid(entry.PrincipalSid);
             var isOther = !(isEveryone || isAuthUsers || isService || isAdmin);
             if (isEveryone && !ShowEveryone)
             {
