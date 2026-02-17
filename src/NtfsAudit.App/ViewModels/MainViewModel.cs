@@ -3985,9 +3985,10 @@ namespace NtfsAudit.App.ViewModels
                 var isScanRunning = status.IsRunning;
                 var isServiceRunning = serviceState.IsRunning;
                 IsServiceRuntimeRunning = isScanRunning;
-                var queueText = status.PendingJobs > 0
-                    ? string.Format(" | code scansioni: {0}", status.PendingJobs)
-                    : " | code scansioni: 0";
+                var queuedJobs = Math.Max(0, status.PendingJobs);
+                var queuedRoots = Math.Max(0, status.RemainingRootsInCurrentJob);
+                var totalQueuedScans = queuedJobs + queuedRoots;
+                var queueText = string.Format(" | code scansioni: {0}", totalQueuedScans);
 
                 if (isScanRunning)
                 {

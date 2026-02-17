@@ -40,6 +40,7 @@ namespace NtfsAudit.Service
                 {
                     IsRunning = false,
                     PendingJobs = 0,
+                    RemainingRootsInCurrentJob = 0,
                     LastUpdateUtc = DateTime.UtcNow,
                     LastMessage = "In attesa di job"
                 });
@@ -51,6 +52,7 @@ namespace NtfsAudit.Service
             {
                 IsRunning = false,
                 PendingJobs = files.Length,
+                RemainingRootsInCurrentJob = 0,
                 LastUpdateUtc = DateTime.UtcNow,
                 LastMessage = files.Length > 0 ? "Job in coda" : "In attesa di job"
             });
@@ -91,6 +93,7 @@ namespace NtfsAudit.Service
                         CurrentRootIndex = index + 1,
                         TotalRoots = optionsList.Count,
                         PendingJobs = Math.Max(0, files.Length - 1),
+                        RemainingRootsInCurrentJob = Math.Max(0, optionsList.Count - (index + 1)),
                         StartedAtUtc = startedAt,
                         LastUpdateUtc = DateTime.UtcNow,
                         LastMessage = string.Format("Scansione root {0}/{1}", index + 1, optionsList.Count)
@@ -117,6 +120,7 @@ namespace NtfsAudit.Service
                 {
                     IsRunning = false,
                     PendingJobs = pending,
+                    RemainingRootsInCurrentJob = 0,
                     LastUpdateUtc = DateTime.UtcNow,
                     LastMessage = pending > 0 ? "Job completato, altri job in coda" : "Ultimo job completato"
                 });
