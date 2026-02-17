@@ -35,8 +35,7 @@ namespace NtfsAudit.App.Services
             {
                 TryEnableSecurityPrivilege();
             }
-            var tempDir = Path.Combine(Path.GetTempPath(), "NtfsAudit");
-            Directory.CreateDirectory(tempDir);
+            var tempDir = EnsureTempDirectory();
             var timestamp = DateTime.Now.ToString("dd-MM-yyyy-HH-mm");
             var tempDataPath = Path.Combine(tempDir, string.Format("scan_{0}.jsonl", timestamp));
             var errorPath = Path.Combine(tempDir, string.Format("errors_{0}.jsonl", timestamp));
@@ -351,6 +350,36 @@ namespace NtfsAudit.App.Services
             };
         }
 
+        private static string EnsureTempDirectory()
+        {
+            foreach (var candidate in GetTempDirectoryCandidates())
+            {
+                try
+                {
+                    Directory.CreateDirectory(candidate);
+                    return candidate;
+                }
+                catch
+                {
+                }
+            }
+
+            var fallback = Path.Combine(Path.GetTempPath(), "NtfsAudit");
+            Directory.CreateDirectory(fallback);
+            return fallback;
+        }
+
+        private static IEnumerable<string> GetTempDirectoryCandidates()
+        {
+            var windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+            if (!string.IsNullOrWhiteSpace(windowsPath))
+            {
+                yield return Path.Combine(windowsPath, "SystemTemp", "NtfsAudit");
+            }
+
+            yield return Path.Combine(Path.GetTempPath(), "NtfsAudit");
+        }
+
         private static void DrainQueue<T>(BlockingCollection<T> queue, StreamWriter writer, CancellationToken token)
         {
             foreach (var item in queue.GetConsumingEnumerable(token))
@@ -573,14 +602,6 @@ namespace NtfsAudit.App.Services
                 lock (currentDetail)
                 {
                     currentDetail.AllEntries.Add(entry);
-                    if (resolved.IsGroup)
-                    {
-                        currentDetail.GroupEntries.Add(entry);
-                    }
-                    else
-                    {
-                        currentDetail.UserEntries.Add(entry);
-                    }
                 }
 
                 List<ResolvedPrincipal> members = null;
@@ -643,7 +664,6 @@ namespace NtfsAudit.App.Services
                         memberEntry.RiskLevel = EvaluateRisk(memberEntry);
                         lock (currentDetail)
                         {
-                            currentDetail.UserEntries.Add(memberEntry);
                             currentDetail.AllEntries.Add(memberEntry);
                         }
                         dataQueue.Add(BuildExportRecord(memberEntry, options));

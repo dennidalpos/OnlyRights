@@ -40,6 +40,7 @@ namespace NtfsAudit.Service
                 {
                     IsRunning = false,
                     PendingJobs = 0,
+                    RemainingRootsInCurrentJob = 0,
                     LastUpdateUtc = DateTime.UtcNow,
                     LastMessage = "In attesa di job"
                 });
@@ -51,6 +52,7 @@ namespace NtfsAudit.Service
             {
                 IsRunning = false,
                 PendingJobs = files.Length,
+                RemainingRootsInCurrentJob = 0,
                 LastUpdateUtc = DateTime.UtcNow,
                 LastMessage = files.Length > 0 ? "Job in coda" : "In attesa di job"
             });
@@ -91,6 +93,7 @@ namespace NtfsAudit.Service
                         CurrentRootIndex = index + 1,
                         TotalRoots = optionsList.Count,
                         PendingJobs = Math.Max(0, files.Length - 1),
+                        RemainingRootsInCurrentJob = Math.Max(0, optionsList.Count - (index + 1)),
                         StartedAtUtc = startedAt,
                         LastUpdateUtc = DateTime.UtcNow,
                         LastMessage = string.Format("Scansione root {0}/{1}", index + 1, optionsList.Count)
@@ -117,6 +120,7 @@ namespace NtfsAudit.Service
                 {
                     IsRunning = false,
                     PendingJobs = pending,
+                    RemainingRootsInCurrentJob = 0,
                     LastUpdateUtc = DateTime.UtcNow,
                     LastMessage = pending > 0 ? "Job completato, altri job in coda" : "Ultimo job completato"
                 });
@@ -162,6 +166,25 @@ namespace NtfsAudit.Service
             return name;
         }
 
+        private static void TryDeleteFile(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return;
+            }
+
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch
+            {
+            }
+        }
+
         private void RunSingleScan(ScanOptions options, CancellationToken token)
         {
             var sidCache = new SidNameCache();
@@ -173,13 +196,20 @@ namespace NtfsAudit.Service
             var groupExpansion = new GroupExpansionService(adResolver, groupCache);
             var scanService = new ScanService(identityResolver, groupExpansion);
             var result = scanService.Run(options, null, token);
-
-            if (string.IsNullOrWhiteSpace(options.OutputDirectory)) return;
-            Directory.CreateDirectory(options.OutputDirectory);
-            var archive = new AnalysisArchive();
-            var name = BuildScanNameFromRoot(options.RootPath);
-            var output = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", name, DateTime.Now.ToString("yyyy_MM_dd_HH_mm")));
-            archive.Export(result, options.RootPath, output);
+            try
+            {
+                if (string.IsNullOrWhiteSpace(options.OutputDirectory)) return;
+                Directory.CreateDirectory(options.OutputDirectory);
+                var archive = new AnalysisArchive();
+                var name = BuildScanNameFromRoot(options.RootPath);
+                var output = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", name, DateTime.Now.ToString("yyyy_MM_dd_HH_mm")));
+                archive.Export(result, options.RootPath, output);
+            }
+            finally
+            {
+                TryDeleteFile(result == null ? null : result.TempDataPath);
+                TryDeleteFile(result == null ? null : result.ErrorPath);
+            }
         }
     }
 }
