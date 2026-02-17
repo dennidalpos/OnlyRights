@@ -339,15 +339,6 @@ namespace NtfsAudit.App.Services
                 {
                     detail.IsInheritanceDisabled = true;
                 }
-                if (entry.PermissionLayer == PermissionLayer.Ntfs
-                    && string.Equals(record.PrincipalType, "Group", StringComparison.OrdinalIgnoreCase))
-                {
-                    detail.GroupEntries.Add(entry);
-                }
-                else if (entry.PermissionLayer == PermissionLayer.Ntfs)
-                {
-                    detail.UserEntries.Add(entry);
-                }
             }
 
             return details;

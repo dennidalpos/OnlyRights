@@ -120,6 +120,8 @@ namespace NtfsAudit.App.ViewModels
         private string _selectedRiskSummary = "-";
         private string _selectedAcquisitionWarnings = "-";
         private string _selectedScannedAtText = "-";
+        private const int MaxErrorsToLoad = 10000;
+        private bool _errorsTruncated;
         private string _serviceRuntimeStatusText = "Servizio: in attesa";
         private bool _isServiceRuntimeRunning;
         private bool _isServiceInstalled;
@@ -1089,9 +1091,23 @@ namespace NtfsAudit.App.ViewModels
             ShareEntries.Clear();
             EffectiveEntries.Clear();
 
-            foreach (var entry in detail.GroupEntries) GroupEntries.Add(entry);
-            foreach (var entry in detail.UserEntries) UserEntries.Add(entry);
-            foreach (var entry in detail.AllEntries) AllEntries.Add(entry);
+            foreach (var entry in detail.AllEntries)
+            {
+                AllEntries.Add(entry);
+                if (entry.PermissionLayer != PermissionLayer.Ntfs)
+                {
+                    continue;
+                }
+
+                if (string.Equals(entry.PrincipalType, "Group", StringComparison.OrdinalIgnoreCase))
+                {
+                    GroupEntries.Add(entry);
+                }
+                else
+                {
+                    UserEntries.Add(entry);
+                }
+            }
             foreach (var entry in detail.ShareEntries) ShareEntries.Add(entry);
             foreach (var entry in detail.EffectiveEntries) EffectiveEntries.Add(entry);
             UpdateSummary(detail);
@@ -2225,8 +2241,6 @@ namespace NtfsAudit.App.ViewModels
             }
 
             target.AllEntries.AddRange(source.AllEntries);
-            target.GroupEntries.AddRange(source.GroupEntries);
-            target.UserEntries.AddRange(source.UserEntries);
             target.ShareEntries.AddRange(source.ShareEntries);
             target.EffectiveEntries.AddRange(source.EffectiveEntries);
             target.HasExplicitPermissions = target.HasExplicitPermissions || source.HasExplicitPermissions;
@@ -3408,9 +3422,11 @@ namespace NtfsAudit.App.ViewModels
         private void LoadErrors(string path)
         {
             Errors.Clear();
+            _errorsTruncated = false;
             if (string.IsNullOrWhiteSpace(path)) return;
             var ioPath = PathResolver.ToExtendedPath(path);
             if (!File.Exists(ioPath)) return;
+            var loaded = 0;
             foreach (var line in File.ReadLines(ioPath))
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
@@ -3419,12 +3435,26 @@ namespace NtfsAudit.App.ViewModels
                     var error = Newtonsoft.Json.JsonConvert.DeserializeObject<ErrorEntry>(line);
                     if (error != null)
                     {
-                        Errors.Add(error);
+                        if (loaded < MaxErrorsToLoad)
+                        {
+                            Errors.Add(error);
+                            loaded++;
+                        }
+                        else
+                        {
+                            _errorsTruncated = true;
+                            break;
+                        }
                     }
                 }
                 catch
                 {
                 }
+            }
+
+            if (_errorsTruncated)
+            {
+                ProgressText = string.Format("Errori caricati parzialmente ({0}): limita uso RAM. Esporta il report completo per analisi totale.", MaxErrorsToLoad);
             }
         }
 

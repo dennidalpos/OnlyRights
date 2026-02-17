@@ -602,14 +602,6 @@ namespace NtfsAudit.App.Services
                 lock (currentDetail)
                 {
                     currentDetail.AllEntries.Add(entry);
-                    if (resolved.IsGroup)
-                    {
-                        currentDetail.GroupEntries.Add(entry);
-                    }
-                    else
-                    {
-                        currentDetail.UserEntries.Add(entry);
-                    }
                 }
 
                 List<ResolvedPrincipal> members = null;
@@ -672,7 +664,6 @@ namespace NtfsAudit.App.Services
                         memberEntry.RiskLevel = EvaluateRisk(memberEntry);
                         lock (currentDetail)
                         {
-                            currentDetail.UserEntries.Add(memberEntry);
                             currentDetail.AllEntries.Add(memberEntry);
                         }
                         dataQueue.Add(BuildExportRecord(memberEntry, options));
