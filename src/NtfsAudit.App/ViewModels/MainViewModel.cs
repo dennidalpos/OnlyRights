@@ -140,6 +140,7 @@ namespace NtfsAudit.App.ViewModels
 
             FolderTree = new ObservableCollection<FolderNodeViewModel>();
             ScanRoots = new ObservableCollection<string>();
+            ScanRoots.CollectionChanged += (_, __) => OnScanRootsCollectionChanged();
             GroupEntries = new ObservableCollection<AceEntry>();
             UserEntries = new ObservableCollection<AceEntry>();
             AllEntries = new ObservableCollection<AceEntry>();
@@ -1185,6 +1186,17 @@ namespace NtfsAudit.App.ViewModels
             RootPath = previousRoot;
         }
 
+        private void OnScanRootsCollectionChanged()
+        {
+            OnPropertyChanged("CanStart");
+            StartCommand.RaiseCanExecuteChanged();
+            SaveScanRootSetCommand.RaiseCanExecuteChanged();
+            if (!_suspendUiPreferencePersistence)
+            {
+                SaveUiPreferences();
+            }
+        }
+
         private void AddScanRoot()
         {
             if (string.IsNullOrWhiteSpace(RootPath)) return;
@@ -1249,6 +1261,8 @@ namespace NtfsAudit.App.ViewModels
                 var payload = new ScanRootSet
                 {
                     CreatedAtUtc = DateTime.UtcNow,
+                    RootPath = RootPath,
+                    AuditOutputDirectory = AuditOutputDirectory,
                     ScanRoots = ScanRoots.Where(path => !string.IsNullOrWhiteSpace(path)).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
                     ScanRootTargets = _scanRootDfsTargets.Select(item => new ScanRootTargetPreference
                     {
@@ -1282,15 +1296,18 @@ namespace NtfsAudit.App.ViewModels
             {
                 var json = File.ReadAllText(dialog.FileName);
                 var payload = JsonConvert.DeserializeObject<ScanRootSet>(json);
-                if (payload == null || payload.ScanRoots == null || payload.ScanRoots.Count == 0)
+                if (payload == null)
                 {
-                    throw new InvalidDataException("Il file non contiene cartelle valide.");
+                    throw new InvalidDataException("Il file set cartelle non è valido.");
                 }
 
                 ScanRoots.Clear();
-                foreach (var root in payload.ScanRoots.Where(path => !string.IsNullOrWhiteSpace(path)).Distinct(StringComparer.OrdinalIgnoreCase))
+                if (payload.ScanRoots != null)
                 {
-                    ScanRoots.Add(root);
+                    foreach (var root in payload.ScanRoots.Where(path => !string.IsNullOrWhiteSpace(path)).Distinct(StringComparer.OrdinalIgnoreCase))
+                    {
+                        ScanRoots.Add(root);
+                    }
                 }
 
                 _scanRootDfsTargets.Clear();
@@ -1311,9 +1328,19 @@ namespace NtfsAudit.App.ViewModels
                     }
                 }
 
+                if (!string.IsNullOrWhiteSpace(payload.RootPath))
+                {
+                    RootPath = payload.RootPath;
+                }
+                if (!string.IsNullOrWhiteSpace(payload.AuditOutputDirectory))
+                {
+                    AuditOutputDirectory = payload.AuditOutputDirectory;
+                }
+
                 SelectedScanRoot = ScanRoots.Count > 0 ? ScanRoots[0] : null;
                 OnPropertyChanged("CanStart");
                 StartCommand.RaiseCanExecuteChanged();
+                SaveScanRootSetCommand.RaiseCanExecuteChanged();
                 SaveUiPreferences();
                 ProgressText = string.Format("Set cartelle caricato: {0} cartelle.", ScanRoots.Count);
             }
@@ -4323,6 +4350,8 @@ namespace NtfsAudit.App.ViewModels
         private sealed class ScanRootSet
         {
             public DateTime CreatedAtUtc { get; set; }
+            public string RootPath { get; set; }
+            public string AuditOutputDirectory { get; set; }
             public List<string> ScanRoots { get; set; }
             public List<ScanRootTargetPreference> ScanRootTargets { get; set; }
         }
