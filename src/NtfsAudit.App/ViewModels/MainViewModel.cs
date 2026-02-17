@@ -174,6 +174,8 @@ namespace NtfsAudit.App.ViewModels
             ResetTreeFiltersCommand = new RelayCommand(ResetTreeFilters, () => HasScanResult);
             ClearScanDataCommand = new RelayCommand(ClearScanData, () => !_isViewerMode && !_isScanning && !IsBusy && HasScanResult);
             CleanupResidualFilesCommand = new RelayCommand(CleanupResidualFiles, () => !_isViewerMode && !IsBusy);
+            SaveScanRootSetCommand = new RelayCommand(SaveScanRootSet, () => !_isViewerMode && !IsBusy && ScanRoots.Count > 0);
+            LoadScanRootSetCommand = new RelayCommand(LoadScanRootSet, () => !_isViewerMode && !IsBusy);
 
             LoadCache();
             InitializeScanTimer();
@@ -284,6 +286,8 @@ namespace NtfsAudit.App.ViewModels
         public RelayCommand ResetTreeFiltersCommand { get; private set; }
         public RelayCommand ClearScanDataCommand { get; private set; }
         public RelayCommand CleanupResidualFilesCommand { get; private set; }
+        public RelayCommand SaveScanRootSetCommand { get; private set; }
+        public RelayCommand LoadScanRootSetCommand { get; private set; }
 
         public string RootPath
         {
@@ -377,6 +381,7 @@ namespace NtfsAudit.App.ViewModels
                     }
                 }
                 OnPropertyChanged("SelectedScanRootDfsTarget");
+                SaveUiPreferences();
             }
         }
 
@@ -1193,6 +1198,7 @@ namespace NtfsAudit.App.ViewModels
             }
             OnPropertyChanged("CanStart");
             StartCommand.RaiseCanExecuteChanged();
+            SaveUiPreferences();
         }
 
         private void RemoveScanRoot()
@@ -1205,6 +1211,101 @@ namespace NtfsAudit.App.ViewModels
             SelectedScanRoot = ScanRoots.Count > 0 ? ScanRoots[0] : null;
             OnPropertyChanged("CanStart");
             StartCommand.RaiseCanExecuteChanged();
+            SaveUiPreferences();
+        }
+
+        private void SaveScanRootSet()
+        {
+            var dialog = new Win32.SaveFileDialog
+            {
+                Filter = "Set cartelle scansione (*.scanroots)|*.scanroots|JSON (*.json)|*.json",
+                DefaultExt = ".scanroots",
+                AddExtension = true,
+                FileName = string.Format("scanroots_{0}", DateTime.Now.ToString("yyyy_MM_dd_HH_mm"))
+            };
+            if (dialog.ShowDialog() != true)
+            {
+                return;
+            }
+
+            try
+            {
+                var payload = new ScanRootSet
+                {
+                    CreatedAtUtc = DateTime.UtcNow,
+                    ScanRoots = ScanRoots.Where(path => !string.IsNullOrWhiteSpace(path)).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+                    ScanRootTargets = _scanRootDfsTargets.Select(item => new ScanRootTargetPreference
+                    {
+                        RootPath = GetScanRootKey(item.Key),
+                        DfsTarget = item.Value,
+                        NamespacePath = _scanRootNamespacePaths.ContainsKey(item.Key) ? _scanRootNamespacePaths[item.Key] : null
+                    }).ToList()
+                };
+                File.WriteAllText(dialog.FileName, JsonConvert.SerializeObject(payload, Formatting.Indented));
+                ProgressText = string.Format("Set cartelle salvato: {0}", dialog.FileName);
+            }
+            catch (Exception ex)
+            {
+                ProgressText = string.Format("Errore salvataggio set cartelle: {0}", ex.Message);
+                WpfMessageBox.Show(ProgressText, "Set cartelle", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private void LoadScanRootSet()
+        {
+            var dialog = new Win32.OpenFileDialog
+            {
+                Filter = "Set cartelle scansione (*.scanroots;*.json)|*.scanroots;*.json|Tutti i file (*.*)|*.*"
+            };
+            if (dialog.ShowDialog() != true)
+            {
+                return;
+            }
+
+            try
+            {
+                var json = File.ReadAllText(dialog.FileName);
+                var payload = JsonConvert.DeserializeObject<ScanRootSet>(json);
+                if (payload == null || payload.ScanRoots == null || payload.ScanRoots.Count == 0)
+                {
+                    throw new InvalidDataException("Il file non contiene cartelle valide.");
+                }
+
+                ScanRoots.Clear();
+                foreach (var root in payload.ScanRoots.Where(path => !string.IsNullOrWhiteSpace(path)).Distinct(StringComparer.OrdinalIgnoreCase))
+                {
+                    ScanRoots.Add(root);
+                }
+
+                _scanRootDfsTargets.Clear();
+                _scanRootNamespacePaths.Clear();
+                if (payload.ScanRootTargets != null)
+                {
+                    foreach (var target in payload.ScanRootTargets.Where(item => item != null && !string.IsNullOrWhiteSpace(item.RootPath)))
+                    {
+                        var key = GetScanRootKey(target.RootPath);
+                        if (!string.IsNullOrWhiteSpace(target.DfsTarget))
+                        {
+                            _scanRootDfsTargets[key] = target.DfsTarget;
+                        }
+                        if (!string.IsNullOrWhiteSpace(target.NamespacePath))
+                        {
+                            _scanRootNamespacePaths[key] = target.NamespacePath;
+                        }
+                    }
+                }
+
+                SelectedScanRoot = ScanRoots.Count > 0 ? ScanRoots[0] : null;
+                OnPropertyChanged("CanStart");
+                StartCommand.RaiseCanExecuteChanged();
+                SaveUiPreferences();
+                ProgressText = string.Format("Set cartelle caricato: {0} cartelle.", ScanRoots.Count);
+            }
+            catch (Exception ex)
+            {
+                ProgressText = string.Format("Errore caricamento set cartelle: {0}", ex.Message);
+                WpfMessageBox.Show(ProgressText, "Set cartelle", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
         private string PromptDfsTargetSelection(string namespacePath, IList<string> targets)
@@ -2032,7 +2133,19 @@ namespace NtfsAudit.App.ViewModels
                         result.TreeMap = BuildTreeMapFromDetails(result.Details, result.RootPath);
                     }
 
+                    var previousTempDataPath = aggregateResult.TempDataPath;
+                    var previousErrorPath = aggregateResult.ErrorPath;
                     MergeScanResult(aggregateResult, result);
+                    if (!string.IsNullOrWhiteSpace(previousTempDataPath)
+                        && !string.Equals(previousTempDataPath, aggregateResult.TempDataPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        TryDeleteFile(previousTempDataPath);
+                    }
+                    if (!string.IsNullOrWhiteSpace(previousErrorPath)
+                        && !string.Equals(previousErrorPath, aggregateResult.ErrorPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        TryDeleteFile(previousErrorPath);
+                    }
 
                     if (!string.IsNullOrWhiteSpace(options.OutputDirectory))
                     {
@@ -2301,6 +2414,7 @@ namespace NtfsAudit.App.ViewModels
 
             var tempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit");
             removedEntries += TryDeleteDirectory(tempRoot);
+            removedEntries += TryDeleteDirectory(GetWindowsSystemTempAuditPath());
 
             var localCache = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NtfsAudit", "Cache");
             removedEntries += TryDeleteDirectory(localCache);
@@ -2329,6 +2443,17 @@ namespace NtfsAudit.App.ViewModels
             ProgressText = removedEntries > 0
                 ? string.Format("Pulizia completata: rimossi {0} elementi residui.", removedEntries)
                 : "Pulizia completata: nessun file residuo trovato.";
+        }
+
+        private static string GetWindowsSystemTempAuditPath()
+        {
+            var windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+            if (string.IsNullOrWhiteSpace(windowsPath))
+            {
+                return null;
+            }
+
+            return Path.Combine(windowsPath, "SystemTemp", "NtfsAudit");
         }
 
         private static int TryDeleteDirectory(string directoryPath)
@@ -3674,6 +3799,8 @@ namespace NtfsAudit.App.ViewModels
             ResetTreeFiltersCommand.RaiseCanExecuteChanged();
             ClearScanDataCommand.RaiseCanExecuteChanged();
             CleanupResidualFilesCommand.RaiseCanExecuteChanged();
+            SaveScanRootSetCommand.RaiseCanExecuteChanged();
+            LoadScanRootSetCommand.RaiseCanExecuteChanged();
         }
 
         private string FormatElapsed(TimeSpan elapsed)
@@ -4161,6 +4288,13 @@ namespace NtfsAudit.App.ViewModels
             public string RootPath { get; set; }
             public string DfsTarget { get; set; }
             public string NamespacePath { get; set; }
+        }
+
+        private sealed class ScanRootSet
+        {
+            public DateTime CreatedAtUtc { get; set; }
+            public List<string> ScanRoots { get; set; }
+            public List<ScanRootTargetPreference> ScanRootTargets { get; set; }
         }
 
         private void OnPropertyChanged(string propertyName)

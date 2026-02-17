@@ -831,6 +831,10 @@
                     </ListBox>
                     <Button Grid.Column="1" Margin="8,0,0,0" Padding="10,4" Content="Rimuovi" VerticalAlignment="Top" Command="{Binding RemoveScanRootCommand}" />
                   </Grid>
+                  <WrapPanel Margin="0,0,0,8">
+                    <Button Margin="0,0,8,0" Padding="10,4" Content="Salva set cartelle" Command="{Binding SaveScanRootSetCommand}" />
+                    <Button Padding="10,4" Content="Carica set cartelle" Command="{Binding LoadScanRootSetCommand}" />
+                  </WrapPanel>
                   <Grid Margin="0,0,0,6" Visibility="{Binding HasSelectedScanRootDfsTargets, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="Auto" />

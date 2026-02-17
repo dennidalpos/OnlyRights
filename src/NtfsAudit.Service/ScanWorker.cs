@@ -162,6 +162,25 @@ namespace NtfsAudit.Service
             return name;
         }
 
+        private static void TryDeleteFile(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return;
+            }
+
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch
+            {
+            }
+        }
+
         private void RunSingleScan(ScanOptions options, CancellationToken token)
         {
             var sidCache = new SidNameCache();
@@ -173,13 +192,20 @@ namespace NtfsAudit.Service
             var groupExpansion = new GroupExpansionService(adResolver, groupCache);
             var scanService = new ScanService(identityResolver, groupExpansion);
             var result = scanService.Run(options, null, token);
-
-            if (string.IsNullOrWhiteSpace(options.OutputDirectory)) return;
-            Directory.CreateDirectory(options.OutputDirectory);
-            var archive = new AnalysisArchive();
-            var name = BuildScanNameFromRoot(options.RootPath);
-            var output = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", name, DateTime.Now.ToString("yyyy_MM_dd_HH_mm")));
-            archive.Export(result, options.RootPath, output);
+            try
+            {
+                if (string.IsNullOrWhiteSpace(options.OutputDirectory)) return;
+                Directory.CreateDirectory(options.OutputDirectory);
+                var archive = new AnalysisArchive();
+                var name = BuildScanNameFromRoot(options.RootPath);
+                var output = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", name, DateTime.Now.ToString("yyyy_MM_dd_HH_mm")));
+                archive.Export(result, options.RootPath, output);
+            }
+            finally
+            {
+                TryDeleteFile(result == null ? null : result.TempDataPath);
+                TryDeleteFile(result == null ? null : result.ErrorPath);
+            }
         }
     }
 }
