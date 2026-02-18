@@ -76,7 +76,8 @@ Pipeline:
 3. ricostruzione tree map da export se non presente in memoria,
 4. creazione archivio ZIP temporaneo in `%TEMP%\NtfsAudit\exports`,
 5. cleanup workspace export obsoleti,
-6. replace atomico del file finale.
+6. validazione archivio temporaneo (presenza entry obbligatorie e metadati non vuoti),
+7. replace atomico del file finale.
 
 Contenuto archivio:
 - `data.jsonl`
@@ -90,7 +91,8 @@ Metadati salvati:
 - tipo path,
 - timestamp UTC scansione,
 - versione archivio,
-- opzioni scansione.
+- opzioni scansione,
+- conteggio record dati/errori esportati per verifica di integrità in import.
 
 ## Import analisi (`.ntaudit`)
 Pipeline:
@@ -98,9 +100,10 @@ Pipeline:
 2. estrazione archivio in workspace dedicato (`<nome>_<timestamp>_<guid>`),
 3. verifica presenza minima (`data.jsonl`, fallback `errors.jsonl` vuoto),
 4. load metadati e fallback compatibili versioni precedenti,
-5. ricostruzione `Details`, `TreeMap` e flag cartella,
-6. normalizzazione timestamp importato in UTC,
-7. applicazione opzioni nel ViewModel.
+5. validazione compatibilità scansioni legacy (versioni vecchie) e consistenza record esportati,
+6. ricostruzione `Details`, `TreeMap` e flag cartella,
+7. normalizzazione timestamp importato in UTC,
+8. applicazione opzioni nel ViewModel.
 
 Regole di robustezza:
 - normalizzazione path (slash misti inclusi),

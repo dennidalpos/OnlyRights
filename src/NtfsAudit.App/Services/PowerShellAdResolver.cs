@@ -25,8 +25,8 @@ namespace NtfsAudit.App.Services
             if (!_moduleAvailable) return null;
             var script = string.Format("Import-Module ActiveDirectory -ErrorAction SilentlyContinue; $o = Get-ADObject -Filter \"objectSid -eq '{0}'\" -Properties objectSid,samAccountName,objectClass; if ($o) {{ $sid = $null; if ($o.objectSid) {{ if ($o.objectSid -is [byte[]]) {{ $sid = (New-Object System.Security.Principal.SecurityIdentifier ($o.objectSid,0)).Value }} else {{ $sid = $o.objectSid.ToString() }} }}; $enabled = $null; if ($sid) {{ if ($o.objectClass -contains 'user') {{ $enabled = (Get-ADUser -Identity $sid -Properties Enabled).Enabled }} elseif ($o.objectClass -contains 'computer') {{ $enabled = (Get-ADComputer -Identity $sid -Properties Enabled).Enabled }} }}; [pscustomobject]@{{ Sid=$sid; Name=$o.sAMAccountName; Class=$o.objectClass; Enabled=$enabled }} | ConvertTo-Json -Compress }}", sid);
             var output = Run(script);
-            if (string.IsNullOrWhiteSpace(output)) return null;
-            var obj = JObject.Parse(output);
+            if (!TryParseJsonToken(output, out var token) || token.Type != JTokenType.Object) return null;
+            var obj = (JObject)token;
             var cls = obj["Class"] == null ? string.Empty : obj["Class"].ToString();
             var isGroup = cls.IndexOf("group", StringComparison.OrdinalIgnoreCase) >= 0;
             var enabledToken = obj["Enabled"];
@@ -46,19 +46,20 @@ namespace NtfsAudit.App.Services
             if (!_moduleAvailable) return result;
             var script = string.Format("Import-Module ActiveDirectory -ErrorAction SilentlyContinue; $m = Get-ADGroupMember -Identity '{0}' -Recursive:$false | Select-Object SID,objectSid,samAccountName,objectClass; if ($m) {{ $m | ForEach-Object {{ $sidSource = $null; if ($_.SID) {{ $sidSource = $_.SID }} elseif ($_.objectSid) {{ $sidSource = $_.objectSid }}; $sid = $null; if ($sidSource) {{ if ($sidSource -is [byte[]]) {{ $sid = (New-Object System.Security.Principal.SecurityIdentifier ($sidSource,0)).Value }} else {{ $sid = $sidSource.ToString() }} }}; $enabled = $null; if ($sid) {{ if ($_.objectClass -contains 'user') {{ $enabled = (Get-ADUser -Identity $sid -Properties Enabled).Enabled }} elseif ($_.objectClass -contains 'computer') {{ $enabled = (Get-ADComputer -Identity $sid -Properties Enabled).Enabled }} }}; [pscustomobject]@{{ Sid=$sid; Name=$_.sAMAccountName; Class=$_.objectClass; Enabled=$enabled }} }} | ConvertTo-Json -Compress }}", groupSid);
             var output = Run(script);
-            if (string.IsNullOrWhiteSpace(output)) return result;
-            if (output.TrimStart().StartsWith("["))
+            if (!TryParseJsonToken(output, out var token)) return result;
+            if (token.Type == JTokenType.Array)
             {
-                var arr = JArray.Parse(output);
-                foreach (var item in arr)
+                foreach (var item in (JArray)token)
                 {
                     result.Add(Parse(item));
                 }
                 return result;
             }
 
-            var obj = JObject.Parse(output);
-            result.Add(Parse(obj));
+            if (token.Type == JTokenType.Object)
+            {
+                result.Add(Parse(token));
+            }
             return result;
         }
 
@@ -68,20 +69,46 @@ namespace NtfsAudit.App.Services
             if (!_moduleAvailable) return result;
             var script = string.Format("Import-Module ActiveDirectory -ErrorAction SilentlyContinue; $m = Get-ADPrincipalGroupMembership -Identity '{0}' | Select-Object SID,objectSid,samAccountName,objectClass; if ($m) {{ $m | ForEach-Object {{ $sidSource = $null; if ($_.SID) {{ $sidSource = $_.SID }} elseif ($_.objectSid) {{ $sidSource = $_.objectSid }}; $sid = $null; if ($sidSource) {{ if ($sidSource -is [byte[]]) {{ $sid = (New-Object System.Security.Principal.SecurityIdentifier ($sidSource,0)).Value }} else {{ $sid = $sidSource.ToString() }} }}; $enabled = $null; if ($sid) {{ if ($_.objectClass -contains 'user') {{ $enabled = (Get-ADUser -Identity $sid -Properties Enabled).Enabled }} elseif ($_.objectClass -contains 'computer') {{ $enabled = (Get-ADComputer -Identity $sid -Properties Enabled).Enabled }} }}; [pscustomobject]@{{ Sid=$sid; Name=$_.sAMAccountName; Class=$_.objectClass; Enabled=$enabled }} }} | ConvertTo-Json -Compress }}", userSid);
             var output = Run(script);
-            if (string.IsNullOrWhiteSpace(output)) return result;
-            if (output.TrimStart().StartsWith("["))
+            if (!TryParseJsonToken(output, out var token)) return result;
+            if (token.Type == JTokenType.Array)
             {
-                var arr = JArray.Parse(output);
-                foreach (var item in arr)
+                foreach (var item in (JArray)token)
                 {
                     result.Add(Parse(item));
                 }
                 return result;
             }
 
-            var obj = JObject.Parse(output);
-            result.Add(Parse(obj));
+            if (token.Type == JTokenType.Object)
+            {
+                result.Add(Parse(token));
+            }
             return result;
+        }
+
+        private bool TryParseJsonToken(string output, out JToken token)
+        {
+            token = null;
+            if (string.IsNullOrWhiteSpace(output))
+            {
+                return false;
+            }
+
+            var trimmed = output.Trim();
+            if (!(trimmed.StartsWith("{") || trimmed.StartsWith("[")))
+            {
+                return false;
+            }
+
+            try
+            {
+                token = JToken.Parse(trimmed);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private ResolvedPrincipal Parse(JToken token)
@@ -132,6 +159,10 @@ namespace NtfsAudit.App.Services
                     catch
                     {
                     }
+                }
+                if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
+                {
+                    return null;
                 }
                 if (string.IsNullOrWhiteSpace(output) && !string.IsNullOrWhiteSpace(error))
                 {
