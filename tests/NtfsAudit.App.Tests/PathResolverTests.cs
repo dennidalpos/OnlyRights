@@ -30,5 +30,21 @@ namespace NtfsAudit.App.Tests
 
             Assert.Equal(@"\\server\share\folder", path);
         }
+
+        [Fact]
+        public void ToExtendedPath_NormalizesUncPathWithForwardSlashes()
+        {
+            var path = PathResolver.ToExtendedPath("//server/share/folder");
+
+            Assert.Equal(@"\\?\UNC\server\share\folder", path);
+        }
+
+        [Fact]
+        public void DetectPathKind_HandlesUncPathWithForwardSlashes()
+        {
+            var kind = PathResolver.DetectPathKind("//server/share/folder");
+
+            Assert.True(kind == Models.PathKind.Unc || kind == Models.PathKind.Dfs);
+        }
     }
 }

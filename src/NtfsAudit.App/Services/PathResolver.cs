@@ -18,36 +18,38 @@ namespace NtfsAudit.App.Services
         public static string ToExtendedPath(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) return path;
-            if (path.StartsWith(@"\\?\", StringComparison.Ordinal)) return path;
-            if (path.StartsWith(@"\\", StringComparison.Ordinal))
+            var normalizedPath = path.Trim().Replace('/', '\\');
+            if (normalizedPath.StartsWith(@"\\?\", StringComparison.Ordinal)) return normalizedPath;
+            if (normalizedPath.StartsWith(@"\\", StringComparison.Ordinal))
             {
-                return @"\\?\UNC\" + path.TrimStart('\\');
+                return @"\\?\UNC\" + normalizedPath.TrimStart('\\');
             }
 
-            return @"\\?\" + path;
+            return @"\\?\" + normalizedPath;
         }
 
         public static string FromExtendedPath(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) return path;
-            if (path.StartsWith(@"\\?\UNC\", StringComparison.Ordinal))
+            var normalizedPath = path.Replace('/', '\\');
+            if (normalizedPath.StartsWith(@"\\?\UNC\", StringComparison.Ordinal))
             {
-                return @"\\" + path.Substring(8);
+                return @"\\" + normalizedPath.Substring(8);
             }
 
-            if (path.StartsWith(@"\\?\", StringComparison.Ordinal))
+            if (normalizedPath.StartsWith(@"\\?\", StringComparison.Ordinal))
             {
-                return path.Substring(4);
+                return normalizedPath.Substring(4);
             }
 
-            return path;
+            return normalizedPath;
         }
 
         public static string NormalizeRootPath(string input, bool resolveDfs = true)
         {
             if (string.IsNullOrWhiteSpace(input)) return input;
             var trimmed = input.Trim();
-            var normalized = FromExtendedPath(trimmed);
+            var normalized = FromExtendedPath(trimmed).Replace('/', '\\');
             if (normalized.StartsWith("\\\\"))
             {
                 if (resolveDfs)
@@ -79,7 +81,7 @@ namespace NtfsAudit.App.Services
         {
             if (string.IsNullOrWhiteSpace(input)) return new List<string>();
             var trimmed = input.Trim();
-            var normalized = FromExtendedPath(trimmed);
+            var normalized = FromExtendedPath(trimmed).Replace('/', '\\');
             var uncPath = normalized.StartsWith("\\\\", StringComparison.Ordinal)
                 ? normalized
                 : BuildUncFromDrive(normalized);
@@ -94,7 +96,7 @@ namespace NtfsAudit.App.Services
         public static PathKind DetectPathKind(string input)
         {
             if (string.IsNullOrWhiteSpace(input)) return PathKind.Unknown;
-            var normalized = FromExtendedPath(input.Trim());
+            var normalized = FromExtendedPath(input.Trim()).Replace('/', '\\');
             if (normalized.StartsWith("nfs://", StringComparison.OrdinalIgnoreCase))
             {
                 return PathKind.Nfs;
@@ -182,7 +184,7 @@ namespace NtfsAudit.App.Services
         private static string TryResolveDfsPath(string uncPath)
         {
             if (string.IsNullOrWhiteSpace(uncPath)) return null;
-            var normalized = FromExtendedPath(uncPath);
+            var normalized = FromExtendedPath(uncPath).Replace('/', '\\');
             if (!normalized.StartsWith("\\\\", StringComparison.Ordinal)) return null;
 
             string cached;
@@ -237,7 +239,7 @@ namespace NtfsAudit.App.Services
         private static List<string> TryResolveDfsTargets(string uncPath)
         {
             if (string.IsNullOrWhiteSpace(uncPath)) return new List<string>();
-            var normalized = FromExtendedPath(uncPath);
+            var normalized = FromExtendedPath(uncPath).Replace('/', '\\');
             if (!normalized.StartsWith("\\\\", StringComparison.Ordinal)) return new List<string>();
 
             lock (DfsTargetsCache)

@@ -33,6 +33,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
 $root = Resolve-Path (Join-Path $PSScriptRoot "..")
 $solution = Join-Path $root "NtfsAudit.sln"
 $project = Join-Path $root "src\NtfsAudit.App\NtfsAudit.App.csproj"
@@ -354,3 +355,10 @@ if (-not $SkipPublish) {
         if ($LASTEXITCODE -ne 0) { throw "Service publish failed." }
     }
 }
+
+
+Write-Host "[NtfsAudit] Build summary" -ForegroundColor Cyan
+Write-Host ("  Configuration: {0}" -f $Configuration)
+Write-Host ("  Dist: {0}" -f $dist)
+Write-Host ("  Tests skipped: {0}" -f $SkipTests.IsPresent)
+Write-Host ("  Publish skipped: {0}" -f $SkipPublish.IsPresent)

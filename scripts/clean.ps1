@@ -26,6 +26,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
 $root = Resolve-Path (Join-Path $PSScriptRoot "..")
 
 function Get-TempRoot {
@@ -232,3 +233,6 @@ if ($CleanLogs) {
     $appLogs = Join-Path $localAppData "NtfsAudit\Logs"
     Remove-PathIfExists $appLogs
 }
+
+
+Write-Host "[NtfsAudit] Clean completed." -ForegroundColor Cyan
