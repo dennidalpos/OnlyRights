@@ -114,9 +114,9 @@ Nella UI:
 ## Pulizia residui
 
 Pulsante **Pulisci cache**:
-1. elimina residui operativi (`temp`, cache locale, jobs, service-status),
-2. ricrea la cartella temp applicativa,
-3. apre la cartella temp per verifica rapida.
+1. elimina residui operativi (`temp`, cache locale, cache servizio, jobs, service-status),
+2. ricrea la cartella temp applicativa e la cache servizio,
+3. apre entrambe le cartelle (temp + cache servizio) per verifica rapida.
 
 Script CLI equivalenti:
 - `scripts/clean.ps1 -CleanOperationalData`
