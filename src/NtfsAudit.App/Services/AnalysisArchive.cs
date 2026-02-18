@@ -11,7 +11,8 @@ namespace NtfsAudit.App.Services
 {
     public class AnalysisArchive
     {
-        private const int CurrentArchiveVersion = 5;
+        private const int CurrentArchiveVersion = 6;
+        private const string ArchiveFileExtension = ".ntaudit";
         private const string DataEntryName = "data.jsonl";
         private const string ErrorsEntryName = "errors.jsonl";
         private const string TreeEntryName = "tree.json";
@@ -42,7 +43,8 @@ namespace NtfsAudit.App.Services
                 exportTreeMap = BuildTreeFromExport(result.TempDataPath, resolvedRootPath);
             }
 
-            var ioOutputPath = PathResolver.ToExtendedPath(outputPath);
+            var normalizedOutputPath = EnsureArchiveOutputPath(outputPath);
+            var ioOutputPath = PathResolver.ToExtendedPath(normalizedOutputPath);
             var outputDirectory = Path.GetDirectoryName(ioOutputPath);
             if (!string.IsNullOrWhiteSpace(outputDirectory))
             {
@@ -100,9 +102,10 @@ namespace NtfsAudit.App.Services
         public AnalysisArchiveResult Import(string archivePath)
         {
             if (string.IsNullOrWhiteSpace(archivePath)) throw new ArgumentException("Archive path required", "archivePath");
-            var ioArchivePath = PathResolver.ToExtendedPath(archivePath);
+            var normalizedArchivePath = EnsureArchiveInputPath(archivePath);
+            var ioArchivePath = PathResolver.ToExtendedPath(normalizedArchivePath);
             if (!File.Exists(ioArchivePath)) throw new FileNotFoundException("Analysis archive not found.", archivePath);
-            var archiveName = Path.GetFileNameWithoutExtension(archivePath);
+            var archiveName = Path.GetFileNameWithoutExtension(normalizedArchivePath);
             if (string.IsNullOrWhiteSpace(archiveName)) archiveName = "import";
             foreach (var invalid in Path.GetInvalidFileNameChars()) archiveName = archiveName.Replace(invalid, '_');
             CleanupAnalysisWorkspace(AnalysisImportsDir, AnalysisImportRetention);
@@ -837,6 +840,48 @@ namespace NtfsAudit.App.Services
             {
                 writer.Write(string.Empty);
             }
+        }
+
+
+        private static string EnsureArchiveOutputPath(string outputPath)
+        {
+            var normalized = PathResolver.FromExtendedPath(outputPath).Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                throw new ArgumentException("Output path required", "outputPath");
+            }
+
+            if (!normalized.EndsWith(ArchiveFileExtension, StringComparison.OrdinalIgnoreCase))
+            {
+                normalized += ArchiveFileExtension;
+            }
+
+            return normalized;
+        }
+
+        private static string EnsureArchiveInputPath(string archivePath)
+        {
+            var normalized = PathResolver.FromExtendedPath(archivePath).Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                throw new ArgumentException("Archive path required", "archivePath");
+            }
+
+            if (File.Exists(PathResolver.ToExtendedPath(normalized)))
+            {
+                return normalized;
+            }
+
+            if (!normalized.EndsWith(ArchiveFileExtension, StringComparison.OrdinalIgnoreCase))
+            {
+                var withExtension = normalized + ArchiveFileExtension;
+                if (File.Exists(PathResolver.ToExtendedPath(withExtension)))
+                {
+                    return withExtension;
+                }
+            }
+
+            return normalized;
         }
 
 

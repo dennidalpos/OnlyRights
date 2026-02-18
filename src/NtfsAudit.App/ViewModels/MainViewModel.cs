@@ -2190,8 +2190,9 @@ namespace NtfsAudit.App.ViewModels
 
                     if (!string.IsNullOrWhiteSpace(options.OutputDirectory))
                     {
-                        var safeName = BuildScanNameFromRoot(root);
-                        var outputFile = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", safeName, DateTime.Now.ToString("yyyy_MM_dd_HH_mm")));
+                        var outputDirectory = PathResolver.FromExtendedPath(options.OutputDirectory).Trim();
+                        Directory.CreateDirectory(PathResolver.ToExtendedPath(outputDirectory));
+                        var outputFile = BuildExportPath(outputDirectory, root, "ntaudit");
                         _analysisArchive.Export(result, root, outputFile);
                     }
                 }

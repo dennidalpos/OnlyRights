@@ -431,5 +431,57 @@ namespace NtfsAudit.App.Tests
             }
         }
 
+        [Fact]
+        public void Export_AppendsNtauditExtensionWhenMissing()
+        {
+            var tempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit.Tests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempRoot);
+
+            try
+            {
+                var dataPath = Path.Combine(tempRoot, "scan.jsonl");
+                var errorPath = Path.Combine(tempRoot, "errors.jsonl");
+                var archivePathWithoutExtension = Path.Combine(tempRoot, "analysis_report");
+
+                var line = Newtonsoft.Json.JsonConvert.SerializeObject(new ExportRecord
+                {
+                    FolderPath = @"C:\data",
+                    PrincipalName = "Everyone",
+                    PrincipalSid = "S-1-1-0",
+                    PrincipalType = "Group",
+                    PermissionLayer = PermissionLayer.Ntfs,
+                    AllowDeny = "Allow",
+                    RightsSummary = "Read",
+                    EffectiveRightsSummary = "Read",
+                    HasExplicitPermissions = true
+                });
+                File.WriteAllText(dataPath, line + Environment.NewLine);
+                File.WriteAllText(errorPath, string.Empty);
+
+                var archive = new AnalysisArchive();
+                archive.Export(new ScanResult
+                {
+                    TempDataPath = dataPath,
+                    ErrorPath = errorPath,
+                    RootPath = @"C:\data",
+                    RootPathKind = PathKind.Local,
+                    Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase),
+                    TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase),
+                    ScanOptions = new ScanOptions { RootPath = @"C:\data" },
+                    ScannedAtUtc = DateTime.UtcNow
+                }, @"C:\data", archivePathWithoutExtension);
+
+                Assert.True(File.Exists(archivePathWithoutExtension + ".ntaudit"));
+            }
+            finally
+            {
+                if (Directory.Exists(tempRoot))
+                {
+                    Directory.Delete(tempRoot, true);
+                }
+            }
+        }
+
+
     }
 }
