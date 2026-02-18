@@ -46,7 +46,7 @@ namespace NtfsAudit.App.ViewModels
         private ObservableCollection<string> _selectedScanRootDfsTargets = new ObservableCollection<string>();
         private string _selectedScanRootDfsTarget;
         private string _auditOutputDirectory;
-        private bool _useWindowsServiceMode = true;
+        private bool _useWindowsServiceMode;
         private int _maxDepth = 5;
         private bool _scanAllDepths = true;
         private bool _includeInherited = true;
@@ -172,10 +172,8 @@ namespace NtfsAudit.App.ViewModels
             StartCommand = new RelayCommand(StartScan, () => CanStart);
             StopCommand = new RelayCommand(StopScan, () => CanStop);
             ExportCommand = new RelayCommand(Export, () => CanExport);
-            ExportAnalysisCommand = new RelayCommand(ExportAnalysis, () => CanExport);
             ImportAnalysisCommand = new RelayCommand(ImportAnalysis, () => !_isScanning && !IsBusy);
             ResetTreeFiltersCommand = new RelayCommand(ResetTreeFilters, () => HasScanResult);
-            ClearScanDataCommand = new RelayCommand(ClearScanData, () => !_isViewerMode && !_isScanning && !IsBusy && HasScanResult);
             CleanupResidualFilesCommand = new RelayCommand(CleanupResidualFiles, () => !_isViewerMode && !IsBusy);
             SaveScanRootSetCommand = new RelayCommand(SaveScanRootSet, () => !_isViewerMode && !IsBusy && ScanRoots.Count > 0);
             LoadScanRootSetCommand = new RelayCommand(LoadScanRootSet, () => !_isViewerMode && !IsBusy);
@@ -284,10 +282,8 @@ namespace NtfsAudit.App.ViewModels
         public RelayCommand StartCommand { get; private set; }
         public RelayCommand StopCommand { get; private set; }
         public RelayCommand ExportCommand { get; private set; }
-        public RelayCommand ExportAnalysisCommand { get; private set; }
         public RelayCommand ImportAnalysisCommand { get; private set; }
         public RelayCommand ResetTreeFiltersCommand { get; private set; }
-        public RelayCommand ClearScanDataCommand { get; private set; }
         public RelayCommand CleanupResidualFilesCommand { get; private set; }
         public RelayCommand SaveScanRootSetCommand { get; private set; }
         public RelayCommand LoadScanRootSetCommand { get; private set; }
@@ -2425,22 +2421,6 @@ namespace NtfsAudit.App.ViewModels
                 UpdateCommands();
             }
         }
-
-        private void ClearScanData()
-        {
-            if (_scanResult != null)
-            {
-                TryDeleteFile(_scanResult.TempDataPath);
-                TryDeleteFile(_scanResult.ErrorPath);
-            }
-
-            _scanResult = null;
-            _hasExported = false;
-            ClearResults();
-            ProgressText = "Dati scansione corrente eliminati.";
-            UpdateCommands();
-        }
-
         private void CleanupResidualFiles()
         {
             CleanupResidualFiles(false, false);
@@ -2483,9 +2463,39 @@ namespace NtfsAudit.App.ViewModels
                 return;
             }
 
+            var reopenedTempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit");
+            try
+            {
+                Directory.CreateDirectory(reopenedTempRoot);
+                OpenFolder(reopenedTempRoot);
+            }
+            catch
+            {
+            }
+
             ProgressText = removedEntries > 0
-                ? string.Format("Pulizia completata: rimossi {0} elementi residui.", removedEntries)
-                : "Pulizia completata: nessun file residuo trovato.";
+                ? string.Format("Pulizia completata: rimossi {0} elementi residui. Cartella temp aperta.", removedEntries)
+                : "Pulizia completata: nessun file residuo trovato. Cartella temp aperta.";
+        }
+
+        private static void OpenFolder(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
+            {
+                return;
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = path,
+                    UseShellExecute = true
+                });
+            }
+            catch
+            {
+            }
         }
 
         private static string GetWindowsSystemTempAuditPath()
@@ -2582,25 +2592,6 @@ namespace NtfsAudit.App.ViewModels
                 SetBusy(false);
             }
         }
-
-        private async void ExportAnalysis()
-        {
-            if (_isViewerMode) return;
-            if (_scanResult == null) return;
-            if (!TryEnsureScanDataAvailableForExport("Export analisi non disponibile")) return;
-            var dialog = new Win32.SaveFileDialog
-            {
-                Filter = "Analisi NtfsAudit (*.ntaudit)|*.ntaudit",
-                FileName = BuildExportFileName(RootPath, "ntaudit"),
-                InitialDirectory = ResolveInitialDirectory(_lastExportDirectory, RootPath)
-            };
-            if (dialog.ShowDialog() != true) return;
-            await RunExportActionAsync(
-                () => _analysisArchive.Export(_scanResult, RootPath, dialog.FileName),
-                "Errore export analisi",
-                dialog.FileName);
-        }
-
         private async void ImportAnalysis()
         {
             if (IsBusy) return;
@@ -3851,12 +3842,10 @@ namespace NtfsAudit.App.ViewModels
             RemoveScanRootCommand.RaiseCanExecuteChanged();
             StopCommand.RaiseCanExecuteChanged();
             ExportCommand.RaiseCanExecuteChanged();
-            ExportAnalysisCommand.RaiseCanExecuteChanged();
             ImportAnalysisCommand.RaiseCanExecuteChanged();
             InstallServiceCommand.RaiseCanExecuteChanged();
             UninstallServiceCommand.RaiseCanExecuteChanged();
             ResetTreeFiltersCommand.RaiseCanExecuteChanged();
-            ClearScanDataCommand.RaiseCanExecuteChanged();
             CleanupResidualFilesCommand.RaiseCanExecuteChanged();
             SaveScanRootSetCommand.RaiseCanExecuteChanged();
             LoadScanRootSetCommand.RaiseCanExecuteChanged();

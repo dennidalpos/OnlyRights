@@ -28,6 +28,16 @@
       <Setter Property="BorderBrush" Value="#FF37474F" />
       <Setter Property="BorderThickness" Value="1" />
     </Style>
+    <Style x:Key="ActionButtonStyle" TargetType="Button">
+      <Setter Property="Height" Value="30" />
+      <Setter Property="MinWidth" Value="168" />
+      <Setter Property="Margin" Value="0,0,8,6" />
+      <Setter Property="Padding" Value="10,4" />
+      <Setter Property="Background" Value="#FF1E88E5" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="BorderBrush" Value="#FF1565C0" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
     <Style x:Key="SectionHeaderText" TargetType="TextBlock">
       <Setter Property="FontSize" Value="16" />
       <Setter Property="FontWeight" Value="SemiBold" />
@@ -173,18 +183,14 @@
           </Grid.RowDefinitions>
           <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel>
-              <WrapPanel Margin="0,0,0,6">
-                <Button Margin="0,0,8,6" Padding="12,4" Content="Avvia analisi" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" Background="#FF2E7D32" Foreground="White" />
-                <Button Margin="0,0,8,6" Padding="12,4" Content="Stop + pulizia" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" Background="#FFC62828" Foreground="White" />
-                <Button Margin="0,0,8,6" Padding="12,4" Content="Installa servizio Windows" Command="{Binding InstallServiceCommand}" Background="#FF6A1B9A" Foreground="White" ToolTip="Disponibile solo se il servizio non è installato." />
-                <Button Margin="0,0,8,6" Padding="12,4" Content="Disinstalla servizio Windows" Command="{Binding UninstallServiceCommand}" Background="#FF8E24AA" Foreground="White" ToolTip="Termina processi attivi, pulisce cache/job e rimuove il servizio." />
-                <Button Margin="0,0,8,6" Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" Background="#FF616161" Foreground="White" />
-              </WrapPanel>
               <WrapPanel>
-                <Button Margin="0,0,8,0" Padding="12,4" Content="Esporta elenco permessi (Excel)" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
-                <Button Margin="0,0,8,0" Padding="12,4" Content="Salva report completo (.ntaudit)" Command="{Binding ExportAnalysisCommand}" IsEnabled="{Binding CanExport}" Background="#FF1565C0" Foreground="White" />
-                <Button Margin="0,0,8,0" Padding="12,4" Content="Cancella scansione corrente" Command="{Binding ClearScanDataCommand}" Background="#FF5D4037" Foreground="White" />
-                <Button Padding="12,4" Content="Pulisci cache/residui" Command="{Binding CleanupResidualFilesCommand}" Background="#FF455A64" Foreground="White" />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="Avvia analisi" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" ToolTip="Avvia la scansione delle cartelle selezionate." />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="Stop + pulizia" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" ToolTip="Ferma la scansione in corso e pulisce i file residui." />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="Installa servizio" Command="{Binding InstallServiceCommand}" ToolTip="Installa il servizio Windows di scansione." />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="Disinstalla servizio" Command="{Binding UninstallServiceCommand}" ToolTip="Disinstalla il servizio Windows e rimuove job/stato residui." />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" ToolTip="Importa un report .ntaudit esistente." />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="Esporta Excel" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" ToolTip="Esporta l'elenco permessi in formato Excel (.xlsx)." />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="Pulisci cache" Command="{Binding CleanupResidualFilesCommand}" ToolTip="Elimina tutti i file residui dell'app e apre la cartella dei file temporanei." />
               </WrapPanel>
             </StackPanel>
           </Border>
@@ -206,7 +212,6 @@
             <Border Background="{Binding ServiceBadgeBackground}" BorderBrush="#FFCFD8DC" BorderThickness="1" CornerRadius="10" Padding="8,3">
               <TextBlock Text="{Binding ServiceBadgeText}" Foreground="White" FontWeight="SemiBold" />
             </Border>
-            <TextBlock Margin="2,4,0,0" Text="{Binding ServiceRuntimeStatusText}" Foreground="#FF37474F" FontSize="11" />
           </StackPanel>
         </Grid>
       </Border>
@@ -856,7 +861,7 @@
                     <Button Grid.Column="0" Margin="0,0,8,0" Padding="10,4" Content="Sfoglia..." Command="{Binding BrowseOutputDirectoryCommand}" />
                     <TextBox Grid.Column="1" Height="26" VerticalAlignment="Center" MinWidth="160" Text="{Binding AuditOutputDirectory, UpdateSourceTrigger=PropertyChanged}" />
                   </Grid>
-                  <CheckBox Margin="0,0,0,6" Content="Esegui tramite servizio Windows (cerca NtfsAudit.Service.exe / .dll)" IsChecked="{Binding UseWindowsServiceMode}" />
+                  <CheckBox Margin="0,0,0,6" Content="Esegui tramite servizio Windows" IsChecked="{Binding UseWindowsServiceMode}" />
                   <Expander Header="Opzioni principali" IsExpanded="True">
                     <StackPanel Margin="0,6,0,0">
                       <Grid Margin="0,0,0,6">
