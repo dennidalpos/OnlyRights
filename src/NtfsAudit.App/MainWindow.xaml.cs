@@ -161,14 +161,27 @@ namespace NtfsAudit.App
         {
             var entry = GetSelectedEntry(sender);
             if (entry == null) return;
-            await ShowGroupMembers(entry);
+            await ExecutePrincipalLookupAsync(() => ShowGroupMembers(entry), "Dettagli gruppo");
         }
 
         private async void UserEntries_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             var entry = GetSelectedEntry(sender);
             if (entry == null) return;
-            await ShowUserGroups(entry);
+            await ExecutePrincipalLookupAsync(() => ShowUserGroups(entry), "Dettagli utente");
+        }
+
+        private async Task ExecutePrincipalLookupAsync(Func<Task> operation, string contextTitle)
+        {
+            try
+            {
+                await operation();
+            }
+            catch (Exception ex)
+            {
+                var message = string.Format("Impossibile caricare i dettagli richiesti. Verifica connettività AD/permesse e riprova.\n\nDettagli: {0}", ex.Message);
+                MessageBox.Show(this, message, contextTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
         private AceEntry GetSelectedEntry(object sender)

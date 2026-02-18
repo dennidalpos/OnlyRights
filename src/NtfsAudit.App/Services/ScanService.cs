@@ -19,6 +19,13 @@ namespace NtfsAudit.App.Services
     {
         private const string EveryoneSid = "S-1-1-0";
         private const string AuthenticatedUsersSid = "S-1-5-11";
+        private const int ExportQueueCapacity = 2048;
+        private static readonly EnumerationOptions DirectoryEnumerationOptions = new EnumerationOptions
+        {
+            IgnoreInaccessible = true,
+            RecurseSubdirectories = false,
+            AttributesToSkip = 0
+        };
         private readonly IdentityResolver _identityResolver;
         private readonly GroupExpansionService _groupExpansion;
         private readonly SharePermissionService _sharePermissionService;
@@ -40,7 +47,7 @@ namespace NtfsAudit.App.Services
             var tempDataPath = Path.Combine(tempDir, string.Format("scan_{0}.jsonl", timestamp));
             var errorPath = Path.Combine(tempDir, string.Format("errors_{0}.jsonl", timestamp));
 
-            var treeMap = new ConcurrentDictionary<string, ConcurrentBag<string>>(StringComparer.OrdinalIgnoreCase);
+            var treeMap = new ConcurrentDictionary<string, ConcurrentDictionary<string, byte>>(StringComparer.OrdinalIgnoreCase);
             var details = new ConcurrentDictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase);
             var queue = new ConcurrentQueue<WorkItem>();
             var queueSignal = new SemaphoreSlim(0);
@@ -59,12 +66,12 @@ namespace NtfsAudit.App.Services
             }
 
             Enqueue(new WorkItem(options.RootPath, 0));
-            treeMap.TryAdd(options.RootPath, new ConcurrentBag<string>());
+            treeMap.TryAdd(options.RootPath, new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase));
 
             using (var dataWriter = new StreamWriter(tempDataPath))
             using (var errorWriter = new StreamWriter(errorPath))
             {
-                var dataQueue = new BlockingCollection<ExportRecord>(new ConcurrentQueue<ExportRecord>());
+                var dataQueue = new BlockingCollection<ExportRecord>(new ConcurrentQueue<ExportRecord>(), ExportQueueCapacity);
                 var errorQueue = new BlockingCollection<ErrorEntry>(new ConcurrentQueue<ErrorEntry>());
                 var baselineKeys = options.CompareBaseline ? BuildBaselineKeys(options, errorQueue) : null;
                 var shareContext = options.IncludeSharePermissions ? LoadSharePermissions(options, errorQueue) : null;
@@ -74,7 +81,7 @@ namespace NtfsAudit.App.Services
                 var dataWriterTask = Task.Run(() => DrainQueue(dataQueue, dataWriter, token), token);
                 var errorWriterTask = Task.Run(() => DrainQueue(errorQueue, errorWriter, token), token);
 
-                dataQueue.Add(BuildExportRecord(BuildScanOptionsRecord(options, rootPathKind), options));
+                EnqueueDataRecord(dataQueue, BuildExportRecord(BuildScanOptionsRecord(options, rootPathKind), options), token);
                 var workerCount = Math.Max(2, Math.Min(Environment.ProcessorCount, 8));
                 var workers = new Task[workerCount];
                 for (var i = 0; i < workerCount; i++)
@@ -124,14 +131,8 @@ namespace NtfsAudit.App.Services
                                 try
                                 {
                                     var ioPath = PathResolver.ToExtendedPath(current);
-                                    var enumerationOptions = new EnumerationOptions
-                                    {
-                                        IgnoreInaccessible = true,
-                                        RecurseSubdirectories = false,
-                                        AttributesToSkip = 0
-                                    };
-                                    var parentBag = treeMap.GetOrAdd(current, _ => new ConcurrentBag<string>());
-                                    foreach (var child in Directory.EnumerateDirectories(ioPath, "*", enumerationOptions))
+                                    var parentChildren = treeMap.GetOrAdd(current, _ => new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase));
+                                    foreach (var child in Directory.EnumerateDirectories(ioPath, "*", DirectoryEnumerationOptions))
                                     {
                                         var childPath = PathResolver.FromExtendedPath(child);
                                         if (IsDfsCachePath(childPath))
@@ -139,8 +140,8 @@ namespace NtfsAudit.App.Services
                                             continue;
                                         }
 
-                                        parentBag.Add(childPath);
-                                        treeMap.GetOrAdd(childPath, _ => new ConcurrentBag<string>());
+                                        parentChildren.TryAdd(childPath, 0);
+                                        treeMap.GetOrAdd(childPath, _ => new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase));
                                         Enqueue(new WorkItem(childPath, depth + 1));
                                         hasChildren = true;
                                     }
@@ -166,7 +167,7 @@ namespace NtfsAudit.App.Services
 
                             if (hasChildren)
                             {
-                                treeMap.GetOrAdd(current, _ => new ConcurrentBag<string>());
+                                treeMap.GetOrAdd(current, _ => new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase));
                             }
 
                             if (progress != null)
@@ -228,13 +229,7 @@ namespace NtfsAudit.App.Services
                                             CurrentPath = current
                                         });
                                     }
-                                    var enumerationOptions = new EnumerationOptions
-                                    {
-                                        IgnoreInaccessible = true,
-                                        RecurseSubdirectories = false,
-                                        AttributesToSkip = 0
-                                    };
-                                    foreach (var file in Directory.EnumerateFiles(ioPath, "*", enumerationOptions))
+                                    foreach (var file in Directory.EnumerateFiles(ioPath, "*", DirectoryEnumerationOptions))
                                     {
                                         token.ThrowIfCancellationRequested();
                                         Interlocked.Increment(ref processedFiles);
@@ -328,7 +323,7 @@ namespace NtfsAudit.App.Services
             var treeMapResult = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
             foreach (var entry in treeMap)
             {
-                treeMapResult[entry.Key] = entry.Value.ToList();
+                treeMapResult[entry.Key] = entry.Value.Keys.ToList();
             }
 
             var detailsResult = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase);
@@ -378,6 +373,14 @@ namespace NtfsAudit.App.Services
             }
 
             yield return Path.Combine(Path.GetTempPath(), "NtfsAudit");
+        }
+
+        private static void EnqueueDataRecord(BlockingCollection<ExportRecord> dataQueue, ExportRecord record, CancellationToken token)
+        {
+            while (!dataQueue.TryAdd(record, 100, token))
+            {
+                token.ThrowIfCancellationRequested();
+            }
         }
 
         private static void DrainQueue<T>(BlockingCollection<T> queue, StreamWriter writer, CancellationToken token)
@@ -614,7 +617,7 @@ namespace NtfsAudit.App.Services
                             : string.Format("{0} ({1})", m.Name, m.Sid)).ToList();
                 }
 
-                dataQueue.Add(BuildExportRecord(entry, options));
+                EnqueueDataRecord(dataQueue, BuildExportRecord(entry, options), token);
 
                 if (members != null)
                 {
@@ -666,7 +669,7 @@ namespace NtfsAudit.App.Services
                         {
                             currentDetail.AllEntries.Add(memberEntry);
                         }
-                        dataQueue.Add(BuildExportRecord(memberEntry, options));
+                        EnqueueDataRecord(dataQueue, BuildExportRecord(memberEntry, options), token);
                     }
                 }
             }
@@ -694,6 +697,7 @@ namespace NtfsAudit.App.Services
                 isFile,
                 depth,
                 dataQueue,
+                token,
                 owner,
                 auditSummary,
                 isInheritanceDisabled,
@@ -740,6 +744,7 @@ namespace NtfsAudit.App.Services
             bool isFile,
             int depth,
             BlockingCollection<ExportRecord> dataQueue,
+            CancellationToken token,
             string owner,
             string auditSummary,
             bool isInheritanceDisabled,
@@ -766,11 +771,11 @@ namespace NtfsAudit.App.Services
 
             foreach (var entry in shareEntries)
             {
-                dataQueue.Add(BuildExportRecord(entry, options));
+                EnqueueDataRecord(dataQueue, BuildExportRecord(entry, options), token);
             }
             foreach (var entry in effectiveEntries)
             {
-                dataQueue.Add(BuildExportRecord(entry, options));
+                EnqueueDataRecord(dataQueue, BuildExportRecord(entry, options), token);
             }
         }
 

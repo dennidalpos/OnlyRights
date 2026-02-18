@@ -1151,7 +1151,8 @@ namespace NtfsAudit.App.ViewModels
             return Task.Run(() =>
             {
                 var resolver = CreateResolver(UsePowerShell);
-                return resolver.GetGroupMembers(groupSid).ToArray();
+                var members = resolver.GetGroupMembers(groupSid);
+                return (members ?? new List<ResolvedPrincipal>()).ToArray();
             });
         }
 
@@ -1161,7 +1162,8 @@ namespace NtfsAudit.App.ViewModels
             return Task.Run(() =>
             {
                 var resolver = CreateResolver(UsePowerShell);
-                return resolver.GetUserGroups(userSid).ToArray();
+                var groups = resolver.GetUserGroups(userSid);
+                return (groups ?? new List<ResolvedPrincipal>()).ToArray();
             });
         }
 

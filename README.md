@@ -1,58 +1,83 @@
 # NTFS Audit
 
-Suite Windows per analisi ACL NTFS/SMB con:
-- applicazione WPF operativa,
-- servizio Windows per job in background,
-- viewer in sola lettura per archivi `.ntaudit`.
+Suite Windows per analisi ACL NTFS/SMB composta da:
+- **NtfsAudit.App** (WPF operativa),
+- **NtfsAudit.Service** (esecuzione job in background),
+- **NtfsAudit.Viewer** (apertura archivi `.ntaudit` in sola lettura).
 
-## Componenti
+## Architettura generale
 
-### NtfsAudit.App (WPF)
-Funzionalità principali:
-- configurazione multi-root;
-- scansione diretta oppure invio job al servizio;
-- audit ACL NTFS/Share/Effective;
-- filtri ACL avanzati e filtri albero;
-- export Excel `.xlsx`;
+### NtfsAudit.App
+Responsabile di:
+- configurazione root di scansione,
+- esecuzione scansione locale o invio job al servizio,
+- calcolo ACL NTFS/Share/Effective,
+- filtri ACL e filtri albero,
+- export Excel `.xlsx`,
 - export/import archivio analisi `.ntaudit`.
 
-File chiave:
+File principali:
 - `src/NtfsAudit.App/ViewModels/MainViewModel.cs`
 - `src/NtfsAudit.App/Services/ScanService.cs`
 - `src/NtfsAudit.App/Services/AnalysisArchive.cs`
 - `src/NtfsAudit.App/Export/ExcelExporter.cs`
 
-### NtfsAudit.Service (Windows Service)
-- polling cartella job `%ProgramData%\NtfsAudit\jobs`;
-- esecuzione sequenziale delle root richieste;
-- pubblicazione stato runtime in `%ProgramData%\NtfsAudit\service-status.json`.
+### NtfsAudit.Service
+Responsabile di:
+- polling queue job in `%ProgramData%\NtfsAudit\jobs`,
+- esecuzione sequenziale delle root richieste,
+- aggiornamento stato runtime in `%ProgramData%\NtfsAudit\service-status.json`.
 
 ### NtfsAudit.Viewer
-- apertura archivio `.ntaudit` in modalità sola lettura;
-- riuso della stessa pipeline import dell’app principale.
+Responsabile di:
+- apertura archivio `.ntaudit` senza avviare nuove scansioni,
+- render dei risultati tramite stessa pipeline di import usata nell’app principale.
+
+---
+
+## Processo di scansione (runtime)
+
+Pipeline sintetica:
+1. validazione opzioni e preparazione path temporanei,
+2. enumerazione cartelle (con esclusione path DFSR/cache),
+3. lettura ACL directory (e file, se attivato),
+4. risoluzione identità e opzionale espansione gruppi,
+5. emissione record export JSONL,
+6. aggiornamento progress UI e risultati in memoria (`Details`, `TreeMap`).
+
+Ottimizzazioni attive:
+- enumerazione cartelle/file con singola `EnumerationOptions` riusata;
+- coda export dati con capacità limitata (backpressure) per evitare crescita RAM indefinita;
+- struttura albero con deduplica figli per ridurre overhead in scansioni profonde.
+
+---
 
 ## Processo Import / Export
 
 ## Export Excel (`.xlsx`)
 Pipeline:
-1. lettura `data.jsonl` e `errors.jsonl`;
-2. separazione record utenti/gruppi/errori;
-3. creazione workbook OpenXML;
-4. split automatico fogli quando si supera il limite Excel per sheet.
+1. lettura `data.jsonl` e `errors.jsonl`,
+2. separazione utenti / gruppi / errori,
+3. scrittura workbook OpenXML,
+4. split automatico fogli oltre limite Excel.
 
 Output:
-- fogli `Users_n`, `Groups_n`, `Errors`;
-- scrittura atomica del file finale;
-- warning UI quando il dataset è stato splittato.
+- `Users_n`, `Groups_n`, `Errors`.
+
+Caratteristiche:
+- scrittura atomica output,
+- gestione dataset estesi con split sheet,
+- warning UI in caso di suddivisione.
 
 ## Export analisi (`.ntaudit`)
-Pipeline aggiornata:
-1. validazione file dati scansione (`TempDataPath`);
-2. risoluzione root/path kind e fallback su opzioni scansione;
-3. build tree map (se non già disponibile in memoria);
-4. creazione archivio zip in workspace temporaneo `%TEMP%\NtfsAudit\exports`;
-5. cleanup automatico file temporanei obsoleti nel workspace export;
-6. replace atomico sul file output finale.
+Pipeline:
+1. validazione `TempDataPath`,
+2. risoluzione root e `PathKind` (con fallback su opzioni scansione),
+3. ricostruzione tree map da export se non presente in memoria,
+4. creazione archivio ZIP temporaneo in `%TEMP%\NtfsAudit\exports`,
+5. cleanup workspace export obsoleti,
+6. validazione archivio temporaneo (presenza entry obbligatorie e metadati non vuoti),
+7. replace atomico del file finale.
 
 Contenuto archivio:
 - `data.jsonl`
@@ -62,57 +87,77 @@ Contenuto archivio:
 - `meta.json`
 
 Metadati salvati:
-- root path normalizzato,
-- path kind,
-- timestamp scansione UTC,
+- root normalizzato,
+- tipo path,
+- timestamp UTC scansione,
 - versione archivio,
-- opzioni scansione.
+- opzioni scansione,
+- conteggio record dati/errori esportati per verifica di integrità in import.
 
 ## Import analisi (`.ntaudit`)
-Pipeline aggiornata:
-1. cleanup automatico cartelle import obsolete in `%TEMP%\NtfsAudit\imports`;
-2. estrazione in workspace `%TEMP%\NtfsAudit\imports\<nome_archivio>_<timestamp>_<guid>`;
-3. verifica presenza dati minimi (`data.jsonl`, fallback su `errors.jsonl` vuoto);
-4. caricamento metadati con fallback compatibile;
-5. ricostruzione dettagli ACL (`Details`), albero (`TreeMap`) e flag cartella;
-6. normalizzazione timestamp importato (UTC) con fallback su `LastWriteTimeUtc` archivio;
-7. applicazione opzioni importate al ViewModel.
+Pipeline:
+1. cleanup cartelle import obsolete (`%TEMP%\NtfsAudit\imports`),
+2. estrazione archivio in workspace dedicato (`<nome>_<timestamp>_<guid>`),
+3. verifica presenza minima (`data.jsonl`, fallback `errors.jsonl` vuoto),
+4. load metadati e fallback compatibili versioni precedenti,
+5. validazione compatibilità scansioni legacy (versioni vecchie) e consistenza record esportati,
+6. ricostruzione `Details`, `TreeMap` e flag cartella,
+7. normalizzazione timestamp importato in UTC,
+8. applicazione opzioni nel ViewModel.
 
 Regole di robustezza:
-- path normalizzati (anche con slash misti);
-- deduplica entry ACL;
-- conservazione flag service/admin account;
-- cleanup automatico cartella import solo in caso di import fallito.
+- normalizzazione path (slash misti inclusi),
+- deduplica entry ACL,
+- mantenimento flag service/admin account,
+- cleanup cartella import solo su import fallito.
 
-## Logica checkbox di configurazione scansione
+---
 
-### Profondità
-- `ScanAllDepths = true` -> `MaxDepth = int.MaxValue` in esecuzione.
-- `ScanAllDepths = false` -> input profondità abilitato e clamp su range valido.
+## Logica checkbox configurazione scansione
 
-### Identità
-- `ResolveIdentities` governa:
-  - `ExpandGroups`
-  - `UsePowerShell`
-  - `ExcludeServiceAccounts`
-  - `ExcludeAdminAccounts`
-- Se disattivata, le opzioni dipendenti vengono forzate a `false` per coerenza.
+## 1) Profondità
+- **Scan all depths** (`ScanAllDepths`)
+  - `true`: ignora input numerico e usa profondità massima.
+  - `false`: usa `MaxDepth` con clamp su range valido.
 
-### Audit avanzato
-- `EnableAdvancedAudit` governa:
-  - `ComputeEffectiveAccess`
-  - `IncludeSharePermissions`
-  - `IncludeFiles`
-  - `ReadOwnerAndSacl`
-  - `CompareBaseline`
-- Se disattivata, le opzioni figlie vengono forzate a `false`.
+## 2) Identità
+Checkbox padre: **Resolve identities** (`ResolveIdentities`).
 
-## Logica filtri ACL
+Quando `ResolveIdentities = false`:
+- `ExpandGroups = false`
+- `UsePowerShell = false`
+- `ExcludeServiceAccounts = false`
+- `ExcludeAdminAccounts = false`
 
-Filtri booleani:
-- Allow / Deny (almeno uno sempre attivo);
-- Inherited / Explicit (almeno uno sempre attivo);
-- Protected / Disabled;
+Quando `ResolveIdentities = true`:
+- le opzioni figlie tornano disponibili.
+
+## 3) Audit avanzato
+Checkbox padre: **Enable advanced audit** (`EnableAdvancedAudit`).
+
+Quando `EnableAdvancedAudit = false`:
+- `ComputeEffectiveAccess = false`
+- `IncludeSharePermissions = false`
+- `IncludeFiles = false`
+- `ReadOwnerAndSacl = false`
+- `CompareBaseline = false`
+
+Quando `EnableAdvancedAudit = true`:
+- le opzioni figlie tornano configurabili.
+
+## 4) Coerenze di stato UI
+- Le opzioni importate da archivio vengono riallineate con la stessa logica padre/figlie.
+- Durante reset/load massivo viene sospesa la persistenza preferenze per evitare stati intermedi incoerenti.
+
+---
+
+## Logica filtri ACL (tabella risultati)
+
+Filtri principali:
+- **Allow / Deny** (almeno uno deve rimanere attivo),
+- **Inherited / Explicit** (almeno uno deve rimanere attivo),
+- **Inheritance disabled**,
+- **Protected**,
 - categorie principal:
   - Everyone,
   - Authenticated Users,
@@ -120,53 +165,63 @@ Filtri booleani:
   - Admin Accounts,
   - Other Principals.
 
-Regole di coerenza:
-- se tutte le categorie principal sono disattivate, viene riattivata automaticamente `Other Principals`;
-- classificazione principal via SID noto + fallback nome + fallback flag entry.
+Regole:
+- se tutte le categorie principal vengono disattivate, viene riattivato automaticamente `Other Principals`;
+- filtro testuale (`AclFilter`) case-insensitive su principal, SID, diritti, path, owner, share, rischio, source, `PathKind`, membri gruppo;
+- filtri persistiti in `ui-preferences.json`.
 
-Filtro testuale (`AclFilter`): ricerca case-insensitive su principal, SID, rights, path, owner, share, risk/audit/source/path kind e membri gruppo.
-
-Persistenza preferenze:
-- i filtri ACL e tree filter vengono salvati in cache UI (`ui-preferences.json`);
-- durante load/reset massivo della UI la persistenza è sospesa per evitare scritture ripetute e stati intermedi incoerenti.
+---
 
 ## Logica filtri albero
 
 Filtri disponibili:
 - solo ACL esplicite,
 - solo inheritance disabled,
-- solo differenze,
+- solo differenze baseline,
 - solo deny espliciti,
 - solo mismatch baseline,
 - solo file,
 - solo cartelle.
 
 Regole:
-- file e cartelle non possono essere entrambi disattivati;
-- viene preservata la selezione corrente quando possibile dopo il reload filtrato;
-- i filtri sono persistiti immediatamente nelle preferenze UI.
+- file/cartelle non possono essere entrambi disattivati;
+- preservazione selezione corrente dove possibile dopo reload;
+- persistenza immediata dei flag filtro.
 
-## Esclusione cartelle DFSR/cache
+---
 
-La scansione salta cartelle tecniche DFSR (es. `System Volume Information\DFSR`, `DfsrPrivate`, `ConflictAndDeleted`, `Staging`, `PreExisting`) con parsing robusto anche su path con separatori misti (`\` e `/`).
+## Doppio click su utenti / gruppi (dettaglio principal)
+
+Comportamento:
+- doppio click gruppo -> lookup membri gruppo,
+- doppio click utente -> lookup gruppi utente.
+
+Robustezza:
+- eccezioni lookup AD intercettate con messaggio contestuale,
+- fallback sicuro su array vuoti in caso di resolver `null`,
+- prevenzione errore generico dispatcher durante apertura dettaglio principal.
+
+---
 
 ## Script build / clean
 
 ## `scripts/build.ps1`
-Pipeline:
-1. restore
-2. build
-3. test
-4. publish (App / Viewer / Service)
+Pipeline standard:
+1. `dotnet restore`
+2. `dotnet build`
+3. `dotnet test`
+4. `dotnet publish` (App, Viewer, Service)
 
 Flag principali:
 - `-Configuration`
 - `-SkipRestore`, `-SkipBuild`, `-SkipTests`, `-SkipPublish`
+- `-SkipViewerPublish`, `-SkipServicePublish`, `-SkipPublishClean`
 - `-Framework`, `-Runtime`, `-SelfContained`
 - `-PublishSingleFile`, `-PublishReadyToRun`
+- `-OutputPath`
 - `-RunClean`
 
-Pulizia integrata supportata:
+Pulizia pre-build integrata:
 - `-CleanAllTemp`
 - `-CleanImports`
 - `-CleanCache`
@@ -176,8 +231,9 @@ Pulizia integrata supportata:
 - `-CleanScanData`
 - `-CleanAnalysisImports`
 - `-CleanAnalysisExports`
-- `-CleanAnalysisWorkspace` (shortcut: abilita sia import che export workspace analisi)
-- `-CleanImportExportData` (shortcut: pulisce temp import app + file export + workspace analisi import/export)
+- `-CleanAnalysisWorkspace` (shortcut import+export workspace analisi)
+- `-CleanImportExportData` (shortcut import temporanei + export file + workspace analisi)
+- `-CleanOperationalData` (shortcut esteso: import/export + scan data + service jobs + logs + workspace analisi)
 
 ## `scripts/clean.ps1`
 Pulizia selettiva di:
@@ -185,14 +241,17 @@ Pulizia selettiva di:
 - `%TEMP%\NtfsAudit`,
 - `%LOCALAPPDATA%\NtfsAudit\Cache`,
 - `%LOCALAPPDATA%\NtfsAudit\Logs`,
-- file export (`.xlsx`, `.ntaudit`),
+- file `.xlsx` / `.ntaudit`,
 - queue job servizio,
 - stato runtime servizio,
 - workspace analisi import/export.
 
-Nuovo shortcut:
-- `-CleanAnalysisWorkspace` => pulisce `%TEMP%\NtfsAudit\imports` e `%TEMP%\NtfsAudit\exports`.
-- `-CleanImportExportData` => pulisce import temporanei, file `.xlsx`/`.ntaudit` e workspace analisi import/export.
+Shortcut:
+- `-CleanAnalysisWorkspace` => pulisce `%TEMP%\NtfsAudit\imports` + `%TEMP%\NtfsAudit\exports`
+- `-CleanImportExportData` => pulisce import temporanei + file export + workspace analisi
+- `-CleanOperationalData` => pulizia estesa operativa (import/export, scan data, job servizio, log, workspace analisi)
+
+---
 
 ## Comandi rapidi
 
@@ -203,16 +262,20 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1 -Configuration Rele
 # clean esteso + build
 powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1 -Configuration Release -RunClean -CleanAllTemp -CleanScanData -CleanAnalysisWorkspace
 
-# pulizia solo workspace analisi
+# pulizia workspace analisi
 powershell -ExecutionPolicy Bypass -File .\scripts\clean.ps1 -CleanAnalysisWorkspace
 
-
-# pulizia completa flussi import/export
+# pulizia completa import/export
 powershell -ExecutionPolicy Bypass -File .\scripts\clean.ps1 -CleanImportExportData
+
+# pulizia operativa estesa (log + queue + scan data + import/export)
+powershell -ExecutionPolicy Bypass -File .\scripts\clean.ps1 -CleanOperationalData
 ```
+
+---
 
 ## Note operative
 
-- Progetto orientato a Windows (WPF, ACL NTFS native, service control manager).
-- In ambienti Linux/macOS parte delle funzionalità non è eseguibile.
-- In ambiente senza SDK .NET non è possibile eseguire `dotnet build/test/publish`.
+- Progetto orientato Windows (WPF, ACL NTFS native, service manager).
+- In Linux/macOS alcune funzionalità non sono eseguibili.
+- Senza SDK .NET non è possibile eseguire `dotnet restore/build/test/publish`.
