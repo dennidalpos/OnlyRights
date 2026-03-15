@@ -13,5 +13,7 @@ namespace NtfsAudit.App.Models
         public PathKind RootPathKind { get; set; }
         public ScanOptions ScanOptions { get; set; }
         public DateTime ScannedAtUtc { get; set; }
+        public string SqliteDatabasePath { get; set; }
+        public bool UsesSqliteBackend { get; set; }
     }
 }

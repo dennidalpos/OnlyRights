@@ -5,6 +5,14 @@ Suite Windows per analisi ACL NTFS/SMB composta da:
 - **NtfsAudit.Service** (esecuzione job in background),
 - **NtfsAudit.Viewer** (apertura archivi `.ntaudit` in sola lettura).
 
+## Stack
+
+- .NET 6/8 per applicazioni WPF Windows
+- .NET 8 per Windows Service e test
+- OpenXML per export Excel
+- Microsoft.Data.Sqlite per payload/query layer read-only su archivi grandi
+- Newtonsoft.Json per serializzazione archivio/stato
+
 ## Struttura del repository
 
 - `src/NtfsAudit.App`: applicazione principale (scan, filtri, export/import, UI).
@@ -13,6 +21,8 @@ Suite Windows per analisi ACL NTFS/SMB composta da:
 - `tests/NtfsAudit.App.Tests`: test unitari su pipeline, path, filtri e robustezza import/export.
 - `scripts/build.ps1`: restore/build/test/publish con opzioni cleaning integrate.
 - `scripts/clean.ps1`: pulizia artefatti build e residui operativi (cache/temp/job/report).
+- `.github/workflows/ci.yml`: pipeline minima Windows per restore/build/test.
+- `global.json`: pin dell'SDK .NET 8 usato dal repository.
 
 ---
 
@@ -66,6 +76,7 @@ Pipeline:
    - `errors.jsonl` (vuoto se mancante)
    - `tree.json`
    - `folderflags.json`
+   - `analysis.sqlite`
    - `meta.json`
 5. validazione archivio temporaneo,
 6. replace atomico output finale.
@@ -73,6 +84,7 @@ Pipeline:
 Dettagli aggiornati:
 - estensione `.ntaudit` applicata automaticamente se omessa,
 - workspace export in `%TEMP%\NtfsAudit\exports` con retention automatica,
+- payload SQLite incluso per consultazione read-only scalabile di dataset grandi,
 - metadati con conteggi record/errori per verifica integrità in import.
 
 ---
@@ -88,14 +100,21 @@ Pipeline:
 4. verifica entry minime (`data.jsonl`, `errors.jsonl` fallback vuoto),
 5. lettura metadati e validazione compatibilità versione,
 6. verifica consistenza conteggi record/errori (versioni recenti),
-7. ricostruzione `Details`, `TreeMap`, flag cartella e baseline,
-8. normalizzazione timestamp e opzioni nel ViewModel.
+7. uso del payload SQLite in modalità lazy per archivi grandi oppure fallback ai JSON legacy per archivi piccoli,
+8. ricostruzione `Details`, `TreeMap`, flag cartella e baseline,
+9. normalizzazione timestamp e opzioni nel ViewModel.
 
 Regole di robustezza:
 - normalizzazione path con slash misti,
 - deduplica ACL duplicate,
 - fallback sicuri per archivi legacy,
+- soglia lazy SQLite applicata solo ai dataset grandi, preservando il comportamento storico sugli archivi piccoli,
 - cleanup automatico workspace solo su import fallito.
+
+### Viewer read-only
+
+- `NtfsAudit.Viewer` può essere avviato anche con path `.ntaudit` come argomento da riga di comando o share di rete.
+- Gli archivi grandi vengono consultati in sola lettura tramite `analysis.sqlite` senza materializzare tutti gli ACE in memoria all’avvio.
 
 ---
 
@@ -114,9 +133,10 @@ Nella UI:
 ## Pulizia residui
 
 Pulsante **Pulisci cache**:
-1. elimina residui operativi (`temp`, cache locale, cache servizio, jobs, service-status),
-2. ricrea la cartella temp applicativa e la cache servizio,
-3. apre entrambe le cartelle (temp + cache servizio) per verifica rapida.
+1. elimina residui operativi runtime (`temp` scan, cache locale, cache servizio, jobs, service-status),
+2. preserva i workspace `%TEMP%\\NtfsAudit\\imports` e `%TEMP%\\NtfsAudit\\exports` gestiti con retention dedicata,
+3. ricrea la cartella temp applicativa,
+4. apre la cartella temp per verifica rapida.
 
 Script CLI equivalenti:
 - `scripts/clean.ps1 -CleanOperationalData`
@@ -133,7 +153,7 @@ Flusso standard:
 1. restore (`dotnet restore`),
 2. build (`dotnet build`),
 3. test (`dotnet test`),
-4. publish App/Viewer/Service (`dotnet publish`).
+4. publish App/Viewer/Service (`dotnet publish`, framework-dependent di default).
 
 Opzioni principali:
 - `-Configuration`, `-Framework`, `-Runtime`, `-OutputPath`
@@ -167,20 +187,54 @@ Preset utili:
 
 ### Build completa
 ```powershell
-pwsh ./scripts/build.ps1 -Configuration Release
+powershell -File .\scripts\build.ps1 -Configuration Release
 ```
 
 ### Build senza test
 ```powershell
-pwsh ./scripts/build.ps1 -SkipTests
+powershell -File .\scripts\build.ps1 -SkipTests
 ```
 
 ### Clean operativo completo
 ```powershell
-pwsh ./scripts/clean.ps1 -CleanOperationalData
+powershell -File .\scripts\clean.ps1 -CleanOperationalData
+```
+
+### Test con build già eseguita
+```powershell
+dotnet test .\NtfsAudit.sln -c Release --no-build --nologo
 ```
 
 ### Publish self-contained
 ```powershell
-pwsh ./scripts/build.ps1 -Configuration Release -Runtime win-x64 -SelfContained -PublishSingleFile
+powershell -File .\scripts\build.ps1 -Configuration Release -Runtime win-x64 -SelfContained -PublishSingleFile
 ```
+
+## Setup
+
+Prerequisiti:
+- Windows con .NET SDK 8 installato (pin in `global.json`, attualmente `8.0.100` con roll-forward `latestFeature`)
+- workload desktop .NET/WPF disponibile
+
+Ripristino dipendenze:
+```powershell
+dotnet restore .\NtfsAudit.sln
+```
+
+## Run
+
+Esecuzione applicazione principale:
+```powershell
+dotnet run --project .\src\NtfsAudit.App\NtfsAudit.App.csproj -f net8.0-windows
+```
+
+Esecuzione test:
+```powershell
+dotnet test .\NtfsAudit.sln -c Release --no-build --nologo
+```
+
+## Documentation
+
+- `PROJECT_SPEC.md`
+- `PROJECT_STATUS.json`
+- `.github/workflows/ci.yml`

@@ -76,10 +76,7 @@ namespace NtfsAudit.App.Services
             var isProtected = summary != null ? summary.IsProtected : detail.IsInheritanceDisabled;
             var baselineAdded = detail.BaselineSummary == null ? 0 : detail.BaselineSummary.Added.Count;
             var baselineRemoved = detail.BaselineSummary == null ? 0 : detail.BaselineSummary.Removed.Count;
-            var hasHighRisk = detail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Alto", System.StringComparison.OrdinalIgnoreCase));
-            var hasMediumRisk = detail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Medio", System.StringComparison.OrdinalIgnoreCase));
-            var hasLowRisk = detail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Basso", System.StringComparison.OrdinalIgnoreCase));
-            return (detail.HasExplicitPermissions, detail.IsInheritanceDisabled, added, removed, deny, isProtected, baselineAdded, baselineRemoved, detail.HasExplicitNtfs, detail.HasExplicitShare, hasHighRisk, hasMediumRisk, hasLowRisk);
+            return (detail.HasExplicitPermissions, detail.IsInheritanceDisabled, added, removed, deny, isProtected, baselineAdded, baselineRemoved, detail.HasExplicitNtfs, detail.HasExplicitShare, detail.HasHighRiskEntries, detail.HasMediumRiskEntries, detail.HasLowRiskEntries);
         }
     }
 }

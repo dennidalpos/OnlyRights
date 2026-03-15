@@ -339,6 +339,7 @@ namespace NtfsAudit.App.Tests
                     Assert.NotNull(zip.GetEntry("errors.jsonl"));
                     Assert.NotNull(zip.GetEntry("tree.json"));
                     Assert.NotNull(zip.GetEntry("folderflags.json"));
+                    Assert.NotNull(zip.GetEntry("analysis.sqlite"));
                     var meta = zip.GetEntry("meta.json");
                     Assert.NotNull(meta);
                     using (var stream = meta.Open())
@@ -349,6 +350,74 @@ namespace NtfsAudit.App.Tests
                         Assert.Contains("\"ErrorRecordCount\":1", text);
                     }
                 }
+            }
+            finally
+            {
+                if (Directory.Exists(tempRoot))
+                {
+                    Directory.Delete(tempRoot, true);
+                }
+            }
+        }
+
+        [Fact]
+        public void Import_UsesSqliteBackendForLargeDatasets()
+        {
+            var tempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit.Tests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempRoot);
+
+            try
+            {
+                var dataPath = Path.Combine(tempRoot, "scan.jsonl");
+                var errorPath = Path.Combine(tempRoot, "errors.jsonl");
+                var archivePath = Path.Combine(tempRoot, "analysis_large.ntaudit");
+                using (var writer = new StreamWriter(dataPath))
+                {
+                    for (var i = 0; i < 5000; i++)
+                    {
+                        writer.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(new ExportRecord
+                        {
+                            FolderPath = @"C:\data",
+                            PrincipalName = "User" + i,
+                            PrincipalSid = "S-1-5-21-" + i,
+                            PrincipalType = "User",
+                            PermissionLayer = PermissionLayer.Ntfs,
+                            AllowDeny = "Allow",
+                            RightsSummary = "Read",
+                            EffectiveRightsSummary = "Read",
+                            HasExplicitPermissions = true
+                        }));
+                    }
+                }
+
+                File.WriteAllText(errorPath, string.Empty);
+
+                var archive = new AnalysisArchive();
+                archive.Export(new ScanResult
+                {
+                    TempDataPath = dataPath,
+                    ErrorPath = errorPath,
+                    RootPath = @"C:\data",
+                    RootPathKind = PathKind.Local,
+                    Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        [@"C:\data"] = new FolderDetail { HasExplicitPermissions = true, HasExplicitNtfs = true, HasFolderEntries = true }
+                    },
+                    TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        [@"C:\data"] = new List<string>()
+                    },
+                    ScanOptions = new ScanOptions { RootPath = @"C:\data" },
+                    ScannedAtUtc = DateTime.UtcNow
+                }, @"C:\data", archivePath);
+
+                var imported = archive.Import(archivePath);
+
+                Assert.True(imported.UsesSqliteBackend);
+                Assert.True(imported.ScanResult.UsesSqliteBackend);
+                Assert.False(imported.ScanResult.Details[@"C:\data"].EntriesLoaded);
+                var loadedDetail = new AnalysisSqliteStore().LoadFolderDetail(imported.ScanResult.SqliteDatabasePath, @"C:\data");
+                Assert.Equal(5000, loadedDetail.AllEntries.Count);
             }
             finally
             {

@@ -22,6 +22,14 @@ namespace NtfsAudit.App.Models
         public bool HasExplicitNtfs { get; set; }
         public bool HasExplicitShare { get; set; }
         public bool IsInheritanceDisabled { get; set; }
+        public bool HasFileEntries { get; set; }
+        public bool HasFolderEntries { get; set; }
+        public bool HasHighRiskEntries { get; set; }
+        public bool HasMediumRiskEntries { get; set; }
+        public bool HasLowRiskEntries { get; set; }
+        public bool HasShareEntries { get; set; }
+        public bool HasEffectiveEntries { get; set; }
+        public bool EntriesLoaded { get; set; } = true;
         public AclDiffSummary DiffSummary { get; set; }
         public AclDiffSummary BaselineSummary { get; set; }
     }

@@ -16,6 +16,7 @@ namespace NtfsAudit.Service
         private static readonly string ServiceDataRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "NtfsAudit");
         private static readonly string JobsRoot = Path.Combine(ServiceDataRoot, "jobs");
         private static readonly string StatusPath = Path.Combine(ServiceDataRoot, "service-status.json");
+        private readonly ServiceJobFileHandler _jobFileHandler = new ServiceJobFileHandler();
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
@@ -60,23 +61,9 @@ namespace NtfsAudit.Service
             foreach (var file in files)
             {
                 token.ThrowIfCancellationRequested();
-                ServiceScanJob job;
-                try
+                if (!_jobFileHandler.TryLoad(file, out var job, out var optionsList, out var failureReason))
                 {
-                    job = JsonConvert.DeserializeObject<ServiceScanJob>(File.ReadAllText(file));
-                }
-                catch
-                {
-                    continue;
-                }
-                if (job == null || job.ScanOptions == null || job.ScanOptions.Count == 0)
-                {
-                    continue;
-                }
-
-                var optionsList = job.ScanOptions.Where(option => option != null && !string.IsNullOrWhiteSpace(option.RootPath)).ToList();
-                if (optionsList.Count == 0)
-                {
+                    QuarantineInvalidJob(file, failureReason, files.Length);
                     continue;
                 }
 
@@ -125,6 +112,30 @@ namespace NtfsAudit.Service
                     LastMessage = pending > 0 ? "Job completato, altri job in coda" : "Ultimo job completato"
                 });
             }
+        }
+
+        private void QuarantineInvalidJob(string file, string failureReason, int pendingJobs)
+        {
+            try
+            {
+                _jobFileHandler.Quarantine(file, failureReason);
+            }
+            catch
+            {
+                TryDeleteFile(file);
+            }
+
+            var pending = Directory.Exists(JobsRoot)
+                ? Directory.GetFiles(JobsRoot, "job_*.json").Length
+                : Math.Max(0, pendingJobs - 1);
+            WriteServiceStatus(new ServiceRuntimeStatus
+            {
+                IsRunning = false,
+                PendingJobs = pending,
+                RemainingRootsInCurrentJob = 0,
+                LastUpdateUtc = DateTime.UtcNow,
+                LastMessage = string.Format("Job non valido isolato: {0}", failureReason ?? "errore sconosciuto")
+            });
         }
 
         private static void WriteServiceStatus(ServiceRuntimeStatus status)

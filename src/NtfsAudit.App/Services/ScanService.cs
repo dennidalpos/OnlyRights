@@ -329,6 +329,7 @@ namespace NtfsAudit.App.Services
             var detailsResult = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase);
             foreach (var entry in details)
             {
+                UpdateFolderDetailFlags(entry.Value);
                 detailsResult[entry.Key] = entry.Value;
             }
 
@@ -1235,6 +1236,22 @@ namespace NtfsAudit.App.Services
         private static bool IsAuthenticatedUsers(string sidOrName)
         {
             return string.Equals(sidOrName, AuthenticatedUsersSid, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void UpdateFolderDetailFlags(FolderDetail detail)
+        {
+            if (detail == null)
+            {
+                return;
+            }
+
+            detail.HasShareEntries = detail.ShareEntries.Count > 0;
+            detail.HasEffectiveEntries = detail.EffectiveEntries.Count > 0;
+            detail.HasFileEntries = detail.AllEntries.Any(entry => string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase));
+            detail.HasFolderEntries = detail.AllEntries.Any(entry => !string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase));
+            detail.HasHighRiskEntries = detail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase));
+            detail.HasMediumRiskEntries = detail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase));
+            detail.HasLowRiskEntries = detail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase));
         }
 
         private static bool IsDfsCachePath(string path)

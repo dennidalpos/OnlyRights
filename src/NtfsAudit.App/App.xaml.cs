@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Threading;
 using NtfsAudit.App.Cache;
 using NtfsAudit.App.Logging;
+using NtfsAudit.App.Services;
 
 namespace NtfsAudit.App
 {
@@ -37,28 +38,17 @@ namespace NtfsAudit.App
                 _singleInstanceMutex.Dispose();
                 _singleInstanceMutex = null;
             }
-            CleanupTemporaryFiles();
         }
 
         private bool EnsureSingleInstance()
         {
-            try
-            {
-                var createdNew = false;
-                _singleInstanceMutex = new Mutex(true, SingleInstanceMutexName, out createdNew);
-                if (!createdNew)
-                {
-                    _singleInstanceMutex.Dispose();
-                    _singleInstanceMutex = null;
-                    MessageBox.Show("NTFS Audit è già in esecuzione.", "Istanza già attiva", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return false;
-                }
-                return true;
-            }
-            catch
+            if (SingleInstanceCoordinator.TryAcquire(SingleInstanceMutexName, out _singleInstanceMutex))
             {
                 return true;
             }
+
+            MessageBox.Show("NTFS Audit è già in esecuzione.", "Istanza già attiva", MessageBoxButton.OK, MessageBoxImage.Information);
+            return false;
         }
 
         private void InitializeLogger()
@@ -99,21 +89,6 @@ namespace NtfsAudit.App
                 ? string.Format("Unhandled error [{0}] (null exception)", source)
                 : string.Format("Unhandled error [{0}]: {1}", source, exception);
             _logger.Error(message);
-        }
-
-        private void CleanupTemporaryFiles()
-        {
-            try
-            {
-                var tempRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "NtfsAudit");
-                if (System.IO.Directory.Exists(tempRoot))
-                {
-                    System.IO.Directory.Delete(tempRoot, true);
-                }
-            }
-            catch
-            {
-            }
         }
     }
 }

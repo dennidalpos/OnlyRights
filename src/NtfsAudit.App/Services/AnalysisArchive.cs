@@ -11,16 +11,17 @@ namespace NtfsAudit.App.Services
 {
     public class AnalysisArchive
     {
-        private const int CurrentArchiveVersion = 6;
+        private const int CurrentArchiveVersion = 7;
         private const string ArchiveFileExtension = ".ntaudit";
         private const string DataEntryName = "data.jsonl";
         private const string ErrorsEntryName = "errors.jsonl";
         private const string TreeEntryName = "tree.json";
         private const string MetaEntryName = "meta.json";
         private const string FolderFlagsEntryName = "folderflags.json";
-        private const string AnalysisWorkspaceRoot = "NtfsAudit";
-        private const string AnalysisExportsDir = "exports";
-        private const string AnalysisImportsDir = "imports";
+        private const string SqliteEntryName = "analysis.sqlite";
+        private const int SqliteLazyLoadThreshold = 5000;
+        private const string AnalysisExportsDir = RuntimePaths.ExportsDirectoryName;
+        private const string AnalysisImportsDir = RuntimePaths.ImportsDirectoryName;
         private static readonly TimeSpan AnalysisImportRetention = TimeSpan.FromDays(7);
         private static readonly TimeSpan AnalysisExportRetention = TimeSpan.FromDays(7);
 
@@ -54,6 +55,7 @@ namespace NtfsAudit.App.Services
             CleanupAnalysisWorkspace(AnalysisExportsDir, AnalysisExportRetention);
             var exportWorkspace = GetAnalysisWorkspace(AnalysisExportsDir);
             var tempOutput = Path.Combine(exportWorkspace, string.Format("archive_{0}.tmp", Guid.NewGuid().ToString("N")));
+            var sqlitePath = EnsureSqlitePayload(result, exportWorkspace);
             if (File.Exists(tempOutput))
             {
                 File.Delete(tempOutput);
@@ -70,6 +72,7 @@ namespace NtfsAudit.App.Services
                     }
                     AddJsonEntry(archive, TreeEntryName, exportTreeMap);
                     AddJsonEntry(archive, FolderFlagsEntryName, BuildFolderFlags(result.Details));
+                    AddFileEntry(archive, SqliteEntryName, sqlitePath);
                     AddJsonEntry(archive, MetaEntryName, new ArchiveMeta
                     {
                         RootPath = resolvedRootPath,
@@ -122,6 +125,7 @@ namespace NtfsAudit.App.Services
                     ExtractEntry(archive, ErrorsEntryName, tempDir);
                     ExtractEntry(archive, TreeEntryName, tempDir);
                     ExtractEntry(archive, FolderFlagsEntryName, tempDir);
+                    ExtractEntry(archive, SqliteEntryName, tempDir);
                     ExtractEntry(archive, MetaEntryName, tempDir);
                 }
 
@@ -129,6 +133,7 @@ namespace NtfsAudit.App.Services
                 var errorPath = Path.Combine(tempDir, ErrorsEntryName);
                 var treePath = Path.Combine(tempDir, TreeEntryName);
                 var folderFlagsPath = Path.Combine(tempDir, FolderFlagsEntryName);
+                var sqlitePath = Path.Combine(tempDir, SqliteEntryName);
                 var metaPath = Path.Combine(tempDir, MetaEntryName);
                 if (!File.Exists(dataPath))
                 {
@@ -144,14 +149,27 @@ namespace NtfsAudit.App.Services
                 var scanOptions = meta.ScanOptions ?? LoadScanOptions(dataPath);
                 var resolvedRootPath = ResolveArchiveRoot(meta.RootPath, dataPath, scanOptions);
                 var treeMap = LoadTreeMap(treePath, dataPath, resolvedRootPath);
-
-                var details = BuildDetailsFromExport(dataPath);
-                ApplyFolderFlags(details, LoadFolderFlags(folderFlagsPath));
+                var folderFlags = LoadFolderFlags(folderFlagsPath);
+                var hasSqlitePayload = File.Exists(sqlitePath);
+                var useSqliteBackend = hasSqlitePayload && meta.DataRecordCount >= SqliteLazyLoadThreshold;
+                Dictionary<string, FolderDetail> details;
+                if (useSqliteBackend)
+                {
+                    details = BuildDetailsFromFolderFlags(treeMap, folderFlags);
+                    details = new AnalysisSqliteStore().LoadFolderDetailPlaceholders(sqlitePath, details);
+                }
+                else
+                {
+                    details = BuildDetailsFromExport(dataPath);
+                    ApplyFolderFlags(details, folderFlags);
+                }
 
                 var result = new ScanResult
                 {
                     TempDataPath = dataPath,
                     ErrorPath = errorPath,
+                    SqliteDatabasePath = hasSqlitePayload ? sqlitePath : null,
+                    UsesSqliteBackend = useSqliteBackend,
                     Details = details,
                     TreeMap = treeMap,
                     RootPath = resolvedRootPath,
@@ -167,7 +185,8 @@ namespace NtfsAudit.App.Services
                     RootPath = resolvedRootPath,
                     RootPathKind = result.RootPathKind,
                     ScannedAtUtc = result.ScannedAtUtc,
-                    ScanOptions = scanOptions
+                    ScanOptions = scanOptions,
+                    UsesSqliteBackend = useSqliteBackend
                 };
             }
             finally
@@ -453,10 +472,12 @@ namespace NtfsAudit.App.Services
                 {
                     detail.ShareEntries.Add(entry);
                     detail.HasExplicitShare = true;
+                    detail.HasShareEntries = true;
                 }
                 else if (entry.PermissionLayer == PermissionLayer.Effective)
                 {
                     detail.EffectiveEntries.Add(entry);
+                    detail.HasEffectiveEntries = true;
                 }
                 else
                 {
@@ -471,6 +492,12 @@ namespace NtfsAudit.App.Services
                 {
                     detail.IsInheritanceDisabled = true;
                 }
+
+                detail.HasFileEntries = detail.HasFileEntries || string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase);
+                detail.HasFolderEntries = detail.HasFolderEntries || !string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase);
+                detail.HasHighRiskEntries = detail.HasHighRiskEntries || string.Equals(entry.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase);
+                detail.HasMediumRiskEntries = detail.HasMediumRiskEntries || string.Equals(entry.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase);
+                detail.HasLowRiskEntries = detail.HasLowRiskEntries || string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase);
             }
 
             return details;
@@ -535,6 +562,14 @@ namespace NtfsAudit.App.Services
                     HasExplicitNtfs = entry.Value.HasExplicitNtfs,
                     HasExplicitShare = entry.Value.HasExplicitShare,
                     IsInheritanceDisabled = entry.Value.IsInheritanceDisabled,
+                    HasFileEntries = entry.Value.HasFileEntries,
+                    HasFolderEntries = entry.Value.HasFolderEntries,
+                    HasHighRiskEntries = entry.Value.HasHighRiskEntries,
+                    HasMediumRiskEntries = entry.Value.HasMediumRiskEntries,
+                    HasLowRiskEntries = entry.Value.HasLowRiskEntries,
+                    HasShareEntries = entry.Value.HasShareEntries,
+                    HasEffectiveEntries = entry.Value.HasEffectiveEntries,
+                    DiffSummary = entry.Value.DiffSummary,
                     BaselineAdded = baselineAdded,
                     BaselineRemoved = baselineRemoved
                 };
@@ -574,6 +609,17 @@ namespace NtfsAudit.App.Services
                 detail.HasExplicitNtfs = detail.HasExplicitNtfs || entry.Value.HasExplicitNtfs;
                 detail.HasExplicitShare = detail.HasExplicitShare || entry.Value.HasExplicitShare;
                 detail.IsInheritanceDisabled = detail.IsInheritanceDisabled || entry.Value.IsInheritanceDisabled;
+                detail.HasFileEntries = detail.HasFileEntries || entry.Value.HasFileEntries;
+                detail.HasFolderEntries = detail.HasFolderEntries || entry.Value.HasFolderEntries;
+                detail.HasHighRiskEntries = detail.HasHighRiskEntries || entry.Value.HasHighRiskEntries;
+                detail.HasMediumRiskEntries = detail.HasMediumRiskEntries || entry.Value.HasMediumRiskEntries;
+                detail.HasLowRiskEntries = detail.HasLowRiskEntries || entry.Value.HasLowRiskEntries;
+                detail.HasShareEntries = detail.HasShareEntries || entry.Value.HasShareEntries;
+                detail.HasEffectiveEntries = detail.HasEffectiveEntries || entry.Value.HasEffectiveEntries;
+                if (entry.Value.DiffSummary != null)
+                {
+                    detail.DiffSummary = entry.Value.DiffSummary;
+                }
                 if ((entry.Value.BaselineAdded != null && entry.Value.BaselineAdded.Count > 0) ||
                     (entry.Value.BaselineRemoved != null && entry.Value.BaselineRemoved.Count > 0))
                 {
@@ -894,7 +940,7 @@ namespace NtfsAudit.App.Services
 
             try
             {
-                var workspace = Path.Combine(Path.GetTempPath(), AnalysisWorkspaceRoot, leafDirectory);
+                var workspace = Path.Combine(RuntimePaths.GetTempRoot(), leafDirectory);
                 if (!Directory.Exists(workspace))
                 {
                     return;
@@ -932,6 +978,7 @@ namespace NtfsAudit.App.Services
                     {
                     }
                 }
+
             }
             catch
             {
@@ -940,9 +987,40 @@ namespace NtfsAudit.App.Services
 
         private static string GetAnalysisWorkspace(string leafDirectory)
         {
-            var workspace = Path.Combine(Path.GetTempPath(), AnalysisWorkspaceRoot, leafDirectory);
+            var workspace = Path.Combine(RuntimePaths.GetTempRoot(), leafDirectory);
             Directory.CreateDirectory(workspace);
             return workspace;
+        }
+
+        private string EnsureSqlitePayload(ScanResult result, string exportWorkspace)
+        {
+            if (result != null
+                && !string.IsNullOrWhiteSpace(result.SqliteDatabasePath)
+                && File.Exists(PathResolver.ToExtendedPath(result.SqliteDatabasePath)))
+            {
+                return result.SqliteDatabasePath;
+            }
+
+            var sqlitePath = Path.Combine(exportWorkspace, string.Format("analysis_{0}.sqlite", Guid.NewGuid().ToString("N")));
+            new AnalysisSqliteStore().CreateDatabase(sqlitePath, result.TempDataPath, result.ErrorPath, result.Details);
+            result.SqliteDatabasePath = sqlitePath;
+            result.UsesSqliteBackend = true;
+            return sqlitePath;
+        }
+
+        private Dictionary<string, FolderDetail> BuildDetailsFromFolderFlags(Dictionary<string, List<string>> treeMap, Dictionary<string, FolderFlagsPayload> flags)
+        {
+            var details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase);
+            if (treeMap != null)
+            {
+                foreach (var path in treeMap.Keys.Where(key => !string.IsNullOrWhiteSpace(key)))
+                {
+                    details[path] = new FolderDetail { EntriesLoaded = false };
+                }
+            }
+
+            ApplyFolderFlags(details, flags);
+            return details;
         }
 
         private class ArchiveMeta
@@ -962,6 +1040,14 @@ namespace NtfsAudit.App.Services
             public bool HasExplicitNtfs { get; set; }
             public bool HasExplicitShare { get; set; }
             public bool IsInheritanceDisabled { get; set; }
+            public bool HasFileEntries { get; set; }
+            public bool HasFolderEntries { get; set; }
+            public bool HasHighRiskEntries { get; set; }
+            public bool HasMediumRiskEntries { get; set; }
+            public bool HasLowRiskEntries { get; set; }
+            public bool HasShareEntries { get; set; }
+            public bool HasEffectiveEntries { get; set; }
+            public AclDiffSummary DiffSummary { get; set; }
             public List<AclDiffKey> BaselineAdded { get; set; }
             public List<AclDiffKey> BaselineRemoved { get; set; }
         }
@@ -974,5 +1060,6 @@ namespace NtfsAudit.App.Services
         public PathKind RootPathKind { get; set; }
         public DateTime ScannedAtUtc { get; set; }
         public ScanOptions ScanOptions { get; set; }
+        public bool UsesSqliteBackend { get; set; }
     }
 }
