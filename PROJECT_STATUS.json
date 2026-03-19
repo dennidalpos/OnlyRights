@@ -1,36 +1,29 @@
 {
   "treeview": [
-    ".github/",
-    ".github/workflows/",
     ".github/workflows/ci.yml",
     ".gitignore",
     "AGENTS.md",
+    "Directory.Build.props",
     "global.json",
+    "LICENSE",
     "NtfsAudit.sln",
     "PROJECT_SPEC.md",
     "PROJECT_STATUS.json",
     "README.md",
-    "scripts/",
     "scripts/build.ps1",
     "scripts/clean.ps1",
-    "src/",
-    "src/NtfsAudit.App/",
     "src/NtfsAudit.App/App.config",
     "src/NtfsAudit.App/App.xaml",
     "src/NtfsAudit.App/App.xaml.cs",
-    "src/NtfsAudit.App/Cache/",
     "src/NtfsAudit.App/Cache/GroupMembershipCache.cs",
     "src/NtfsAudit.App/Cache/LocalCacheStore.cs",
     "src/NtfsAudit.App/Cache/SidNameCache.cs",
-    "src/NtfsAudit.App/Export/",
     "src/NtfsAudit.App/Export/ExcelExporter.cs",
     "src/NtfsAudit.App/Export/ExportRecord.cs",
-    "src/NtfsAudit.App/Logging/",
     "src/NtfsAudit.App/Logging/LogEntry.cs",
     "src/NtfsAudit.App/Logging/Logger.cs",
     "src/NtfsAudit.App/MainWindow.xaml",
     "src/NtfsAudit.App/MainWindow.xaml.cs",
-    "src/NtfsAudit.App/Models/",
     "src/NtfsAudit.App/Models/AceEntry.cs",
     "src/NtfsAudit.App/Models/AclDiffKey.cs",
     "src/NtfsAudit.App/Models/AclDiffSummary.cs",
@@ -39,6 +32,7 @@
     "src/NtfsAudit.App/Models/PathKind.cs",
     "src/NtfsAudit.App/Models/Permissions.cs",
     "src/NtfsAudit.App/Models/ResolvedPrincipal.cs",
+    "src/NtfsAudit.App/Models/ScanCredential.cs",
     "src/NtfsAudit.App/Models/ScanOptions.cs",
     "src/NtfsAudit.App/Models/ScanProgress.cs",
     "src/NtfsAudit.App/Models/ScanResult.cs",
@@ -47,15 +41,14 @@
     "src/NtfsAudit.App/NtfsAudit.App.csproj",
     "src/NtfsAudit.App/PrincipalDetailsWindow.xaml",
     "src/NtfsAudit.App/PrincipalDetailsWindow.xaml.cs",
-    "src/NtfsAudit.App/Properties/",
     "src/NtfsAudit.App/Properties/AssemblyInfo.cs",
-    "src/NtfsAudit.App/Services/",
     "src/NtfsAudit.App/Services/AclBaselineComparer.cs",
     "src/NtfsAudit.App/Services/AclDiffService.cs",
     "src/NtfsAudit.App/Services/AnalysisArchive.cs",
     "src/NtfsAudit.App/Services/AnalysisSqliteStore.cs",
     "src/NtfsAudit.App/Services/CompositeAdResolver.cs",
     "src/NtfsAudit.App/Services/DirectoryServicesResolver.cs",
+    "src/NtfsAudit.App/Services/FolderDetailMerger.cs",
     "src/NtfsAudit.App/Services/FolderTreeProvider.cs",
     "src/NtfsAudit.App/Services/GroupExpansionService.cs",
     "src/NtfsAudit.App/Services/IAdResolver.cs",
@@ -66,46 +59,112 @@
     "src/NtfsAudit.App/Services/RightsNormalizer.cs",
     "src/NtfsAudit.App/Services/RuntimeCleanupService.cs",
     "src/NtfsAudit.App/Services/RuntimePaths.cs",
+    "src/NtfsAudit.App/Services/ScanCredentialProtector.cs",
+    "src/NtfsAudit.App/Services/ScanCredentialStore.cs",
     "src/NtfsAudit.App/Services/ScanRootPathConverters.cs",
     "src/NtfsAudit.App/Services/ScanService.cs",
     "src/NtfsAudit.App/Services/ServiceRuntimeStatusPresenter.cs",
     "src/NtfsAudit.App/Services/SharePermissionService.cs",
     "src/NtfsAudit.App/Services/SidClassifier.cs",
     "src/NtfsAudit.App/Services/SingleInstanceCoordinator.cs",
-    "src/NtfsAudit.App/ViewModels/",
+    "src/NtfsAudit.App/Services/WindowsImpersonationHelper.cs",
     "src/NtfsAudit.App/ViewModels/FolderNodeViewModel.cs",
     "src/NtfsAudit.App/ViewModels/MainViewModel.Commands.cs",
     "src/NtfsAudit.App/ViewModels/MainViewModel.cs",
     "src/NtfsAudit.App/ViewModels/MainViewModel.Runtime.cs",
     "src/NtfsAudit.App/ViewModels/MainViewModel.ScanExecution.cs",
     "src/NtfsAudit.App/ViewModels/RelayCommand.cs",
-    "src/NtfsAudit.Service/",
     "src/NtfsAudit.Service/NtfsAudit.Service.csproj",
     "src/NtfsAudit.Service/Program.cs",
-    "src/NtfsAudit.Service/Properties/",
-    "src/NtfsAudit.Service/Properties/AssemblyInfo.cs",
     "src/NtfsAudit.Service/ScanWorker.cs",
     "src/NtfsAudit.Service/ServiceJobFileHandler.cs",
-    "src/NtfsAudit.Viewer/",
+    "src/NtfsAudit.Service/Properties/AssemblyInfo.cs",
     "src/NtfsAudit.Viewer/App.xaml",
     "src/NtfsAudit.Viewer/App.xaml.cs",
     "src/NtfsAudit.Viewer/NtfsAudit.Viewer.csproj",
-    "tests/",
-    "tests/NtfsAudit.App.Tests/",
     "tests/NtfsAudit.App.Tests/AnalysisArchiveTests.cs",
+    "tests/NtfsAudit.App.Tests/FolderDetailMergerTests.cs",
     "tests/NtfsAudit.App.Tests/NtfsAudit.App.Tests.csproj",
     "tests/NtfsAudit.App.Tests/PathResolverTests.cs",
     "tests/NtfsAudit.App.Tests/PermissionCalculatorTests.cs",
     "tests/NtfsAudit.App.Tests/RuntimeLifecycleTests.cs",
+    "tests/NtfsAudit.App.Tests/ScanCredentialTests.cs",
     "tests/NtfsAudit.App.Tests/ScanServicePathFilterTests.cs"
   ],
   "files_big": [
-    "src/NtfsAudit.App/MainWindow.xaml:906",
-    "src/NtfsAudit.App/Services/AnalysisArchive.cs:970",
-    "src/NtfsAudit.App/Services/ScanService.cs:1334",
-    "src/NtfsAudit.App/ViewModels/MainViewModel.Commands.cs:809",
-    "src/NtfsAudit.App/ViewModels/MainViewModel.cs:1077",
-    "src/NtfsAudit.App/ViewModels/MainViewModel.Runtime.cs:1422"
+    "src/NtfsAudit.App/MainWindow.xaml:956",
+    "src/NtfsAudit.App/Services/AnalysisArchive.cs:1065",
+    "src/NtfsAudit.App/Services/ScanService.cs:1446",
+    "src/NtfsAudit.App/ViewModels/MainViewModel.Commands.cs:1022",
+    "src/NtfsAudit.App/ViewModels/MainViewModel.cs:1338",
+    "src/NtfsAudit.App/ViewModels/MainViewModel.Runtime.cs:1655"
   ],
-  "tasks": []
+  "tasks": [
+    {
+      "id": "service-worker-error-reporting",
+      "type": "bug",
+      "status": "pending",
+      "description": "Rendere osservabili gli errori nel worker di servizio: ScanWorker contiene catch vuoti nei loop principali, nella quarantena job e nell'esecuzione delle scansioni, quindi i fallimenti possono rimanere silenziosi e difficili da diagnosticare.",
+      "files": [
+        "src/NtfsAudit.Service/ScanWorker.cs"
+      ],
+      "priority": 1
+    },
+    {
+      "id": "refactor-mainviewmodel-runtime",
+      "type": "refactor",
+      "status": "pending",
+      "description": "Valutare e avviare lo split di MainViewModel.Runtime.cs, che ha superato la soglia AGENTS dei 1500 linee (1655), separando lifecycle UI, runtime/service status e cleanup.",
+      "files": [
+        "src/NtfsAudit.App/ViewModels/MainViewModel.Runtime.cs"
+      ],
+      "priority": 2
+    },
+    {
+      "id": "test-scanworker-job-flow",
+      "type": "infra",
+      "status": "pending",
+      "description": "Aggiungere test mirati sul flusso di ScanWorker per coprire stato idle/running, quarantena dei job non validi e avanzamento della coda; oggi i test coprono ServiceJobFileHandler ma non il worker end-to-end.",
+      "files": [
+        "src/NtfsAudit.Service/ScanWorker.cs",
+        "tests/NtfsAudit.App.Tests/RuntimeLifecycleTests.cs",
+        "tests/NtfsAudit.App.Tests/ScanCredentialTests.cs"
+      ],
+      "priority": 2
+    },
+    {
+      "id": "refactor-scan-and-archive-services",
+      "type": "refactor",
+      "status": "pending",
+      "description": "Ridurre la complessita di ScanService.cs (1446 linee) e AnalysisArchive.cs (1065 linee) estraendo pipeline, validazioni e IO per migliorare manutenibilita e testabilita.",
+      "files": [
+        "src/NtfsAudit.App/Services/ScanService.cs",
+        "src/NtfsAudit.App/Services/AnalysisArchive.cs"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "test-viewer-startup-import",
+      "type": "infra",
+      "status": "pending",
+      "description": "Aggiungere copertura per il bootstrap del Viewer: apertura archivio da argomento, fallback al suffisso .ntaudit e invocazione di ImportAnalysisFromPathAsync non risultano coperti dai test attuali.",
+      "files": [
+        "src/NtfsAudit.Viewer/App.xaml.cs",
+        "tests/NtfsAudit.App.Tests/NtfsAudit.App.Tests.csproj"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "refactor-mainwindow-mainviewmodel-split",
+      "type": "refactor",
+      "status": "pending",
+      "description": "Continuare lo split di MainWindow.xaml, MainViewModel.cs e MainViewModel.Commands.cs: l'area UI concentra ancora file tra 941 e 1338 linee e responsabilita ampie tra layout, stato e comandi.",
+      "files": [
+        "src/NtfsAudit.App/MainWindow.xaml",
+        "src/NtfsAudit.App/ViewModels/MainViewModel.cs",
+        "src/NtfsAudit.App/ViewModels/MainViewModel.Commands.cs"
+      ],
+      "priority": 3
+    }
+  ]
 }

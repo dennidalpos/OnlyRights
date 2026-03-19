@@ -2,7 +2,7 @@
 
 Suite Windows per analisi ACL NTFS/SMB composta da:
 - **NtfsAudit.App** (WPF operativa),
-- **NtfsAudit.Service** (esecuzione job in background),
+- **NtfsAudit.Service** (host opzionale per job in background),
 - **NtfsAudit.Viewer** (apertura archivi `.ntaudit` in sola lettura).
 
 ## Stack
@@ -16,13 +16,19 @@ Suite Windows per analisi ACL NTFS/SMB composta da:
 ## Struttura del repository
 
 - `src/NtfsAudit.App`: applicazione principale (scan, filtri, export/import, UI).
-- `src/NtfsAudit.Service`: servizio Windows per esecuzione job asincroni.
+- `src/NtfsAudit.Service`: host Windows opzionale per esecuzione job asincroni/background con la stessa pipeline dell'app.
 - `src/NtfsAudit.Viewer`: client in sola lettura per archivi analisi.
 - `tests/NtfsAudit.App.Tests`: test unitari su pipeline, path, filtri e robustezza import/export.
 - `scripts/build.ps1`: restore/build/test/publish con opzioni cleaning integrate.
 - `scripts/clean.ps1`: pulizia artefatti build e residui operativi (cache/temp/job/report).
 - `.github/workflows/ci.yml`: pipeline minima Windows per restore/build/test.
 - `global.json`: pin dell'SDK .NET 8 usato dal repository.
+
+Output generati riconoscibili dalla root:
+- `artifacts/bin/<ProjectName>/...`: output di build.
+- `artifacts/obj/<ProjectName>/...`: intermedi MSBuild/restore.
+- `artifacts/test-results/...`: risultati `dotnet test`.
+- `dist/<Configuration>/...`: publish distribuiti generati dagli script.
 
 ---
 
@@ -121,12 +127,20 @@ Regole di robustezza:
 ## Modalità locale vs servizio
 
 - **Locale**: scansione nel processo UI con progress in tempo reale.
-- **Servizio Windows**: enqueue job in `%ProgramData%\NtfsAudit\jobs`, esecuzione in background, monitor stato via `service-status.json`.
+- **Servizio Windows**: host opzionale per enqueue job in `%ProgramData%\NtfsAudit\jobs`, esecuzione in background e monitor stato via `service-status.json`.
+- Il servizio non aggiunge funzionalità di analisi rispetto all'app: serve soprattutto per scansioni lunghe, non interattive o quando si vuole disaccoppiare l'esecuzione dalla sessione UI.
+- **Credenziali scansione**: supporto a credenziali globali applicative e override dedicato per singola root, con priorità `override root -> globali -> utente corrente`.
 
 Nella UI:
 - checkbox **Esegui tramite servizio Windows** (default non selezionato),
 - badge stato servizio unificato,
-- azioni install/disinstalla servizio dalla toolbar.
+- azioni install/disinstalla servizio dalla toolbar,
+- sezione **Credenziali scansione** per salvare in locale credenziali protette e override per la root selezionata.
+
+Persistenza credenziali:
+- storage locale protetto via DPAPI nel profilo utente,
+- payload dei job service protetto per `LocalMachine`,
+- nessuna credenziale esportata nei metadati `.ntaudit`.
 
 ---
 
@@ -139,9 +153,9 @@ Pulsante **Pulisci cache**:
 4. apre la cartella temp per verifica rapida.
 
 Script CLI equivalenti:
-- `scripts/clean.ps1 -CleanOperationalData`
-- `scripts/clean.ps1 -CleanImportExportData`
-- `scripts/clean.ps1 -CleanAnalysisWorkspace`
+- `scripts/clean.ps1 -CleanOperationalData` preserva `%TEMP%\\NtfsAudit\\imports` e `%TEMP%\\NtfsAudit\\exports`
+- `scripts/clean.ps1 -CleanImportExportData` pulisce report/export e workspace analisi
+- `scripts/clean.ps1 -CleanAnalysisWorkspace` cancella solo i workspace analisi `imports/exports`
 
 ---
 
@@ -155,6 +169,11 @@ Flusso standard:
 3. test (`dotnet test`),
 4. publish App/Viewer/Service (`dotnet publish`, framework-dependent di default).
 
+Output:
+- build/intermedi centralizzati in `artifacts/bin` e `artifacts/obj`,
+- risultati test in `artifacts/test-results`,
+- publish in `dist/<Configuration>/[Runtime]/[Framework]`.
+
 Opzioni principali:
 - `-Configuration`, `-Framework`, `-Runtime`, `-OutputPath`
 - `-SkipRestore`, `-SkipBuild`, `-SkipTests`, `-SkipPublish`
@@ -162,12 +181,15 @@ Opzioni principali:
 - `-SelfContained`, `-PublishSingleFile`, `-PublishReadyToRun`
 - `-RunClean` + opzioni cleaning (`-CleanOperationalData`, `-CleanImportExportData`, ...)
 
+Con `-RunClean`, i cleanup generici o operativi preservano i workspace `%TEMP%\\NtfsAudit\\imports` e `%TEMP%\\NtfsAudit\\exports`; per rimuoverli servono i flag espliciti `-CleanAnalysisWorkspace`, `-CleanAnalysisImports`, `-CleanAnalysisExports` o `-CleanImportExportData`.
+
 Il comando stampa un riepilogo finale build (configurazione, dist, test/publish).
 
 ## `scripts/clean.ps1`
 
 Pulizia modulare:
-- artefatti compilazione (`bin/obj/.vs/dist/artifacts`),
+- artefatti compilazione centralizzati (`artifacts/bin`, `artifacts/obj`, `artifacts/test-results`) e residui legacy `src/**/bin|obj`,
+- cartella `.vs` e publish `dist`,
 - temp applicativo `%TEMP%\NtfsAudit`,
 - cache `%LOCALAPPDATA%\NtfsAudit\Cache`,
 - log app/temp,
@@ -180,6 +202,8 @@ Preset utili:
 - `-CleanOperationalData`
 - `-CleanImportExportData`
 - `-CleanAnalysisWorkspace`
+
+I preset generici `-CleanAllTemp` e `-CleanOperationalData` preservano `%TEMP%\\NtfsAudit\\imports` e `%TEMP%\\NtfsAudit\\exports`; la cancellazione dei workspace analisi resta un'azione esplicita.
 
 ---
 
@@ -238,3 +262,17 @@ dotnet test .\NtfsAudit.sln -c Release --no-build --nologo
 - `PROJECT_SPEC.md`
 - `PROJECT_STATUS.json`
 - `.github/workflows/ci.yml`
+
+## Copyright
+
+Copyright (c) 2026 Danny Perondi. All rights reserved.
+
+OnlyRights is proprietary, confidential, and closed-source. You may view this
+repository only for reference, evaluation, or internal review.
+
+You may not copy, modify, reuse, distribute, publish, sublicense, sell, or
+otherwise use any part of this project, including source code, scripts,
+documentation, or assets, without prior written permission from Danny
+Perondi.
+
+This project is provided "AS IS", without warranty or liability.

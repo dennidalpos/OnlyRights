@@ -1,3 +1,14 @@
+<#
+ OnlyRights
+ Copyright (c) 2026 Danny Perondi
+ All rights reserved.
+
+ Proprietary and confidential.
+ Viewing is permitted only for reference, evaluation, or internal review.
+ Unauthorized copying, modification, distribution, sublicensing,
+ commercial use, or reuse of this file is prohibited without prior
+ written permission from Danny Perondi.
+#>
 param(
     [string]$Configuration,
     [string]$Framework,
@@ -40,10 +51,46 @@ function Get-TempRoot {
     return [System.IO.Path]::GetTempPath()
 }
 
+function Get-NtfsAuditTempRoot {
+    param([string]$PreferredRoot)
+    return (Join-Path (Get-TempRoot $PreferredRoot) "NtfsAudit")
+}
+
 function Remove-PathIfExists {
     param([string]$PathToRemove)
     if (-not [string]::IsNullOrWhiteSpace($PathToRemove) -and (Test-Path $PathToRemove)) {
         Remove-Item $PathToRemove -Recurse -Force
+    }
+}
+
+function Clear-NtfsAuditTempRoot {
+    param(
+        [string]$PreferredRoot,
+        [bool]$PreserveImports = $false,
+        [bool]$PreserveExports = $false
+    )
+
+    $tempRoot = Get-NtfsAuditTempRoot $PreferredRoot
+    if (-not (Test-Path $tempRoot)) {
+        return
+    }
+
+    $preservedNames = @()
+    if ($PreserveImports) { $preservedNames += "imports" }
+    if ($PreserveExports) { $preservedNames += "exports" }
+
+    if ($preservedNames.Count -eq 0) {
+        Remove-PathIfExists $tempRoot
+        return
+    }
+
+    Get-ChildItem -Path $tempRoot -Force -ErrorAction SilentlyContinue |
+        Where-Object { $preservedNames -notcontains $_.Name } |
+        ForEach-Object { Remove-PathIfExists $_.FullName }
+
+    $remainingEntries = @(Get-ChildItem -Path $tempRoot -Force -ErrorAction SilentlyContinue)
+    if ($remainingEntries.Count -eq 0) {
+        Remove-PathIfExists $tempRoot
     }
 }
 
@@ -79,11 +126,8 @@ if ($CleanAllTemp) {
     $KeepImportTemp = $false
     $KeepCache = $false
     $CleanLogs = $true
-    $CleanExports = $true
     $CleanServiceJobs = $true
     $CleanScanData = $true
-    $CleanAnalysisImports = $true
-    $CleanAnalysisExports = $true
 }
 
 if ($CleanAnalysisWorkspace) {
@@ -99,22 +143,21 @@ if ($CleanImportExportData) {
 }
 
 if ($CleanOperationalData) {
-    $CleanImports = $true
-    $CleanExports = $true
+    $CleanCache = $true
     $CleanScanData = $true
     $CleanServiceJobs = $true
     $CleanLogs = $true
-    $CleanAnalysisImports = $true
-    $CleanAnalysisExports = $true
 }
+
+$preserveAnalysisImports = -not ($CleanImports -or $CleanAnalysisImports)
+$preserveAnalysisExports = -not ($CleanExports -or $CleanAnalysisExports)
 
 if ($CleanServiceJobs) {
     Remove-ServiceJobs
 }
 
 if ($CleanScanData) {
-    $baseTemp = Get-TempRoot $TempRoot
-    Remove-PathIfExists (Join-Path $baseTemp "NtfsAudit")
+    Clear-NtfsAuditTempRoot -PreferredRoot $TempRoot -PreserveImports $preserveAnalysisImports -PreserveExports $preserveAnalysisExports
 
     $programData = if ($env:ProgramData) { $env:ProgramData } else { [Environment]::GetFolderPath("CommonApplicationData") }
     if (-not [string]::IsNullOrWhiteSpace($programData)) {
@@ -150,6 +193,7 @@ if ($CleanExports) {
 
 $paths = @(
     (Join-Path $root ".vs"),
+    (Join-Path $root "TestResults"),
     (Join-Path $root "src\NtfsAudit.App\bin"),
     (Join-Path $root "src\NtfsAudit.App\obj"),
     (Join-Path $root "src\NtfsAudit.Viewer\bin"),
@@ -203,17 +247,7 @@ foreach ($path in $paths) {
 
 $baseTemp = Get-TempRoot $TempRoot
 if (-not $KeepTemp) {
-    $temp = Join-Path $baseTemp "NtfsAudit"
-    if (Test-Path $temp) {
-        if ($KeepImportTemp) {
-            Get-ChildItem $temp | Where-Object { $_.Name -ne "imports" } | ForEach-Object {
-                Remove-PathIfExists $_.FullName
-            }
-        }
-        else {
-            Remove-PathIfExists $temp
-        }
-    }
+    Clear-NtfsAuditTempRoot -PreferredRoot $TempRoot -PreserveImports ($KeepImportTemp -or $preserveAnalysisImports) -PreserveExports $preserveAnalysisExports
 }
 elseif (-not $KeepImportTemp) {
     $importTemp = Join-Path (Join-Path $baseTemp "NtfsAudit") "imports"

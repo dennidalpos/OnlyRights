@@ -1,3 +1,14 @@
+/*
+ * OnlyRights
+ * Copyright (c) 2026 Danny Perondi
+ * All rights reserved.
+ *
+ * Proprietary and confidential.
+ * Viewing is permitted only for reference, evaluation, or internal review.
+ * Unauthorized copying, modification, distribution, sublicensing,
+ * commercial use, or reuse of this file is prohibited without prior
+ * written permission from Danny Perondi.
+ */
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -245,7 +256,7 @@ namespace NtfsAudit.App.ViewModels
                 return detailsTreeMap;
             }
 
-            // Compatibilità con analisi legacy: alcune esportazioni storiche contengono TreeMap parziali.
+            // CompatibilitÃ  con analisi legacy: alcune esportazioni storiche contengono TreeMap parziali.
             if (treeMap != null && treeMap.Count > 0 && detailsTreeMap != null && detailsTreeMap.Count > treeMap.Count)
             {
                 Debug.WriteLine("[TreeMap] using detailsTreeMap (legacy partial treeMap detected)");
@@ -354,7 +365,7 @@ namespace NtfsAudit.App.ViewModels
             var entries = detail == null ? new List<AceEntry>() : detail.AllEntries;
             SelectedPathKind = PathResolver.DetectPathKind(path).ToString();
             SelectedOwnerSummary = entries.Select(e => e.Owner).FirstOrDefault(v => !string.IsNullOrWhiteSpace(v)) ?? "-";
-            SelectedInheritanceSummary = detail != null && detail.IsInheritanceDisabled ? "Ereditarietà disabilitata" : "Ereditarietà attiva";
+            SelectedInheritanceSummary = detail != null && detail.IsInheritanceDisabled ? "EreditarietÃ  disabilitata" : "EreditarietÃ  attiva";
             SelectedTotalAceCount = entries.Count;
             SelectedExplicitAceCount = entries.Count(e => !e.IsInherited);
             SelectedInheritedAceCount = entries.Count(e => e.IsInherited);
@@ -1071,6 +1082,10 @@ namespace NtfsAudit.App.ViewModels
             CleanupResidualFilesCommand.RaiseCanExecuteChanged();
             SaveScanRootSetCommand.RaiseCanExecuteChanged();
             LoadScanRootSetCommand.RaiseCanExecuteChanged();
+            SaveGlobalCredentialCommand.RaiseCanExecuteChanged();
+            ClearGlobalCredentialCommand.RaiseCanExecuteChanged();
+            SaveScanRootCredentialCommand.RaiseCanExecuteChanged();
+            ClearScanRootCredentialCommand.RaiseCanExecuteChanged();
         }
 
         private string FormatElapsed(TimeSpan elapsed)
@@ -1231,14 +1246,14 @@ namespace NtfsAudit.App.ViewModels
             {
                 if (string.IsNullOrWhiteSpace(root))
                 {
-                    message = "È presente una cartella vuota nell'elenco scansione.";
+                    message = "Ãˆ presente una cartella vuota nell'elenco scansione.";
                     return false;
                 }
 
                 var ioRoot = PathResolver.ToExtendedPath(root);
                 if (File.Exists(ioRoot))
                 {
-                    message = string.Format("Il percorso selezionato è un file e non una cartella: {0}", root);
+                    message = string.Format("Il percorso selezionato Ã¨ un file e non una cartella: {0}", root);
                     return false;
                 }
 
@@ -1363,6 +1378,99 @@ namespace NtfsAudit.App.ViewModels
             _sidNameCache.Load(cachePath);
             _uiPreferencesPath = _cacheStore.GetCacheFilePath("ui-preferences.json");
             LoadUiPreferences();
+        }
+
+        private void LoadCredentialSettings()
+        {
+            var settings = _scanCredentialStore.Load();
+            GlobalCredentialUserName = settings.GlobalCredential == null ? string.Empty : settings.GlobalCredential.UserName;
+            GlobalCredentialPassword = settings.GlobalCredential == null ? string.Empty : settings.GlobalCredential.Password;
+
+            _scanRootCredentialOverrides.Clear();
+            foreach (var entry in settings.RootOverrides)
+            {
+                if (entry.Value == null || !entry.Value.IsConfigured)
+                {
+                    continue;
+                }
+
+                _scanRootCredentialOverrides[entry.Key] = entry.Value.Clone();
+            }
+
+            LoadSelectedScanRootCredential();
+        }
+
+        private void LoadSelectedScanRootCredential()
+        {
+            if (string.IsNullOrWhiteSpace(SelectedScanRoot))
+            {
+                SelectedScanRootCredentialUserName = string.Empty;
+                SelectedScanRootCredentialPassword = string.Empty;
+                return;
+            }
+
+            if (_scanRootCredentialOverrides.TryGetValue(GetScanRootKey(SelectedScanRoot), out var overrideCredential)
+                && overrideCredential != null
+                && overrideCredential.IsConfigured)
+            {
+                SelectedScanRootCredentialUserName = overrideCredential.UserName;
+                SelectedScanRootCredentialPassword = overrideCredential.Password;
+                return;
+            }
+
+            SelectedScanRootCredentialUserName = string.Empty;
+            SelectedScanRootCredentialPassword = string.Empty;
+        }
+
+        private ScanCredential ResolveScanCredentialForRoot(string root)
+        {
+            if (!string.IsNullOrWhiteSpace(root)
+                && _scanRootCredentialOverrides.TryGetValue(GetScanRootKey(root), out var overrideCredential)
+                && overrideCredential != null
+                && overrideCredential.IsConfigured)
+            {
+                return overrideCredential.Clone();
+            }
+
+            if (HasGlobalCredential)
+            {
+                return new ScanCredential
+                {
+                    UserName = GlobalCredentialUserName,
+                    Password = GlobalCredentialPassword
+                };
+            }
+
+            return null;
+        }
+
+        private string ResolveCredentialSource(string root)
+        {
+            if (!string.IsNullOrWhiteSpace(root)
+                && _scanRootCredentialOverrides.TryGetValue(GetScanRootKey(root), out var overrideCredential)
+                && overrideCredential != null
+                && overrideCredential.IsConfigured)
+            {
+                return "RootOverride";
+            }
+
+            if (HasGlobalCredential)
+            {
+                return "Global";
+            }
+
+            return "CurrentUser";
+        }
+
+        private ScanOptions BuildOptionsForRoot(ScanOptions template, string root, bool protectCredentialForService)
+        {
+            var options = CloneOptions(template, root);
+            var credential = ResolveScanCredentialForRoot(root);
+            options.CredentialSource = ResolveCredentialSource(root);
+            options.Credential = protectCredentialForService
+                ? ScanCredentialProtector.ProtectForLocalMachine(credential)
+                : credential == null ? null : credential.Clone();
+            return options;
         }
 
         private void SaveCache()

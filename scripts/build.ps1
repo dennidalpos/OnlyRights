@@ -1,3 +1,14 @@
+<#
+ OnlyRights
+ Copyright (c) 2026 Danny Perondi
+ All rights reserved.
+
+ Proprietary and confidential.
+ Viewing is permitted only for reference, evaluation, or internal review.
+ Unauthorized copying, modification, distribution, sublicensing,
+ commercial use, or reuse of this file is prohibited without prior
+ written permission from Danny Perondi.
+#>
 param(
     [string]$Configuration = "Release",
     [switch]$SkipRestore,
@@ -51,6 +62,10 @@ if ($Runtime) {
 if ($Framework) {
     $dist = Join-Path $dist $Framework
 }
+$artifactsRoot = Join-Path $root "artifacts"
+$buildOutputRoot = Join-Path $artifactsRoot "bin"
+$intermediateOutputRoot = Join-Path $artifactsRoot "obj"
+$testResultsRoot = Join-Path $artifactsRoot "test-results"
 
 function Get-TempRoot {
     param([string]$PreferredRoot)
@@ -63,10 +78,46 @@ function Get-TempRoot {
     return [System.IO.Path]::GetTempPath()
 }
 
+function Get-NtfsAuditTempRoot {
+    param([string]$PreferredRoot)
+    return (Join-Path (Get-TempRoot $PreferredRoot) "NtfsAudit")
+}
+
 function Remove-PathIfExists {
     param([string]$PathToRemove)
     if (-not [string]::IsNullOrWhiteSpace($PathToRemove) -and (Test-Path $PathToRemove)) {
         Remove-Item $PathToRemove -Recurse -Force
+    }
+}
+
+function Clear-NtfsAuditTempRoot {
+    param(
+        [string]$PreferredRoot,
+        [bool]$PreserveImports = $false,
+        [bool]$PreserveExports = $false
+    )
+
+    $tempRoot = Get-NtfsAuditTempRoot $PreferredRoot
+    if (-not (Test-Path $tempRoot)) {
+        return
+    }
+
+    $preservedNames = @()
+    if ($PreserveImports) { $preservedNames += "imports" }
+    if ($PreserveExports) { $preservedNames += "exports" }
+
+    if ($preservedNames.Count -eq 0) {
+        Remove-PathIfExists $tempRoot
+        return
+    }
+
+    Get-ChildItem -Path $tempRoot -Force -ErrorAction SilentlyContinue |
+        Where-Object { $preservedNames -notcontains $_.Name } |
+        ForEach-Object { Remove-PathIfExists $_.FullName }
+
+    $remainingEntries = @(Get-ChildItem -Path $tempRoot -Force -ErrorAction SilentlyContinue)
+    if ($remainingEntries.Count -eq 0) {
+        Remove-PathIfExists $tempRoot
     }
 }
 
@@ -126,7 +177,9 @@ if ($RunClean) {
     if (-not $CleanCache -and -not $CleanAllTemp) { $cleanArgs += "-KeepCache" }
 
     & $cleanScript @cleanArgs
-    if ($LASTEXITCODE -ne 0) { throw "Clean failed." }
+    if (Get-Variable -Name LASTEXITCODE -Scope Global -ErrorAction SilentlyContinue) {
+        if ($global:LASTEXITCODE -ne 0) { throw "Clean failed." }
+    }
 }
 
 if ($CleanAnalysisWorkspace) {
@@ -142,30 +195,25 @@ if ($CleanImportExportData) {
 }
 
 if ($CleanOperationalData) {
-    $CleanImports = $true
-    $CleanExports = $true
+    $CleanCache = $true
     $CleanScanData = $true
     $CleanServiceJobs = $true
     $CleanLogs = $true
-    $CleanAnalysisImports = $true
-    $CleanAnalysisExports = $true
 }
 
 if ($CleanAllTemp) {
     $CleanTemp = $true
-    $CleanImports = $true
     $CleanCache = $true
     $CleanLogs = $true
-    $CleanExports = $true
     $CleanServiceJobs = $true
     $CleanScanData = $true
-    $CleanAnalysisImports = $true
-    $CleanAnalysisExports = $true
 }
 
+$preserveAnalysisImports = -not ($CleanImports -or $CleanAnalysisImports)
+$preserveAnalysisExports = -not ($CleanExports -or $CleanAnalysisExports)
+
 if ($CleanTemp) {
-    $baseTemp = Get-TempRoot $TempRoot
-    Remove-PathIfExists (Join-Path $baseTemp "NtfsAudit")
+    Clear-NtfsAuditTempRoot -PreferredRoot $TempRoot -PreserveImports $preserveAnalysisImports -PreserveExports $preserveAnalysisExports
 }
 
 if ($CleanImports) {
@@ -213,8 +261,7 @@ if ($CleanServiceJobs) {
 }
 
 if ($CleanScanData) {
-    $baseTemp = Get-TempRoot $TempRoot
-    Remove-PathIfExists (Join-Path $baseTemp "NtfsAudit")
+    Clear-NtfsAuditTempRoot -PreferredRoot $TempRoot -PreserveImports $preserveAnalysisImports -PreserveExports $preserveAnalysisExports
 
     $programData = if ($env:ProgramData) { $env:ProgramData } else { [Environment]::GetFolderPath("CommonApplicationData") }
     if (-not [string]::IsNullOrWhiteSpace($programData)) {
@@ -251,6 +298,7 @@ if (-not $SkipTests) {
     if ($buildCompleted) {
         $testArgs += "--no-build"
     }
+    $testArgs += @("--results-directory", $testResultsRoot)
     & dotnet @testArgs
     if ($LASTEXITCODE -ne 0) { throw "Tests failed." }
 }
@@ -359,6 +407,9 @@ if (-not $SkipPublish) {
 
 Write-Host "[NtfsAudit] Build summary" -ForegroundColor Cyan
 Write-Host ("  Configuration: {0}" -f $Configuration)
+Write-Host ("  Build outputs: {0}" -f $buildOutputRoot)
+Write-Host ("  Intermediates: {0}" -f $intermediateOutputRoot)
+Write-Host ("  Test results: {0}" -f $testResultsRoot)
 Write-Host ("  Dist: {0}" -f $dist)
 Write-Host ("  Tests skipped: {0}" -f $SkipTests.IsPresent)
 Write-Host ("  Publish skipped: {0}" -f $SkipPublish.IsPresent)

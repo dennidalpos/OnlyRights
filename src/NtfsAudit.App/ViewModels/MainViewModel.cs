@@ -1,3 +1,14 @@
+/*
+ * OnlyRights
+ * Copyright (c) 2026 Danny Perondi
+ * All rights reserved.
+ *
+ * Proprietary and confidential.
+ * Viewing is permitted only for reference, evaluation, or internal review.
+ * Unauthorized copying, modification, distribution, sublicensing,
+ * commercial use, or reuse of this file is prohibited without prior
+ * written permission from Danny Perondi.
+ */
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -33,6 +44,7 @@ namespace NtfsAudit.App.ViewModels
         private readonly AnalysisSqliteStore _analysisSqliteStore;
         private readonly RuntimeCleanupService _runtimeCleanupService;
         private readonly ServiceRuntimeStatusPresenter _serviceRuntimeStatusPresenter;
+        private readonly ScanCredentialStore _scanCredentialStore;
         private ScanResult _scanResult;
         private CancellationTokenSource _cts;
         private bool _isScanning;
@@ -46,8 +58,13 @@ namespace NtfsAudit.App.ViewModels
         private string _selectedScanRoot;
         private readonly Dictionary<string, string> _scanRootDfsTargets = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _scanRootNamespacePaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, ScanCredential> _scanRootCredentialOverrides = new Dictionary<string, ScanCredential>(StringComparer.OrdinalIgnoreCase);
         private ObservableCollection<string> _selectedScanRootDfsTargets = new ObservableCollection<string>();
         private string _selectedScanRootDfsTarget;
+        private string _globalCredentialUserName;
+        private string _globalCredentialPassword;
+        private string _selectedScanRootCredentialUserName;
+        private string _selectedScanRootCredentialPassword;
         private string _auditOutputDirectory;
         private bool _useWindowsServiceMode;
         private int _maxDepth = 5;
@@ -143,6 +160,7 @@ namespace NtfsAudit.App.ViewModels
             _analysisSqliteStore = new AnalysisSqliteStore();
             _runtimeCleanupService = new RuntimeCleanupService();
             _serviceRuntimeStatusPresenter = new ServiceRuntimeStatusPresenter();
+            _scanCredentialStore = new ScanCredentialStore();
 
             FolderTree = new ObservableCollection<FolderNodeViewModel>();
             ScanRoots = new ObservableCollection<string>();
@@ -183,8 +201,13 @@ namespace NtfsAudit.App.ViewModels
             CleanupResidualFilesCommand = new RelayCommand(CleanupResidualFiles, () => !_isViewerMode && !IsBusy);
             SaveScanRootSetCommand = new RelayCommand(SaveScanRootSet, () => !_isViewerMode && !IsBusy && ScanRoots.Count > 0);
             LoadScanRootSetCommand = new RelayCommand(LoadScanRootSet, () => !_isViewerMode && !IsBusy);
+            SaveGlobalCredentialCommand = new RelayCommand(SaveGlobalCredential, () => !_isViewerMode && !IsBusy);
+            ClearGlobalCredentialCommand = new RelayCommand(ClearGlobalCredential, () => !_isViewerMode && !IsBusy && HasGlobalCredential);
+            SaveScanRootCredentialCommand = new RelayCommand(SaveSelectedScanRootCredential, () => !_isViewerMode && !IsBusy && !string.IsNullOrWhiteSpace(SelectedScanRoot));
+            ClearScanRootCredentialCommand = new RelayCommand(ClearSelectedScanRootCredential, () => !_isViewerMode && !IsBusy && HasSelectedScanRootCredentialOverride);
 
             LoadCache();
+            LoadCredentialSettings();
             InitializeScanTimer();
             InitializeServiceStatusMonitor();
         }
@@ -293,6 +316,10 @@ namespace NtfsAudit.App.ViewModels
         public RelayCommand CleanupResidualFilesCommand { get; private set; }
         public RelayCommand SaveScanRootSetCommand { get; private set; }
         public RelayCommand LoadScanRootSetCommand { get; private set; }
+        public RelayCommand SaveGlobalCredentialCommand { get; private set; }
+        public RelayCommand ClearGlobalCredentialCommand { get; private set; }
+        public RelayCommand SaveScanRootCredentialCommand { get; private set; }
+        public RelayCommand ClearScanRootCredentialCommand { get; private set; }
 
         public string RootPath
         {
@@ -316,7 +343,11 @@ namespace NtfsAudit.App.ViewModels
                 _selectedScanRoot = value;
                 OnPropertyChanged("SelectedScanRoot");
                 LoadSelectedScanRootDfsTargets();
+                LoadSelectedScanRootCredential();
+                OnPropertyChanged("HasSelectedScanRoot");
                 RemoveScanRootCommand.RaiseCanExecuteChanged();
+                SaveScanRootCredentialCommand.RaiseCanExecuteChanged();
+                ClearScanRootCredentialCommand.RaiseCanExecuteChanged();
             }
         }
 
@@ -357,7 +388,7 @@ namespace NtfsAudit.App.ViewModels
                                 .Any(path => string.Equals(GetScanRootKey(path), newKey, StringComparison.OrdinalIgnoreCase));
                             if (duplicate)
                             {
-                                WpfMessageBox.Show("Il target DFS selezionato è già presente in elenco.", "Target DFS", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                                WpfMessageBox.Show("Il target DFS selezionato Ã¨ giÃ  presente in elenco.", "Target DFS", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                                 return;
                             }
 
@@ -366,9 +397,15 @@ namespace NtfsAudit.App.ViewModels
                             _scanRootNamespacePaths[newKey] = namespacePath;
                             _scanRootDfsTargets.Remove(key);
                             _scanRootDfsTargets[newKey] = value;
+                            if (_scanRootCredentialOverrides.TryGetValue(key, out var overrideCredential))
+                            {
+                                _scanRootCredentialOverrides.Remove(key);
+                                _scanRootCredentialOverrides[newKey] = overrideCredential;
+                            }
                             _selectedScanRoot = value;
                             OnPropertyChanged("SelectedScanRoot");
                             LoadSelectedScanRootDfsTargets();
+                            LoadSelectedScanRootCredential();
                             OnPropertyChanged("SelectedScanRootDfsTarget");
                             OnPropertyChanged("CanStart");
                             StartCommand.RaiseCanExecuteChanged();
@@ -388,6 +425,144 @@ namespace NtfsAudit.App.ViewModels
                 OnPropertyChanged("SelectedScanRootDfsTarget");
                 SaveUiPreferences();
             }
+        }
+
+        public string GlobalCredentialUserName
+        {
+            get { return _globalCredentialUserName; }
+            set
+            {
+                _globalCredentialUserName = value;
+                OnPropertyChanged("GlobalCredentialUserName");
+                OnPropertyChanged("HasGlobalCredential");
+                OnPropertyChanged("GlobalCredentialStatusText");
+                if (ClearGlobalCredentialCommand != null)
+                {
+                    ClearGlobalCredentialCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        public string GlobalCredentialPassword
+        {
+            get { return _globalCredentialPassword; }
+            set
+            {
+                _globalCredentialPassword = value;
+                OnPropertyChanged("GlobalCredentialPassword");
+                OnPropertyChanged("HasGlobalCredential");
+                OnPropertyChanged("GlobalCredentialStatusText");
+                if (ClearGlobalCredentialCommand != null)
+                {
+                    ClearGlobalCredentialCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        public bool HasGlobalCredential
+        {
+            get
+            {
+                return !string.IsNullOrWhiteSpace(GlobalCredentialUserName)
+                    && !string.IsNullOrWhiteSpace(GlobalCredentialPassword);
+            }
+        }
+
+        public string GlobalCredentialStatusText
+        {
+            get
+            {
+                if (!HasGlobalCredential)
+                {
+                    return "Nessuna credenziale globale salvata: verra usato l'utente corrente dove non esistono override.";
+                }
+
+                return string.Format("Credenziale globale attiva: {0}", GlobalCredentialUserName);
+            }
+        }
+
+        public string SelectedScanRootCredentialUserName
+        {
+            get { return _selectedScanRootCredentialUserName; }
+            set
+            {
+                _selectedScanRootCredentialUserName = value;
+                OnPropertyChanged("SelectedScanRootCredentialUserName");
+                OnPropertyChanged("HasSelectedScanRootCredentialOverride");
+                OnPropertyChanged("SelectedScanRootCredentialStatusText");
+                OnPropertyChanged("SelectedScanRootEffectiveCredentialSource");
+                if (ClearScanRootCredentialCommand != null)
+                {
+                    ClearScanRootCredentialCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        public string SelectedScanRootCredentialPassword
+        {
+            get { return _selectedScanRootCredentialPassword; }
+            set
+            {
+                _selectedScanRootCredentialPassword = value;
+                OnPropertyChanged("SelectedScanRootCredentialPassword");
+                OnPropertyChanged("HasSelectedScanRootCredentialOverride");
+                OnPropertyChanged("SelectedScanRootCredentialStatusText");
+                OnPropertyChanged("SelectedScanRootEffectiveCredentialSource");
+                if (ClearScanRootCredentialCommand != null)
+                {
+                    ClearScanRootCredentialCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        public bool HasSelectedScanRootCredentialOverride
+        {
+            get
+            {
+                return !string.IsNullOrWhiteSpace(SelectedScanRootCredentialUserName)
+                    && !string.IsNullOrWhiteSpace(SelectedScanRootCredentialPassword);
+            }
+        }
+
+        public string SelectedScanRootCredentialStatusText
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(SelectedScanRoot))
+                {
+                    return "Seleziona una root per configurare un override dedicato.";
+                }
+
+                if (HasSelectedScanRootCredentialOverride)
+                {
+                    return string.Format("Override root attivo per {0}.", SelectedScanRootCredentialUserName);
+                }
+
+                return "Nessun override salvato per la root selezionata.";
+            }
+        }
+
+        public string SelectedScanRootEffectiveCredentialSource
+        {
+            get
+            {
+                if (HasSelectedScanRootCredentialOverride)
+                {
+                    return "Risoluzione effettiva: override root";
+                }
+
+                if (HasGlobalCredential)
+                {
+                    return "Risoluzione effettiva: credenziali globali";
+                }
+
+                return "Risoluzione effettiva: utente corrente";
+            }
+        }
+
+        public bool HasSelectedScanRoot
+        {
+            get { return !string.IsNullOrWhiteSpace(SelectedScanRoot); }
         }
 
         public string AuditOutputDirectory
@@ -1154,7 +1329,7 @@ namespace NtfsAudit.App.ViewModels
             if (string.IsNullOrWhiteSpace(groupSid)) return Task.FromResult(new ResolvedPrincipal[0]);
             return Task.Run(() =>
             {
-                var resolver = CreateResolver(UsePowerShell);
+                var resolver = CreateResolver(UsePowerShell, ResolveScanCredentialForRoot(SelectedScanRoot));
                 var members = resolver.GetGroupMembers(groupSid);
                 return (members ?? new List<ResolvedPrincipal>()).ToArray();
             });
@@ -1165,7 +1340,7 @@ namespace NtfsAudit.App.ViewModels
             if (string.IsNullOrWhiteSpace(userSid)) return Task.FromResult(new ResolvedPrincipal[0]);
             return Task.Run(() =>
             {
-                var resolver = CreateResolver(UsePowerShell);
+                var resolver = CreateResolver(UsePowerShell, ResolveScanCredentialForRoot(SelectedScanRoot));
                 var groups = resolver.GetUserGroups(userSid);
                 return (groups ?? new List<ResolvedPrincipal>()).ToArray();
             });

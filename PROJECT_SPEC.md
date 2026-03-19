@@ -11,7 +11,8 @@ Fornire una suite Windows per analizzare permessi NTFS e share SMB, esportare i 
 - Export dei risultati in `.xlsx` e `.ntaudit`.
 - Import e visualizzazione di archivi `.ntaudit`.
 - Payload SQLite read-only per consultazione scalabile di dataset grandi.
-- Esecuzione locale oppure tramite Windows Service.
+- Esecuzione locale oppure tramite Windows Service opzionale come host per scansioni background, non interattive o lunghe, senza funzionalita applicative aggiuntive.
+- Credenziali scansione a due livelli con credenziali globali applicative, override per singola root e fallback finale all'utente corrente.
 - Quarantena dei job service corrotti/non validi con aggiornamento dello stato runtime.
 - Script PowerShell per build, publish e pulizia artefatti/dati operativi.
 
@@ -23,17 +24,20 @@ Fornire una suite Windows per analizzare permessi NTFS e share SMB, esportare i 
 
 ## Architecture
 - `src/NtfsAudit.App`: applicazione WPF principale con UI, view model, pipeline di scan, servizi di risoluzione identità, export/import archivio, payload SQLite e calcolo permessi.
-- `src/NtfsAudit.Service`: worker service Windows che esegue job di scansione in background usando la logica condivisa dell'app.
+- `src/NtfsAudit.Service`: worker service Windows opzionale che ospita job di scansione in background usando la stessa logica condivisa dell'app, senza introdurre funzionalita applicative dedicate.
 - `src/NtfsAudit.Viewer`: client WPF in sola lettura per aprire archivi `.ntaudit`, anche da argomento/percorsi di rete, con caricamento lazy da SQLite per archivi grandi.
 - `tests/NtfsAudit.App.Tests`: test unitari sui componenti core di path resolution, permission calculation, archive import/export e filtri.
 - `src/NtfsAudit.App/ViewModels/MainViewModel*.cs`: partial class separate per stato, comandi, esecuzione scan e runtime/UI lifecycle.
+- `src/NtfsAudit.App/Services/ScanCredential*.cs`: persistenza locale protetta DPAPI, sanitizzazione export e payload macchina per i job del servizio.
 - `scripts/build.ps1` e `scripts/clean.ps1`: automazione locale per restore/build/test/publish e pulizia.
 
 ## Constraints
 - Repository orientato a Windows e target `net6.0-windows` / `net8.0-windows`.
 - Il service supporta solo `net8.0-windows`.
 - L'SDK locale/CI deve essere pinato tramite `global.json` su toolchain .NET 8 supportata.
+- Gli output e intermedi di build/test devono essere centralizzati dalla root sotto `artifacts/` (`artifacts/bin`, `artifacts/obj`, `artifacts/test-results`); i publish distribuiti restano sotto `dist/`.
 - I workspace `%TEMP%\\NtfsAudit\\imports` e `%TEMP%\\NtfsAudit\\exports` non devono essere cancellati distruttivamente in shutdown/cleanup generici; sono gestiti con retention dedicata.
+- Le credenziali scansione persistite localmente devono essere protette tramite DPAPI; i job del servizio devono ricevere solo payload credenziali protetti per `LocalMachine`, mai password in chiaro.
 - Gli archivi `.ntaudit` devono includere `analysis.sqlite` per consentire query/read-only efficienti sui dataset grandi.
 - La coerenza tra codice, documentazione e `PROJECT_STATUS.json` va mantenuta ad ogni modifica.
 - File >=800 linee devono essere monitorati; file >=1500 linee vanno valutati per refactor/split.

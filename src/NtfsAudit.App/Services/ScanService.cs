@@ -1,3 +1,14 @@
+/*
+ * OnlyRights
+ * Copyright (c) 2026 Danny Perondi
+ * All rights reserved.
+ *
+ * Proprietary and confidential.
+ * Viewing is permitted only for reference, evaluation, or internal review.
+ * Unauthorized copying, modification, distribution, sublicensing,
+ * commercial use, or reuse of this file is prohibited without prior
+ * written permission from Danny Perondi.
+ */
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -30,13 +41,31 @@ namespace NtfsAudit.App.Services
         private readonly GroupExpansionService _groupExpansion;
         private readonly SharePermissionService _sharePermissionService;
         public ScanService(IdentityResolver identityResolver, GroupExpansionService groupExpansion)
+            : this(identityResolver, groupExpansion, null)
+        {
+        }
+
+        public ScanService(IdentityResolver identityResolver, GroupExpansionService groupExpansion, SharePermissionService sharePermissionService)
         {
             _identityResolver = identityResolver;
             _groupExpansion = groupExpansion;
-            _sharePermissionService = new SharePermissionService();
+            _sharePermissionService = sharePermissionService ?? new SharePermissionService();
         }
 
         public ScanResult Run(ScanOptions options, IProgress<ScanProgress> progress, CancellationToken token)
+        {
+            var runtimeOptions = options == null ? null : options.Clone();
+            if (runtimeOptions != null && runtimeOptions.Credential != null)
+            {
+                runtimeOptions.Credential = ScanCredentialProtector.ResolveForRuntime(runtimeOptions.Credential);
+            }
+
+            return WindowsImpersonationHelper.Run(
+                runtimeOptions == null ? null : runtimeOptions.Credential,
+                () => RunCore(runtimeOptions, progress, token));
+        }
+
+        private ScanResult RunCore(ScanOptions options, IProgress<ScanProgress> progress, CancellationToken token)
         {
             if (options.ReadOwnerAndSacl)
             {

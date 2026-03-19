@@ -1,3 +1,14 @@
+/*
+ * OnlyRights
+ * Copyright (c) 2026 Danny Perondi
+ * All rights reserved.
+ *
+ * Proprietary and confidential.
+ * Viewing is permitted only for reference, evaluation, or internal review.
+ * Unauthorized copying, modification, distribution, sublicensing,
+ * commercial use, or reuse of this file is prohibited without prior
+ * written permission from Danny Perondi.
+ */
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -35,7 +46,7 @@ namespace NtfsAudit.App.Services
                 throw new FileNotFoundException("Scan data file not found.", result.TempDataPath);
             }
 
-            var exportOptions = result.ScanOptions ?? LoadScanOptions(result.TempDataPath);
+            var exportOptions = (result.ScanOptions ?? LoadScanOptions(result.TempDataPath))?.CreateArchiveSafeCopy();
             var resolvedRootPath = ResolveArchiveRoot(rootPath, result.TempDataPath, exportOptions);
             var resolvedPathKind = result.RootPathKind == PathKind.Unknown ? PathResolver.DetectPathKind(resolvedRootPath) : result.RootPathKind;
             var exportTreeMap = result.TreeMap;

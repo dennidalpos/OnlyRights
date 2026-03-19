@@ -186,8 +186,8 @@
               <WrapPanel>
                 <Button Style="{StaticResource ActionButtonStyle}" Content="Avvia analisi" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" ToolTip="Avvia la scansione delle cartelle selezionate." />
                 <Button Style="{StaticResource ActionButtonStyle}" Content="Stop + pulizia" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" ToolTip="Ferma la scansione in corso e pulisce i file residui." />
-                <Button Style="{StaticResource ActionButtonStyle}" Content="Installa servizio" Command="{Binding InstallServiceCommand}" ToolTip="Installa il servizio Windows di scansione." />
-                <Button Style="{StaticResource ActionButtonStyle}" Content="Disinstalla servizio" Command="{Binding UninstallServiceCommand}" ToolTip="Disinstalla il servizio Windows e rimuove job/stato residui." />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="Installa servizio" Command="{Binding InstallServiceCommand}" ToolTip="Installa l'host Windows opzionale per scansioni in background o non interattive." />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="Disinstalla servizio" Command="{Binding UninstallServiceCommand}" ToolTip="Disinstalla l'host Windows opzionale e rimuove job/stato residui." />
                 <Button Style="{StaticResource ActionButtonStyle}" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" ToolTip="Importa un report .ntaudit esistente." />
                 <Button Style="{StaticResource ActionButtonStyle}" Content="Esporta Excel" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" ToolTip="Esporta l'elenco permessi in formato Excel (.xlsx)." />
                 <Button Style="{StaticResource ActionButtonStyle}" Content="Pulisci cache" Command="{Binding CleanupResidualFilesCommand}" ToolTip="Elimina tutti i file residui dell'app e apre la cartella dei file temporanei." />
@@ -861,7 +861,42 @@
                     <Button Grid.Column="0" Margin="0,0,8,0" Padding="10,4" Content="Sfoglia..." Command="{Binding BrowseOutputDirectoryCommand}" />
                     <TextBox Grid.Column="1" Height="26" VerticalAlignment="Center" MinWidth="160" Text="{Binding AuditOutputDirectory, UpdateSourceTrigger=PropertyChanged}" />
                   </Grid>
-                  <CheckBox Margin="0,0,0,6" Content="Esegui tramite servizio Windows" IsChecked="{Binding UseWindowsServiceMode}" />
+                  <CheckBox Margin="0,0,0,4" Content="Esegui tramite servizio Windows" IsChecked="{Binding UseWindowsServiceMode}" ToolTip="Usa l'host Windows opzionale per eseguire la scansione in background; non aggiunge funzioni di analisi rispetto alla modalita locale." />
+                  <TextBlock Text="Opzionale: utile per scansioni lunghe o non interattive; usa la stessa logica dell'app e non aggiunge funzionalita applicative." Style="{StaticResource MicrocopyText}" Margin="0,0,0,6" TextWrapping="Wrap" />
+                  <TextBlock Text="Credenziali scansione" Style="{StaticResource SubsectionHeaderText}" />
+                  <TextBlock Text="{Binding GlobalCredentialStatusText}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,6" />
+                  <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Globali" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBox Grid.Column="1" Height="26" Margin="0,0,8,0" MinWidth="180" Text="{Binding GlobalCredentialUserName, UpdateSourceTrigger=PropertyChanged}" ToolTip="Utente globale (DOMINIO\utente o utente@dominio)" />
+                    <PasswordBox x:Name="GlobalCredentialPasswordBox" Grid.Column="2" Height="26" Width="180" Margin="0,0,8,0" PasswordChanged="GlobalCredentialPasswordBox_OnPasswordChanged" ToolTip="Password credenziali globali" />
+                    <StackPanel Grid.Column="3" Orientation="Horizontal">
+                      <Button Margin="0,0,8,0" Padding="10,4" Content="Salva" Command="{Binding SaveGlobalCredentialCommand}" />
+                      <Button Padding="10,4" Content="Rimuovi" Command="{Binding ClearGlobalCredentialCommand}" />
+                    </StackPanel>
+                  </Grid>
+                  <TextBlock Text="{Binding SelectedScanRootCredentialStatusText}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,4" />
+                  <TextBlock Text="{Binding SelectedScanRootEffectiveCredentialSource}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,6" />
+                  <Grid Margin="0,0,0,8" IsEnabled="{Binding HasSelectedScanRoot}">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Override root" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBox Grid.Column="1" Height="26" Margin="0,0,8,0" MinWidth="180" Text="{Binding SelectedScanRootCredentialUserName, UpdateSourceTrigger=PropertyChanged}" ToolTip="Utente dedicato per la root selezionata" />
+                    <PasswordBox x:Name="SelectedScanRootCredentialPasswordBox" Grid.Column="2" Height="26" Width="180" Margin="0,0,8,0" PasswordChanged="SelectedScanRootCredentialPasswordBox_OnPasswordChanged" ToolTip="Password override root" />
+                    <StackPanel Grid.Column="3" Orientation="Horizontal">
+                      <Button Margin="0,0,8,0" Padding="10,4" Content="Salva" Command="{Binding SaveScanRootCredentialCommand}" />
+                      <Button Padding="10,4" Content="Rimuovi" Command="{Binding ClearScanRootCredentialCommand}" />
+                    </StackPanel>
+                  </Grid>
                   <Expander Header="Opzioni principali" IsExpanded="True">
                     <StackPanel Margin="0,6,0,0">
                       <Grid Margin="0,0,0,6">
@@ -887,7 +922,7 @@
                   <TextBlock Text="Aumenta accuratezza, può impattare performance." Style="{StaticResource MicrocopyText}" />
                   <CheckBox Margin="0,0,0,4" Content="Espandi gruppi annidati" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
                   <CheckBox Margin="0,0,0,4" Content="Usa PowerShell per AD" IsChecked="{Binding UsePowerShell}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
-                  <Expander Header="Opzioni avanzate (per amministratori)" IsExpanded="False" Margin="0,8,0,0">
+                  <Expander Header="Opzioni avanzate (per amministratori)" IsExpanded="True" Margin="0,8,0,0">
                     <StackPanel Margin="0,6,0,0">
                       <CheckBox Margin="0,0,0,4" Content="Abilita audit avanzato" IsChecked="{Binding EnableAdvancedAudit}" />
                       <StackPanel Margin="0,4,0,0" IsEnabled="{Binding IsAdvancedAuditEnabled}">

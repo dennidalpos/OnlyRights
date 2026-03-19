@@ -1,3 +1,14 @@
+/*
+ * OnlyRights
+ * Copyright (c) 2026 Danny Perondi
+ * All rights reserved.
+ *
+ * Proprietary and confidential.
+ * Viewing is permitted only for reference, evaluation, or internal review.
+ * Unauthorized copying, modification, distribution, sublicensing,
+ * commercial use, or reuse of this file is prohibited without prior
+ * written permission from Danny Perondi.
+ */
 using System;
 using System.ComponentModel;
 using System.Drawing;
@@ -16,8 +27,10 @@ namespace NtfsAudit.App
     {
         private readonly WinForms.NotifyIcon _notifyIcon;
         private readonly DispatcherTimer _trayTimer;
+        private MainViewModel _boundViewModel;
         private string _lastTrayStatus;
         private bool _forceClose;
+        private bool _isSynchronizingPasswords;
         public MainWindow()
             : this(new MainViewModel())
         {
@@ -27,6 +40,8 @@ namespace NtfsAudit.App
         {
             InitializeComponent();
             DataContext = viewModel ?? new MainViewModel();
+            AttachViewModelHandlers(DataContext as MainViewModel);
+            SyncCredentialPasswordBoxes();
 
             _notifyIcon = new WinForms.NotifyIcon
             {
@@ -73,6 +88,7 @@ namespace NtfsAudit.App
                 _trayTimer.Stop();
                 _notifyIcon.Visible = false;
                 _notifyIcon.Dispose();
+                DetachViewModelHandlers();
             };
 
             UpdateTrayStatus();
@@ -123,6 +139,59 @@ namespace NtfsAudit.App
             UpdateTrayStatus();
         }
 
+        private void AttachViewModelHandlers(MainViewModel viewModel)
+        {
+            _boundViewModel = viewModel;
+            if (_boundViewModel != null)
+            {
+                _boundViewModel.PropertyChanged += OnViewModelPropertyChanged;
+            }
+        }
+
+        private void DetachViewModelHandlers()
+        {
+            if (_boundViewModel != null)
+            {
+                _boundViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+                _boundViewModel = null;
+            }
+        }
+
+        private void OnViewModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e == null)
+            {
+                return;
+            }
+
+            if (string.Equals(e.PropertyName, "GlobalCredentialPassword", StringComparison.Ordinal)
+                || string.Equals(e.PropertyName, "SelectedScanRootCredentialPassword", StringComparison.Ordinal)
+                || string.Equals(e.PropertyName, "SelectedScanRoot", StringComparison.Ordinal))
+            {
+                SyncCredentialPasswordBoxes();
+            }
+        }
+
+        private void SyncCredentialPasswordBoxes()
+        {
+            var viewModel = DataContext as MainViewModel;
+            if (viewModel == null)
+            {
+                return;
+            }
+
+            try
+            {
+                _isSynchronizingPasswords = true;
+                GlobalCredentialPasswordBox.Password = viewModel.GlobalCredentialPassword ?? string.Empty;
+                SelectedScanRootCredentialPasswordBox.Password = viewModel.SelectedScanRootCredentialPassword ?? string.Empty;
+            }
+            finally
+            {
+                _isSynchronizingPasswords = false;
+            }
+        }
+
         private void OnMainWindowClosing(object sender, CancelEventArgs e)
         {
             if (_forceClose)
@@ -137,7 +206,7 @@ namespace NtfsAudit.App
                 WindowState = WindowState.Minimized;
                 Hide();
                 UpdateTrayStatus();
-                _notifyIcon.ShowBalloonTip(2500, "NTFS Audit", "Servizio attivo: l'app resta nel tray finché la scansione è in corso.", WinForms.ToolTipIcon.Info);
+                _notifyIcon.ShowBalloonTip(2500, "NTFS Audit", "Servizio attivo: l'app resta nel tray finchÃ© la scansione Ã¨ in corso.", WinForms.ToolTipIcon.Info);
             }
         }
 
@@ -179,7 +248,7 @@ namespace NtfsAudit.App
             }
             catch (Exception ex)
             {
-                var message = string.Format("Impossibile caricare i dettagli richiesti. Verifica connettività AD/permesse e riprova.\n\nDettagli: {0}", ex.Message);
+                var message = string.Format("Impossibile caricare i dettagli richiesti. Verifica connettivitÃ  AD/permesse e riprova.\n\nDettagli: {0}", ex.Message);
                 MessageBox.Show(this, message, contextTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
@@ -271,6 +340,34 @@ namespace NtfsAudit.App
             if (result != MessageBoxResult.Yes)
             {
                 e.Cancel = true;
+            }
+        }
+
+        private void GlobalCredentialPasswordBox_OnPasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isSynchronizingPasswords)
+            {
+                return;
+            }
+
+            var viewModel = DataContext as MainViewModel;
+            if (viewModel != null)
+            {
+                viewModel.GlobalCredentialPassword = GlobalCredentialPasswordBox.Password;
+            }
+        }
+
+        private void SelectedScanRootCredentialPasswordBox_OnPasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isSynchronizingPasswords)
+            {
+                return;
+            }
+
+            var viewModel = DataContext as MainViewModel;
+            if (viewModel != null)
+            {
+                viewModel.SelectedScanRootCredentialPassword = SelectedScanRootCredentialPasswordBox.Password;
             }
         }
     }

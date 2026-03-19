@@ -1,3 +1,14 @@
+/*
+ * OnlyRights
+ * Copyright (c) 2026 Danny Perondi
+ * All rights reserved.
+ *
+ * Proprietary and confidential.
+ * Viewing is permitted only for reference, evaluation, or internal review.
+ * Unauthorized copying, modification, distribution, sublicensing,
+ * commercial use, or reuse of this file is prohibited without prior
+ * written permission from Danny Perondi.
+ */
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -47,7 +58,7 @@ namespace NtfsAudit.App
                 return true;
             }
 
-            MessageBox.Show("NTFS Audit è già in esecuzione.", "Istanza già attiva", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("NTFS Audit Ã¨ giÃ  in esecuzione.", "Istanza giÃ  attiva", MessageBoxButton.OK, MessageBoxImage.Information);
             return false;
         }
 

@@ -1,3 +1,14 @@
+/*
+ * OnlyRights
+ * Copyright (c) 2026 Danny Perondi
+ * All rights reserved.
+ *
+ * Proprietary and confidential.
+ * Viewing is permitted only for reference, evaluation, or internal review.
+ * Unauthorized copying, modification, distribution, sublicensing,
+ * commercial use, or reuse of this file is prohibited without prior
+ * written permission from Danny Perondi.
+ */
 using System;
 using System.Collections.Generic;
 using System.Management;
@@ -8,6 +19,18 @@ namespace NtfsAudit.App.Services
 {
     public class SharePermissionService
     {
+        private readonly ScanCredential _credential;
+
+        public SharePermissionService()
+            : this(null)
+        {
+        }
+
+        public SharePermissionService(ScanCredential credential)
+        {
+            _credential = credential;
+        }
+
         public SharePermissionContext TryGetSharePermissions(string rootPath)
         {
             if (string.IsNullOrWhiteSpace(rootPath)) return null;
@@ -18,7 +41,7 @@ namespace NtfsAudit.App.Services
 
             try
             {
-                var scope = new ManagementScope(string.Format(@"\\{0}\root\cimv2", server));
+                var scope = new ManagementScope(string.Format(@"\\{0}\root\cimv2", server), BuildConnectionOptions());
                 scope.Connect();
                 var path = new ManagementPath(string.Format("Win32_LogicalShareSecuritySetting.Name='{0}'", share));
                 using (var securitySetting = new ManagementObject(scope, path, null))
@@ -80,6 +103,23 @@ namespace NtfsAudit.App.Services
                 return name;
             }
             return sid ?? string.Empty;
+        }
+
+        private ConnectionOptions BuildConnectionOptions()
+        {
+            var options = new ConnectionOptions
+            {
+                EnablePrivileges = true
+            };
+
+            if (_credential == null || !_credential.IsConfigured)
+            {
+                return options;
+            }
+
+            options.Username = _credential.UserName;
+            options.Password = _credential.Password;
+            return options;
         }
     }
 

@@ -1,3 +1,14 @@
+/*
+ * OnlyRights
+ * Copyright (c) 2026 Danny Perondi
+ * All rights reserved.
+ *
+ * Proprietary and confidential.
+ * Viewing is permitted only for reference, evaluation, or internal review.
+ * Unauthorized copying, modification, distribution, sublicensing,
+ * commercial use, or reuse of this file is prohibited without prior
+ * written permission from Danny Perondi.
+ */
 using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using NtfsAudit.App.Models;
@@ -6,6 +17,18 @@ namespace NtfsAudit.App.Services
 {
     public class DirectoryServicesResolver : IAdResolver
     {
+        private readonly ScanCredential _credential;
+
+        public DirectoryServicesResolver()
+            : this(null)
+        {
+        }
+
+        public DirectoryServicesResolver(ScanCredential credential)
+        {
+            _credential = credential;
+        }
+
         public bool IsAvailable { get { return true; } }
 
         public ResolvedPrincipal ResolvePrincipal(string sid)
@@ -32,7 +55,7 @@ namespace NtfsAudit.App.Services
         {
             try
             {
-                using (var ctx = new PrincipalContext(type))
+                using (var ctx = CreateContext(type))
                 {
                     using (var principal = Principal.FindByIdentity(ctx, IdentityType.Sid, sid))
                     {
@@ -51,7 +74,7 @@ namespace NtfsAudit.App.Services
             var result = new List<ResolvedPrincipal>();
             try
             {
-                using (var ctx = new PrincipalContext(type))
+                using (var ctx = CreateContext(type))
                 {
                     using (var group = GroupPrincipal.FindByIdentity(ctx, IdentityType.Sid, groupSid))
                     {
@@ -79,7 +102,7 @@ namespace NtfsAudit.App.Services
             var result = new List<ResolvedPrincipal>();
             try
             {
-                using (var ctx = new PrincipalContext(type))
+                using (var ctx = CreateContext(type))
                 {
                     using (var principal = Principal.FindByIdentity(ctx, IdentityType.Sid, userSid))
                     {
@@ -100,6 +123,16 @@ namespace NtfsAudit.App.Services
             }
 
             return result;
+        }
+
+        private PrincipalContext CreateContext(ContextType type)
+        {
+            if (_credential == null || !_credential.IsConfigured)
+            {
+                return new PrincipalContext(type);
+            }
+
+            return new PrincipalContext(type, null, _credential.UserName, _credential.Password);
         }
 
         private ResolvedPrincipal MapPrincipal(Principal principal)

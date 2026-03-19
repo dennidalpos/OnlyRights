@@ -1,3 +1,14 @@
+/*
+ * OnlyRights
+ * Copyright (c) 2026 Danny Perondi
+ * All rights reserved.
+ *
+ * Proprietary and confidential.
+ * Viewing is permitted only for reference, evaluation, or internal review.
+ * Unauthorized copying, modification, distribution, sublicensing,
+ * commercial use, or reuse of this file is prohibited without prior
+ * written permission from Danny Perondi.
+ */
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -95,11 +106,126 @@ namespace NtfsAudit.App.ViewModels
             var key = GetScanRootKey(SelectedScanRoot);
             _scanRootDfsTargets.Remove(key);
             _scanRootNamespacePaths.Remove(key);
+            _scanRootCredentialOverrides.Remove(key);
             ScanRoots.Remove(SelectedScanRoot);
             SelectedScanRoot = ScanRoots.Count > 0 ? ScanRoots[0] : null;
             OnPropertyChanged("CanStart");
             StartCommand.RaiseCanExecuteChanged();
             SaveUiPreferences();
+        }
+
+        private void SaveGlobalCredential()
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(GlobalCredentialUserName) || string.IsNullOrWhiteSpace(GlobalCredentialPassword))
+                {
+                    WpfMessageBox.Show(
+                        "Inserisci utente e password per salvare le credenziali globali.",
+                        "Credenziali scansione",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Warning);
+                    return;
+                }
+
+                var credential = new ScanCredential
+                {
+                    UserName = GlobalCredentialUserName.Trim(),
+                    Password = GlobalCredentialPassword
+                };
+                _scanCredentialStore.SaveGlobal(credential);
+                GlobalCredentialUserName = credential.UserName;
+                GlobalCredentialPassword = credential.Password;
+                ProgressText = "Credenziali globali salvate in locale in forma protetta.";
+                OnPropertyChanged("SelectedScanRootEffectiveCredentialSource");
+                ClearGlobalCredentialCommand.RaiseCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                ProgressText = string.Format("Errore salvataggio credenziali globali: {0}", ex.Message);
+                WpfMessageBox.Show(ProgressText, "Credenziali scansione", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private void ClearGlobalCredential()
+        {
+            try
+            {
+                _scanCredentialStore.SaveGlobal(null);
+                GlobalCredentialUserName = string.Empty;
+                GlobalCredentialPassword = string.Empty;
+                ProgressText = "Credenziali globali rimosse. La risoluzione torna a override root oppure utente corrente.";
+                OnPropertyChanged("SelectedScanRootEffectiveCredentialSource");
+                ClearGlobalCredentialCommand.RaiseCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                ProgressText = string.Format("Errore rimozione credenziali globali: {0}", ex.Message);
+                WpfMessageBox.Show(ProgressText, "Credenziali scansione", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private void SaveSelectedScanRootCredential()
+        {
+            if (string.IsNullOrWhiteSpace(SelectedScanRoot))
+            {
+                return;
+            }
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(SelectedScanRootCredentialUserName) || string.IsNullOrWhiteSpace(SelectedScanRootCredentialPassword))
+                {
+                    WpfMessageBox.Show(
+                        "Inserisci utente e password per salvare l'override della root selezionata.",
+                        "Credenziali scansione",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Warning);
+                    return;
+                }
+
+                var key = GetScanRootKey(SelectedScanRoot);
+                var credential = new ScanCredential
+                {
+                    UserName = SelectedScanRootCredentialUserName.Trim(),
+                    Password = SelectedScanRootCredentialPassword
+                };
+                _scanRootCredentialOverrides[key] = credential.Clone();
+                _scanCredentialStore.SaveOverride(key, credential);
+                SelectedScanRootCredentialUserName = credential.UserName;
+                SelectedScanRootCredentialPassword = credential.Password;
+                ProgressText = string.Format("Override credenziali salvato per la root selezionata: {0}", SelectedScanRoot);
+                ClearScanRootCredentialCommand.RaiseCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                ProgressText = string.Format("Errore salvataggio override root: {0}", ex.Message);
+                WpfMessageBox.Show(ProgressText, "Credenziali scansione", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private void ClearSelectedScanRootCredential()
+        {
+            if (string.IsNullOrWhiteSpace(SelectedScanRoot))
+            {
+                return;
+            }
+
+            try
+            {
+                var key = GetScanRootKey(SelectedScanRoot);
+                _scanRootCredentialOverrides.Remove(key);
+                _scanCredentialStore.SaveOverride(key, null);
+                SelectedScanRootCredentialUserName = string.Empty;
+                SelectedScanRootCredentialPassword = string.Empty;
+                ProgressText = string.Format("Override credenziali rimosso per la root selezionata: {0}", SelectedScanRoot);
+                ClearScanRootCredentialCommand.RaiseCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                ProgressText = string.Format("Errore rimozione override root: {0}", ex.Message);
+                WpfMessageBox.Show(ProgressText, "Credenziali scansione", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
         private void SaveScanRootSet()
@@ -158,7 +284,7 @@ namespace NtfsAudit.App.ViewModels
                 var payload = JsonConvert.DeserializeObject<ScanRootSet>(json);
                 if (payload == null)
                 {
-                    throw new InvalidDataException("Il file set cartelle non è valido.");
+                    throw new InvalidDataException("Il file set cartelle non Ã¨ valido.");
                 }
 
                 ScanRoots.Clear();
@@ -324,7 +450,7 @@ namespace NtfsAudit.App.ViewModels
                 var serviceState = QueryServiceState();
                 if (serviceState.IsInstalled && serviceState.IsRunning)
                 {
-                    ProgressText = "Servizio Windows già installato e attivo.";
+                    ProgressText = "Servizio Windows giÃ  installato e attivo.";
                     RefreshServiceRuntimeStatus();
                     return;
                 }
@@ -481,7 +607,7 @@ namespace NtfsAudit.App.ViewModels
                 case 1060:
                     return "Il servizio specificato non esiste come servizio installato.";
                 case 1073:
-                    return "Il servizio esiste già.";
+                    return "Il servizio esiste giÃ .";
                 case -1:
                     return "Impossibile avviare sc.exe o richiesta UAC annullata.";
                 default:

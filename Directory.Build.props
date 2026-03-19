@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <RepositoryArtifactsRoot>$(MSBuildThisFileDirectory)artifacts\</RepositoryArtifactsRoot>
+    <ArtifactsProjectName Condition="'$(AssemblyName)' != ''">$(AssemblyName)</ArtifactsProjectName>
+    <ArtifactsProjectName Condition="'$(ArtifactsProjectName)' == ''">$(MSBuildProjectName)</ArtifactsProjectName>
+    <BaseOutputPath>$(RepositoryArtifactsRoot)bin\$(ArtifactsProjectName)\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(RepositoryArtifactsRoot)obj\$(ArtifactsProjectName)\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+    <VSTestResultsDirectory>$(RepositoryArtifactsRoot)test-results\</VSTestResultsDirectory>
+  </PropertyGroup>
+</Project>

@@ -1,3 +1,14 @@
+/*
+ * OnlyRights
+ * Copyright (c) 2026 Danny Perondi
+ * All rights reserved.
+ *
+ * Proprietary and confidential.
+ * Viewing is permitted only for reference, evaluation, or internal review.
+ * Unauthorized copying, modification, distribution, sublicensing,
+ * commercial use, or reuse of this file is prohibited without prior
+ * written permission from Danny Perondi.
+ */
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using NtfsAudit.App.Services;
@@ -85,7 +96,7 @@ namespace NtfsAudit.App.ViewModels
         public bool HasBaselineAdded { get { return BaselineAddedCount > 0; } }
         public bool HasBaselineRemoved { get { return BaselineRemovedCount > 0; } }
         public bool HasBaselineMismatch { get { return HasBaselineAdded || HasBaselineRemoved; } }
-        public string DiffLabel { get { return "Δ"; } }
+        public string DiffLabel { get { return "Î”"; } }
         public string DenyExplicitLabel { get { return "D"; } }
         public string BaselineMismatchLabel { get { return "B"; } }
         public string ExplicitNtfsLabel { get { return "N"; } }

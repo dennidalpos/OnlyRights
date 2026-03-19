@@ -1,3 +1,14 @@
+/*
+ * OnlyRights
+ * Copyright (c) 2026 Danny Perondi
+ * All rights reserved.
+ *
+ * Proprietary and confidential.
+ * Viewing is permitted only for reference, evaluation, or internal review.
+ * Unauthorized copying, modification, distribution, sublicensing,
+ * commercial use, or reuse of this file is prohibited without prior
+ * written permission from Danny Perondi.
+ */
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -108,7 +119,7 @@ namespace NtfsAudit.App.ViewModels
                 {
                     JobId = Guid.NewGuid().ToString("N"),
                     CreatedAtUtc = DateTime.UtcNow,
-                    ScanOptions = roots.Select(root => CloneOptions(optionsTemplate, root)).ToList()
+                    ScanOptions = roots.Select(root => BuildOptionsForRoot(optionsTemplate, root, true)).ToList()
                 };
 
                 if (!TryEnsureServiceInstalledForScan())
@@ -145,7 +156,7 @@ namespace NtfsAudit.App.ViewModels
                 foreach (var root in roots)
                 {
                     token.ThrowIfCancellationRequested();
-                    var options = CloneOptions(optionsTemplate, root);
+                    var options = BuildOptionsForRoot(optionsTemplate, root, false);
                     var result = ExecuteScan(options, token);
                     if (result == null)
                     {
@@ -246,20 +257,7 @@ namespace NtfsAudit.App.ViewModels
 
         private static void MergeFolderDetail(FolderDetail target, FolderDetail source)
         {
-            if (target == null || source == null)
-            {
-                return;
-            }
-
-            target.AllEntries.AddRange(source.AllEntries);
-            target.ShareEntries.AddRange(source.ShareEntries);
-            target.EffectiveEntries.AddRange(source.EffectiveEntries);
-            target.HasExplicitPermissions = target.HasExplicitPermissions || source.HasExplicitPermissions;
-            target.HasExplicitNtfs = target.HasExplicitNtfs || source.HasExplicitNtfs;
-            target.HasExplicitShare = target.HasExplicitShare || source.HasExplicitShare;
-            target.IsInheritanceDisabled = target.IsInheritanceDisabled || source.IsInheritanceDisabled;
-            if (source.DiffSummary != null) target.DiffSummary = source.DiffSummary;
-            if (source.BaselineSummary != null) target.BaselineSummary = source.BaselineSummary;
+            FolderDetailMerger.Merge(target, source);
         }
 
         private static void MergeTreeMap(Dictionary<string, List<string>> target, Dictionary<string, List<string>> source)
@@ -299,6 +297,8 @@ namespace NtfsAudit.App.ViewModels
             {
                 RootPath = root,
                 OutputDirectory = template.OutputDirectory,
+                CredentialSource = template.CredentialSource,
+                Credential = template.Credential == null ? null : template.Credential.Clone(),
                 MaxDepth = template.MaxDepth,
                 ScanAllDepths = template.ScanAllDepths,
                 IncludeInherited = template.IncludeInherited,
@@ -665,7 +665,7 @@ namespace NtfsAudit.App.ViewModels
             var ioPath = PathResolver.ToExtendedPath(outputPath);
             if (!File.Exists(ioPath))
             {
-                throw new IOException("Il file export non è stato creato.");
+                throw new IOException("Il file export non Ã¨ stato creato.");
             }
             var info = new FileInfo(ioPath);
             if (info.Length == 0)
@@ -678,16 +678,22 @@ namespace NtfsAudit.App.ViewModels
         {
             try
             {
-                var adResolver = CreateResolver(options.UsePowerShell);
+                var runtimeOptions = options.Clone();
+                if (runtimeOptions.Credential != null)
+                {
+                    runtimeOptions.Credential = ScanCredentialProtector.ResolveForRuntime(runtimeOptions.Credential);
+                }
+
+                var adResolver = CreateResolver(runtimeOptions.UsePowerShell, runtimeOptions.Credential);
                 var identityResolver = new IdentityResolver(_sidNameCache, adResolver);
                 var groupExpansion = new GroupExpansionService(adResolver, _groupMembershipCache);
-                var scanService = new ScanService(identityResolver, groupExpansion);
+                var scanService = new ScanService(identityResolver, groupExpansion, new SharePermissionService(runtimeOptions.Credential));
 
                 var progress = new Progress<ScanProgress>(scanProgress =>
                 {
                     RunOnUi(() => UpdateProgress(scanProgress));
                 });
-                var result = scanService.Run(options, progress, token);
+                var result = scanService.Run(runtimeOptions, progress, token);
 
                 RunOnUi(() =>
                 {
@@ -698,7 +704,7 @@ namespace NtfsAudit.App.ViewModels
                     LoadTree(result);
                     LoadErrors(result.ErrorPath);
                     ErrorCount = Errors.Count;
-                    SelectFolder(options.RootPath);
+                    SelectFolder(runtimeOptions.RootPath);
                 });
 
                 return result;
@@ -723,18 +729,18 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        private IAdResolver CreateResolver(bool usePowerShell)
+        private IAdResolver CreateResolver(bool usePowerShell, ScanCredential credential)
         {
             if (usePowerShell)
             {
                 var path = FindPowerShell();
-                var psResolver = new PowerShellAdResolver(path);
-                var dsResolver = new DirectoryServicesResolver();
+                var psResolver = new PowerShellAdResolver(path, credential);
+                var dsResolver = new DirectoryServicesResolver(credential);
                 if (psResolver.IsAvailable) return new CompositeAdResolver(psResolver, dsResolver);
                 return dsResolver;
             }
 
-            return new DirectoryServicesResolver();
+            return new DirectoryServicesResolver(credential);
         }
 
         private string FindPowerShell()

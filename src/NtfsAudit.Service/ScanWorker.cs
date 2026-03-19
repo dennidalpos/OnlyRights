@@ -1,3 +1,14 @@
+/*
+ * OnlyRights
+ * Copyright (c) 2026 Danny Perondi
+ * All rights reserved.
+ *
+ * Proprietary and confidential.
+ * Viewing is permitted only for reference, evaluation, or internal review.
+ * Unauthorized copying, modification, distribution, sublicensing,
+ * commercial use, or reuse of this file is prohibited without prior
+ * written permission from Danny Perondi.
+ */
 using System;
 using System.IO;
 using System.Linq;
@@ -198,23 +209,29 @@ namespace NtfsAudit.Service
 
         private void RunSingleScan(ScanOptions options, CancellationToken token)
         {
+            var runtimeOptions = options == null ? null : options.Clone();
+            if (runtimeOptions != null && runtimeOptions.Credential != null)
+            {
+                runtimeOptions.Credential = ScanCredentialProtector.ResolveForRuntime(runtimeOptions.Credential);
+            }
+
             var sidCache = new SidNameCache();
             var cacheStore = new LocalCacheStore();
             sidCache.Load(cacheStore.GetCacheFilePath("sid-cache.json"));
             var groupCache = new GroupMembershipCache(TimeSpan.FromHours(2));
-            var adResolver = new DirectoryServicesResolver();
+            var adResolver = new DirectoryServicesResolver(runtimeOptions == null ? null : runtimeOptions.Credential);
             var identityResolver = new IdentityResolver(sidCache, adResolver);
             var groupExpansion = new GroupExpansionService(adResolver, groupCache);
-            var scanService = new ScanService(identityResolver, groupExpansion);
-            var result = scanService.Run(options, null, token);
+            var scanService = new ScanService(identityResolver, groupExpansion, new SharePermissionService(runtimeOptions == null ? null : runtimeOptions.Credential));
+            var result = scanService.Run(runtimeOptions, null, token);
             try
             {
-                if (string.IsNullOrWhiteSpace(options.OutputDirectory)) return;
-                Directory.CreateDirectory(options.OutputDirectory);
+                if (string.IsNullOrWhiteSpace(runtimeOptions.OutputDirectory)) return;
+                Directory.CreateDirectory(runtimeOptions.OutputDirectory);
                 var archive = new AnalysisArchive();
-                var name = BuildScanNameFromRoot(options.RootPath);
-                var output = Path.Combine(options.OutputDirectory, string.Format("{0}_{1}.ntaudit", name, DateTime.Now.ToString("yyyy_MM_dd_HH_mm")));
-                archive.Export(result, options.RootPath, output);
+                var name = BuildScanNameFromRoot(runtimeOptions.RootPath);
+                var output = Path.Combine(runtimeOptions.OutputDirectory, string.Format("{0}_{1}.ntaudit", name, DateTime.Now.ToString("yyyy_MM_dd_HH_mm")));
+                archive.Export(result, runtimeOptions.RootPath, output);
             }
             finally
             {
