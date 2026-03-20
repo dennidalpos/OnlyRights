@@ -1,9 +1,11 @@
-# NTFS Audit
+# OnlyRights
 
-Suite Windows per analisi ACL NTFS/SMB composta da:
+Suite Windows `NtfsAudit` per analisi ACL NTFS/SMB composta da:
 - **NtfsAudit.App** (WPF operativa),
 - **NtfsAudit.Service** (host opzionale per job in background),
 - **NtfsAudit.Viewer** (apertura archivi `.ntaudit` in sola lettura).
+
+Nel repository il nome progetto legale è **OnlyRights**; la solution e i componenti applicativi mantengono il naming tecnico **NtfsAudit**.
 
 ## Stack
 
@@ -265,14 +267,14 @@ dotnet test .\NtfsAudit.sln -c Release --no-build --nologo
 
 ## Copyright
 
+Project name: `OnlyRights`
+
+Application suite: `NtfsAudit`
+
 Copyright (c) 2026 Danny Perondi. All rights reserved.
 
-OnlyRights is proprietary, confidential, and closed-source. You may view this
-repository only for reference, evaluation, or internal review.
+This repository and its source code are proprietary. Unauthorized copying,
+modification, distribution, sublicensing, or commercial use is prohibited
+without prior written permission.
 
-You may not copy, modify, reuse, distribute, publish, sublicense, sell, or
-otherwise use any part of this project, including source code, scripts,
-documentation, or assets, without prior written permission from Danny
-Perondi.
-
-This project is provided "AS IS", without warranty or liability.
+This software is provided "AS IS", without warranty or liability.

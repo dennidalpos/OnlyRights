@@ -24,6 +24,8 @@ namespace NtfsAudit.App.Services
         private readonly string _powershellPath;
         private readonly bool _moduleAvailable;
         private readonly ScanCredential _credential;
+        private readonly Func<string, string> _scriptRunner;
+        private readonly Func<string, bool> _fileExists;
 
         public PowerShellAdResolver(string powershellPath)
             : this(powershellPath, null)
@@ -31,9 +33,16 @@ namespace NtfsAudit.App.Services
         }
 
         public PowerShellAdResolver(string powershellPath, ScanCredential credential)
+            : this(powershellPath, credential, null, null)
+        {
+        }
+
+        internal PowerShellAdResolver(string powershellPath, ScanCredential credential, Func<string, string> scriptRunner, Func<string, bool> fileExists)
         {
             _powershellPath = powershellPath;
             _credential = credential;
+            _scriptRunner = scriptRunner;
+            _fileExists = fileExists ?? File.Exists;
             _moduleAvailable = CheckModule();
         }
 
@@ -168,7 +177,12 @@ namespace NtfsAudit.App.Services
 
         private string Run(string script)
         {
-            if (!File.Exists(_powershellPath)) return null;
+            if (_scriptRunner != null)
+            {
+                return _scriptRunner(script);
+            }
+
+            if (!_fileExists(_powershellPath)) return null;
             var info = new ProcessStartInfo
             {
                 FileName = _powershellPath,

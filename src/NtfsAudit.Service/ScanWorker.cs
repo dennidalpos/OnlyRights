@@ -24,10 +24,41 @@ namespace NtfsAudit.Service
 {
     public class ScanWorker : BackgroundService
     {
-        private static readonly string ServiceDataRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "NtfsAudit");
-        private static readonly string JobsRoot = Path.Combine(ServiceDataRoot, "jobs");
-        private static readonly string StatusPath = Path.Combine(ServiceDataRoot, "service-status.json");
-        private readonly ServiceJobFileHandler _jobFileHandler = new ServiceJobFileHandler();
+        private static readonly string DefaultServiceDataRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "NtfsAudit");
+        private readonly ServiceJobFileHandler _jobFileHandler;
+        private readonly string _serviceDataRoot;
+        private readonly string _jobsRoot;
+        private readonly string _statusPath;
+        private readonly Action<ServiceRuntimeStatus> _statusWriter;
+        private readonly Action<ScanOptions, CancellationToken> _scanExecutor;
+
+        public ScanWorker()
+            : this(
+                null,
+                DefaultServiceDataRoot,
+                Path.Combine(DefaultServiceDataRoot, "jobs"),
+                Path.Combine(DefaultServiceDataRoot, "service-status.json"),
+                null,
+                null)
+        {
+        }
+
+        internal ScanWorker(
+            ServiceJobFileHandler jobFileHandler,
+            string serviceDataRoot,
+            string jobsRoot,
+            string statusPath,
+            Action<ServiceRuntimeStatus> statusWriter,
+            Action<ScanOptions, CancellationToken> scanExecutor)
+        {
+            _jobFileHandler = jobFileHandler ?? new ServiceJobFileHandler();
+            _serviceDataRoot = string.IsNullOrWhiteSpace(serviceDataRoot) ? DefaultServiceDataRoot : serviceDataRoot;
+            _jobsRoot = string.IsNullOrWhiteSpace(jobsRoot) ? Path.Combine(_serviceDataRoot, "jobs") : jobsRoot;
+            _statusPath = string.IsNullOrWhiteSpace(statusPath) ? Path.Combine(_serviceDataRoot, "service-status.json") : statusPath;
+            _statusWriter = statusWriter ?? PersistServiceStatus;
+            _scanExecutor = scanExecutor ?? RunSingleScan;
+        }
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
@@ -36,19 +67,31 @@ namespace NtfsAudit.Service
                 {
                     ProcessJobs(stoppingToken);
                 }
-                catch
+                catch (OperationCanceledException)
                 {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    ReportWorkerError("loop principale", ex, 0, null, null, 0, 0, 0);
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
         }
 
-        private void ProcessJobs(CancellationToken token)
+        internal void ProcessJobs(CancellationToken token)
         {
-            if (!Directory.Exists(JobsRoot))
+            if (!Directory.Exists(_jobsRoot))
             {
-                WriteServiceStatus(new ServiceRuntimeStatus
+                UpdateServiceStatus(new ServiceRuntimeStatus
                 {
                     IsRunning = false,
                     PendingJobs = 0,
@@ -59,8 +102,8 @@ namespace NtfsAudit.Service
                 return;
             }
 
-            var files = Directory.GetFiles(JobsRoot, "job_*.json").OrderBy(path => path).ToArray();
-            WriteServiceStatus(new ServiceRuntimeStatus
+            var files = Directory.GetFiles(_jobsRoot, "job_*.json").OrderBy(path => path).ToArray();
+            UpdateServiceStatus(new ServiceRuntimeStatus
             {
                 IsRunning = false,
                 PendingJobs = files.Length,
@@ -69,28 +112,30 @@ namespace NtfsAudit.Service
                 LastMessage = files.Length > 0 ? "Job in coda" : "In attesa di job"
             });
 
-            foreach (var file in files)
+            for (var fileIndex = 0; fileIndex < files.Length; fileIndex++)
             {
+                var file = files[fileIndex];
                 token.ThrowIfCancellationRequested();
                 if (!_jobFileHandler.TryLoad(file, out var job, out var optionsList, out var failureReason))
                 {
-                    QuarantineInvalidJob(file, failureReason, files.Length);
+                    QuarantineInvalidJob(file, failureReason, files.Length, fileIndex);
                     continue;
                 }
 
                 var startedAt = DateTime.UtcNow;
+                var failedRoots = 0;
                 for (var index = 0; index < optionsList.Count; index++)
                 {
                     token.ThrowIfCancellationRequested();
                     var options = optionsList[index];
-                    WriteServiceStatus(new ServiceRuntimeStatus
+                    UpdateServiceStatus(new ServiceRuntimeStatus
                     {
                         IsRunning = true,
                         CurrentJobId = job.JobId,
                         CurrentRootPath = options.RootPath,
                         CurrentRootIndex = index + 1,
                         TotalRoots = optionsList.Count,
-                        PendingJobs = Math.Max(0, files.Length - 1),
+                        PendingJobs = Math.Max(0, files.Length - fileIndex - 1),
                         RemainingRootsInCurrentJob = Math.Max(0, optionsList.Count - (index + 1)),
                         StartedAtUtc = startedAt,
                         LastUpdateUtc = DateTime.UtcNow,
@@ -99,63 +144,156 @@ namespace NtfsAudit.Service
 
                     try
                     {
-                        RunSingleScan(options, token);
+                        _scanExecutor(options, token);
                     }
                     catch (OperationCanceledException)
                     {
                         throw;
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        failedRoots++;
+                        ReportWorkerError(
+                            string.Format("scansione root {0}/{1}", index + 1, optionsList.Count),
+                            ex,
+                            Math.Max(0, files.Length - fileIndex - 1),
+                            job.JobId,
+                            options.RootPath,
+                            index + 1,
+                            optionsList.Count,
+                            Math.Max(0, optionsList.Count - (index + 1)));
                     }
                 }
 
                 File.Delete(file);
-                var pending = Directory.Exists(JobsRoot)
-                    ? Directory.GetFiles(JobsRoot, "job_*.json").Length
+                var pending = Directory.Exists(_jobsRoot)
+                    ? Directory.GetFiles(_jobsRoot, "job_*.json").Length
                     : 0;
-                WriteServiceStatus(new ServiceRuntimeStatus
+                UpdateServiceStatus(new ServiceRuntimeStatus
                 {
                     IsRunning = false,
                     PendingJobs = pending,
                     RemainingRootsInCurrentJob = 0,
                     LastUpdateUtc = DateTime.UtcNow,
-                    LastMessage = pending > 0 ? "Job completato, altri job in coda" : "Ultimo job completato"
+                    LastMessage = BuildCompletionMessage(pending, failedRoots)
                 });
             }
         }
 
-        private void QuarantineInvalidJob(string file, string failureReason, int pendingJobs)
+        private void QuarantineInvalidJob(string file, string failureReason, int pendingJobs, int fileIndex)
         {
+            Exception quarantineError = null;
+            var quarantined = false;
+
             try
             {
                 _jobFileHandler.Quarantine(file, failureReason);
+                quarantined = true;
             }
-            catch
+            catch (Exception ex)
             {
+                quarantineError = ex;
                 TryDeleteFile(file);
             }
 
-            var pending = Directory.Exists(JobsRoot)
-                ? Directory.GetFiles(JobsRoot, "job_*.json").Length
-                : Math.Max(0, pendingJobs - 1);
-            WriteServiceStatus(new ServiceRuntimeStatus
+            var pending = Directory.Exists(_jobsRoot)
+                ? Directory.GetFiles(_jobsRoot, "job_*.json").Length
+                : Math.Max(0, pendingJobs - fileIndex - 1);
+            var lastMessage = quarantined
+                ? string.Format("Job non valido isolato: {0}", failureReason ?? "errore sconosciuto")
+                : string.Format(
+                    "Job non valido rimosso dopo errore quarantena: {0} ({1})",
+                    failureReason ?? "errore sconosciuto",
+                    quarantineError == null ? "errore non disponibile" : quarantineError.Message);
+
+            UpdateServiceStatus(new ServiceRuntimeStatus
             {
                 IsRunning = false,
                 PendingJobs = pending,
                 RemainingRootsInCurrentJob = 0,
                 LastUpdateUtc = DateTime.UtcNow,
-                LastMessage = string.Format("Job non valido isolato: {0}", failureReason ?? "errore sconosciuto")
+                LastMessage = lastMessage
             });
         }
 
-        private static void WriteServiceStatus(ServiceRuntimeStatus status)
+        private string BuildCompletionMessage(int pendingJobs, int failedRoots)
         {
+            if (failedRoots > 0)
+            {
+                var errorSummary = failedRoots == 1
+                    ? "1 errore di scansione"
+                    : string.Format("{0} errori di scansione", failedRoots);
+                return pendingJobs > 0
+                    ? string.Format("Job completato con {0}, altri job in coda", errorSummary)
+                    : string.Format("Ultimo job completato con {0}", errorSummary);
+            }
+
+            return pendingJobs > 0 ? "Job completato, altri job in coda" : "Ultimo job completato";
+        }
+
+        private void UpdateServiceStatus(ServiceRuntimeStatus status)
+        {
+            if (status == null)
+            {
+                return;
+            }
+
             try
             {
-                if (status == null) return;
-                Directory.CreateDirectory(ServiceDataRoot);
-                File.WriteAllText(StatusPath, JsonConvert.SerializeObject(status, Formatting.Indented));
+                _statusWriter(status);
+            }
+            catch (Exception ex)
+            {
+                TryWriteConsoleError(string.Format("Errore aggiornamento stato servizio: {0}", ex));
+            }
+        }
+
+        private void PersistServiceStatus(ServiceRuntimeStatus status)
+        {
+            Directory.CreateDirectory(_serviceDataRoot);
+            File.WriteAllText(_statusPath, JsonConvert.SerializeObject(status, Formatting.Indented));
+        }
+
+        private void ReportWorkerError(
+            string context,
+            Exception exception,
+            int pendingJobs,
+            string jobId,
+            string rootPath,
+            int currentRootIndex,
+            int totalRoots,
+            int remainingRoots)
+        {
+            var message = string.Format(
+                "Errore servizio ({0}): {1}",
+                string.IsNullOrWhiteSpace(context) ? "contesto sconosciuto" : context,
+                exception == null ? "errore non disponibile" : exception.Message);
+
+            TryWriteConsoleError(exception == null ? message : string.Format("{0}{1}{2}", message, Environment.NewLine, exception));
+            UpdateServiceStatus(new ServiceRuntimeStatus
+            {
+                IsRunning = false,
+                CurrentJobId = jobId,
+                CurrentRootPath = rootPath,
+                CurrentRootIndex = currentRootIndex,
+                TotalRoots = totalRoots,
+                PendingJobs = Math.Max(0, pendingJobs),
+                RemainingRootsInCurrentJob = Math.Max(0, remainingRoots),
+                LastUpdateUtc = DateTime.UtcNow,
+                LastMessage = message
+            });
+        }
+
+        private static void TryWriteConsoleError(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            try
+            {
+                Console.Error.WriteLine(message);
             }
             catch
             {

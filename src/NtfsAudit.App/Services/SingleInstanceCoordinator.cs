@@ -16,26 +16,83 @@ namespace NtfsAudit.App.Services
 {
     internal static class SingleInstanceCoordinator
     {
-        internal static bool TryAcquire(string mutexName, out Mutex mutex)
+        internal static SingleInstanceAcquireResult TryAcquire(string mutexName, out Mutex mutex)
+        {
+            return TryAcquire(mutexName, out mutex, CreateMutex);
+        }
+
+        internal static SingleInstanceAcquireResult TryAcquire(string mutexName, out Mutex mutex, Func<string, MutexFactoryResult> mutexFactory)
         {
             mutex = null;
 
             try
             {
-                var createdNew = false;
-                var candidate = new Mutex(true, mutexName, out createdNew);
-                if (!createdNew)
+                var attempt = (mutexFactory ?? CreateMutex)(mutexName);
+                if (attempt.Mutex == null)
                 {
-                    candidate.Dispose();
-                    return false;
+                    return SingleInstanceAcquireResult.Failure("Il mutex dell'istanza unica non è stato creato.");
                 }
 
-                mutex = candidate;
-                return true;
+                if (!attempt.CreatedNew)
+                {
+                    attempt.Mutex.Dispose();
+                    return SingleInstanceAcquireResult.AlreadyRunning();
+                }
+
+                mutex = attempt.Mutex;
+                return SingleInstanceAcquireResult.Acquired();
             }
-            catch
+            catch (Exception ex)
             {
-                return true;
+                return SingleInstanceAcquireResult.Failure(ex.Message);
+            }
+        }
+
+        private static MutexFactoryResult CreateMutex(string mutexName)
+        {
+            var createdNew = false;
+            var candidate = new Mutex(true, mutexName, out createdNew);
+            return new MutexFactoryResult(candidate, createdNew);
+        }
+
+        internal readonly struct MutexFactoryResult
+        {
+            internal MutexFactoryResult(Mutex mutex, bool createdNew)
+            {
+                Mutex = mutex;
+                CreatedNew = createdNew;
+            }
+
+            internal Mutex Mutex { get; }
+            internal bool CreatedNew { get; }
+        }
+
+        internal readonly struct SingleInstanceAcquireResult
+        {
+            private SingleInstanceAcquireResult(bool isAcquired, bool isAlreadyRunning, string errorMessage)
+            {
+                IsAcquired = isAcquired;
+                IsAlreadyRunning = isAlreadyRunning;
+                ErrorMessage = errorMessage;
+            }
+
+            internal bool IsAcquired { get; }
+            internal bool IsAlreadyRunning { get; }
+            internal string ErrorMessage { get; }
+
+            internal static SingleInstanceAcquireResult Acquired()
+            {
+                return new SingleInstanceAcquireResult(true, false, null);
+            }
+
+            internal static SingleInstanceAcquireResult AlreadyRunning()
+            {
+                return new SingleInstanceAcquireResult(false, true, null);
+            }
+
+            internal static SingleInstanceAcquireResult Failure(string errorMessage)
+            {
+                return new SingleInstanceAcquireResult(false, false, errorMessage);
             }
         }
     }

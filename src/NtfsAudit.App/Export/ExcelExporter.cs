@@ -28,6 +28,17 @@ namespace NtfsAudit.App.Export
         private const int MaxDataRowsPerSheet = ExcelMaxRows - 1;
         private const int MinColumnWidth = 8;
         private const int MaxColumnWidth = 60;
+        private readonly int _maxDataRowsPerSheet;
+
+        public ExcelExporter()
+            : this(MaxDataRowsPerSheet)
+        {
+        }
+
+        public ExcelExporter(int maxDataRowsPerSheet)
+        {
+            _maxDataRowsPerSheet = maxDataRowsPerSheet > 0 ? maxDataRowsPerSheet : MaxDataRowsPerSheet;
+        }
 
         public ExcelExportResult Export(string tempDataPath, string errorPath, string outputPath)
         {
@@ -239,7 +250,7 @@ namespace NtfsAudit.App.Export
 
         private void WriteRecord(ref SheetWriter writer, WorkbookPart workbookPart, Sheets sheets, string prefix, ref int sheetIndex, ref uint sheetId, string[] headers, ExportRecord record, List<SheetMetrics> metricsPool, ref uint tableId)
         {
-            if (writer.RowCount >= MaxDataRowsPerSheet)
+            if (writer.RowCount >= _maxDataRowsPerSheet)
             {
                 writer.Dispose();
                 sheetIndex++;
@@ -336,7 +347,7 @@ namespace NtfsAudit.App.Export
                 var rowValues = BuildRowValues(record);
                 if (string.Equals(record.PrincipalType, "Group", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (groupSheets[groupIndex].RowCount >= MaxDataRowsPerSheet)
+                    if (groupSheets[groupIndex].RowCount >= _maxDataRowsPerSheet)
                     {
                         groupIndex++;
                         groupSheets.Add(BuildSheetMetrics(headers));
@@ -346,7 +357,7 @@ namespace NtfsAudit.App.Export
                 }
                 else if (string.Equals(record.PrincipalType, "User", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (userSheets[userIndex].RowCount >= MaxDataRowsPerSheet)
+                    if (userSheets[userIndex].RowCount >= _maxDataRowsPerSheet)
                     {
                         userIndex++;
                         userSheets.Add(BuildSheetMetrics(headers));

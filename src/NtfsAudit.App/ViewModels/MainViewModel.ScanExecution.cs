@@ -665,7 +665,7 @@ namespace NtfsAudit.App.ViewModels
             var ioPath = PathResolver.ToExtendedPath(outputPath);
             if (!File.Exists(ioPath))
             {
-                throw new IOException("Il file export non Ã¨ stato creato.");
+                throw new IOException("Il file export non è stato creato.");
             }
             var info = new FileInfo(ioPath);
             if (info.Length == 0)

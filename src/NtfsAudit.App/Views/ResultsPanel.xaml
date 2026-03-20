@@ -1,0 +1,359 @@
+<UserControl x:Class="NtfsAudit.App.Views.ResultsPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="12" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0">
+              <TextBlock Text="Risultati" Style="{StaticResource SectionHeaderText}" />
+            </StackPanel>
+            <StackPanel Grid.Row="1" Margin="0,8,0,8" IsEnabled="{Binding HasScanResult}">
+              <TextBlock Text="??? Legenda diritti" Style="{StaticResource SubsectionHeaderText}" />
+              <WrapPanel Margin="0,0,0,6">
+                <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Permesso di lettura" Style="{StaticResource BadgeToolTipBorder}">
+                  <TextBlock Text="?? Read" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Visualizza elenco contenuti" Style="{StaticResource BadgeToolTipBorder}">
+                  <TextBlock Text="?? List" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Lettura ed esecuzione" Style="{StaticResource BadgeToolTipBorder}">
+                  <TextBlock Text="? R&amp;E" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FF27AE60" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Scrittura" Style="{StaticResource BadgeToolTipBorder}">
+                  <TextBlock Text="? Write" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FFF2994A" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Modifica" Style="{StaticResource BadgeToolTipBorder}">
+                  <TextBlock Text="?? Modify" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FF9B51E0" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Controllo completo" Style="{StaticResource BadgeToolTipBorder}">
+                  <TextBlock Text="?? Full" Foreground="White" FontSize="10" />
+                </Border>
+                <Border Background="#FFEB5757" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Accesso negato (Deny)" Style="{StaticResource BadgeToolTipBorder}">
+                  <TextBlock Text="? Deny" Foreground="White" FontSize="10" />
+                </Border>
+              </WrapPanel>
+              <TextBlock Text="Cartella trattata" FontSize="11" Foreground="#FF546E7A" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding SelectedFolderName}" FontWeight="SemiBold" FontSize="13" Foreground="#FF0D47A1" TextTrimming="CharacterEllipsis" />
+              <TextBlock Text="{Binding SelectedFolderPath}" FontSize="11" Foreground="#FF546E7A" TextTrimming="CharacterEllipsis" Margin="0,0,0,6" />
+
+              <Expander Header="Filtri persistenti" IsExpanded="False" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10">
+                <StackPanel>
+                  <TextBlock Text="Ricerca ACL / Gruppo / Utente" Style="{StaticResource SubsectionHeaderText}" />
+                  <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Filtro:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBox Grid.Column="1" Height="26" MinWidth="220" Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
+                  </Grid>
+                  <TextBlock Text="Permessi" Style="{StaticResource SubsectionHeaderText}" />
+                  <WrapPanel Margin="0,0,0,4">
+                    <CheckBox Margin="0,0,12,6" Content="Colora per diritto" IsChecked="{Binding ColorizeRights}" />
+                    <CheckBox Margin="0,0,12,6" Content="Allow" IsChecked="{Binding ShowAllow}" />
+                    <CheckBox Margin="0,0,12,6" Content="Deny" IsChecked="{Binding ShowDeny}" />
+                    <CheckBox Margin="0,0,12,6" Content="Ereditato" IsChecked="{Binding ShowInherited}" />
+                    <CheckBox Margin="0,0,12,6" Content="Esplicito" IsChecked="{Binding ShowExplicit}" />
+                    <CheckBox Margin="0,0,12,6" Content="Protetto" IsChecked="{Binding ShowProtected}" />
+                    <CheckBox Margin="0,0,12,6" Content="Disabilitato" IsChecked="{Binding ShowDisabled}" />
+                  </WrapPanel>
+                  <TextBlock Text="Identita" Style="{StaticResource SubsectionHeaderText}" />
+                  <WrapPanel Margin="0,0,0,4">
+                    <CheckBox Margin="0,0,12,6" Content="Everyone" IsChecked="{Binding ShowEveryone}" />
+                    <CheckBox Margin="0,0,12,6" Content="Authenticated Users" IsChecked="{Binding ShowAuthenticatedUsers}" />
+                    <CheckBox Margin="0,0,12,6" Content="Utenti di servizio" IsChecked="{Binding ShowServiceAccounts}" />
+                    <CheckBox Margin="0,0,12,6" Content="Admin" IsChecked="{Binding ShowAdminAccounts}" />
+                    <CheckBox Margin="0,0,12,6" Content="Altri" IsChecked="{Binding ShowOtherPrincipals}" />
+                  </WrapPanel>
+                </StackPanel>
+              </Expander>
+            </StackPanel>
+            <TabControl Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+              <TabItem Header="Permessi Gruppi" ToolTip="Vista permessi dei gruppi con badge, diritti e metadati ACL.">
+                <DataGrid ToolTip="Risultati filtrati dei permessi gruppo." ItemsSource="{Binding FilteredGroupEntries}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True"
+                          ScrollViewer.CanContentScroll="True"
+                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          ColumnWidth="SizeToCells"
+                          MinColumnWidth="80"
+                          MouseDoubleClick="GroupEntries_OnMouseDoubleClick"
+                          RowStyle="{StaticResource RightsRowStyle}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch">
+                  <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Badge" CellTemplate="{StaticResource PermissionBadgesTemplate}" />
+                    <DataGridTextColumn Header="Gruppo" Binding="{Binding PrincipalName}" />
+                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" />
+                    <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="Ereditato" Binding="{Binding IsInherited, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="Modify" Binding="{Binding HasModify, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="R&amp;E" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" />
+                    <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
+                    <DataGridTextColumn Header="Risorsa" Binding="{Binding ResourceType}" />
+                    <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
+                    <DataGridTextColumn Header="Effective Access" Binding="{Binding EffectiveRightsSummary}" />
+                    <DataGridTextColumn Header="Rischio" Binding="{Binding RiskLevel}" />
+                    <DataGridTextColumn Header="SACL/Audit" Binding="{Binding AuditSummary}" />
+                    <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
+                    <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" />
+                    <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" />
+                  </DataGrid.Columns>
+                </DataGrid>
+              </TabItem>
+              <TabItem Header="Permessi Utenti" ToolTip="Vista permessi degli utenti con badge, diritti e metadati ACL.">
+                <DataGrid ToolTip="Risultati filtrati dei permessi utente." ItemsSource="{Binding FilteredUserEntries}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True"
+                          ScrollViewer.CanContentScroll="True"
+                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          ColumnWidth="SizeToCells"
+                          MinColumnWidth="80"
+                          MouseDoubleClick="UserEntries_OnMouseDoubleClick"
+                          RowStyle="{StaticResource RightsRowStyle}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch">
+                  <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Badge" CellTemplate="{StaticResource PermissionBadgesTemplate}" />
+                    <DataGridTextColumn Header="Utente" Binding="{Binding PrincipalName}" />
+                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" />
+                    <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="Ereditato" Binding="{Binding IsInherited, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="Modify" Binding="{Binding HasModify, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="R&amp;E" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" />
+                    <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
+                    <DataGridTextColumn Header="Risorsa" Binding="{Binding ResourceType}" />
+                    <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
+                    <DataGridTextColumn Header="Effective Access" Binding="{Binding EffectiveRightsSummary}" />
+                    <DataGridTextColumn Header="Rischio" Binding="{Binding RiskLevel}" />
+                    <DataGridTextColumn Header="SACL/Audit" Binding="{Binding AuditSummary}" />
+                    <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
+                    <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" />
+                    <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" />
+                  </DataGrid.Columns>
+                </DataGrid>
+              </TabItem>
+              <TabItem Header="Dettaglio ACL" ToolTip="Vista completa ACL (utenti, gruppi, share ed effective).">
+                <DataGrid ToolTip="Dettaglio ACL completo del nodo selezionato." ItemsSource="{Binding FilteredAllEntries}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True"
+                          ScrollViewer.CanContentScroll="True"
+                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          ColumnWidth="SizeToCells"
+                          MinColumnWidth="80"
+                          RowStyle="{StaticResource RightsRowStyle}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch">
+                  <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Badge" CellTemplate="{StaticResource PermissionBadgesTemplate}" />
+                    <DataGridTextColumn Header="Principal" Binding="{Binding PrincipalName}" />
+                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" />
+                    <DataGridCheckBoxColumn Header="Disabilitato" Binding="{Binding IsDisabled, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="Ereditato" Binding="{Binding IsInherited, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="Full" Binding="{Binding HasFullControl, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="Modify" Binding="{Binding HasModify, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="R&amp;E" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="List" Binding="{Binding HasList, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="Read" Binding="{Binding HasRead, Mode=OneWay}" />
+                    <DataGridCheckBoxColumn Header="Write" Binding="{Binding HasWrite, Mode=OneWay}" />
+                    <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
+                    <DataGridTextColumn Header="Tipo" Binding="{Binding PrincipalType}" />
+                    <DataGridTextColumn Header="Risorsa" Binding="{Binding ResourceType}" />
+                    <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
+                    <DataGridTextColumn Header="Effective Access" Binding="{Binding EffectiveRightsSummary}" />
+                    <DataGridTextColumn Header="Rischio" Binding="{Binding RiskLevel}" />
+                    <DataGridTextColumn Header="SACL/Audit" Binding="{Binding AuditSummary}" />
+                    <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
+                    <DataGridTextColumn Header="Inheritance" Binding="{Binding InheritanceFlags}" />
+                    <DataGridTextColumn Header="Propagation" Binding="{Binding PropagationFlags}" />
+                  </DataGrid.Columns>
+                </DataGrid>
+              </TabItem>
+              <TabItem Header="Share" ToolTip="Vista dei permessi Share SMB rilevati durante la scansione.">
+                <DataGrid ToolTip="Permessi Share SMB del nodo selezionato." ItemsSource="{Binding FilteredShareEntries}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True"
+                          ScrollViewer.CanContentScroll="True"
+                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          ColumnWidth="SizeToCells"
+                          MinColumnWidth="80"
+                          RowStyle="{StaticResource RightsRowStyle}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch">
+                  <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Badge" CellTemplate="{StaticResource PermissionBadgesTemplate}" />
+                    <DataGridTextColumn Header="Principal" Binding="{Binding PrincipalName}" />
+                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" />
+                    <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
+                    <DataGridTextColumn Header="Server" Binding="{Binding ShareServer}" />
+                    <DataGridTextColumn Header="Share" Binding="{Binding ShareName}" />
+                    <DataGridTextColumn Header="Allow/Deny" Binding="{Binding AllowDeny}" />
+                    <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
+                    <DataGridTextColumn Header="SACL/Audit" Binding="{Binding AuditSummary}" />
+                  </DataGrid.Columns>
+                </DataGrid>
+              </TabItem>
+              <TabItem Header="Effective Access" ToolTip="Vista accesso effettivo calcolato da NTFS + Share.">
+                <DataGrid ToolTip="Accesso effettivo combinato NTFS/Share del nodo selezionato." ItemsSource="{Binding FilteredEffectiveEntries}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True"
+                          ScrollViewer.CanContentScroll="True"
+                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          ColumnWidth="SizeToCells"
+                          MinColumnWidth="80"
+                          RowStyle="{StaticResource RightsRowStyle}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch">
+                  <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Badge" CellTemplate="{StaticResource PermissionBadgesTemplate}" />
+                    <DataGridTextColumn Header="Principal" Binding="{Binding PrincipalName}" />
+                    <DataGridTextColumn Header="Owner" Binding="{Binding Owner}" />
+                    <DataGridTextColumn Header="SID" Binding="{Binding PrincipalSid}" />
+                    <DataGridTextColumn Header="Effective" Binding="{Binding EffectiveRightsSummary}" />
+                    <DataGridTextColumn Header="NTFS Mask" Binding="{Binding NtfsRightsMask}" />
+                    <DataGridTextColumn Header="Share Mask" Binding="{Binding ShareRightsMask}" />
+                    <DataGridTextColumn Header="Depth" Binding="{Binding Depth}" />
+                  </DataGrid.Columns>
+                </DataGrid>
+              </TabItem>
+              <TabItem Header="Info Permessi" ToolTip="Riepilogo cartella e autorizzazioni in stile sicurezza/avanzate Windows.">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                  <StackPanel Margin="8">
+                    <TextBlock Text="Oggetto" Style="{StaticResource SubsectionHeaderText}" />
+                    <Border Background="#FFF5F5F5" BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,8">
+                      <TextBlock Text="{Binding SelectedFolderPath}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    </Border>
+
+                    <TextBlock Text="Sicurezza avanzata" Style="{StaticResource SubsectionHeaderText}" />
+                    <Border BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,6">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="#FFE8F5E9" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedOwnerSummary}" Value="-">
+                              <Setter Property="Background" Value="#FFFFEBEE" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock Text="{Binding SelectedOwnerSummary, StringFormat=Owner: {0}}" />
+                    </Border>
+
+                    <Border BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,10">
+                      <Border.Style>
+                        <Style TargetType="Border">
+                          <Setter Property="Background" Value="#FFE8F5E9" />
+                          <Style.Triggers>
+                    <DataTrigger Binding="{Binding SelectedInheritanceSummary}" Value="Ereditarieta disabilitata">
+                              <Setter Property="Background" Value="#FFFFEBEE" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock Text="{Binding SelectedInheritanceSummary}" />
+                    </Border>
+
+                    <TextBlock Text="Riepilogo autorizzazioni" Style="{StaticResource SubsectionHeaderText}" />
+                    <WrapPanel>
+                      <Border Background="#FFE3F2FD" BorderBrush="#FFBBDEFB" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                        <TextBlock Text="{Binding SelectedTotalAceCount, StringFormat=Totali: {0}}" />
+                      </Border>
+                      <Border BorderBrush="#FFBBDEFB" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                        <Border.Style>
+                          <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFE3F2FD" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding SelectedExplicitAceCount}" Value="0">
+                                <Setter Property="Background" Value="#FFF5F5F5" />
+                                <Setter Property="BorderBrush" Value="#FFE0E0E0" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding SelectedExplicitAceCount, StringFormat=Esplicite: {0}}" />
+                      </Border>
+                      <Border BorderBrush="#FFC8E6C9" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                        <Border.Style>
+                          <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFE8F5E9" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding SelectedInheritedAceCount}" Value="0">
+                                <Setter Property="Background" Value="#FFFFF8E1" />
+                                <Setter Property="BorderBrush" Value="#FFFFE082" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding SelectedInheritedAceCount, StringFormat=Ereditate: {0}}" />
+                      </Border>
+                      <Border BorderBrush="#FFFFCDD2" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
+                        <Border.Style>
+                          <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FFFFEBEE" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding SelectedDenyAceCount}" Value="0">
+                                <Setter Property="Background" Value="#FFF5F5F5" />
+                                <Setter Property="BorderBrush" Value="#FFE0E0E0" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding SelectedDenyAceCount, StringFormat=Deny: {0}}" />
+                      </Border>
+                    </WrapPanel>
+                  </StackPanel>
+                </ScrollViewer>
+              </TabItem>
+              <TabItem Header="Errori" ToolTip="Errori raccolti durante scansione e import/export.">
+                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                  <DataGrid ToolTip="Elenco errori (path, tipo e messaggio)." ItemsSource="{Binding FilteredErrors}"
+                            AutoGenerateColumns="False"
+                            IsReadOnly="True"
+                            EnableRowVirtualization="True"
+                            EnableColumnVirtualization="True"
+                            ScrollViewer.CanContentScroll="True"
+                            ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto"
+                            ColumnWidth="SizeToCells"
+                            MinColumnWidth="80"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch">
+                    <DataGrid.Columns>
+                      <DataGridTextColumn Header="Path" Binding="{Binding Path}" />
+                      <DataGridTextColumn Header="Tipo" Binding="{Binding ErrorType}" />
+                      <DataGridTextColumn Header="Messaggio" Binding="{Binding Message}" />
+                    </DataGrid.Columns>
+                  </DataGrid>
+                </Grid>
+              </TabItem>
+            </TabControl>
+          </Grid>
+        </Border>
+</UserControl>

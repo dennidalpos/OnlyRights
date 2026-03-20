@@ -9,6 +9,7 @@
  * commercial use, or reuse of this file is prohibited without prior
  * written permission from Danny Perondi.
  */
+using System;
 using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using NtfsAudit.App.Models;
@@ -18,6 +19,9 @@ namespace NtfsAudit.App.Services
     public class DirectoryServicesResolver : IAdResolver
     {
         private readonly ScanCredential _credential;
+        private readonly Func<ContextType, string, ResolvedPrincipal> _resolvePrincipalOverride;
+        private readonly Func<ContextType, string, List<ResolvedPrincipal>> _resolveGroupMembersOverride;
+        private readonly Func<ContextType, string, List<ResolvedPrincipal>> _resolveUserGroupsOverride;
 
         public DirectoryServicesResolver()
             : this(null)
@@ -25,30 +29,63 @@ namespace NtfsAudit.App.Services
         }
 
         public DirectoryServicesResolver(ScanCredential credential)
+            : this(credential, null, null, null)
+        {
+        }
+
+        internal DirectoryServicesResolver(
+            ScanCredential credential,
+            Func<ContextType, string, ResolvedPrincipal> resolvePrincipalOverride,
+            Func<ContextType, string, List<ResolvedPrincipal>> resolveGroupMembersOverride,
+            Func<ContextType, string, List<ResolvedPrincipal>> resolveUserGroupsOverride)
         {
             _credential = credential;
+            _resolvePrincipalOverride = resolvePrincipalOverride;
+            _resolveGroupMembersOverride = resolveGroupMembersOverride;
+            _resolveUserGroupsOverride = resolveUserGroupsOverride;
         }
 
         public bool IsAvailable { get { return true; } }
 
         public ResolvedPrincipal ResolvePrincipal(string sid)
         {
-            var resolved = ResolveInContext(ContextType.Domain, sid);
-            return resolved ?? ResolveInContext(ContextType.Machine, sid);
+            var resolved = ResolvePrincipalInContext(ContextType.Domain, sid);
+            return resolved ?? ResolvePrincipalInContext(ContextType.Machine, sid);
         }
 
         public List<ResolvedPrincipal> GetGroupMembers(string groupSid)
         {
-            var resolved = ResolveGroupMembers(ContextType.Domain, groupSid);
+            var resolved = ResolveGroupMembersInContext(ContextType.Domain, groupSid);
             if (resolved.Count > 0) return resolved;
-            return ResolveGroupMembers(ContextType.Machine, groupSid);
+            return ResolveGroupMembersInContext(ContextType.Machine, groupSid);
         }
 
         public List<ResolvedPrincipal> GetUserGroups(string userSid)
         {
-            var resolved = ResolveUserGroups(ContextType.Domain, userSid);
+            var resolved = ResolveUserGroupsInContext(ContextType.Domain, userSid);
             if (resolved.Count > 0) return resolved;
-            return ResolveUserGroups(ContextType.Machine, userSid);
+            return ResolveUserGroupsInContext(ContextType.Machine, userSid);
+        }
+
+        private ResolvedPrincipal ResolvePrincipalInContext(ContextType type, string sid)
+        {
+            return _resolvePrincipalOverride != null
+                ? _resolvePrincipalOverride(type, sid)
+                : ResolveInContext(type, sid);
+        }
+
+        private List<ResolvedPrincipal> ResolveGroupMembersInContext(ContextType type, string groupSid)
+        {
+            return _resolveGroupMembersOverride != null
+                ? _resolveGroupMembersOverride(type, groupSid) ?? new List<ResolvedPrincipal>()
+                : ResolveGroupMembers(type, groupSid);
+        }
+
+        private List<ResolvedPrincipal> ResolveUserGroupsInContext(ContextType type, string userSid)
+        {
+            return _resolveUserGroupsOverride != null
+                ? _resolveUserGroupsOverride(type, userSid) ?? new List<ResolvedPrincipal>()
+                : ResolveUserGroups(type, userSid);
         }
 
         private ResolvedPrincipal ResolveInContext(ContextType type, string sid)

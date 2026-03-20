@@ -1,0 +1,167 @@
+<UserControl x:Class="NtfsAudit.App.Views.FolderTreePanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Border BorderBrush="#DDDDDD" BorderThickness="1" Padding="12" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Text="Albero cartelle" Style="{StaticResource SectionHeaderText}" />
+            <StackPanel Grid.Row="1" Margin="0,0,0,8">
+              <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <Button Margin="0,0,8,0" Padding="10,4" Content="Espandi tutto" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
+                <Button Padding="10,4" Content="Comprimi tutto" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
+              </StackPanel>
+              <Expander Header="Legenda e filtri Tree" IsExpanded="False" IsEnabled="{Binding HasScanResult}">
+                <StackPanel Margin="0,6,0,0">
+                  <TextBlock Text="?? Filtri Tree" Style="{StaticResource SubsectionHeaderText}" />
+                  <WrapPanel Margin="0,0,0,4">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con permessi NTFS espliciti.">
+                                            <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="N" Foreground="White" FontSize="10" /></Border>
+                      <CheckBox Content="NTFS espliciti" IsChecked="{Binding TreeFilterExplicitOnly}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi protetti (ereditarieta disabilitata).">
+                                            <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="P" Foreground="White" FontSize="10" /></Border>
+                      <CheckBox Content="Protetto" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con differenze ACL rispetto alla cartella padre immediata (confronto gerarchico).">
+                                            <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="?" Foreground="White" FontSize="10" /></Border>
+                      <CheckBox Content="Diff vs padre" IsChecked="{Binding TreeFilterDiffOnly}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con regole Deny esplicite.">
+                                            <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="D" Foreground="White" FontSize="10" /></Border>
+                      <CheckBox Content="Deny espliciti" IsChecked="{Binding TreeFilterExplicitDenyOnly}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con differenze ACL rispetto alla baseline/policy attesa (confronto assoluto).">
+                                            <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="B" Foreground="White" FontSize="10" /></Border>
+                      <CheckBox Content="Mismatch baseline" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi che contengono file analizzati.">
+                                            <Border Background="#FF616161" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="F" Foreground="White" FontSize="10" /></Border>
+                      <CheckBox Content="Con file" IsChecked="{Binding TreeFilterFilesOnly}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi di tipo cartella.">
+                                            <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="C" Foreground="White" FontSize="10" /></Border>
+                      <CheckBox Content="Solo cartelle" IsChecked="{Binding TreeFilterFoldersOnly}" />
+                    </StackPanel>
+                  </WrapPanel>
+                  <TextBlock Text="? = confronto con la cartella padre | B = confronto con baseline/policy attesa" Style="{StaticResource MicrocopyText}" />
+                  <Button Content="Reset filtri tree" Width="140" Margin="0,0,0,8" Command="{Binding ResetTreeFiltersCommand}" />
+                                  </StackPanel>
+              </Expander>
+            </StackPanel>
+            <TreeView x:Name="FolderTreeView" Grid.Row="2" ItemsSource="{Binding FolderTree}" SelectedItemChanged="TreeView_OnSelectedItemChanged" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling">
+              <TreeView.ItemContainerStyle>
+                <Style TargetType="TreeViewItem">
+                  <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                  <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                  <Setter Property="Background" Value="Transparent" />
+                  <Setter Property="Foreground" Value="#FF212121" />
+                  <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                      <Setter Property="Background" Value="#FFBBDEFB" />
+                      <Setter Property="Foreground" Value="#FF0D47A1" />
+                      <Setter Property="FontWeight" Value="SemiBold" />
+                    </Trigger>
+                  </Style.Triggers>
+                </Style>
+              </TreeView.ItemContainerStyle>
+              <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="??" Margin="0,0,6,0" />
+                    <TextBlock Text="{Binding DisplayName}" />
+                  <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Protetto (ereditarieta disabilitata)"><Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
+                          <Setter Property="Visibility" Value="Collapsed" />
+                          <Style.Triggers>
+                            <MultiDataTrigger>
+                              <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsProtected}" Value="True" />
+                                <Condition Binding="{Binding DataContext.TreeFilterInheritanceDisabledOnly, RelativeSource={RelativeSource AncestorType=TreeView}}" Value="True" />
+                              </MultiDataTrigger.Conditions>
+                              <Setter Property="Visibility" Value="Visible" />
+                            </MultiDataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock Text="P" Foreground="White" FontSize="10" />
+                    </Border>
+                    <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Differenze rispetto alla cartella padre">
+                      <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
+                          <Setter Property="Visibility" Value="Collapsed" />
+                          <Style.Triggers>
+                            <MultiDataTrigger>
+                              <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding HasDiff}" Value="True" />
+                                <Condition Binding="{Binding DataContext.TreeFilterDiffOnly, RelativeSource={RelativeSource AncestorType=TreeView}}" Value="True" />
+                              </MultiDataTrigger.Conditions>
+                              <Setter Property="Visibility" Value="Visible" />
+                            </MultiDataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock Text="{Binding DiffLabel}" Foreground="White" FontSize="10" />
+                    </Border>
+                    <Border Background="#FFAD1457" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Accesso negato (Deny espliciti)">
+                      <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
+                          <Setter Property="Visibility" Value="Collapsed" />
+                          <Style.Triggers>
+                            <MultiDataTrigger>
+                              <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding HasDenyExplicit}" Value="True" />
+                                <Condition Binding="{Binding DataContext.TreeFilterExplicitDenyOnly, RelativeSource={RelativeSource AncestorType=TreeView}}" Value="True" />
+                              </MultiDataTrigger.Conditions>
+                              <Setter Property="Visibility" Value="Visible" />
+                            </MultiDataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock Text="{Binding DenyExplicitLabel}" Foreground="White" FontSize="10" />
+                    </Border>
+                    <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Differenze rispetto alla baseline">
+                      <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
+                          <Setter Property="Visibility" Value="Collapsed" />
+                          <Style.Triggers>
+                            <MultiDataTrigger>
+                              <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding HasBaselineMismatch}" Value="True" />
+                                <Condition Binding="{Binding DataContext.TreeFilterBaselineMismatchOnly, RelativeSource={RelativeSource AncestorType=TreeView}}" Value="True" />
+                              </MultiDataTrigger.Conditions>
+                              <Setter Property="Visibility" Value="Visible" />
+                            </MultiDataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock Text="{Binding BaselineMismatchLabel}" Foreground="White" FontSize="10" />
+                    </Border>
+                    <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Permessi NTFS espliciti">
+                      <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
+                          <Setter Property="Visibility" Value="Collapsed" />
+                          <Style.Triggers>
+                            <MultiDataTrigger>
+                              <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding HasExplicitNtfs}" Value="True" />
+                                <Condition Binding="{Binding DataContext.TreeFilterExplicitOnly, RelativeSource={RelativeSource AncestorType=TreeView}}" Value="True" />
+                              </MultiDataTrigger.Conditions>
+                              <Setter Property="Visibility" Value="Visible" />
+                            </MultiDataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Border.Style>
+                      <TextBlock Text="{Binding ExplicitNtfsLabel}" Foreground="White" FontSize="10" />
+                    </Border>
+                  </StackPanel>
+                </HierarchicalDataTemplate>
+              </TreeView.ItemTemplate>
+            </TreeView>
+          </Grid>
+        </Border>
+
+</UserControl>

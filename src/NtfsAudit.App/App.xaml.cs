@@ -53,12 +53,23 @@ namespace NtfsAudit.App
 
         private bool EnsureSingleInstance()
         {
-            if (SingleInstanceCoordinator.TryAcquire(SingleInstanceMutexName, out _singleInstanceMutex))
+            var acquireResult = SingleInstanceCoordinator.TryAcquire(SingleInstanceMutexName, out _singleInstanceMutex);
+            if (acquireResult.IsAcquired)
             {
                 return true;
             }
 
-            MessageBox.Show("NTFS Audit Ã¨ giÃ  in esecuzione.", "Istanza giÃ  attiva", MessageBoxButton.OK, MessageBoxImage.Information);
+            if (acquireResult.IsAlreadyRunning)
+            {
+                MessageBox.Show("NTFS Audit è già in esecuzione.", "Istanza già attiva", MessageBoxButton.OK, MessageBoxImage.Information);
+                return false;
+            }
+
+            var message = string.Format(
+                "Impossibile inizializzare il controllo istanza unica.{0}{0}Dettagli: {1}",
+                Environment.NewLine,
+                string.IsNullOrWhiteSpace(acquireResult.ErrorMessage) ? "errore non disponibile" : acquireResult.ErrorMessage);
+            MessageBox.Show(message, "Errore avvio", MessageBoxButton.OK, MessageBoxImage.Error);
             return false;
         }
 

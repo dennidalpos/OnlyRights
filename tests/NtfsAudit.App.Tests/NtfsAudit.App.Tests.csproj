@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\NtfsAudit.App\NtfsAudit.App.csproj" />
     <ProjectReference Include="..\..\src\NtfsAudit.Service\NtfsAudit.Service.csproj" />
+    <ProjectReference Include="..\..\src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj" />
   </ItemGroup>
 
   <ItemGroup>
