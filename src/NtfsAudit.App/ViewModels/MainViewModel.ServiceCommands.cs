@@ -418,6 +418,25 @@ namespace NtfsAudit.App.ViewModels
                 Path.Combine(appBase, "Service", "NtfsAudit.Service.dll")
             };
 
+            var current = new DirectoryInfo(appBase);
+            for (var i = 0; i < 8 && current != null; i++)
+            {
+                var repoRoot = current.FullName;
+                candidates.Add(Path.Combine(repoRoot, "artifacts", "packages", "Release", "net8.0-windows", "Service", "NtfsAudit.Service.exe"));
+                candidates.Add(Path.Combine(repoRoot, "artifacts", "packages", "Release", "net8.0-windows", "Service", "NtfsAudit.Service.dll"));
+                candidates.Add(Path.Combine(repoRoot, "artifacts", "packages", "Debug", "net8.0-windows", "Service", "NtfsAudit.Service.exe"));
+                candidates.Add(Path.Combine(repoRoot, "artifacts", "packages", "Debug", "net8.0-windows", "Service", "NtfsAudit.Service.dll"));
+                candidates.Add(Path.Combine(repoRoot, "artifacts", "publish", "Release", "net8.0-windows", "Service", "NtfsAudit.Service.exe"));
+                candidates.Add(Path.Combine(repoRoot, "artifacts", "publish", "Release", "net8.0-windows", "Service", "NtfsAudit.Service.dll"));
+                candidates.Add(Path.Combine(repoRoot, "artifacts", "publish", "Debug", "net8.0-windows", "Service", "NtfsAudit.Service.exe"));
+                candidates.Add(Path.Combine(repoRoot, "artifacts", "publish", "Debug", "net8.0-windows", "Service", "NtfsAudit.Service.dll"));
+                candidates.Add(Path.Combine(repoRoot, "artifacts", "build", "NtfsAudit.Service", "Release", "net8.0-windows", "NtfsAudit.Service.exe"));
+                candidates.Add(Path.Combine(repoRoot, "artifacts", "build", "NtfsAudit.Service", "Release", "net8.0-windows", "NtfsAudit.Service.dll"));
+                candidates.Add(Path.Combine(repoRoot, "artifacts", "build", "NtfsAudit.Service", "Debug", "net8.0-windows", "NtfsAudit.Service.exe"));
+                candidates.Add(Path.Combine(repoRoot, "artifacts", "build", "NtfsAudit.Service", "Debug", "net8.0-windows", "NtfsAudit.Service.dll"));
+                current = current.Parent;
+            }
+
             var parent = Directory.GetParent(appBase);
             for (var i = 0; i < 4 && parent != null; i++)
             {
@@ -428,7 +447,10 @@ namespace NtfsAudit.App.ViewModels
                 parent = parent.Parent;
             }
 
-            var serviceBinary = candidates.FirstOrDefault(path => !string.IsNullOrWhiteSpace(path) && File.Exists(path));
+            var serviceBinary = candidates
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault(File.Exists);
             if (string.IsNullOrWhiteSpace(serviceBinary)) return null;
             return serviceBinary;
         }

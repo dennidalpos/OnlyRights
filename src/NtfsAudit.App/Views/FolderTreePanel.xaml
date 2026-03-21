@@ -16,7 +16,7 @@
               </StackPanel>
               <Expander Header="Legenda e filtri Tree" IsExpanded="False" IsEnabled="{Binding HasScanResult}">
                 <StackPanel Margin="0,6,0,0">
-                  <TextBlock Text="?? Filtri Tree" Style="{StaticResource SubsectionHeaderText}" />
+                  <TextBlock Text="Filtri tree" Style="{StaticResource SubsectionHeaderText}" />
                   <WrapPanel Margin="0,0,0,4">
                     <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con permessi NTFS espliciti.">
                                             <Border Background="#FF00897B" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="N" Foreground="White" FontSize="10" /></Border>
@@ -27,7 +27,7 @@
                       <CheckBox Content="Protetto" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con differenze ACL rispetto alla cartella padre immediata (confronto gerarchico).">
-                                            <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="?" Foreground="White" FontSize="10" /></Border>
+                                            <Border Background="#FF455A64" Padding="2,0" CornerRadius="2" Margin="0,0,4,0"><TextBlock Text="DP" Foreground="White" FontSize="10" /></Border>
                       <CheckBox Content="Diff vs padre" IsChecked="{Binding TreeFilterDiffOnly}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con regole Deny esplicite.">
@@ -47,7 +47,7 @@
                       <CheckBox Content="Solo cartelle" IsChecked="{Binding TreeFilterFoldersOnly}" />
                     </StackPanel>
                   </WrapPanel>
-                  <TextBlock Text="? = confronto con la cartella padre | B = confronto con baseline/policy attesa" Style="{StaticResource MicrocopyText}" />
+                  <TextBlock Text="DP = confronto con la cartella padre | B = confronto con baseline/policy attesa" Style="{StaticResource MicrocopyText}" />
                   <Button Content="Reset filtri tree" Width="140" Margin="0,0,0,8" Command="{Binding ResetTreeFiltersCommand}" />
                                   </StackPanel>
               </Expander>
@@ -71,7 +71,7 @@
               <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                   <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="??" Margin="0,0,6,0" />
+                    <TextBlock Text="DIR" Margin="0,0,6,0" Foreground="#FF546E7A" FontWeight="SemiBold" />
                     <TextBlock Text="{Binding DisplayName}" />
                   <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Protetto (ereditarieta disabilitata)"><Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">

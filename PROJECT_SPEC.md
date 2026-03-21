@@ -14,7 +14,7 @@ Fornire una suite Windows per analizzare permessi NTFS e share SMB, esportare i 
 - Esecuzione locale oppure tramite Windows Service opzionale come host per scansioni background, non interattive o lunghe, senza funzionalita applicative aggiuntive.
 - Credenziali scansione a due livelli con credenziali globali applicative, override per singola root e fallback finale all'utente corrente.
 - Quarantena dei job service corrotti/non validi con aggiornamento dello stato runtime.
-- Script PowerShell per build, publish e pulizia artefatti/dati operativi.
+- Script PowerShell canonici per bootstrap, doctor, compile, build, test, pack, publish e clean.
 
 ## Non Scope
 - Supporto multipiattaforma non Windows.
@@ -29,13 +29,13 @@ Fornire una suite Windows per analizzare permessi NTFS e share SMB, esportare i 
 - `tests/NtfsAudit.App.Tests`: test unitari sui componenti core di path resolution, permission calculation, archive import/export e filtri.
 - `src/NtfsAudit.App/ViewModels/MainViewModel*.cs`: partial class separate per stato, comandi, esecuzione scan e runtime/UI lifecycle.
 - `src/NtfsAudit.App/Services/ScanCredential*.cs`: persistenza locale protetta DPAPI, sanitizzazione export e payload macchina per i job del servizio.
-- `scripts/build.ps1` e `scripts/clean.ps1`: automazione locale per restore/build/test/publish e pulizia.
+- `scripts/*.ps1`: entrypoint canonici del repository; `scripts/helpers/common.ps1` centralizza il contesto condiviso, `scripts/windows/*.ps1` governa il ciclo di vita del servizio Windows e `scripts/packaging/*.ps1` governa il packaging MSI con tool locali WiX.
 
 ## Constraints
 - Repository orientato a Windows e target `net6.0-windows` / `net8.0-windows`.
 - Il service supporta solo `net8.0-windows`.
 - L'SDK locale/CI deve essere pinato tramite `global.json` su toolchain .NET 8 supportata.
-- Gli output e intermedi di build/test devono essere centralizzati dalla root sotto `artifacts/` (`artifacts/bin`, `artifacts/obj`, `artifacts/test-results`); i publish distribuiti restano sotto `dist/`.
+- Gli output persistenti devono essere centralizzati dalla root sotto `artifacts/` (`artifacts/build`, `artifacts/test-results`, `artifacts/packages`, `artifacts/publish`).
 - I workspace `%TEMP%\\NtfsAudit\\imports` e `%TEMP%\\NtfsAudit\\exports` non devono essere cancellati distruttivamente in shutdown/cleanup generici; sono gestiti con retention dedicata.
 - Le credenziali scansione persistite localmente devono essere protette tramite DPAPI; i job del servizio devono ricevere solo payload credenziali protetti per `LocalMachine`, mai password in chiaro.
 - Gli archivi `.ntaudit` devono includere `analysis.sqlite` per consentire query/read-only efficienti sui dataset grandi.

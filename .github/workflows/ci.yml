@@ -19,11 +19,11 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Restore
-        run: dotnet restore .\NtfsAudit.sln --nologo
+      - name: Bootstrap
+        run: powershell -File .\scripts\bootstrap.ps1
 
       - name: Build
-        run: dotnet build .\NtfsAudit.sln -c Release --no-restore --nologo
+        run: powershell -File .\scripts\build.ps1 -Configuration Release -SkipRestore
 
       - name: Test
-        run: dotnet test .\NtfsAudit.sln -c Release --no-build --nologo --results-directory .\artifacts\test-results
+        run: powershell -File .\scripts\test.ps1 -Configuration Release -SkipRestore -SkipBuild

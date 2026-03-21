@@ -12,28 +12,28 @@
               <TextBlock Text="Risultati" Style="{StaticResource SectionHeaderText}" />
             </StackPanel>
             <StackPanel Grid.Row="1" Margin="0,8,0,8" IsEnabled="{Binding HasScanResult}">
-              <TextBlock Text="??? Legenda diritti" Style="{StaticResource SubsectionHeaderText}" />
+              <TextBlock Text="Legenda diritti" Style="{StaticResource SubsectionHeaderText}" />
               <WrapPanel Margin="0,0,0,6">
                 <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Permesso di lettura" Style="{StaticResource BadgeToolTipBorder}">
-                  <TextBlock Text="?? Read" Foreground="White" FontSize="10" />
+                  <TextBlock Text="R Read" Foreground="White" FontSize="10" />
                 </Border>
                 <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Visualizza elenco contenuti" Style="{StaticResource BadgeToolTipBorder}">
-                  <TextBlock Text="?? List" Foreground="White" FontSize="10" />
+                  <TextBlock Text="L List" Foreground="White" FontSize="10" />
                 </Border>
                 <Border Background="#FF2F80ED" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Lettura ed esecuzione" Style="{StaticResource BadgeToolTipBorder}">
-                  <TextBlock Text="? R&amp;E" Foreground="White" FontSize="10" />
+                  <TextBlock Text="RX R&amp;E" Foreground="White" FontSize="10" />
                 </Border>
                 <Border Background="#FF27AE60" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Scrittura" Style="{StaticResource BadgeToolTipBorder}">
-                  <TextBlock Text="? Write" Foreground="White" FontSize="10" />
+                  <TextBlock Text="W Write" Foreground="White" FontSize="10" />
                 </Border>
                 <Border Background="#FFF2994A" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Modifica" Style="{StaticResource BadgeToolTipBorder}">
-                  <TextBlock Text="?? Modify" Foreground="White" FontSize="10" />
+                  <TextBlock Text="M Modify" Foreground="White" FontSize="10" />
                 </Border>
                 <Border Background="#FF9B51E0" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Controllo completo" Style="{StaticResource BadgeToolTipBorder}">
-                  <TextBlock Text="?? Full" Foreground="White" FontSize="10" />
+                  <TextBlock Text="F Full" Foreground="White" FontSize="10" />
                 </Border>
                 <Border Background="#FFEB5757" Padding="4,2" CornerRadius="2" Margin="0,0,6,4" ToolTip="Accesso negato (Deny)" Style="{StaticResource BadgeToolTipBorder}">
-                  <TextBlock Text="? Deny" Foreground="White" FontSize="10" />
+                  <TextBlock Text="D Deny" Foreground="White" FontSize="10" />
                 </Border>
               </WrapPanel>
               <TextBlock Text="Cartella trattata" FontSize="11" Foreground="#FF546E7A" FontWeight="SemiBold" />

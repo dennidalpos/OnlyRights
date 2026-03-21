@@ -21,16 +21,20 @@ Nel repository il nome progetto legale è **OnlyRights**; la solution e i compon
 - `src/NtfsAudit.Service`: host Windows opzionale per esecuzione job asincroni/background con la stessa pipeline dell'app.
 - `src/NtfsAudit.Viewer`: client in sola lettura per archivi analisi.
 - `tests/NtfsAudit.App.Tests`: test unitari su pipeline, path, filtri e robustezza import/export.
-- `scripts/build.ps1`: restore/build/test/publish con opzioni cleaning integrate.
+- `scripts/bootstrap.ps1`, `doctor.ps1`, `compile.ps1`, `build.ps1`, `test.ps1`, `pack.ps1`, `publish.ps1`: entrypoint canonici del repository.
 - `scripts/clean.ps1`: pulizia artefatti build e residui operativi (cache/temp/job/report).
-- `.github/workflows/ci.yml`: pipeline minima Windows per restore/build/test.
+- `scripts/windows/*.ps1`: gestione servizio Windows via `sc.exe` con fallback opzionale a `tools/nssm`.
+- `scripts/packaging/*.ps1`: build/test install/test upgrade/test uninstall MSI tramite `tools/wix314-binaries` e `msiexec`.
+- `.github/workflows/ci.yml`: pipeline Windows che usa gli stessi entrypoint locali.
 - `global.json`: pin dell'SDK .NET 8 usato dal repository.
 
 Output generati riconoscibili dalla root:
-- `artifacts/bin/<ProjectName>/...`: output di build.
-- `artifacts/obj/<ProjectName>/...`: intermedi MSBuild/restore.
+- `artifacts/build/<ProjectName>/...`: output di build.
+- `artifacts/build/obj/<ProjectName>/...`: intermedi MSBuild/restore.
 - `artifacts/test-results/...`: risultati `dotnet test`.
-- `dist/<Configuration>/...`: publish distribuiti generati dagli script.
+- `artifacts/packages/<Configuration>/...`: artefatti distribuibili prodotti da `pack`.
+- `artifacts/packages/<Configuration>/<Framework>/installer/...`: MSI e staging WiX generati dagli script packaging.
+- `artifacts/publish/<Configuration>/...`: staging locale prodotto da `publish`.
 
 ---
 
@@ -161,37 +165,35 @@ Script CLI equivalenti:
 
 ---
 
-## Script build / clean
+## Script canonici
 
-## `scripts/build.ps1`
+- `scripts/bootstrap.ps1`: restore non interattivo della solution.
+- `scripts/doctor.ps1`: verifica SDK .NET, `global.json` e toolchain locali Windows (`tools/wix314-binaries`, `tools/nssm`).
+- `scripts/compile.ps1`: compila la solution senza packaging.
+- `scripts/build.ps1`: wrapper canonico su `compile`; in questo repository `compile` e `build` coincidono tecnicamente.
+- `scripts/test.ps1`: esegue i test automatici e salva i risultati in `artifacts/test-results`.
+- `scripts/pack.ps1`: produce publish App/Viewer/Service sotto `artifacts/packages`.
+- `scripts/publish.ps1`: copia artefatti già prodotti da `pack` sotto `artifacts/publish`.
 
-Flusso standard:
-1. restore (`dotnet restore`),
-2. build (`dotnet build`),
-3. test (`dotnet test`),
-4. publish App/Viewer/Service (`dotnet publish`, framework-dependent di default).
+## Script Windows
 
-Output:
-- build/intermedi centralizzati in `artifacts/bin` e `artifacts/obj`,
-- risultati test in `artifacts/test-results`,
-- publish in `dist/<Configuration>/[Runtime]/[Framework]`.
+- `scripts/windows/service-install.ps1`: installa `NtfsAuditWorker` dai path canonici `artifacts/build|packages|publish` o da un path esplicito.
+- `scripts/windows/service-start.ps1` e `service-stop.ps1`: avvio/stop non interattivi del servizio.
+- `scripts/windows/service-uninstall.ps1`: rimuove il servizio e pulisce i residui operativi.
+- `scripts/windows/services-cleanup.ps1`: cleanup difensivo post-test; `nssm-cleanup.ps1` forza il ramo fallback NSSM.
 
-Opzioni principali:
-- `-Configuration`, `-Framework`, `-Runtime`, `-OutputPath`
-- `-SkipRestore`, `-SkipBuild`, `-SkipTests`, `-SkipPublish`
-- `-SkipViewerPublish`, `-SkipServicePublish`, `-SkipPublishClean`
-- `-SelfContained`, `-PublishSingleFile`, `-PublishReadyToRun`
-- `-RunClean` + opzioni cleaning (`-CleanOperationalData`, `-CleanImportExportData`, ...)
+## Script MSI
 
-Con `-RunClean`, i cleanup generici o operativi preservano i workspace `%TEMP%\\NtfsAudit\\imports` e `%TEMP%\\NtfsAudit\\exports`; per rimuoverli servono i flag espliciti `-CleanAnalysisWorkspace`, `-CleanAnalysisImports`, `-CleanAnalysisExports` o `-CleanImportExportData`.
-
-Il comando stampa un riepilogo finale build (configurazione, dist, test/publish).
+- `scripts/packaging/msi-build.ps1`: genera l'MSI sotto `artifacts/packages/.../installer`.
+- `scripts/packaging/msi-install-test.ps1`: installazione silenziosa verificabile con log in `artifacts/logs`.
+- `scripts/packaging/msi-upgrade-test.ps1`: prova upgrade compatibile tra due versioni MSI.
+- `scripts/packaging/msi-uninstall-test.ps1`: uninstall silenzioso e cleanup finale del servizio.
 
 ## `scripts/clean.ps1`
 
 Pulizia modulare:
-- artefatti compilazione centralizzati (`artifacts/bin`, `artifacts/obj`, `artifacts/test-results`) e residui legacy `src/**/bin|obj`,
-- cartella `.vs` e publish `dist`,
+- artefatti compilazione centralizzati (`artifacts/build`, `artifacts/test-results`, `artifacts/packages`, `artifacts/publish`) e residui legacy `src/**/bin|obj`,
+- cartella `.vs` e vecchi publish legacy `dist`,
 - temp applicativo `%TEMP%\NtfsAudit`,
 - cache `%LOCALAPPDATA%\NtfsAudit\Cache`,
 - log app/temp,
@@ -211,14 +213,49 @@ I preset generici `-CleanAllTemp` e `-CleanOperationalData` preservano `%TEMP%\\
 
 ## Avvio rapido
 
-### Build completa
+### Bootstrap
+```powershell
+powershell -File .\scripts\bootstrap.ps1
+```
+
+### Doctor
+```powershell
+powershell -File .\scripts\doctor.ps1
+```
+
+### Build
 ```powershell
 powershell -File .\scripts\build.ps1 -Configuration Release
 ```
 
-### Build senza test
+### Test
 ```powershell
-powershell -File .\scripts\build.ps1 -SkipTests
+powershell -File .\scripts\test.ps1 -Configuration Release
+```
+
+### Pack
+```powershell
+powershell -File .\scripts\pack.ps1 -Configuration Release
+```
+
+### Publish locale
+```powershell
+powershell -File .\scripts\publish.ps1 -Configuration Release
+```
+
+### Installazione servizio Windows
+```powershell
+powershell -File .\scripts\windows\service-install.ps1 -Configuration Release
+```
+
+### Build MSI
+```powershell
+powershell -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Version 1.0.0
+```
+
+### Test upgrade MSI
+```powershell
+powershell -File .\scripts\packaging\msi-upgrade-test.ps1 -Configuration Release -BaseVersion 1.0.0 -UpgradeVersion 1.0.1
 ```
 
 ### Clean operativo completo
@@ -228,12 +265,12 @@ powershell -File .\scripts\clean.ps1 -CleanOperationalData
 
 ### Test con build già eseguita
 ```powershell
-dotnet test .\NtfsAudit.sln -c Release --no-build --nologo
+powershell -File .\scripts\test.ps1 -Configuration Release -SkipRestore -SkipBuild
 ```
 
-### Publish self-contained
+### Pack self-contained
 ```powershell
-powershell -File .\scripts\build.ps1 -Configuration Release -Runtime win-x64 -SelfContained -PublishSingleFile
+powershell -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x64 -SelfContained -PublishSingleFile
 ```
 
 ## Setup
@@ -244,7 +281,7 @@ Prerequisiti:
 
 Ripristino dipendenze:
 ```powershell
-dotnet restore .\NtfsAudit.sln
+powershell -File .\scripts\bootstrap.ps1
 ```
 
 ## Run
@@ -256,7 +293,7 @@ dotnet run --project .\src\NtfsAudit.App\NtfsAudit.App.csproj -f net8.0-windows
 
 Esecuzione test:
 ```powershell
-dotnet test .\NtfsAudit.sln -c Release --no-build --nologo
+powershell -File .\scripts\test.ps1 -Configuration Release
 ```
 
 ## Documentation

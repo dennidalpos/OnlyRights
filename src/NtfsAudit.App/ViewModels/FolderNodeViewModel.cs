@@ -96,7 +96,7 @@ namespace NtfsAudit.App.ViewModels
         public bool HasBaselineAdded { get { return BaselineAddedCount > 0; } }
         public bool HasBaselineRemoved { get { return BaselineRemovedCount > 0; } }
         public bool HasBaselineMismatch { get { return HasBaselineAdded || HasBaselineRemoved; } }
-        public string DiffLabel { get { return "Î”"; } }
+        public string DiffLabel { get { return "DP"; } }
         public string DenyExplicitLabel { get { return "D"; } }
         public string BaselineMismatchLabel { get { return "B"; } }
         public string ExplicitNtfsLabel { get { return "N"; } }
