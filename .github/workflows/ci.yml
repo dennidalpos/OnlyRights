@@ -9,7 +9,7 @@ on:
   pull_request:
 
 jobs:
-  build-test:
+  build-test-pack-publish:
     runs-on: windows-latest
 
     steps:
@@ -19,11 +19,30 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Clean (initial)
+        run: powershell -File .\scripts\clean.ps1
+
       - name: Bootstrap
         run: powershell -File .\scripts\bootstrap.ps1
+
+      - name: Doctor
+        run: powershell -File .\scripts\doctor.ps1
 
       - name: Build
         run: powershell -File .\scripts\build.ps1 -Configuration Release -SkipRestore
 
       - name: Test
         run: powershell -File .\scripts\test.ps1 -Configuration Release -SkipRestore -SkipBuild
+
+      - name: Pack
+        run: powershell -File .\scripts\pack.ps1 -Configuration Release -SkipRestore -SkipBuild
+
+      - name: Publish
+        run: powershell -File .\scripts\publish.ps1 -Configuration Release
+
+      - name: MSI Build
+        run: powershell -File .\scripts\packaging\msi-build.ps1 -Configuration Release -SkipPack
+
+      - name: Clean (final)
+        if: always()
+        run: powershell -File .\scripts\clean.ps1

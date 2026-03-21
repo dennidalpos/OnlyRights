@@ -334,8 +334,6 @@ function Remove-ServiceResiduals {
         (Join-Path $programData "NtfsAudit\service-status.json"),
         (Join-Path $localAppData "NtfsAudit\Logs"),
         (Join-Path $tempRoot "NtfsAudit\logs"),
-        (Join-Path $tempRoot "NtfsAudit\imports"),
-        (Join-Path $tempRoot "NtfsAudit\exports"),
         (Join-Path $tempRoot "NtfsAudit\queue")
     )) {
         if ([string]::IsNullOrWhiteSpace($path)) {

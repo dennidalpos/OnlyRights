@@ -205,7 +205,22 @@ function Add-MsiDirectoryContent {
     )
 
     $indent = ('  ' * $IndentLevel)
-    foreach ($file in ($Files | Where-Object { [System.IO.Path]::GetDirectoryName($_.FullName) -eq $CurrentPath } | Sort-Object Name)) {
+    $resolvedFiles = foreach ($entry in @($Files)) {
+        if ($entry -is [System.Array]) {
+            foreach ($nestedEntry in $entry) {
+                if ($nestedEntry -is [System.IO.FileInfo]) {
+                    $nestedEntry
+                }
+            }
+            continue
+        }
+
+        if ($entry -is [System.IO.FileInfo]) {
+            $entry
+        }
+    }
+
+    foreach ($file in ($resolvedFiles | Where-Object { [System.IO.Path]::GetDirectoryName($_.FullName) -eq $CurrentPath } | Sort-Object Name)) {
         $relativePath = Get-RelativePathCompat -BasePath $RootPath -TargetPath $file.FullName
         $componentId = Convert-ToSafeId -Prefix "Cmp" -Value $relativePath
         $fileId = Convert-ToSafeId -Prefix "Fil" -Value $relativePath
