@@ -1,4 +1,6 @@
-param()
+param(
+    [switch]$RequireOptionalTools
+)
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
@@ -43,6 +45,22 @@ function Test-ExecutablePath {
     return -not [string]::IsNullOrWhiteSpace($Path) -and (Test-Path $Path)
 }
 
+function New-CheckResult {
+    param(
+        [string]$Label,
+        [bool]$Passed,
+        [string]$Failure,
+        [bool]$Required
+    )
+
+    return [pscustomobject]@{
+        Label = $Label
+        Passed = $Passed
+        Failure = $Failure
+        Required = $Required
+    }
+}
+
 $context = Get-RepositoryContext -ScriptRoot $PSScriptRoot
 Assert-RepositoryPrerequisites -Context $context
 
@@ -64,26 +82,48 @@ else {
 }
 
 $checks = @(
-    [pscustomobject]@{ Label = "SDK feature band available"; Passed = $sdkInstalled; Failure = ("Required SDK feature band not installed for global.json version {0}." -f $requiredSdkVersion) },
-    [pscustomobject]@{ Label = "Selected SDK WindowsDesktop support"; Passed = $desktopSdkAvailable; Failure = ("Selected SDK {0} does not expose Microsoft.NET.Sdk.WindowsDesktop." -f $currentDotnetVersion) },
-    [pscustomobject]@{ Label = "dotnet host"; Passed = (Test-ExecutablePath $dotnetHostPath); Failure = ("dotnet host not found: {0}" -f $dotnetHostPath) },
-    [pscustomobject]@{ Label = "sc.exe"; Passed = (Test-ExecutablePath $scExecutablePath); Failure = ("sc.exe not found: {0}" -f $scExecutablePath) },
-    [pscustomobject]@{ Label = "msiexec.exe"; Passed = (Test-ExecutablePath $msiexecPath); Failure = ("msiexec.exe not found: {0}" -f $msiexecPath) },
-    [pscustomobject]@{ Label = "WiX candle.exe"; Passed = (Test-ExecutablePath $wixCandlePath); Failure = ("WiX candle.exe not found: {0}" -f $wixCandlePath) },
-    [pscustomobject]@{ Label = "WiX light.exe"; Passed = (Test-ExecutablePath $wixLightPath); Failure = ("WiX light.exe not found: {0}" -f $wixLightPath) },
-    [pscustomobject]@{ Label = "NSSM fallback executable"; Passed = (Test-ExecutablePath $nssmExecutablePath); Failure = ("NSSM executable not found: {0}" -f $nssmExecutablePath) }
+    (New-CheckResult -Label "SDK feature band available" -Passed $sdkInstalled -Failure ("Required SDK feature band not installed for global.json version {0}." -f $requiredSdkVersion) -Required $true),
+    (New-CheckResult -Label "Selected SDK WindowsDesktop support" -Passed $desktopSdkAvailable -Failure ("Selected SDK {0} does not expose Microsoft.NET.Sdk.WindowsDesktop." -f $currentDotnetVersion) -Required $true),
+    (New-CheckResult -Label "dotnet host" -Passed (Test-ExecutablePath $dotnetHostPath) -Failure ("dotnet host not found: {0}" -f $dotnetHostPath) -Required $true),
+    (New-CheckResult -Label "sc.exe (Windows service management)" -Passed (Test-ExecutablePath $scExecutablePath) -Failure ("sc.exe not found: {0}" -f $scExecutablePath) -Required $false),
+    (New-CheckResult -Label "msiexec.exe (MSI install tests)" -Passed (Test-ExecutablePath $msiexecPath) -Failure ("msiexec.exe not found: {0}" -f $msiexecPath) -Required $false),
+    (New-CheckResult -Label "WiX candle.exe (MSI build)" -Passed (Test-ExecutablePath $wixCandlePath) -Failure ("WiX candle.exe not found: {0}" -f $wixCandlePath) -Required $false),
+    (New-CheckResult -Label "WiX light.exe (MSI build)" -Passed (Test-ExecutablePath $wixLightPath) -Failure ("WiX light.exe not found: {0}" -f $wixLightPath) -Required $false),
+    (New-CheckResult -Label "NSSM fallback executable" -Passed (Test-ExecutablePath $nssmExecutablePath) -Failure ("NSSM executable not found: {0}" -f $nssmExecutablePath) -Required $false)
 )
 
+$requiredChecks = @($checks | Where-Object { $_.Required })
+$optionalChecks = @($checks | Where-Object { -not $_.Required })
+
 Write-Host "[NtfsAudit] Doctor summary" -ForegroundColor Cyan
+Write-Host ("  Profile: {0}" -f $(if ($RequireOptionalTools) { "extended" } else { "initial-setup" }))
 Write-Host ("  OS: Windows")
 Write-Host ("  dotnet --version: {0}" -f $currentDotnetVersion)
 Write-Host ("  global.json sdk.version: {0}" -f $requiredSdkVersion)
 Write-Host ("  Installed SDKs: {0}" -f ($installedSdkVersions -join ", "))
-foreach ($check in $checks) {
-    Write-Host ("  {0}: {1}" -f $check.Label, $check.Passed)
+
+Write-Host "  Required checks:"
+foreach ($check in $requiredChecks) {
+    $status = if ($check.Passed) { "OK" } else { "FAIL" }
+    Write-Host ("    [{0}] {1}" -f $status, $check.Label)
 }
 
-$failedChecks = @($checks | Where-Object { -not $_.Passed })
-if ($failedChecks.Count -gt 0) {
-    throw (($failedChecks | ForEach-Object { $_.Failure }) -join [Environment]::NewLine)
+Write-Host "  Optional capabilities:"
+foreach ($check in $optionalChecks) {
+    $status = if ($check.Passed) { "OK" } else { "WARN" }
+    Write-Host ("    [{0}] {1}" -f $status, $check.Label)
+}
+
+$failedRequiredChecks = @($requiredChecks | Where-Object { -not $_.Passed })
+if ($failedRequiredChecks.Count -gt 0) {
+    throw (($failedRequiredChecks | ForEach-Object { $_.Failure }) -join [Environment]::NewLine)
+}
+
+$failedOptionalChecks = @($optionalChecks | Where-Object { -not $_.Passed })
+if ($failedOptionalChecks.Count -gt 0) {
+    if ($RequireOptionalTools) {
+        throw (($failedOptionalChecks | ForEach-Object { $_.Failure }) -join [Environment]::NewLine)
+    }
+
+    Write-Warning "Some optional capabilities are not available. Base setup/build can continue, but service/MSI flows may be unavailable until these checks pass."
 }

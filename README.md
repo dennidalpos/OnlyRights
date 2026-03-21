@@ -21,6 +21,8 @@ Nel repository il nome progetto legale è **OnlyRights**; la solution e i compon
 - `src/NtfsAudit.Service`: host Windows opzionale per esecuzione job asincroni/background con la stessa pipeline dell'app.
 - `src/NtfsAudit.Viewer`: client in sola lettura per archivi analisi.
 - `tests/NtfsAudit.App.Tests`: test unitari su pipeline, path, filtri e robustezza import/export.
+- `docs/setup-iniziale.md`: guida rapida per setup iniziale e configurazione utente.
+- `scripts/setup.ps1`: wrapper rapido per il primo setup locale (`bootstrap` + `doctor` + `build`).
 - `scripts/bootstrap.ps1`, `doctor.ps1`, `compile.ps1`, `build.ps1`, `test.ps1`, `pack.ps1`, `publish.ps1`: entrypoint canonici del repository.
 - `scripts/clean.ps1`: pulizia artefatti build e residui operativi (cache/temp/job/report).
 - `scripts/windows/*.ps1`: gestione servizio Windows via `sc.exe` con fallback opzionale a `tools/nssm`.
@@ -167,8 +169,9 @@ Script CLI equivalenti:
 
 ## Script canonici
 
+- `scripts/setup.ps1`: percorso consigliato per il primo avvio locale; richiama `bootstrap`, `doctor` e `build` con un solo comando.
 - `scripts/bootstrap.ps1`: restore non interattivo della solution.
-- `scripts/doctor.ps1`: verifica SDK .NET, `global.json` e toolchain locali Windows (`tools/wix314-binaries`, `tools/nssm`).
+- `scripts/doctor.ps1`: verifica i prerequisiti minimi per setup/build locale e segnala separatamente le capability opzionali per servizio Windows e packaging MSI. Con `-RequireOptionalTools` rende bloccanti anche i controlli opzionali.
 - `scripts/compile.ps1`: compila la solution senza packaging.
 - `scripts/build.ps1`: wrapper canonico su `compile`; in questo repository `compile` e `build` coincidono tecnicamente.
 - `scripts/test.ps1`: esegue i test automatici e salva i risultati in `artifacts/test-results`.
@@ -212,6 +215,14 @@ I preset generici `-CleanAllTemp` e `-CleanOperationalData` preservano `%TEMP%\\
 ---
 
 ## Avvio rapido
+
+### Setup iniziale consigliato
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
+```
+
+Guida utente dettagliata:
+- `docs/setup-iniziale.md`
 
 ### Bootstrap
 ```powershell
@@ -279,10 +290,13 @@ Prerequisiti:
 - Windows con .NET SDK 8 installato (pin in `global.json`, attualmente `8.0.100` con roll-forward `latestFeature`)
 - workload desktop .NET/WPF disponibile
 
-Ripristino dipendenze:
+Procedura più semplice per il primo avvio:
 ```powershell
-powershell -File .\scripts\bootstrap.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
 ```
+
+Per la configurazione iniziale guidata dell'app:
+- `docs/setup-iniziale.md`
 
 ## Run
 
@@ -298,6 +312,7 @@ powershell -File .\scripts\test.ps1 -Configuration Release
 
 ## Documentation
 
+- `docs/setup-iniziale.md`
 - `PROJECT_SPEC.md`
 - `PROJECT_STATUS.json`
 - `.github/workflows/ci.yml`
