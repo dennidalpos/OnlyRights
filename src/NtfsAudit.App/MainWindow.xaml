@@ -50,11 +50,20 @@
                        Foreground="#FF856404"
                        FontWeight="SemiBold" />
           </Border>
-          <StackPanel Grid.Row="2" Margin="0,6,0,0" Orientation="Vertical" HorizontalAlignment="Left">
-            <Border Background="{Binding ServiceBadgeBackground}" BorderBrush="#FFCFD8DC" BorderThickness="1" CornerRadius="10" Padding="8,3">
+          <Grid Grid.Row="2" Margin="0,6,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="12" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Background="{Binding ServiceBadgeBackground}" BorderBrush="#FFCFD8DC" BorderThickness="1" CornerRadius="10" Padding="8,3" VerticalAlignment="Top">
               <TextBlock Text="{Binding ServiceBadgeText}" Foreground="White" FontWeight="SemiBold" />
             </Border>
-          </StackPanel>
+            <StackPanel Grid.Column="2">
+              <TextBlock Text="{Binding ServiceRuntimeStatusText}" Style="{StaticResource SubsectionHeaderText}" Margin="0,0,0,2" />
+              <TextBlock Text="{Binding ProgressText}" Style="{StaticResource MicrocopyText}" Margin="0" TextWrapping="Wrap" />
+            </StackPanel>
+          </Grid>
         </Grid>
       </Border>
 

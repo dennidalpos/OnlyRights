@@ -149,7 +149,7 @@ powershell -File .\scripts\doctor.ps1
 Esegui:
 
 ```powershell
-powershell -File .\scripts\clean.ps1
+powershell -File .\scripts\reset-repo-state.ps1
 ```
 
 ### Vuoi pulire anche i residui operativi dell'app

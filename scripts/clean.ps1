@@ -33,7 +33,8 @@ param(
     [switch]$CleanAnalysisExports,
     [switch]$CleanAnalysisWorkspace,
     [switch]$CleanImportExportData,
-    [switch]$CleanOperationalData
+    [switch]$CleanOperationalData,
+    [switch]$ResetToInitialState
 )
 
 $ErrorActionPreference = "Stop"
@@ -61,6 +62,25 @@ function Remove-PathIfExists {
     if (-not [string]::IsNullOrWhiteSpace($PathToRemove) -and (Test-Path $PathToRemove)) {
         Remove-Item $PathToRemove -Recurse -Force
     }
+}
+
+function Get-BuildOutputPaths {
+    $result = New-Object System.Collections.Generic.List[string]
+
+    foreach ($searchRoot in @(
+        (Join-Path $root "src"),
+        (Join-Path $root "tests")
+    )) {
+        if (-not (Test-Path $searchRoot)) {
+            continue
+        }
+
+        Get-ChildItem -Path $searchRoot -Directory -Recurse -Force -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -in @("bin", "obj") } |
+            ForEach-Object { [void]$result.Add($_.FullName) }
+    }
+
+    return $result | Sort-Object -Unique
 }
 
 function Clear-NtfsAuditTempRoot {
@@ -149,6 +169,26 @@ if ($CleanOperationalData) {
     $CleanLogs = $true
 }
 
+if ($ResetToInitialState) {
+    $KeepDist = $false
+    $KeepArtifacts = $false
+    $KeepTemp = $false
+    $KeepImportTemp = $false
+    $KeepCache = $false
+    $CleanAllTemp = $true
+    $CleanOperationalData = $true
+    $CleanImportExportData = $true
+    $CleanAnalysisWorkspace = $true
+    $CleanImports = $true
+    $CleanCache = $true
+    $CleanLogs = $true
+    $CleanExports = $true
+    $CleanServiceJobs = $true
+    $CleanScanData = $true
+    $CleanAnalysisImports = $true
+    $CleanAnalysisExports = $true
+}
+
 $preserveAnalysisImports = -not ($CleanImports -or $CleanAnalysisImports)
 $preserveAnalysisExports = -not ($CleanExports -or $CleanAnalysisExports)
 
@@ -194,15 +234,13 @@ if ($CleanExports) {
 $paths = @(
     (Join-Path $root ".vs"),
     (Join-Path $root "TestResults"),
-    (Join-Path $root "src\NtfsAudit.App\bin"),
-    (Join-Path $root "src\NtfsAudit.App\obj"),
-    (Join-Path $root "src\NtfsAudit.Viewer\bin"),
-    (Join-Path $root "src\NtfsAudit.Viewer\obj"),
-    (Join-Path $root "src\NtfsAudit.Service\bin"),
-    (Join-Path $root "src\NtfsAudit.Service\obj"),
-    (Join-Path $root "tests\NtfsAudit.App.Tests\bin"),
-    (Join-Path $root "tests\NtfsAudit.App.Tests\obj")
+    (Join-Path $root "build"),
+    (Join-Path $root "out"),
+    (Join-Path $root "publish"),
+    (Join-Path $root "tmp"),
+    (Join-Path $root "exports")
 )
+$paths += Get-BuildOutputPaths
 
 if ($ImportsOnly -or $CacheOnly) {
     $paths = @()
@@ -270,3 +308,7 @@ if ($CleanLogs) {
 
 
 Write-Host "[NtfsAudit] Clean completed." -ForegroundColor Cyan
+if ($ResetToInitialState) {
+    Write-Host "  Profile: initial-state"
+    Write-Host "  Result: repository riportato a stato sorgente-only (senza rimuovere modifiche git tracciate)"
+}

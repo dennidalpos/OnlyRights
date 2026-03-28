@@ -11,11 +11,12 @@
             <TextBlock Grid.Row="0" Text="Albero cartelle" Style="{StaticResource SectionHeaderText}" />
             <StackPanel Grid.Row="1" Margin="0,0,0,8">
               <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                <Button Margin="0,0,8,0" Padding="10,4" Content="Espandi tutto" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
-                <Button Padding="10,4" Content="Comprimi tutto" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
+                <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,8,0" Content="Espandi tutto" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
+                <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,0,6" Content="Comprimi tutto" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
               </StackPanel>
               <Expander Header="Legenda e filtri Tree" IsExpanded="False" IsEnabled="{Binding HasScanResult}">
                 <StackPanel Margin="0,6,0,0">
+                  <TextBlock Text="I badge restano visibili; i filtri limitano solo i nodi mostrati." Style="{StaticResource MicrocopyText}" Margin="0,0,0,6" />
                   <TextBlock Text="Filtri tree" Style="{StaticResource SubsectionHeaderText}" />
                   <WrapPanel Margin="0,0,0,4">
                     <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con permessi NTFS espliciti.">
@@ -48,7 +49,7 @@
                     </StackPanel>
                   </WrapPanel>
                   <TextBlock Text="DP = confronto con la cartella padre | B = confronto con baseline/policy attesa" Style="{StaticResource MicrocopyText}" />
-                  <Button Content="Reset filtri tree" Width="140" Margin="0,0,0,8" Command="{Binding ResetTreeFiltersCommand}" />
+                  <Button Style="{StaticResource InlineActionButtonStyle}" Content="Reset filtri tree" Width="140" Margin="0,0,0,8" Command="{Binding ResetTreeFiltersCommand}" />
                                   </StackPanel>
               </Expander>
             </StackPanel>
@@ -73,17 +74,13 @@
                   <StackPanel Orientation="Horizontal">
                     <TextBlock Text="DIR" Margin="0,0,6,0" Foreground="#FF546E7A" FontWeight="SemiBold" />
                     <TextBlock Text="{Binding DisplayName}" />
-                  <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Protetto (ereditarieta disabilitata)"><Border.Style>
+                    <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="Protetto (ereditarieta disabilitata)"><Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
                           <Style.Triggers>
-                            <MultiDataTrigger>
-                              <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsProtected}" Value="True" />
-                                <Condition Binding="{Binding DataContext.TreeFilterInheritanceDisabledOnly, RelativeSource={RelativeSource AncestorType=TreeView}}" Value="True" />
-                              </MultiDataTrigger.Conditions>
+                            <DataTrigger Binding="{Binding IsProtected}" Value="True">
                               <Setter Property="Visibility" Value="Visible" />
-                            </MultiDataTrigger>
+                            </DataTrigger>
                           </Style.Triggers>
                         </Style>
                       </Border.Style>
@@ -94,13 +91,9 @@
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
                           <Style.Triggers>
-                            <MultiDataTrigger>
-                              <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding HasDiff}" Value="True" />
-                                <Condition Binding="{Binding DataContext.TreeFilterDiffOnly, RelativeSource={RelativeSource AncestorType=TreeView}}" Value="True" />
-                              </MultiDataTrigger.Conditions>
+                            <DataTrigger Binding="{Binding HasDiff}" Value="True">
                               <Setter Property="Visibility" Value="Visible" />
-                            </MultiDataTrigger>
+                            </DataTrigger>
                           </Style.Triggers>
                         </Style>
                       </Border.Style>
@@ -111,13 +104,9 @@
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
                           <Style.Triggers>
-                            <MultiDataTrigger>
-                              <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding HasDenyExplicit}" Value="True" />
-                                <Condition Binding="{Binding DataContext.TreeFilterExplicitDenyOnly, RelativeSource={RelativeSource AncestorType=TreeView}}" Value="True" />
-                              </MultiDataTrigger.Conditions>
+                            <DataTrigger Binding="{Binding HasDenyExplicit}" Value="True">
                               <Setter Property="Visibility" Value="Visible" />
-                            </MultiDataTrigger>
+                            </DataTrigger>
                           </Style.Triggers>
                         </Style>
                       </Border.Style>
@@ -128,13 +117,9 @@
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
                           <Style.Triggers>
-                            <MultiDataTrigger>
-                              <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding HasBaselineMismatch}" Value="True" />
-                                <Condition Binding="{Binding DataContext.TreeFilterBaselineMismatchOnly, RelativeSource={RelativeSource AncestorType=TreeView}}" Value="True" />
-                              </MultiDataTrigger.Conditions>
+                            <DataTrigger Binding="{Binding HasBaselineMismatch}" Value="True">
                               <Setter Property="Visibility" Value="Visible" />
-                            </MultiDataTrigger>
+                            </DataTrigger>
                           </Style.Triggers>
                         </Style>
                       </Border.Style>
@@ -145,13 +130,9 @@
                         <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
                           <Setter Property="Visibility" Value="Collapsed" />
                           <Style.Triggers>
-                            <MultiDataTrigger>
-                              <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding HasExplicitNtfs}" Value="True" />
-                                <Condition Binding="{Binding DataContext.TreeFilterExplicitOnly, RelativeSource={RelativeSource AncestorType=TreeView}}" Value="True" />
-                              </MultiDataTrigger.Conditions>
+                            <DataTrigger Binding="{Binding HasExplicitNtfs}" Value="True">
                               <Setter Property="Visibility" Value="Visible" />
-                            </MultiDataTrigger>
+                            </DataTrigger>
                           </Style.Triggers>
                         </Style>
                       </Border.Style>

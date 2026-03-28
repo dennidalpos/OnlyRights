@@ -171,6 +171,7 @@ namespace NtfsAudit.App.ViewModels
 
         private bool TryValidateScanInputs(IReadOnlyCollection<string> roots, out string message)
         {
+            var nonBlockingWarnings = new List<string>();
             if (roots == null || roots.Count == 0)
             {
                 message = "Aggiungi almeno una cartella da analizzare.";
@@ -185,23 +186,21 @@ namespace NtfsAudit.App.ViewModels
                     return false;
                 }
 
-                var ioRoot = PathResolver.ToExtendedPath(root);
-                if (File.Exists(ioRoot))
+                var validationResult = ScanPathAccessValidator.ValidateDirectoryRootDetailed(root, ResolveScanCredentialForRoot(root));
+                if (validationResult.IsBlocking)
                 {
-                    message = string.Format("Il percorso selezionato è un file e non una cartella: {0}", root);
+                    message = validationResult.Message;
                     return false;
                 }
-
-                if (!Directory.Exists(ioRoot))
+                if (!string.IsNullOrWhiteSpace(validationResult.Message))
                 {
-                    message = string.Format("Percorso non valido o non raggiungibile: {0}", root);
-                    return false;
+                    nonBlockingWarnings.Add(validationResult.Message);
                 }
             }
 
             if (string.IsNullOrWhiteSpace(AuditOutputDirectory))
             {
-                message = null;
+                message = BuildValidationWarningMessage(nonBlockingWarnings);
                 return true;
             }
 
@@ -219,8 +218,26 @@ namespace NtfsAudit.App.ViewModels
                 return false;
             }
 
-            message = null;
+            message = BuildValidationWarningMessage(nonBlockingWarnings);
             return true;
+        }
+
+        private static string BuildValidationWarningMessage(IReadOnlyCollection<string> warnings)
+        {
+            if (warnings == null || warnings.Count == 0)
+            {
+                return null;
+            }
+
+            if (warnings.Count == 1)
+            {
+                foreach (var warning in warnings)
+                {
+                    return warning;
+                }
+            }
+
+            return "Alcuni percorsi non sono verificabili in anticipo; la scansione continuera registrando automaticamente i problemi di accesso o compatibilita.";
         }
 
         private static ServiceRuntimeStatus TryReadServiceRuntimeStatus(string statusPath)

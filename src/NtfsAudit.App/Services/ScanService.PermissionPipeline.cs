@@ -512,7 +512,17 @@ namespace NtfsAudit.App.Services
         {
             try
             {
-                return _sharePermissionService.TryGetSharePermissions(options.RootPath);
+                var context = _sharePermissionService.TryGetSharePermissions(options.RootPath);
+                var diagnostic = _sharePermissionService.LastDiagnostic;
+                if (diagnostic != null && errorQueue != null)
+                {
+                    var message = string.IsNullOrWhiteSpace(diagnostic.TechnicalDetails)
+                        ? diagnostic.Message
+                        : string.Format("{0} Dettagli: {1}", diagnostic.Message, diagnostic.TechnicalDetails);
+                    errorQueue.Add(BuildErrorEntry(diagnostic.Path, diagnostic.ErrorType, message));
+                }
+
+                return context;
             }
             catch (Exception ex)
             {

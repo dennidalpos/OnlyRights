@@ -1,0 +1,83 @@
+/*
+ * OnlyRights
+ * Copyright (c) 2026 Danny Perondi
+ * All rights reserved.
+ *
+ * Proprietary and confidential.
+ * Viewing is permitted only for reference, evaluation, or internal review.
+ * Unauthorized copying, modification, distribution, sublicensing,
+ * commercial use, or reuse of this file is prohibited without prior
+ * written permission from Danny Perondi.
+ */
+using System;
+using System.IO;
+using System.Security.AccessControl;
+using NtfsAudit.App.Services;
+using Xunit;
+
+namespace NtfsAudit.App.Tests
+{
+    public class SharePermissionServiceTests
+    {
+        [Fact]
+        public void TryGetSharePermissions_LeavesDiagnosticEmpty_ForNonSharePaths()
+        {
+            var service = new SharePermissionService(
+                null,
+                _ => null,
+                (server, share, options) => null);
+
+            var result = service.TryGetSharePermissions(@"C:\Data");
+
+            Assert.Null(result);
+            Assert.Null(service.LastDiagnostic);
+        }
+
+        [Fact]
+        public void TryGetSharePermissions_ExposesAccessDeniedDiagnostic()
+        {
+            var service = new SharePermissionService(
+                null,
+                _ => Tuple.Create("nas01", "public"),
+                (server, share, options) => throw new UnauthorizedAccessException("Access denied"));
+
+            var result = service.TryGetSharePermissions(@"\\nas01\public");
+
+            Assert.Null(result);
+            Assert.NotNull(service.LastDiagnostic);
+            Assert.Equal("SharePermissionsAccessDenied", service.LastDiagnostic.ErrorType);
+            Assert.Contains(@"\\nas01\public", service.LastDiagnostic.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void TryGetSharePermissions_ExposesReachabilityDiagnostic()
+        {
+            var service = new SharePermissionService(
+                null,
+                _ => Tuple.Create("nas01", "public"),
+                (server, share, options) => throw new IOException("The RPC server is unavailable."));
+
+            var result = service.TryGetSharePermissions(@"\\nas01\public");
+
+            Assert.Null(result);
+            Assert.NotNull(service.LastDiagnostic);
+            Assert.Equal("SharePermissionsUnavailable", service.LastDiagnostic.ErrorType);
+            Assert.Contains("WMI", service.LastDiagnostic.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void TryGetSharePermissions_MapsMissingSecurityPrivilege_ToAccessDeniedDiagnostic()
+        {
+            var service = new SharePermissionService(
+                null,
+                _ => Tuple.Create("nas01", "public"),
+                (server, share, options) => throw new PrivilegeNotHeldException("SeSecurityPrivilege"));
+
+            var result = service.TryGetSharePermissions(@"\\nas01\public");
+
+            Assert.Null(result);
+            Assert.NotNull(service.LastDiagnostic);
+            Assert.Equal("SharePermissionsAccessDenied", service.LastDiagnostic.ErrorType);
+        }
+    }
+}

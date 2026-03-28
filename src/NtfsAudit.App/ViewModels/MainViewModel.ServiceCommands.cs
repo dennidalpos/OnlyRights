@@ -407,98 +407,12 @@ namespace NtfsAudit.App.ViewModels
 
         private string ResolveServiceInstallCommand()
         {
-            var appBase = AppDomain.CurrentDomain.BaseDirectory;
-            var candidates = new List<string>
-            {
-                Path.Combine(appBase, "NtfsAudit.Service.exe"),
-                Path.Combine(appBase, "NtfsAudit.Service", "NtfsAudit.Service.exe"),
-                Path.Combine(appBase, "Service", "NtfsAudit.Service.exe"),
-                Path.Combine(appBase, "NtfsAudit.Service.dll"),
-                Path.Combine(appBase, "NtfsAudit.Service", "NtfsAudit.Service.dll"),
-                Path.Combine(appBase, "Service", "NtfsAudit.Service.dll")
-            };
-
-            var current = new DirectoryInfo(appBase);
-            for (var i = 0; i < 8 && current != null; i++)
-            {
-                var repoRoot = current.FullName;
-                candidates.Add(Path.Combine(repoRoot, "artifacts", "packages", "Release", "net8.0-windows", "Service", "NtfsAudit.Service.exe"));
-                candidates.Add(Path.Combine(repoRoot, "artifacts", "packages", "Release", "net8.0-windows", "Service", "NtfsAudit.Service.dll"));
-                candidates.Add(Path.Combine(repoRoot, "artifacts", "packages", "Debug", "net8.0-windows", "Service", "NtfsAudit.Service.exe"));
-                candidates.Add(Path.Combine(repoRoot, "artifacts", "packages", "Debug", "net8.0-windows", "Service", "NtfsAudit.Service.dll"));
-                candidates.Add(Path.Combine(repoRoot, "artifacts", "publish", "Release", "net8.0-windows", "Service", "NtfsAudit.Service.exe"));
-                candidates.Add(Path.Combine(repoRoot, "artifacts", "publish", "Release", "net8.0-windows", "Service", "NtfsAudit.Service.dll"));
-                candidates.Add(Path.Combine(repoRoot, "artifacts", "publish", "Debug", "net8.0-windows", "Service", "NtfsAudit.Service.exe"));
-                candidates.Add(Path.Combine(repoRoot, "artifacts", "publish", "Debug", "net8.0-windows", "Service", "NtfsAudit.Service.dll"));
-                candidates.Add(Path.Combine(repoRoot, "artifacts", "build", "NtfsAudit.Service", "Release", "net8.0-windows", "NtfsAudit.Service.exe"));
-                candidates.Add(Path.Combine(repoRoot, "artifacts", "build", "NtfsAudit.Service", "Release", "net8.0-windows", "NtfsAudit.Service.dll"));
-                candidates.Add(Path.Combine(repoRoot, "artifacts", "build", "NtfsAudit.Service", "Debug", "net8.0-windows", "NtfsAudit.Service.exe"));
-                candidates.Add(Path.Combine(repoRoot, "artifacts", "build", "NtfsAudit.Service", "Debug", "net8.0-windows", "NtfsAudit.Service.dll"));
-                current = current.Parent;
-            }
-
-            var parent = Directory.GetParent(appBase);
-            for (var i = 0; i < 4 && parent != null; i++)
-            {
-                candidates.Add(Path.Combine(parent.FullName, "NtfsAudit.Service", "bin", "Release", "net8.0-windows", "NtfsAudit.Service.exe"));
-                candidates.Add(Path.Combine(parent.FullName, "NtfsAudit.Service", "bin", "Debug", "net8.0-windows", "NtfsAudit.Service.exe"));
-                candidates.Add(Path.Combine(parent.FullName, "NtfsAudit.Service", "bin", "Release", "net8.0-windows", "NtfsAudit.Service.dll"));
-                candidates.Add(Path.Combine(parent.FullName, "NtfsAudit.Service", "bin", "Debug", "net8.0-windows", "NtfsAudit.Service.dll"));
-                parent = parent.Parent;
-            }
-
-            var serviceBinary = candidates
-                .Where(path => !string.IsNullOrWhiteSpace(path))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .FirstOrDefault(File.Exists);
-            if (string.IsNullOrWhiteSpace(serviceBinary)) return null;
-            return serviceBinary;
+            return WindowsServiceInstallCommandResolver.ResolveServiceCommand(AppDomain.CurrentDomain.BaseDirectory);
         }
 
         private string BuildServiceBinPathForSc(string serviceCommand)
         {
-            if (string.IsNullOrWhiteSpace(serviceCommand))
-            {
-                throw new InvalidOperationException("Percorso servizio non valido.");
-            }
-
-            if (serviceCommand.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-            {
-                return QuoteForSc(serviceCommand);
-            }
-
-            var dotnetHost = ResolveDotnetHostPath();
-            // Per sc.exe il valore binPath con due token (host + dll) deve essere una singola stringa,
-            // con virgolette interne escaped e valore esterno quotato.
-            return string.Format("\"\\\"{0}\\\" \\\"{1}\\\"\"",
-                SanitizeForSc(dotnetHost),
-                SanitizeForSc(serviceCommand));
-        }
-
-        private static string SanitizeForSc(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
-            return value.Replace("\"", string.Empty);
-        }
-
-        private static string QuoteForSc(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value)) return "\"\"";
-            return string.Format("\"{0}\"", value.Replace("\"", string.Empty));
-        }
-
-        private static string ResolveDotnetHostPath()
-        {
-            var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-            var preferred = string.IsNullOrWhiteSpace(programFiles)
-                ? null
-                : Path.Combine(programFiles, "dotnet", "dotnet.exe");
-            if (!string.IsNullOrWhiteSpace(preferred) && File.Exists(preferred))
-            {
-                return preferred;
-            }
-
-            return "dotnet.exe";
+            return WindowsServiceInstallCommandResolver.FormatBinPathForSc(serviceCommand);
         }
 
     }

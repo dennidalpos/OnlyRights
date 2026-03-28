@@ -21,8 +21,6 @@ using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Data;
-using System.Windows.Forms;
-using WinForms = System.Windows.Forms;
 using System.Windows.Threading;
 using Win32 = Microsoft.Win32;
 using Newtonsoft.Json;
@@ -49,12 +47,20 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_isViewerMode) return;
             var previousRoot = RootPath;
-            RootPath = AuditOutputDirectory;
-            if (TryPickFolder(out var selectedPath))
+            _suspendUiPreferencePersistence = true;
+            try
             {
-                AuditOutputDirectory = selectedPath;
+                RootPath = AuditOutputDirectory;
+                if (TryPickFolder(out var selectedPath))
+                {
+                    AuditOutputDirectory = selectedPath;
+                }
+                RootPath = previousRoot;
             }
-            RootPath = previousRoot;
+            finally
+            {
+                _suspendUiPreferencePersistence = false;
+            }
         }
 
         private void OnScanRootsCollectionChanged()
@@ -71,29 +77,26 @@ namespace NtfsAudit.App.ViewModels
         private void AddScanRoot()
         {
             if (string.IsNullOrWhiteSpace(RootPath)) return;
-            var rootToAdd = RootPath;
-            var namespacePath = string.Empty;
-            var targets = PathResolver.GetDfsTargets(RootPath);
-            if (targets != null && targets.Count > 0)
+            var selection = ScanRootSelectionResolver.Resolve(RootPath, PathResolver.GetDfsTargets(RootPath), SelectedDfsTarget);
+            if (selection.RequiresExplicitSelection)
             {
-                namespacePath = RootPath;
-                var selectedTarget = PromptDfsTargetSelection(RootPath, targets);
-                if (string.IsNullOrWhiteSpace(selectedTarget))
-                {
-                    return;
-                }
-                rootToAdd = selectedTarget;
+                WpfMessageBox.Show(
+                    "Seleziona un target DFS dalla sidebar prima di aggiungere la root.",
+                    "Target DFS",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Warning);
+                return;
             }
 
-            var normalizedRoot = GetScanRootKey(rootToAdd);
+            var normalizedRoot = GetScanRootKey(selection.RootPath);
             if (ScanRoots.Any(path => string.Equals(GetScanRootKey(path), normalizedRoot, StringComparison.OrdinalIgnoreCase))) return;
 
-            ScanRoots.Add(rootToAdd);
-            SelectedScanRoot = rootToAdd;
-            if (!string.IsNullOrWhiteSpace(namespacePath))
+            ScanRoots.Add(selection.RootPath);
+            SelectedScanRoot = selection.RootPath;
+            if (!string.IsNullOrWhiteSpace(selection.NamespacePath))
             {
-                _scanRootNamespacePaths[normalizedRoot] = namespacePath;
-                _scanRootDfsTargets[normalizedRoot] = rootToAdd;
+                _scanRootNamespacePaths[normalizedRoot] = selection.NamespacePath;
+                _scanRootDfsTargets[normalizedRoot] = selection.RootPath;
             }
             OnPropertyChanged("CanStart");
             StartCommand.RaiseCanExecuteChanged();
@@ -334,58 +337,6 @@ namespace NtfsAudit.App.ViewModels
             {
                 ProgressText = string.Format("Errore caricamento set cartelle: {0}", ex.Message);
                 WpfMessageBox.Show(ProgressText, "Set cartelle", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-            }
-        }
-
-        private string PromptDfsTargetSelection(string namespacePath, IList<string> targets)
-        {
-            if (targets == null || targets.Count == 0) return null;
-            if (targets.Count == 1) return targets[0];
-
-            using (var form = new WinForms.Form())
-            using (var combo = new WinForms.ComboBox())
-            using (var okButton = new WinForms.Button())
-            using (var cancelButton = new WinForms.Button())
-            using (var label = new WinForms.Label())
-            {
-                form.Text = "Seleziona target DFS";
-                form.FormBorderStyle = WinForms.FormBorderStyle.FixedDialog;
-                form.StartPosition = WinForms.FormStartPosition.CenterScreen;
-                form.ClientSize = new System.Drawing.Size(760, 130);
-                form.MaximizeBox = false;
-                form.MinimizeBox = false;
-
-                label.Text = string.Format("Namespace: {0}", namespacePath);
-                label.AutoSize = false;
-                label.SetBounds(12, 10, 736, 22);
-
-                combo.DropDownStyle = WinForms.ComboBoxStyle.DropDownList;
-                combo.SetBounds(12, 38, 736, 24);
-                foreach (var target in targets) combo.Items.Add(target);
-                combo.SelectedIndex = 0;
-
-                okButton.Text = "OK";
-                okButton.SetBounds(592, 84, 75, 30);
-                okButton.DialogResult = WinForms.DialogResult.OK;
-
-                cancelButton.Text = "Annulla";
-                cancelButton.SetBounds(673, 84, 75, 30);
-                cancelButton.DialogResult = WinForms.DialogResult.Cancel;
-
-                form.Controls.Add(label);
-                form.Controls.Add(combo);
-                form.Controls.Add(okButton);
-                form.Controls.Add(cancelButton);
-                form.AcceptButton = okButton;
-                form.CancelButton = cancelButton;
-
-                var result = form.ShowDialog();
-                if (result != WinForms.DialogResult.OK || combo.SelectedItem == null)
-                {
-                    return null;
-                }
-
-                return combo.SelectedItem.ToString();
             }
         }
 

@@ -141,6 +141,7 @@ namespace NtfsAudit.App.ViewModels
                 OnPropertyChanged("CanStart");
                 AddScanRootCommand.RaiseCanExecuteChanged();
                 StartCommand.RaiseCanExecuteChanged();
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -355,17 +356,7 @@ namespace NtfsAudit.App.ViewModels
         {
             get
             {
-                if (HasSelectedScanRootCredentialOverride)
-                {
-                    return "Risoluzione effettiva: override root";
-                }
-
-                if (HasGlobalCredential)
-                {
-                    return "Risoluzione effettiva: credenziali globali";
-                }
-
-                return "Risoluzione effettiva: utente corrente";
+                return DescribeEffectiveCredentialSource(SelectedScanRoot);
             }
         }
 
@@ -381,6 +372,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _auditOutputDirectory = value;
                 OnPropertyChanged("AuditOutputDirectory");
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -391,6 +383,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _useWindowsServiceMode = value;
                 OnPropertyChanged("UseWindowsServiceMode");
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -401,6 +394,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _maxDepth = ClampMaxDepth(value);
                 OnPropertyChanged("MaxDepth");
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -416,6 +410,7 @@ namespace NtfsAudit.App.ViewModels
                 }
                 OnPropertyChanged("ScanAllDepths");
                 OnPropertyChanged("IsMaxDepthEnabled");
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -431,6 +426,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _includeInherited = value;
                 OnPropertyChanged("IncludeInherited");
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -444,6 +440,7 @@ namespace NtfsAudit.App.ViewModels
                 OnPropertyChanged("IsExpandGroupsEnabled");
                 OnPropertyChanged("IsIdentityOptionsEnabled");
                 ApplyIdentityDependencies();
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -464,6 +461,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _excludeServiceAccounts = value;
                 OnPropertyChanged("ExcludeServiceAccounts");
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -474,6 +472,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _excludeAdminAccounts = value;
                 OnPropertyChanged("ExcludeAdminAccounts");
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -484,6 +483,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _expandGroups = value;
                 OnPropertyChanged("ExpandGroups");
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -494,6 +494,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _usePowerShell = value;
                 OnPropertyChanged("UsePowerShell");
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -506,6 +507,7 @@ namespace NtfsAudit.App.ViewModels
                 OnPropertyChanged("EnableAdvancedAudit");
                 OnPropertyChanged("IsAdvancedAuditEnabled");
                 ApplyAdvancedAuditDependencies();
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -521,6 +523,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _computeEffectiveAccess = value;
                 OnPropertyChanged("ComputeEffectiveAccess");
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -531,6 +534,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _includeSharePermissions = value;
                 OnPropertyChanged("IncludeSharePermissions");
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -541,6 +545,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _includeFiles = value;
                 OnPropertyChanged("IncludeFiles");
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -551,6 +556,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _readOwnerAndSacl = value;
                 OnPropertyChanged("ReadOwnerAndSacl");
+                PersistUiPreferencesIfAllowed();
             }
         }
 
@@ -561,6 +567,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _compareBaseline = value;
                 OnPropertyChanged("CompareBaseline");
+                PersistUiPreferencesIfAllowed();
             }
         }
 

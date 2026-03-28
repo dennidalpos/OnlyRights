@@ -8,12 +8,14 @@
               <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <GroupBox Grid.Row="0" Header="Stato scansione" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10">
+            <GroupBox Grid.Row="0" Header="Stato scansione" Style="{StaticResource AppGroupBoxStyle}" Margin="0">
               <StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                   <Border Width="14" Height="14" Background="{Binding StatusBrush}" CornerRadius="2" Margin="0,0,6,0" />
                   <TextBlock Text="{Binding StatusText}" FontWeight="SemiBold" VerticalAlignment="Center" />
                 </StackPanel>
+                <TextBlock Text="{Binding ProgressText}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,6" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding ServiceRuntimeStatusText}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,8" TextWrapping="Wrap" />
                 <Border Background="{Binding CurrentPathBackground}" Padding="6" CornerRadius="4" Margin="0,0,0,8">
                   <TextBlock Text="{Binding CurrentPathText}" TextTrimming="CharacterEllipsis" />
                 </Border>
@@ -48,19 +50,32 @@
 
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
               <StackPanel>
-              <GroupBox Header="Scansione" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10" Margin="0,0,0,0" IsEnabled="{Binding IsScanConfigEnabled}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+              <GroupBox Header="Scansione" Style="{StaticResource AppGroupBoxStyle}" Margin="0" IsEnabled="{Binding IsScanConfigEnabled}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel>
                   <TextBlock Text="Cartelle da scansionare" Style="{StaticResource SubsectionHeaderText}" />
-                  <TextBlock Text="Puoi fermare la scansione/job (con pulizia residui), modificare questo elenco e riavviare con nuove cartelle." Style="{StaticResource MicrocopyText}" />
+                  <TextBlock Text="Aggiorna l'elenco e rilancia quando serve." Style="{StaticResource MicrocopyText}" ToolTip="Puoi fermare la scansione o il job con pulizia residui, modificare questo elenco e riavviare con nuove cartelle." />
                   <Grid Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="Auto" />
                       <ColumnDefinition Width="*" />
                       <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Margin="0,0,8,0" Padding="10,4" Content="Sfoglia..." Command="{Binding BrowseCommand}" />
-                    <TextBox Grid.Column="1" Height="26" VerticalAlignment="Center" MinWidth="160" Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}" />
-                    <Button Grid.Column="2" Margin="8,0,0,0" Padding="10,4" Content="Aggiungi" Command="{Binding AddScanRootCommand}" />
+                    <Button Grid.Column="0" Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,8,0" Content="Sfoglia..." Command="{Binding BrowseCommand}" />
+                    <TextBox Grid.Column="1" Style="{StaticResource FieldTextBoxStyle}" Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}" />
+                    <Button Grid.Column="2" Style="{StaticResource InlineActionButtonStyle}" Margin="8,0,0,0" Content="Aggiungi" Command="{Binding AddScanRootCommand}" />
+                  </Grid>
+                  <Grid Margin="0,0,0,6" Visibility="{Binding HasDfsTargets, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Target DFS input" VerticalAlignment="Center" Margin="0,0,6,0"
+                               ToolTip="Se il percorso inserito è un namespace DFS con più target, scegli qui il target da usare prima di avviare la scansione o aggiungere la root." />
+                    <ComboBox Grid.Column="1"
+                              Height="28"
+                              Background="#FFE3F2FD"
+                              ItemsSource="{Binding DfsTargets}"
+                              SelectedItem="{Binding SelectedDfsTarget, UpdateSourceTrigger=PropertyChanged}" />
                   </Grid>
                   <Grid Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
@@ -87,11 +102,11 @@
                         </DataTemplate>
                       </ListBox.ItemTemplate>
                     </ListBox>
-                    <Button Grid.Column="1" Margin="8,0,0,0" Padding="10,4" Content="Rimuovi" VerticalAlignment="Top" Command="{Binding RemoveScanRootCommand}" />
+                    <Button Grid.Column="1" Style="{StaticResource InlineActionButtonStyle}" Margin="8,0,0,0" Content="Rimuovi" VerticalAlignment="Top" Command="{Binding RemoveScanRootCommand}" />
                   </Grid>
                   <WrapPanel Margin="0,0,0,8">
-                    <Button Margin="0,0,8,0" Padding="10,4" Content="Salva set cartelle" Command="{Binding SaveScanRootSetCommand}" />
-                    <Button Padding="10,4" Content="Carica set cartelle" Command="{Binding LoadScanRootSetCommand}" />
+                    <Button Style="{StaticResource InlineActionButtonStyle}" Content="Salva set cartelle" Command="{Binding SaveScanRootSetCommand}" />
+                    <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,0,6" Content="Carica set cartelle" Command="{Binding LoadScanRootSetCommand}" />
                   </WrapPanel>
                   <Grid Margin="0,0,0,6" Visibility="{Binding HasSelectedScanRootDfsTargets, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <Grid.ColumnDefinitions>
@@ -111,11 +126,11 @@
                       <ColumnDefinition Width="Auto" />
                       <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Margin="0,0,8,0" Padding="10,4" Content="Sfoglia..." Command="{Binding BrowseOutputDirectoryCommand}" />
-                    <TextBox Grid.Column="1" Height="26" VerticalAlignment="Center" MinWidth="160" Text="{Binding AuditOutputDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                    <Button Grid.Column="0" Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,8,0" Content="Sfoglia..." Command="{Binding BrowseOutputDirectoryCommand}" />
+                    <TextBox Grid.Column="1" Style="{StaticResource FieldTextBoxStyle}" Text="{Binding AuditOutputDirectory, UpdateSourceTrigger=PropertyChanged}" />
                   </Grid>
-                  <CheckBox Margin="0,0,0,4" Content="Esegui tramite servizio Windows" IsChecked="{Binding UseWindowsServiceMode}" ToolTip="Usa l'host Windows opzionale per eseguire la scansione in background; non aggiunge funzioni di analisi rispetto alla modalita locale." />
-                  <TextBlock Text="Opzionale: utile per scansioni lunghe o non interattive; usa la stessa logica dell'app e non aggiunge funzionalita applicative." Style="{StaticResource MicrocopyText}" Margin="0,0,0,6" TextWrapping="Wrap" />
+                  <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="Esegui tramite servizio Windows (opzionale)" IsChecked="{Binding UseWindowsServiceMode}" ToolTip="Usa l'host Windows opzionale per eseguire la scansione in background; non aggiunge funzioni di analisi rispetto alla modalita locale." />
+                  <TextBlock Text="Mantiene il job attivo anche dopo il logout." Style="{StaticResource MicrocopyText}" Margin="0,0,0,6" TextWrapping="Wrap" ToolTip="Utile per scansioni lunghe o non interattive. La logica di analisi resta la stessa dell'app locale." />
                   <TextBlock Text="Credenziali scansione" Style="{StaticResource SubsectionHeaderText}" />
                   <TextBlock Text="{Binding GlobalCredentialStatusText}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,6" />
                   <Grid Margin="0,0,0,6">
@@ -126,15 +141,16 @@
                       <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="Globali" VerticalAlignment="Center" Margin="0,0,6,0" />
-                    <TextBox Grid.Column="1" Height="26" Margin="0,0,8,0" MinWidth="180" Text="{Binding GlobalCredentialUserName, UpdateSourceTrigger=PropertyChanged}" ToolTip="Utente globale (DOMINIO\utente o utente@dominio)" />
-                    <PasswordBox x:Name="GlobalCredentialPasswordBox" Grid.Column="2" Height="26" Width="180" Margin="0,0,8,0" PasswordChanged="GlobalCredentialPasswordBox_OnPasswordChanged" ToolTip="Password credenziali globali" />
+                    <TextBox Grid.Column="1" Style="{StaticResource FieldTextBoxStyle}" Margin="0,0,8,0" MinWidth="180" Text="{Binding GlobalCredentialUserName, UpdateSourceTrigger=PropertyChanged}" ToolTip="Utente globale (DOMINIO\utente o utente@dominio)" />
+                    <PasswordBox x:Name="GlobalCredentialPasswordBox" Grid.Column="2" Height="28" Width="180" Margin="0,0,8,0" PasswordChanged="GlobalCredentialPasswordBox_OnPasswordChanged" ToolTip="Password credenziali globali" />
                     <StackPanel Grid.Column="3" Orientation="Horizontal">
-                      <Button Margin="0,0,8,0" Padding="10,4" Content="Salva" Command="{Binding SaveGlobalCredentialCommand}" />
-                      <Button Padding="10,4" Content="Rimuovi" Command="{Binding ClearGlobalCredentialCommand}" />
+                      <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,8,0" Content="Salva" Command="{Binding SaveGlobalCredentialCommand}" />
+                      <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,0,0" Content="Rimuovi" Command="{Binding ClearGlobalCredentialCommand}" />
                     </StackPanel>
                   </Grid>
                   <TextBlock Text="{Binding SelectedScanRootCredentialStatusText}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,4" />
-                  <TextBlock Text="{Binding SelectedScanRootEffectiveCredentialSource}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,6" />
+                  <TextBlock Text="{Binding SelectedScanRootEffectiveCredentialSource}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,6"
+                             ToolTip="Per percorsi locali o non UNC l'app non applica credenziali salvate: resta l'utente corrente." />
                   <Grid Margin="0,0,0,8" IsEnabled="{Binding HasSelectedScanRoot}">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="Auto" />
@@ -143,11 +159,11 @@
                       <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="Override root" VerticalAlignment="Center" Margin="0,0,6,0" />
-                    <TextBox Grid.Column="1" Height="26" Margin="0,0,8,0" MinWidth="180" Text="{Binding SelectedScanRootCredentialUserName, UpdateSourceTrigger=PropertyChanged}" ToolTip="Utente dedicato per la root selezionata" />
-                    <PasswordBox x:Name="SelectedScanRootCredentialPasswordBox" Grid.Column="2" Height="26" Width="180" Margin="0,0,8,0" PasswordChanged="SelectedScanRootCredentialPasswordBox_OnPasswordChanged" ToolTip="Password override root" />
+                    <TextBox Grid.Column="1" Style="{StaticResource FieldTextBoxStyle}" Margin="0,0,8,0" MinWidth="180" Text="{Binding SelectedScanRootCredentialUserName, UpdateSourceTrigger=PropertyChanged}" ToolTip="Utente dedicato per la root selezionata" />
+                    <PasswordBox x:Name="SelectedScanRootCredentialPasswordBox" Grid.Column="2" Height="28" Width="180" Margin="0,0,8,0" PasswordChanged="SelectedScanRootCredentialPasswordBox_OnPasswordChanged" ToolTip="Password override root" />
                     <StackPanel Grid.Column="3" Orientation="Horizontal">
-                      <Button Margin="0,0,8,0" Padding="10,4" Content="Salva" Command="{Binding SaveScanRootCredentialCommand}" />
-                      <Button Padding="10,4" Content="Rimuovi" Command="{Binding ClearScanRootCredentialCommand}" />
+                      <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,8,0" Content="Salva" Command="{Binding SaveScanRootCredentialCommand}" />
+                      <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,0,0" Content="Rimuovi" Command="{Binding ClearScanRootCredentialCommand}" />
                     </StackPanel>
                   </Grid>
                   <Expander Header="Opzioni principali" IsExpanded="True">
@@ -159,37 +175,37 @@
                           <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="Profondita" VerticalAlignment="Center" Margin="0,0,6,0" />
-                        <TextBox Grid.Column="1" Width="60" Height="24" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0,0,12,0" />
-                        <CheckBox Grid.Column="2" Content="Analizza tutte le sottocartelle" IsChecked="{Binding ScanAllDepths}" />
+                        <TextBox Grid.Column="1" Width="60" Height="28" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0,0,12,0" />
+                        <CheckBox Grid.Column="2" Style="{StaticResource OptionCheckBoxStyle}" Content="Analizza tutte le sottocartelle" IsChecked="{Binding ScanAllDepths}" Margin="0" />
                       </Grid>
-                      <CheckBox Content="Includi permessi ereditati" IsChecked="{Binding IncludeInherited}" />
+                      <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="Includi permessi ereditati" IsChecked="{Binding IncludeInherited}" Margin="0" />
                     </StackPanel>
                   </Expander>
                 </StackPanel>
               </GroupBox>
 
-              <GroupBox Header="Opzioni" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10" Margin="0,10,0,0" IsEnabled="{Binding IsScanConfigEnabled}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+              <GroupBox Header="Opzioni" Style="{StaticResource AppGroupBoxStyle}" Margin="0,10,0,0" IsEnabled="{Binding IsScanConfigEnabled}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel>
                   <TextBlock Text="Identita" Style="{StaticResource SubsectionHeaderText}" />
-                  <CheckBox Margin="0,0,0,4" Content="Risolvi identita" IsChecked="{Binding ResolveIdentities}" />
-                  <TextBlock Text="Aumenta accuratezza, puo impattare performance." Style="{StaticResource MicrocopyText}" />
-                  <CheckBox Margin="0,0,0,4" Content="Espandi gruppi annidati" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
-                  <CheckBox Margin="0,0,0,4" Content="Usa PowerShell per AD" IsChecked="{Binding UsePowerShell}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
-                  <Expander Header="Opzioni avanzate (per amministratori)" IsExpanded="True" Margin="0,8,0,0">
+                  <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="Risolvi identita" IsChecked="{Binding ResolveIdentities}" />
+                  <TextBlock Text="Piu accuratezza, con possibile costo prestazionale." Style="{StaticResource MicrocopyText}" ToolTip="Attiva la risoluzione SID, gruppi e utenti tramite resolver disponibili." />
+                  <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="Espandi gruppi annidati" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
+                  <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="Usa PowerShell per AD" IsChecked="{Binding UsePowerShell}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
+                  <Expander Header="Audit avanzato" IsExpanded="True" Margin="0,8,0,0" ToolTip="Opzioni amministrative aggiuntive per Effective Access, Share, file, Owner/SACL e baseline.">
                     <StackPanel Margin="0,6,0,0">
-                      <CheckBox Margin="0,0,0,4" Content="Abilita audit avanzato" IsChecked="{Binding EnableAdvancedAudit}" />
+                      <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="Abilita audit avanzato" IsChecked="{Binding EnableAdvancedAudit}" />
                       <StackPanel Margin="0,4,0,0" IsEnabled="{Binding IsAdvancedAuditEnabled}">
-                      <CheckBox Margin="0,0,0,4" Content="Calcola Effective Access" IsChecked="{Binding ComputeEffectiveAccess}" />
-                      <CheckBox Margin="0,0,0,4" Content="Leggi permessi Share (SMB)" IsChecked="{Binding IncludeSharePermissions}" />
-                      <CheckBox Margin="0,0,0,4" Content="Scansiona file" IsChecked="{Binding IncludeFiles}" />
-                      <CheckBox Margin="0,0,0,4" Content="Leggi Owner e SACL" IsChecked="{Binding ReadOwnerAndSacl}" />
-                      <CheckBox Content="Confronta con baseline/policy attese" IsChecked="{Binding CompareBaseline}" />
+                      <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="Calcola Effective Access" IsChecked="{Binding ComputeEffectiveAccess}" />
+                      <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="Leggi permessi Share (SMB)" IsChecked="{Binding IncludeSharePermissions}" />
+                      <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="Scansiona file" IsChecked="{Binding IncludeFiles}" />
+                      <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="Leggi Owner e SACL" IsChecked="{Binding ReadOwnerAndSacl}" />
+                      <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Margin="0" Content="Confronta con baseline/policy attese" IsChecked="{Binding CompareBaseline}" />
                       </StackPanel>
                     </StackPanel>
                   </Expander>
                   <TextBlock Text="Esclusioni" Style="{StaticResource SubsectionHeaderText}" />
-                  <CheckBox Margin="0,0,0,4" Content="Escludi utenti di servizio" IsChecked="{Binding ExcludeServiceAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
-                  <CheckBox Content="Escludi utenti admin" IsChecked="{Binding ExcludeAdminAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
+                  <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="Escludi utenti di servizio" IsChecked="{Binding ExcludeServiceAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
+                  <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Margin="0" Content="Escludi utenti admin" IsChecked="{Binding ExcludeAdminAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
                 </StackPanel>
               </GroupBox>
               </StackPanel>

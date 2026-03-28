@@ -19,12 +19,12 @@ using NtfsAudit.App.Models;
 
 namespace NtfsAudit.App.Services
 {
-    public class PowerShellAdResolver : IAdResolver
+    public class PowerShellAdResolver : IAdResolver, IResolverDiagnostics
     {
         private readonly string _powershellPath;
         private readonly bool _moduleAvailable;
         private readonly ScanCredential _credential;
-        private readonly Func<string, string> _scriptRunner;
+        private readonly Func<string, PowerShellExecutionResult> _scriptExecutor;
         private readonly Func<string, bool> _fileExists;
 
         public PowerShellAdResolver(string powershellPath)
@@ -33,20 +33,39 @@ namespace NtfsAudit.App.Services
         }
 
         public PowerShellAdResolver(string powershellPath, ScanCredential credential)
-            : this(powershellPath, credential, null, null)
+            : this(powershellPath, credential, (Func<string, string>)null, null)
         {
         }
 
         internal PowerShellAdResolver(string powershellPath, ScanCredential credential, Func<string, string> scriptRunner, Func<string, bool> fileExists)
+            : this(
+                powershellPath,
+                credential,
+                scriptRunner == null
+                    ? null
+                    : new Func<string, PowerShellExecutionResult>(script => new PowerShellExecutionResult
+                    {
+                        ExitCode = 0,
+                        Output = scriptRunner(script)
+                    }),
+                fileExists)
+        {
+        }
+
+        internal PowerShellAdResolver(string powershellPath, ScanCredential credential, Func<string, PowerShellExecutionResult> scriptExecutor, Func<string, bool> fileExists)
         {
             _powershellPath = powershellPath;
             _credential = credential;
-            _scriptRunner = scriptRunner;
+            _scriptExecutor = scriptExecutor;
             _fileExists = fileExists ?? File.Exists;
             _moduleAvailable = CheckModule();
         }
 
         public bool IsAvailable { get { return _moduleAvailable; } }
+
+        public string AvailabilityDiagnostic { get; private set; }
+
+        public string LastDiagnostic { get; private set; }
 
         public ResolvedPrincipal ResolvePrincipal(string sid)
         {
@@ -56,7 +75,7 @@ namespace NtfsAudit.App.Services
                 BuildCredentialBootstrap(),
                 sid,
                 BuildCredentialParameter());
-            var output = Run(script);
+            var output = Run(script, string.Format("ResolvePrincipal({0})", sid));
             if (!TryParseJsonToken(output, out var token) || token.Type != JTokenType.Object) return null;
             var obj = (JObject)token;
             var cls = obj["Class"] == null ? string.Empty : obj["Class"].ToString();
@@ -82,7 +101,7 @@ namespace NtfsAudit.App.Services
                 BuildCredentialBootstrap(),
                 groupSid,
                 credentialParameter);
-            var output = Run(script);
+            var output = Run(script, string.Format("GetGroupMembers({0})", groupSid));
             if (!TryParseJsonToken(output, out var token)) return result;
             if (token.Type == JTokenType.Array)
             {
@@ -110,7 +129,7 @@ namespace NtfsAudit.App.Services
                 BuildCredentialBootstrap(),
                 userSid,
                 credentialParameter);
-            var output = Run(script);
+            var output = Run(script, string.Format("GetUserGroups({0})", userSid));
             if (!TryParseJsonToken(output, out var token)) return result;
             if (token.Type == JTokenType.Array)
             {
@@ -139,16 +158,19 @@ namespace NtfsAudit.App.Services
             var trimmed = output.Trim();
             if (!(trimmed.StartsWith("{") || trimmed.StartsWith("[")))
             {
+                SetDiagnostic("Output JSON non valido da PowerShell AD.");
                 return false;
             }
 
             try
             {
                 token = JToken.Parse(trimmed);
+                LastDiagnostic = null;
                 return true;
             }
             catch
             {
+                SetDiagnostic("Output JSON non valido da PowerShell AD.");
                 return false;
             }
         }
@@ -171,18 +193,43 @@ namespace NtfsAudit.App.Services
         private bool CheckModule()
         {
             var script = "Get-Module -ListAvailable ActiveDirectory | Select-Object -First 1 | ConvertTo-Json -Compress";
-            var output = Run(script);
-            return !string.IsNullOrWhiteSpace(output);
-        }
-
-        private string Run(string script)
-        {
-            if (_scriptRunner != null)
+            var output = Run(script, "CheckModule");
+            if (TryParseJsonToken(output, out var _))
             {
-                return _scriptRunner(script);
+                AvailabilityDiagnostic = null;
+                return true;
             }
 
-            if (!_fileExists(_powershellPath)) return null;
+            AvailabilityDiagnostic = string.IsNullOrWhiteSpace(LastDiagnostic)
+                ? "Modulo ActiveDirectory non disponibile in PowerShell."
+                : LastDiagnostic;
+            Debug.WriteLine(string.Format("[PowerShellAdResolver] unavailable: {0}", AvailabilityDiagnostic));
+            return false;
+        }
+
+        private string Run(string script, string operation)
+        {
+            LastDiagnostic = null;
+
+            PowerShellExecutionResult executionResult;
+            if (_scriptExecutor != null)
+            {
+                executionResult = _scriptExecutor(script);
+                if (executionResult == null)
+                {
+                    SetDiagnostic(string.Format("PowerShell AD non ha prodotto un risultato durante {0}.", operation));
+                    return null;
+                }
+
+                return NormalizeExecutionResult(executionResult, operation);
+            }
+
+            if (!_fileExists(_powershellPath))
+            {
+                SetDiagnostic(string.Format("powershell.exe non trovato: {0}", _powershellPath));
+                return null;
+            }
+
             var info = new ProcessStartInfo
             {
                 FileName = _powershellPath,
@@ -192,31 +239,91 @@ namespace NtfsAudit.App.Services
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
-            using (var process = Process.Start(info))
+
+            try
             {
-                if (process == null) return null;
-                var output = process.StandardOutput.ReadToEnd();
-                var error = process.StandardError.ReadToEnd();
-                if (!process.WaitForExit(15000))
+                using (var process = Process.Start(info))
                 {
-                    try
+                    if (process == null)
                     {
-                        process.Kill();
+                        SetDiagnostic("Impossibile avviare powershell.exe.");
+                        return null;
                     }
-                    catch
+
+                    var output = process.StandardOutput.ReadToEnd();
+                    var error = process.StandardError.ReadToEnd();
+                    if (!process.WaitForExit(15000))
                     {
+                        try
+                        {
+                            process.Kill();
+                        }
+                        catch
+                        {
+                        }
+
+                        SetDiagnostic(string.Format("Timeout PowerShell AD durante {0}.", operation));
+                        return null;
                     }
+
+                    executionResult = new PowerShellExecutionResult
+                    {
+                        ExitCode = process.ExitCode,
+                        Output = output,
+                        Error = error
+                    };
                 }
-                if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
-                {
-                    return null;
-                }
-                if (string.IsNullOrWhiteSpace(output) && !string.IsNullOrWhiteSpace(error))
-                {
-                    return null;
-                }
-                return output.Trim();
             }
+            catch (Exception ex)
+            {
+                SetDiagnostic(string.Format("Errore esecuzione PowerShell AD durante {0}: {1}", operation, ex.Message));
+                return null;
+            }
+
+            return NormalizeExecutionResult(executionResult, operation);
+        }
+
+        private string NormalizeExecutionResult(PowerShellExecutionResult executionResult, string operation)
+        {
+            var output = executionResult.Output == null ? string.Empty : executionResult.Output.Trim();
+            var error = executionResult.Error == null ? string.Empty : executionResult.Error.Trim();
+
+            if (executionResult.ExitCode != 0)
+            {
+                SetDiagnostic(string.Format(
+                    "PowerShell AD fallito durante {0} (exit code {1}): {2}",
+                    operation,
+                    executionResult.ExitCode,
+                    TruncateDiagnostic(string.IsNullOrWhiteSpace(error) ? output : error)));
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(output))
+            {
+                if (!string.IsNullOrWhiteSpace(error))
+                {
+                    SetDiagnostic(string.Format(
+                        "PowerShell AD non ha prodotto output valido durante {0}: {1}",
+                        operation,
+                        TruncateDiagnostic(error)));
+                }
+                return null;
+            }
+
+            LastDiagnostic = null;
+            return output;
+        }
+
+        private void SetDiagnostic(string message)
+        {
+            LastDiagnostic = message;
+            Debug.WriteLine(string.Format("[PowerShellAdResolver] {0}", message));
+        }
+
+        private static string TruncateDiagnostic(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+            return value.Length <= 220 ? value : value.Substring(0, 220);
         }
 
         private string BuildCredentialBootstrap()
@@ -248,6 +355,13 @@ namespace NtfsAudit.App.Services
         private static string EscapePowerShellString(string value)
         {
             return string.IsNullOrEmpty(value) ? string.Empty : value.Replace("'", "''");
+        }
+
+        internal sealed class PowerShellExecutionResult
+        {
+            public int ExitCode { get; set; }
+            public string Output { get; set; }
+            public string Error { get; set; }
         }
     }
 }

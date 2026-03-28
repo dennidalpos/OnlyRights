@@ -40,8 +40,33 @@ jobs:
       - name: Publish
         run: powershell -File .\scripts\publish.ps1 -Configuration Release
 
+      - name: Build net6 App and Viewer
+        run: powershell -File .\scripts\build.ps1 -Configuration Release -Framework net6.0-windows -SkipRestore
+
+      - name: Pack net6 App and Viewer
+        run: powershell -File .\scripts\pack.ps1 -Configuration Release -Framework net6.0-windows -SkipRestore -SkipService
+
+      - name: Publish net6 App and Viewer
+        run: powershell -File .\scripts\publish.ps1 -Configuration Release -Framework net6.0-windows
+
       - name: MSI Build
         run: powershell -File .\scripts\packaging\msi-build.ps1 -Configuration Release -SkipPack
+
+      - name: Service Install Smoke
+        run: powershell -File .\scripts\windows\service-install.ps1 -Configuration Release
+
+      - name: Service Uninstall Smoke
+        if: always()
+        run: powershell -File .\scripts\windows\service-uninstall.ps1
+
+      - name: MSI Install Smoke
+        run: powershell -File .\scripts\packaging\msi-install-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic -SkipBuild
+
+      - name: MSI Uninstall Smoke
+        run: powershell -File .\scripts\packaging\msi-uninstall-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic
+
+      - name: MSI Upgrade Smoke
+        run: powershell -File .\scripts\packaging\msi-upgrade-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\upgrade
 
       - name: Clean (final)
         if: always()

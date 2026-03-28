@@ -107,11 +107,12 @@ namespace NtfsAudit.App.Services
         public static PathKind DetectPathKind(string input)
         {
             if (string.IsNullOrWhiteSpace(input)) return PathKind.Unknown;
-            var normalized = FromExtendedPath(input.Trim()).Replace('/', '\\');
-            if (normalized.StartsWith("nfs://", StringComparison.OrdinalIgnoreCase))
+            var trimmed = input.Trim();
+            if (trimmed.StartsWith("nfs://", StringComparison.OrdinalIgnoreCase))
             {
                 return PathKind.Nfs;
             }
+            var normalized = FromExtendedPath(trimmed).Replace('/', '\\');
             if (IsLikelyNfsPath(normalized))
             {
                 return PathKind.Nfs;

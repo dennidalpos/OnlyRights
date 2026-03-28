@@ -125,11 +125,16 @@ namespace NtfsAudit.App.Services
 
         private ErrorEntry BuildErrorEntry(string path, Exception ex)
         {
+            return ScanExceptionClassifier.BuildErrorEntry(path, ex);
+        }
+
+        private ErrorEntry BuildErrorEntry(string path, string errorType, string message)
+        {
             return new ErrorEntry
             {
                 Path = path,
-                ErrorType = ex.GetType().Name,
-                Message = ex.Message
+                ErrorType = string.IsNullOrWhiteSpace(errorType) ? "Error" : errorType,
+                Message = message ?? string.Empty
             };
         }
 

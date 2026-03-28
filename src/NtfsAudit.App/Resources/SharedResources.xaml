@@ -33,6 +33,48 @@
     <Setter Property="BorderThickness" Value="1" />
   </Style>
 
+  <Style x:Key="InlineActionButtonStyle" TargetType="Button">
+    <Setter Property="Height" Value="28" />
+    <Setter Property="Padding" Value="10,4" />
+    <Setter Property="Margin" Value="0,0,8,6" />
+  </Style>
+
+  <Style x:Key="FieldTextBoxStyle" TargetType="TextBox">
+    <Setter Property="Height" Value="28" />
+    <Setter Property="MinWidth" Value="160" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style x:Key="OptionCheckBoxStyle" TargetType="CheckBox">
+    <Setter Property="Margin" Value="0,0,0,6" />
+  </Style>
+
+  <Style x:Key="AppGroupBoxStyle" TargetType="GroupBox">
+    <Setter Property="BorderBrush" Value="#DDDDDD" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="10" />
+    <Setter Property="Margin" Value="0,0,0,10" />
+  </Style>
+
+  <Style x:Key="InfoCardBorderStyle" TargetType="Border">
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="8,6" />
+    <Setter Property="Margin" Value="0,0,8,8" />
+  </Style>
+
+  <Style x:Key="InfoLabelText" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="Foreground" Value="#FF546E7A" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style x:Key="InfoValueText" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="#FF1F1F1F" />
+  </Style>
+
   <Style x:Key="SectionHeaderText" TargetType="TextBlock">
     <Setter Property="FontSize" Value="16" />
     <Setter Property="FontWeight" Value="SemiBold" />

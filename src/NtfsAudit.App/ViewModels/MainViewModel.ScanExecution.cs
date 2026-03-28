@@ -55,6 +55,11 @@ namespace NtfsAudit.App.ViewModels
                 return;
             }
 
+            if (!string.IsNullOrWhiteSpace(validationMessage))
+            {
+                ProgressText = validationMessage;
+            }
+
             if (UseWindowsServiceMode)
             {
                 EnqueueServiceScan(roots);
@@ -737,6 +742,12 @@ namespace NtfsAudit.App.ViewModels
                 var psResolver = new PowerShellAdResolver(path, credential);
                 var dsResolver = new DirectoryServicesResolver(credential);
                 if (psResolver.IsAvailable) return new CompositeAdResolver(psResolver, dsResolver);
+                if (!string.IsNullOrWhiteSpace(psResolver.AvailabilityDiagnostic))
+                {
+                    Debug.WriteLine(string.Format(
+                        "[MainViewModel] PowerShell AD resolver unavailable, fallback to DirectoryServices: {0}",
+                        psResolver.AvailabilityDiagnostic));
+                }
                 return dsResolver;
             }
 

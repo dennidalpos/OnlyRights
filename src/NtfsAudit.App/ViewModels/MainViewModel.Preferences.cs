@@ -73,6 +73,11 @@ namespace NtfsAudit.App.ViewModels
 
         private ScanCredential ResolveScanCredentialForRoot(string root)
         {
+            return ScanCredentialPathPolicy.ResolveRuntimeCredential(root, ResolveConfiguredScanCredentialForRoot(root));
+        }
+
+        private ScanCredential ResolveConfiguredScanCredentialForRoot(string root)
+        {
             if (!string.IsNullOrWhiteSpace(root)
                 && _scanRootCredentialOverrides.TryGetValue(GetScanRootKey(root), out var overrideCredential)
                 && overrideCredential != null
@@ -93,7 +98,7 @@ namespace NtfsAudit.App.ViewModels
             return null;
         }
 
-        private string ResolveCredentialSource(string root)
+        private string ResolveConfiguredCredentialSource(string root)
         {
             if (!string.IsNullOrWhiteSpace(root)
                 && _scanRootCredentialOverrides.TryGetValue(GetScanRootKey(root), out var overrideCredential)
@@ -109,6 +114,16 @@ namespace NtfsAudit.App.ViewModels
             }
 
             return "CurrentUser";
+        }
+
+        private string ResolveCredentialSource(string root)
+        {
+            return ScanCredentialPathPolicy.ResolveEffectiveSource(root, ResolveConfiguredCredentialSource(root));
+        }
+
+        private string DescribeEffectiveCredentialSource(string root)
+        {
+            return ScanCredentialPathPolicy.DescribeEffectiveSource(root, ResolveConfiguredCredentialSource(root));
         }
 
         private ScanOptions BuildOptionsForRoot(ScanOptions template, string root, bool protectCredentialForService)
@@ -127,6 +142,14 @@ namespace NtfsAudit.App.ViewModels
             var cachePath = _cacheStore.GetCacheFilePath("sid-cache.json");
             _sidNameCache.Save(cachePath);
             SaveUiPreferences();
+        }
+
+        private void PersistUiPreferencesIfAllowed()
+        {
+            if (!_suspendUiPreferencePersistence)
+            {
+                SaveUiPreferences();
+            }
         }
 
         private void LoadUiPreferences()
@@ -158,8 +181,26 @@ namespace NtfsAudit.App.ViewModels
                 TreeFilterBaselineMismatchOnly = prefs.TreeFilterBaselineMismatchOnly;
                 TreeFilterFilesOnly = prefs.TreeFilterFilesOnly;
                 TreeFilterFoldersOnly = prefs.TreeFilterFoldersOnly;
+                if (!string.IsNullOrWhiteSpace(prefs.RootPath))
+                {
+                    RootPath = prefs.RootPath;
+                }
                 AuditOutputDirectory = prefs.AuditOutputDirectory;
                 UseWindowsServiceMode = prefs.UseWindowsServiceMode;
+                ScanAllDepths = prefs.ScanAllDepths;
+                MaxDepth = prefs.MaxDepth;
+                IncludeInherited = prefs.IncludeInherited;
+                ResolveIdentities = prefs.ResolveIdentities;
+                ExcludeServiceAccounts = prefs.ResolveIdentities && prefs.ExcludeServiceAccounts;
+                ExcludeAdminAccounts = prefs.ResolveIdentities && prefs.ExcludeAdminAccounts;
+                ExpandGroups = prefs.ResolveIdentities && prefs.ExpandGroups;
+                UsePowerShell = prefs.ResolveIdentities && prefs.UsePowerShell;
+                EnableAdvancedAudit = prefs.EnableAdvancedAudit;
+                ComputeEffectiveAccess = prefs.EnableAdvancedAudit && prefs.ComputeEffectiveAccess;
+                IncludeSharePermissions = prefs.EnableAdvancedAudit && prefs.IncludeSharePermissions;
+                IncludeFiles = prefs.EnableAdvancedAudit && prefs.IncludeFiles;
+                ReadOwnerAndSacl = prefs.EnableAdvancedAudit && prefs.ReadOwnerAndSacl;
+                CompareBaseline = prefs.EnableAdvancedAudit && prefs.CompareBaseline;
                 ScanRoots.Clear();
                 _scanRootDfsTargets.Clear();
                 _scanRootNamespacePaths.Clear();
@@ -185,6 +226,11 @@ namespace NtfsAudit.App.ViewModels
                 if (ScanRoots.Count > 0)
                 {
                     SelectedScanRoot = ScanRoots[0];
+                }
+                if (!string.IsNullOrWhiteSpace(prefs.SelectedDfsTarget)
+                    && DfsTargets.Any(target => string.Equals(target, prefs.SelectedDfsTarget, StringComparison.OrdinalIgnoreCase)))
+                {
+                    SelectedDfsTarget = DfsTargets.First(target => string.Equals(target, prefs.SelectedDfsTarget, StringComparison.OrdinalIgnoreCase));
                 }
             }
             catch
@@ -221,8 +267,24 @@ namespace NtfsAudit.App.ViewModels
                     TreeFilterBaselineMismatchOnly = TreeFilterBaselineMismatchOnly,
                     TreeFilterFilesOnly = TreeFilterFilesOnly,
                     TreeFilterFoldersOnly = TreeFilterFoldersOnly,
+                    RootPath = RootPath,
+                    SelectedDfsTarget = SelectedDfsTarget,
                     AuditOutputDirectory = AuditOutputDirectory,
                     UseWindowsServiceMode = UseWindowsServiceMode,
+                    MaxDepth = MaxDepth,
+                    ScanAllDepths = ScanAllDepths,
+                    IncludeInherited = IncludeInherited,
+                    ResolveIdentities = ResolveIdentities,
+                    ExcludeServiceAccounts = ExcludeServiceAccounts,
+                    ExcludeAdminAccounts = ExcludeAdminAccounts,
+                    ExpandGroups = ExpandGroups,
+                    UsePowerShell = UsePowerShell,
+                    EnableAdvancedAudit = EnableAdvancedAudit,
+                    ComputeEffectiveAccess = ComputeEffectiveAccess,
+                    IncludeSharePermissions = IncludeSharePermissions,
+                    IncludeFiles = IncludeFiles,
+                    ReadOwnerAndSacl = ReadOwnerAndSacl,
+                    CompareBaseline = CompareBaseline,
                     ScanRoots = ScanRoots.ToList(),
                     ScanRootTargets = _scanRootDfsTargets.Select(item => new ScanRootTargetPreference
                     {
@@ -258,8 +320,24 @@ namespace NtfsAudit.App.ViewModels
             public bool TreeFilterBaselineMismatchOnly { get; set; }
             public bool TreeFilterFilesOnly { get; set; } = true;
             public bool TreeFilterFoldersOnly { get; set; } = true;
+            public string RootPath { get; set; }
+            public string SelectedDfsTarget { get; set; }
             public string AuditOutputDirectory { get; set; }
             public bool UseWindowsServiceMode { get; set; }
+            public int MaxDepth { get; set; } = 5;
+            public bool ScanAllDepths { get; set; } = true;
+            public bool IncludeInherited { get; set; } = true;
+            public bool ResolveIdentities { get; set; } = true;
+            public bool ExcludeServiceAccounts { get; set; }
+            public bool ExcludeAdminAccounts { get; set; }
+            public bool ExpandGroups { get; set; } = true;
+            public bool UsePowerShell { get; set; } = true;
+            public bool EnableAdvancedAudit { get; set; } = true;
+            public bool ComputeEffectiveAccess { get; set; } = true;
+            public bool IncludeSharePermissions { get; set; } = true;
+            public bool IncludeFiles { get; set; }
+            public bool ReadOwnerAndSacl { get; set; } = true;
+            public bool CompareBaseline { get; set; } = true;
             public List<string> ScanRoots { get; set; }
             public List<ScanRootTargetPreference> ScanRootTargets { get; set; }
         }

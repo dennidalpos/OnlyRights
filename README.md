@@ -24,11 +24,17 @@ Nel repository il nome progetto legale è **OnlyRights**; la solution e i compon
 - `docs/setup-iniziale.md`: guida rapida per setup iniziale e configurazione utente.
 - `scripts/setup.ps1`: wrapper rapido per il primo setup locale (`bootstrap` + `doctor` + `build`).
 - `scripts/bootstrap.ps1`, `doctor.ps1`, `compile.ps1`, `build.ps1`, `test.ps1`, `pack.ps1`, `publish.ps1`: entrypoint canonici del repository.
-- `scripts/clean.ps1`: pulizia artefatti build e residui operativi (cache/temp/job/report).
+- `scripts/clean.ps1`: pulizia artefatti build e residui operativi (cache/temp/job/report), con preset `-ResetToInitialState` per tornare a uno stato sorgente-only.
+- `scripts/reset-repo-state.ps1`: wrapper dedicato per riportare il repository allo stato iniziale pulito senza toccare le modifiche git tracciate.
 - `scripts/windows/*.ps1`: gestione servizio Windows via `sc.exe` con fallback opzionale a `tools/nssm`.
 - `scripts/packaging/*.ps1`: build/test install/test upgrade/test uninstall MSI tramite `tools/wix314-binaries` e `msiexec`.
 - `.github/workflows/ci.yml`: pipeline Windows che usa gli stessi entrypoint locali.
 - `global.json`: pin dell'SDK .NET 8 usato dal repository.
+
+Contratto framework supportato:
+- `NtfsAudit.App` e `NtfsAudit.Viewer` restano supportati su `net6.0-windows` e `net8.0-windows`.
+- `NtfsAudit.Service`, test automatici, smoke test servizio e packaging MSI restano allineati a `net8.0-windows`.
+- La CI valida `net8.0-windows` end-to-end e aggiunge copertura `build`/`pack`/`publish` per `net6.0-windows` su App e Viewer.
 
 Output generati riconoscibili dalla root:
 - `artifacts/build/<ProjectName>/...`: output di build.
@@ -59,6 +65,11 @@ Output in memoria:
 
 Output persistente:
 - report automatico `.ntaudit` nella cartella **Output report .ntaudit** (se impostata).
+
+Diagnostica runtime:
+- i fallimenti nella lettura dei permessi share SMB vengono registrati in `errors.jsonl` con messaggi distinti per accesso negato, host/share non raggiungibile o provider non compatibile, invece di essere ignorati silenziosamente.
+- i path con permessi insufficienti, provider/filesystem non supportati o verifiche preliminari non deterministiche non bloccano piu l'avvio della scansione: il problema viene degradato automaticamente e registrato in `errors.jsonl` con un messaggio normalizzato.
+- i path classificati come `NFS` vengono rilevati ed etichettati in UI, ma il prodotto non dichiara parità completa con i permessi POSIX/NFS: l'analisi resta limitata ai metadati e provider che Windows espone realmente.
 
 ---
 
@@ -137,18 +148,23 @@ Regole di robustezza:
 - **Locale**: scansione nel processo UI con progress in tempo reale.
 - **Servizio Windows**: host opzionale per enqueue job in `%ProgramData%\NtfsAudit\jobs`, esecuzione in background e monitor stato via `service-status.json`.
 - Il servizio non aggiunge funzionalità di analisi rispetto all'app: serve soprattutto per scansioni lunghe, non interattive o quando si vuole disaccoppiare l'esecuzione dalla sessione UI.
-- **Credenziali scansione**: supporto a credenziali globali applicative e override dedicato per singola root, con priorità `override root -> globali -> utente corrente`.
+- **Credenziali scansione**: supporto a credenziali globali applicative e override dedicato per singola root, con priorità `override root -> globali -> utente corrente`; sui path locali o non UNC l'esecuzione resta comunque sull'utente corrente.
 
 Nella UI:
 - checkbox **Esegui tramite servizio Windows** (default non selezionato),
-- badge stato servizio unificato,
+- badge stato servizio unificato con testo runtime/progress,
 - azioni install/disinstalla servizio dalla toolbar,
-- sezione **Credenziali scansione** per salvare in locale credenziali protette e override per la root selezionata.
+- sezione **Credenziali scansione** per salvare in locale credenziali protette e override per la root selezionata,
+- selettore target DFS sia per il path in input sia per la root DFS già presente in elenco.
 
 Persistenza credenziali:
 - storage locale protetto via DPAPI nel profilo utente,
 - payload dei job service protetto per `LocalMachine`,
 - nessuna credenziale esportata nei metadati `.ntaudit`.
+
+Persistenza configurazione scansione:
+- le preferenze UI salvano root corrente, target DFS selezionato, cartelle in elenco, output `.ntaudit`, modalità servizio e principali flag di scansione.
+- le credenziali restano persistite separatamente nello storage protetto locale e non vengono duplicate nel file `ui-preferences.json`.
 
 ---
 
@@ -164,6 +180,7 @@ Script CLI equivalenti:
 - `scripts/clean.ps1 -CleanOperationalData` preserva `%TEMP%\\NtfsAudit\\imports` e `%TEMP%\\NtfsAudit\\exports`
 - `scripts/clean.ps1 -CleanImportExportData` pulisce report/export e workspace analisi
 - `scripts/clean.ps1 -CleanAnalysisWorkspace` cancella solo i workspace analisi `imports/exports`
+- `scripts/clean.ps1 -ResetToInitialState` o `scripts/reset-repo-state.ps1` rimuovono artefatti, cache, temp, export e workspace analisi per tornare a uno stato iniziale pulito
 
 ---
 
@@ -180,7 +197,7 @@ Script CLI equivalenti:
 
 ## Script Windows
 
-- `scripts/windows/service-install.ps1`: installa `NtfsAuditWorker` dai path canonici `artifacts/build|packages|publish` o da un path esplicito.
+- `scripts/windows/service-install.ps1`: installa `NtfsAuditWorker` dai path canonici `src/.../bin`, `artifacts/build`, `artifacts/packages`, `artifacts/publish` o da un path esplicito.
 - `scripts/windows/service-start.ps1` e `service-stop.ps1`: avvio/stop non interattivi del servizio.
 - `scripts/windows/service-uninstall.ps1`: rimuove il servizio e pulisce i residui operativi.
 - `scripts/windows/services-cleanup.ps1`: cleanup difensivo post-test; `nssm-cleanup.ps1` forza il ramo fallback NSSM.
@@ -191,6 +208,7 @@ Script CLI equivalenti:
 - `scripts/packaging/msi-install-test.ps1`: installazione silenziosa verificabile con log in `artifacts/logs`.
 - `scripts/packaging/msi-upgrade-test.ps1`: prova upgrade compatibile tra due versioni MSI.
 - `scripts/packaging/msi-uninstall-test.ps1`: uninstall silenzioso e cleanup finale del servizio.
+- `.github/workflows/ci.yml`: oltre a build/test/pack/publish e build MSI, esegue smoke test non interattivi di install/uninstall servizio e install/uninstall/upgrade MSI.
 
 ## `scripts/clean.ps1`
 
@@ -209,8 +227,10 @@ Preset utili:
 - `-CleanOperationalData`
 - `-CleanImportExportData`
 - `-CleanAnalysisWorkspace`
+- `-ResetToInitialState`
 
 I preset generici `-CleanAllTemp` e `-CleanOperationalData` preservano `%TEMP%\\NtfsAudit\\imports` e `%TEMP%\\NtfsAudit\\exports`; la cancellazione dei workspace analisi resta un'azione esplicita.
+`-ResetToInitialState` esegue invece una pulizia completa sorgente-only: artefatti, cache, temp, export, job servizio e workspace analisi, senza alterare file versionati o modifiche git locali.
 
 ---
 
@@ -274,6 +294,11 @@ powershell -File .\scripts\packaging\msi-upgrade-test.ps1 -Configuration Release
 powershell -File .\scripts\clean.ps1 -CleanOperationalData
 ```
 
+### Reset stato iniziale pulito
+```powershell
+powershell -File .\scripts\reset-repo-state.ps1
+```
+
 ### Test con build già eseguita
 ```powershell
 powershell -File .\scripts\test.ps1 -Configuration Release -SkipRestore -SkipBuild
@@ -303,6 +328,11 @@ Per la configurazione iniziale guidata dell'app:
 Esecuzione applicazione principale:
 ```powershell
 dotnet run --project .\src\NtfsAudit.App\NtfsAudit.App.csproj -f net8.0-windows
+```
+
+Esecuzione viewer read-only:
+```powershell
+dotnet run --project .\src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj -f net8.0-windows
 ```
 
 Esecuzione test:

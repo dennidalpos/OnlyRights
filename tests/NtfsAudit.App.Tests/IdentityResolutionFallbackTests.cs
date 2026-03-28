@@ -105,10 +105,11 @@ namespace NtfsAudit.App.Tests
             var resolver = new PowerShellAdResolver(
                 "powershell.exe",
                 null,
-                _ => null,
+                (Func<string, string>)(_ => null),
                 _ => true);
 
             Assert.False(resolver.IsAvailable);
+            Assert.False(string.IsNullOrWhiteSpace(resolver.AvailabilityDiagnostic));
             Assert.Null(resolver.ResolvePrincipal("S-1-5-21-123"));
             Assert.Empty(resolver.GetGroupMembers("S-1-5-21-123"));
         }
@@ -160,6 +161,75 @@ namespace NtfsAudit.App.Tests
             Assert.Contains(scripts, script => script.Contains("-Credential $credential", StringComparison.Ordinal));
             Assert.Contains(scripts, script => script.Contains("ConvertTo-SecureString 'p''ass' -AsPlainText -Force", StringComparison.Ordinal));
             Assert.Contains(scripts, script => script.Contains("PSCredential('DOMAIN\\svc-reader'", StringComparison.Ordinal));
+        }
+
+        [Fact]
+        public void PowerShellAdResolver_CapturesExecutionDiagnostics_ForCommandFailures()
+        {
+            var moduleProbeDone = false;
+            var resolver = new PowerShellAdResolver(
+                "powershell.exe",
+                null,
+                script =>
+                {
+                    if (!moduleProbeDone)
+                    {
+                        moduleProbeDone = true;
+                        return new PowerShellAdResolver.PowerShellExecutionResult
+                        {
+                            ExitCode = 0,
+                            Output = "{}"
+                        };
+                    }
+
+                    return new PowerShellAdResolver.PowerShellExecutionResult
+                    {
+                        ExitCode = 17,
+                        Error = "Access denied"
+                    };
+                },
+                _ => true);
+
+            var resolved = resolver.ResolvePrincipal("S-1-5-21-500");
+
+            Assert.True(resolver.IsAvailable);
+            Assert.Null(resolved);
+            Assert.Contains("exit code 17", resolver.LastDiagnostic, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("ResolvePrincipal", resolver.LastDiagnostic, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void PowerShellAdResolver_CapturesJsonDiagnostics_ForInvalidPayloads()
+        {
+            var moduleProbeDone = false;
+            var resolver = new PowerShellAdResolver(
+                "powershell.exe",
+                null,
+                script =>
+                {
+                    if (!moduleProbeDone)
+                    {
+                        moduleProbeDone = true;
+                        return new PowerShellAdResolver.PowerShellExecutionResult
+                        {
+                            ExitCode = 0,
+                            Output = "{}"
+                        };
+                    }
+
+                    return new PowerShellAdResolver.PowerShellExecutionResult
+                    {
+                        ExitCode = 0,
+                        Output = "not-json"
+                    };
+                },
+                _ => true);
+
+            var resolved = resolver.ResolvePrincipal("S-1-5-21-500");
+
+            Assert.True(resolver.IsAvailable);
+            Assert.Null(resolved);
+            Assert.Contains("JSON", resolver.LastDiagnostic, StringComparison.OrdinalIgnoreCase);
         }
 
         private sealed class FakeAdResolver : IAdResolver

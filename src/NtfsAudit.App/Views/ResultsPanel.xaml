@@ -10,6 +10,44 @@
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0">
               <TextBlock Text="Risultati" Style="{StaticResource SectionHeaderText}" />
+              <WrapPanel Margin="0,0,0,4" IsEnabled="{Binding HasScanResult}">
+                <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFE3F2FD" BorderBrush="#FFBBDEFB">
+                  <StackPanel>
+                    <TextBlock Text="ACE totali" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{Binding SummaryTotalEntries}" Style="{StaticResource InfoValueText}" />
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFFFEBEE" BorderBrush="#FFFFCDD2">
+                  <StackPanel>
+                    <TextBlock Text="Deny" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{Binding SummaryDenyCount}" Style="{StaticResource InfoValueText}" />
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFF3E5F5" BorderBrush="#FFE1BEE7">
+                  <StackPanel>
+                    <TextBlock Text="High risk" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{Binding SummaryHighRisk}" Style="{StaticResource InfoValueText}" />
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFE8F5E9" BorderBrush="#FFC8E6C9">
+                  <StackPanel>
+                    <TextBlock Text="File" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{Binding SummaryFilesCount}" Style="{StaticResource InfoValueText}" />
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFFFF3E0" BorderBrush="#FFFFE0B2">
+                  <StackPanel>
+                    <TextBlock Text="Everyone" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{Binding SummaryEveryoneCount}" Style="{StaticResource InfoValueText}" />
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFF5F5F5" BorderBrush="#FFE0E0E0">
+                  <StackPanel>
+                    <TextBlock Text="Authenticated Users" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{Binding SummaryAuthUsersCount}" Style="{StaticResource InfoValueText}" />
+                  </StackPanel>
+                </Border>
+              </WrapPanel>
             </StackPanel>
             <StackPanel Grid.Row="1" Margin="0,8,0,8" IsEnabled="{Binding HasScanResult}">
               <TextBlock Text="Legenda diritti" Style="{StaticResource SubsectionHeaderText}" />
@@ -39,8 +77,41 @@
               <TextBlock Text="Cartella trattata" FontSize="11" Foreground="#FF546E7A" FontWeight="SemiBold" />
               <TextBlock Text="{Binding SelectedFolderName}" FontWeight="SemiBold" FontSize="13" Foreground="#FF0D47A1" TextTrimming="CharacterEllipsis" />
               <TextBlock Text="{Binding SelectedFolderPath}" FontSize="11" Foreground="#FF546E7A" TextTrimming="CharacterEllipsis" Margin="0,0,0,6" />
+              <WrapPanel Margin="0,0,0,8">
+                <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFF5F5F5" BorderBrush="#FFE0E0E0">
+                  <StackPanel>
+                    <TextBlock Text="Tipo path" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{Binding SelectedPathKind}" Style="{StaticResource InfoValueText}" />
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFF5F5F5" BorderBrush="#FFE0E0E0">
+                  <StackPanel>
+                    <TextBlock Text="Layer letti" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{Binding SelectedPermissionLayers}" Style="{StaticResource InfoValueText}" />
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFF5F5F5" BorderBrush="#FFE0E0E0">
+                  <StackPanel>
+                    <TextBlock Text="Rischio" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{Binding SelectedRiskSummary}" Style="{StaticResource InfoValueText}" />
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFF5F5F5" BorderBrush="#FFE0E0E0">
+                  <StackPanel>
+                    <TextBlock Text="Scansione" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{Binding SelectedScannedAtText}" Style="{StaticResource InfoValueText}" />
+                  </StackPanel>
+                </Border>
+              </WrapPanel>
+              <Border Background="#FFF5F5F5" BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,8">
+                <StackPanel>
+                  <TextBlock Text="Avvisi acquisizione" Style="{StaticResource InfoLabelText}" />
+                  <TextBlock Text="{Binding SelectedAcquisitionWarnings}" TextWrapping="Wrap" />
+                </StackPanel>
+              </Border>
 
-              <Expander Header="Filtri persistenti" IsExpanded="False" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10">
+              <Expander Header="Filtri persistenti" IsExpanded="False" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10"
+                        ToolTip="I filtri restano applicati tra viste e selezioni; usa questi controlli per restringere l'elenco ACL senza perdere il dataset caricato.">
                 <StackPanel>
                   <TextBlock Text="Ricerca ACL / Gruppo / Utente" Style="{StaticResource SubsectionHeaderText}" />
                   <Grid Margin="0,0,0,6">

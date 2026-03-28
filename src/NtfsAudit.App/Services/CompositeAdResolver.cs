@@ -10,6 +10,7 @@
  * written permission from Danny Perondi.
  */
 using System.Collections.Generic;
+using System.Diagnostics;
 using NtfsAudit.App.Models;
 
 namespace NtfsAudit.App.Services
@@ -36,6 +37,7 @@ namespace NtfsAudit.App.Services
             {
                 var resolved = _primary.ResolvePrincipal(sid);
                 if (resolved != null) return resolved;
+                WriteFallbackDiagnostic(_primary, "ResolvePrincipal", sid);
             }
 
             if (_fallback != null && _fallback.IsAvailable)
@@ -52,6 +54,7 @@ namespace NtfsAudit.App.Services
             {
                 var members = _primary.GetGroupMembers(groupSid);
                 if (members != null && members.Count > 0) return members;
+                WriteFallbackDiagnostic(_primary, "GetGroupMembers", groupSid);
             }
 
             if (_fallback != null && _fallback.IsAvailable)
@@ -68,6 +71,7 @@ namespace NtfsAudit.App.Services
             {
                 var members = _primary.GetUserGroups(userSid);
                 if (members != null && members.Count > 0) return members;
+                WriteFallbackDiagnostic(_primary, "GetUserGroups", userSid);
             }
 
             if (_fallback != null && _fallback.IsAvailable)
@@ -76,6 +80,21 @@ namespace NtfsAudit.App.Services
             }
 
             return new List<ResolvedPrincipal>();
+        }
+
+        private static void WriteFallbackDiagnostic(IAdResolver resolver, string operation, string subject)
+        {
+            var diagnostics = resolver as IResolverDiagnostics;
+            if (diagnostics == null || string.IsNullOrWhiteSpace(diagnostics.LastDiagnostic))
+            {
+                return;
+            }
+
+            Debug.WriteLine(string.Format(
+                "[CompositeAdResolver] fallback after {0}({1}): {2}",
+                operation,
+                subject,
+                diagnostics.LastDiagnostic));
         }
     }
 }

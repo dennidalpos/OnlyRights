@@ -163,6 +163,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 _selectedDfsTarget = value;
                 OnPropertyChanged("SelectedDfsTarget");
+                PersistUiPreferencesIfAllowed();
             }
         }
 
