@@ -11,6 +11,8 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -21,22 +23,29 @@ namespace NtfsAudit.App.Services
         public RuntimeCleanupResult CleanupOperationalData()
         {
             var removedEntries = 0;
-            removedEntries += CleanupTempRootPreservingAnalysisWorkspaces();
-            removedEntries += TryDeleteDirectory(RuntimePaths.GetWindowsSystemTempRoot());
-            removedEntries += TryDeleteDirectory(RuntimePaths.GetLocalCacheRoot());
-            removedEntries += TryDeleteDirectory(RuntimePaths.GetJobsRoot());
-            removedEntries += TryDeleteFile(RuntimePaths.GetServiceStatusPath());
+            var diagnostics = new List<string>();
+            removedEntries += CleanupTempRootPreservingAnalysisWorkspaces(diagnostics);
+            removedEntries += TryDeleteDirectory(RuntimePaths.GetWindowsSystemTempRoot(), diagnostics);
+            removedEntries += TryDeleteDirectory(RuntimePaths.GetLocalCacheRoot(), diagnostics);
+            removedEntries += TryDeleteDirectory(RuntimePaths.GetJobsRoot(), diagnostics);
+            removedEntries += TryDeleteFile(RuntimePaths.GetServiceStatusPath(), diagnostics);
 
             Directory.CreateDirectory(RuntimePaths.GetTempRoot());
 
             return new RuntimeCleanupResult
             {
                 RemovedEntries = removedEntries,
-                TempRootPath = RuntimePaths.GetTempRoot()
+                TempRootPath = RuntimePaths.GetTempRoot(),
+                Diagnostics = new ReadOnlyCollection<string>(diagnostics)
             };
         }
 
         internal int CleanupTempRootPreservingAnalysisWorkspaces()
+        {
+            return CleanupTempRootPreservingAnalysisWorkspaces(null);
+        }
+
+        internal int CleanupTempRootPreservingAnalysisWorkspaces(ICollection<string> diagnostics)
         {
             var tempRoot = RuntimePaths.GetTempRoot();
             if (!Directory.Exists(tempRoot))
@@ -59,18 +68,23 @@ namespace NtfsAudit.App.Services
                     continue;
                 }
 
-                removedEntries += TryDeleteDirectory(fullPath);
+                removedEntries += TryDeleteDirectory(fullPath, diagnostics);
             }
 
             foreach (var file in Directory.GetFiles(tempRoot))
             {
-                removedEntries += TryDeleteFile(file);
+                removedEntries += TryDeleteFile(file, diagnostics);
             }
 
             return removedEntries;
         }
 
         internal static int TryDeleteDirectory(string directoryPath)
+        {
+            return TryDeleteDirectory(directoryPath, null);
+        }
+
+        internal static int TryDeleteDirectory(string directoryPath, ICollection<string> diagnostics)
         {
             if (string.IsNullOrWhiteSpace(directoryPath) || !Directory.Exists(directoryPath))
             {
@@ -82,13 +96,19 @@ namespace NtfsAudit.App.Services
                 Directory.Delete(directoryPath, true);
                 return 1;
             }
-            catch
+            catch (Exception ex)
             {
+                AddDiagnostic(diagnostics, string.Format("Impossibile rimuovere directory runtime: {0}. Dettagli: {1}", directoryPath, ex.Message));
                 return 0;
             }
         }
 
         internal static int TryDeleteFile(string path)
+        {
+            return TryDeleteFile(path, null);
+        }
+
+        internal static int TryDeleteFile(string path, ICollection<string> diagnostics)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -106,10 +126,22 @@ namespace NtfsAudit.App.Services
                 File.Delete(ioPath);
                 return 1;
             }
-            catch
+            catch (Exception ex)
             {
+                AddDiagnostic(diagnostics, string.Format("Impossibile rimuovere file runtime: {0}. Dettagli: {1}", path, ex.Message));
                 return 0;
             }
+        }
+
+        private static void AddDiagnostic(ICollection<string> diagnostics, string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            Debug.WriteLine("[RuntimeCleanup] " + message);
+            diagnostics?.Add(message);
         }
     }
 
@@ -117,5 +149,6 @@ namespace NtfsAudit.App.Services
     {
         public int RemovedEntries { get; set; }
         public string TempRootPath { get; set; }
+        public IReadOnlyCollection<string> Diagnostics { get; set; }
     }
 }

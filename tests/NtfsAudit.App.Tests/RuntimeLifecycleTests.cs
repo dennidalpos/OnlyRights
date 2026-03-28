@@ -33,6 +33,7 @@ namespace NtfsAudit.App.Tests
             var staleDirectory = Path.Combine(tempRoot, "stale-" + Guid.NewGuid().ToString("N"));
             var staleFile = Path.Combine(tempRoot, "stale-" + Guid.NewGuid().ToString("N") + ".tmp");
 
+            RuntimeCleanupService.TryDeleteDirectory(tempRoot);
             Directory.CreateDirectory(importsRoot);
             Directory.CreateDirectory(exportsRoot);
             Directory.CreateDirectory(staleDirectory);
@@ -55,6 +56,32 @@ namespace NtfsAudit.App.Tests
             {
                 RuntimeCleanupService.TryDeleteDirectory(staleDirectory);
                 RuntimeCleanupService.TryDeleteFile(staleFile);
+            }
+        }
+
+        [Fact]
+        public void TryDeleteFile_CollectsDiagnostic_WhenDeletionFails()
+        {
+            var tempRoot = RuntimePaths.GetTempRoot();
+            Directory.CreateDirectory(tempRoot);
+            var lockedFile = Path.Combine(tempRoot, "locked-" + Guid.NewGuid().ToString("N") + ".tmp");
+            File.WriteAllText(lockedFile, "temp");
+            var diagnostics = new List<string>();
+
+            try
+            {
+                using (new FileStream(lockedFile, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    var removedEntries = RuntimeCleanupService.TryDeleteFile(lockedFile, diagnostics);
+
+                    Assert.Equal(0, removedEntries);
+                    Assert.Single(diagnostics);
+                    Assert.Contains("Impossibile rimuovere file runtime", diagnostics[0], StringComparison.Ordinal);
+                }
+            }
+            finally
+            {
+                RuntimeCleanupService.TryDeleteFile(lockedFile);
             }
         }
 

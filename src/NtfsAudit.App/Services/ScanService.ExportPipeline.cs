@@ -26,6 +26,11 @@ namespace NtfsAudit.App.Services
         {
             foreach (var candidate in GetTempDirectoryCandidates())
             {
+                if (string.IsNullOrWhiteSpace(candidate))
+                {
+                    continue;
+                }
+
                 try
                 {
                     Directory.CreateDirectory(candidate);
@@ -36,20 +41,20 @@ namespace NtfsAudit.App.Services
                 }
             }
 
-            var fallback = Path.Combine(Path.GetTempPath(), "NtfsAudit");
+            var fallback = RuntimePaths.GetTempRoot();
             Directory.CreateDirectory(fallback);
             return fallback;
         }
 
         private static IEnumerable<string> GetTempDirectoryCandidates()
         {
-            var windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
-            if (!string.IsNullOrWhiteSpace(windowsPath))
+            var windowsSystemTempRoot = RuntimePaths.GetWindowsSystemTempRoot();
+            if (!string.IsNullOrWhiteSpace(windowsSystemTempRoot))
             {
-                yield return Path.Combine(windowsPath, "SystemTemp", "NtfsAudit");
+                yield return windowsSystemTempRoot;
             }
 
-            yield return Path.Combine(Path.GetTempPath(), "NtfsAudit");
+            yield return RuntimePaths.GetTempRoot();
         }
 
         private static void EnqueueDataRecord(BlockingCollection<ExportRecord> dataQueue, ExportRecord record, CancellationToken token)

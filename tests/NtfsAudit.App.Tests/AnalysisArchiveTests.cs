@@ -196,7 +196,7 @@ namespace NtfsAudit.App.Tests
 
             try
             {
-                var workspace = Path.Combine(Path.GetTempPath(), "NtfsAudit", "exports");
+                var workspace = RuntimePaths.GetAnalysisExportsRoot();
                 Directory.CreateDirectory(workspace);
                 var obsoleteFile = Path.Combine(workspace, string.Format("stale_{0}.tmp", Guid.NewGuid().ToString("N")));
                 File.WriteAllText(obsoleteFile, "stale");
@@ -287,7 +287,7 @@ namespace NtfsAudit.App.Tests
                     ScannedAtUtc = DateTime.UtcNow
                 }, @"C:\data", archivePath);
 
-                var workspace = Path.Combine(Path.GetTempPath(), "NtfsAudit", "imports");
+                var workspace = RuntimePaths.GetAnalysisImportsRoot();
                 var obsoleteDir = Path.Combine(workspace, string.Format("stale_{0}", Guid.NewGuid().ToString("N")));
                 Directory.CreateDirectory(obsoleteDir);
                 Directory.SetLastWriteTimeUtc(obsoleteDir, DateTime.UtcNow.AddDays(-10));

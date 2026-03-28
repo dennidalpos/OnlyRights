@@ -426,20 +426,24 @@ namespace NtfsAudit.App.ViewModels
         {
             var cleanupResult = _runtimeCleanupService.CleanupOperationalData();
             var removedEntries = cleanupResult.RemovedEntries;
+            var diagnosticsCount = cleanupResult.Diagnostics == null ? 0 : cleanupResult.Diagnostics.Count;
+            var diagnosticsSuffix = diagnosticsCount > 0
+                ? string.Format(" Alcuni elementi non sono stati rimossi ({0}).", diagnosticsCount)
+                : string.Empty;
 
             if (triggeredByServiceUninstall)
             {
                 ProgressText = removedEntries > 0
-                    ? string.Format("Disinstallazione servizio: rimossi {0} elementi residui (cache/job/temp).", removedEntries)
-                    : "Disinstallazione servizio: nessun residuo da pulire.";
+                    ? string.Format("Disinstallazione servizio: rimossi {0} elementi residui (cache/job/temp).{1}", removedEntries, diagnosticsSuffix)
+                    : "Disinstallazione servizio: nessun residuo da pulire." + diagnosticsSuffix;
                 return;
             }
 
             if (triggeredByStop)
             {
                 ProgressText = removedEntries > 0
-                    ? string.Format("Analisi fermata: rimossi {0} elementi residui (cache/job/temp).", removedEntries)
-                    : "Analisi fermata: nessun residuo da pulire.";
+                    ? string.Format("Analisi fermata: rimossi {0} elementi residui (cache/job/temp).{1}", removedEntries, diagnosticsSuffix)
+                    : "Analisi fermata: nessun residuo da pulire." + diagnosticsSuffix;
                 return;
             }
 
@@ -452,8 +456,8 @@ namespace NtfsAudit.App.ViewModels
             }
 
             ProgressText = removedEntries > 0
-                ? string.Format("Pulizia completata: rimossi {0} elementi residui. Cartella temp aperta.", removedEntries)
-                : "Pulizia completata: nessun file residuo trovato. Cartella temp aperta.";
+                ? string.Format("Pulizia completata: rimossi {0} elementi residui. Cartella temp aperta.{1}", removedEntries, diagnosticsSuffix)
+                : "Pulizia completata: nessun file residuo trovato. Cartella temp aperta." + diagnosticsSuffix;
         }
 
         private static void OpenFolder(string path)
