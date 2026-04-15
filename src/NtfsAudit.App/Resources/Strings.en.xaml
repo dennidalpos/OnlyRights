@@ -34,6 +34,7 @@
   <sys:String x:Key="Scan.Errors">Errors: </sys:String>
   <sys:String x:Key="Scan.Elapsed">Time: </sys:String>
   <sys:String x:Key="Scan.Section">Scan</sys:String>
+  <sys:String x:Key="Scan.PathsAndOutput">Paths and output</sys:String>
   <sys:String x:Key="Scan.FoldersToScan">Folders to scan</sys:String>
   <sys:String x:Key="Scan.FoldersHint">Update the list and rerun when needed.</sys:String>
   <sys:String x:Key="Scan.StartHint">Add at least one folder or load a set before starting the analysis.</sys:String>
@@ -50,6 +51,10 @@
   <sys:String x:Key="Scan.GlobalPassword.AutomationName">Global scan credential password</sys:String>
   <sys:String x:Key="Credential.LocalPathCurrentUser.ToolTip">For local or non-UNC paths, saved credentials are not applied: the current user remains in use.</sys:String>
   <sys:String x:Key="Scan.MainOptions">Main options</sys:String>
+  <sys:String x:Key="Scan.Compatibility">Compatibility</sys:String>
+  <sys:String x:Key="Scan.ApplyCompatibleOptions">Set maximum compatibility</sys:String>
+  <sys:String x:Key="Scan.CompatibleOptionsHint">Use the current Windows user and disable features that require AD, PowerShell, WMI/RPC, SACL, or SMB share permissions.</sys:String>
+  <sys:String x:Key="Scan.DepthOptions">Depth</sys:String>
   <sys:String x:Key="Scan.Depth">Depth</sys:String>
   <sys:String x:Key="Scan.AllSubfolders">Analyze all subfolders</sys:String>
   <sys:String x:Key="Scan.IncludeInherited">Include inherited permissions</sys:String>
@@ -195,6 +200,8 @@
   <sys:String x:Key="Progress.ExportDataMissing">Export unavailable: scan data file is missing.</sys:String>
   <sys:String x:Key="Progress.CredentialsGlobalSaved">Global credentials saved locally in protected form.</sys:String>
   <sys:String x:Key="Progress.CredentialsGlobalRemoved">Global credentials removed. Resolution falls back to the current user.</sys:String>
+  <sys:String x:Key="Progress.CredentialsGlobalCurrentUser">Empty global credentials saved as current Windows user.</sys:String>
+  <sys:String x:Key="Progress.CompatibleOptionsApplied">Options set for maximum compatibility with local paths, UNC paths, and NAS folders visible from Windows.</sys:String>
   <sys:String x:Key="Credential.GlobalNone">No global credentials saved: the current Windows user will be used.</sys:String>
   <sys:String x:Key="Credential.GlobalActive">Global credential active: {0}</sys:String>
   <sys:String x:Key="Credential.SourceGlobal">Effective credentials: global credentials.</sys:String>
@@ -205,6 +212,7 @@
   <sys:String x:Key="Validation.SomePathsNotPreverified">Some paths cannot be verified in advance; the scan will continue and automatically record access or compatibility problems.</sys:String>
   <sys:String x:Key="Validation.SelectDfsTarget">Select a DFS target from the sidebar before adding the root.</sys:String>
   <sys:String x:Key="Validation.CredentialsGlobalRequired">Enter user and password to save global credentials.</sys:String>
+  <sys:String x:Key="Validation.CredentialsGlobalPartial">Enter both user and password, or leave both empty to use the current Windows user.</sys:String>
   <sys:String x:Key="Dialog.ProceedAnyway">{0}&#x0a;&#x0a;Do you want to proceed anyway?</sys:String>
   <sys:String x:Key="Dialog.UnexportedDataMessage">You have unexported scan data. Close anyway?</sys:String>
   <sys:String x:Key="Tray.Open">Open</sys:String>

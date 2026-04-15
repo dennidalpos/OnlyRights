@@ -33,6 +33,7 @@
   <sys:String x:Key="Scan.Errors">Errori: </sys:String>
   <sys:String x:Key="Scan.Elapsed">Tempo: </sys:String>
   <sys:String x:Key="Scan.Section">Scansione</sys:String>
+  <sys:String x:Key="Scan.PathsAndOutput">Percorsi e output</sys:String>
   <sys:String x:Key="Scan.FoldersToScan">Cartelle da scansionare</sys:String>
   <sys:String x:Key="Scan.FoldersHint">Aggiorna l'elenco e rilancia quando serve.</sys:String>
   <sys:String x:Key="Scan.StartHint">Aggiungi almeno una cartella o carica un set prima di avviare l'analisi.</sys:String>
@@ -49,6 +50,10 @@
   <sys:String x:Key="Scan.GlobalPassword.AutomationName">Password globale credenziali scansione</sys:String>
   <sys:String x:Key="Credential.LocalPathCurrentUser.ToolTip">Per percorsi locali o non UNC l'app non applica credenziali salvate: resta l'utente corrente.</sys:String>
   <sys:String x:Key="Scan.MainOptions">Opzioni principali</sys:String>
+  <sys:String x:Key="Scan.Compatibility">Compatibilita</sys:String>
+  <sys:String x:Key="Scan.ApplyCompatibleOptions">Imposta compatibilita massima</sys:String>
+  <sys:String x:Key="Scan.CompatibleOptionsHint">Usa l'utente Windows corrente e disattiva funzioni che richiedono AD, PowerShell, WMI/RPC, SACL o permessi share SMB.</sys:String>
+  <sys:String x:Key="Scan.DepthOptions">Profondita</sys:String>
   <sys:String x:Key="Scan.Depth">Profondita</sys:String>
   <sys:String x:Key="Scan.AllSubfolders">Analizza tutte le sottocartelle</sys:String>
   <sys:String x:Key="Scan.IncludeInherited">Includi permessi ereditati</sys:String>
@@ -194,6 +199,8 @@
   <sys:String x:Key="Progress.ExportDataMissing">Export non disponibile: file dati scansione mancante.</sys:String>
   <sys:String x:Key="Progress.CredentialsGlobalSaved">Credenziali globali salvate in locale in forma protetta.</sys:String>
   <sys:String x:Key="Progress.CredentialsGlobalRemoved">Credenziali globali rimosse. La risoluzione torna all'utente corrente.</sys:String>
+  <sys:String x:Key="Progress.CredentialsGlobalCurrentUser">Credenziali globali vuote salvate come utente Windows corrente.</sys:String>
+  <sys:String x:Key="Progress.CompatibleOptionsApplied">Opzioni impostate per compatibilita massima con path locali, UNC e NAS visibili da Windows.</sys:String>
   <sys:String x:Key="Credential.GlobalNone">Nessuna credenziale globale salvata: verra usato l'utente Windows corrente.</sys:String>
   <sys:String x:Key="Credential.GlobalActive">Credenziale globale attiva: {0}</sys:String>
   <sys:String x:Key="Credential.SourceGlobal">Credenziali effettive: credenziali globali.</sys:String>
@@ -204,6 +211,7 @@
   <sys:String x:Key="Validation.SomePathsNotPreverified">Alcuni percorsi non sono verificabili in anticipo; la scansione continuera registrando automaticamente i problemi di accesso o compatibilita.</sys:String>
   <sys:String x:Key="Validation.SelectDfsTarget">Seleziona un target DFS dalla sidebar prima di aggiungere la root.</sys:String>
   <sys:String x:Key="Validation.CredentialsGlobalRequired">Inserisci utente e password per salvare le credenziali globali.</sys:String>
+  <sys:String x:Key="Validation.CredentialsGlobalPartial">Inserisci sia utente sia password, oppure lascia entrambi vuoti per usare l'utente Windows corrente.</sys:String>
   <sys:String x:Key="Dialog.ProceedAnyway">{0}&#xA;&#xA;Vuoi procedere comunque?</sys:String>
   <sys:String x:Key="Dialog.UnexportedDataMessage">Hai dati di scansione non esportati. Vuoi chiudere comunque?</sys:String>
   <sys:String x:Key="Tray.Open">Apri</sys:String>

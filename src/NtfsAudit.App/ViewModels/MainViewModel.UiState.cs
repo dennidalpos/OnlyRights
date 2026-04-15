@@ -436,6 +436,7 @@ namespace NtfsAudit.App.ViewModels
             LoadScanRootSetCommand.RaiseCanExecuteChanged();
             SaveGlobalCredentialCommand.RaiseCanExecuteChanged();
             ClearGlobalCredentialCommand.RaiseCanExecuteChanged();
+            ApplyCompatibleScanOptionsCommand.RaiseCanExecuteChanged();
         }
     }
 }

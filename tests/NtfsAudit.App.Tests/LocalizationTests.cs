@@ -55,6 +55,11 @@ namespace NtfsAudit.App.Tests
 
             Assert.Equal(englishKeys, italianKeys);
             Assert.Equal(englishKeys.Count, englishKeys.Distinct().Count());
+            Assert.Contains("Scan.ApplyCompatibleOptions", englishKeys);
+            Assert.Contains("Scan.CompatibleOptionsHint", englishKeys);
+            Assert.Contains("Progress.CredentialsGlobalCurrentUser", englishKeys);
+            Assert.Contains("Progress.CompatibleOptionsApplied", englishKeys);
+            Assert.Contains("Validation.CredentialsGlobalPartial", englishKeys);
         }
 
         [Fact]

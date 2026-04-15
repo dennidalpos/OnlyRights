@@ -148,6 +148,16 @@ namespace NtfsAudit.App.ViewModels
         private const string ServiceName = "NtfsAuditWorker";
 
         public MainViewModel(bool viewerMode = false)
+            : this(viewerMode, null)
+        {
+        }
+
+        internal MainViewModel(ScanCredentialStore scanCredentialStore, bool viewerMode = false)
+            : this(viewerMode, scanCredentialStore)
+        {
+        }
+
+        private MainViewModel(bool viewerMode, ScanCredentialStore scanCredentialStore)
         {
             _isViewerMode = viewerMode;
             _cacheStore = new LocalCacheStore();
@@ -158,7 +168,7 @@ namespace NtfsAudit.App.ViewModels
             _analysisSqliteStore = new AnalysisSqliteStore();
             _runtimeCleanupService = new RuntimeCleanupService();
             _serviceRuntimeStatusPresenter = new ServiceRuntimeStatusPresenter();
-            _scanCredentialStore = new ScanCredentialStore();
+            _scanCredentialStore = scanCredentialStore ?? new ScanCredentialStore();
             _selectedLocale = LocalizationManager.ResolveLocale(LocalizationManager.CurrentLocale);
             LocalizationManager.LocaleChanged += OnLocaleChanged;
 
@@ -203,6 +213,7 @@ namespace NtfsAudit.App.ViewModels
             LoadScanRootSetCommand = new RelayCommand(LoadScanRootSet, () => !_isViewerMode && !IsBusy);
             SaveGlobalCredentialCommand = new RelayCommand(SaveGlobalCredential, () => !_isViewerMode && !IsBusy);
             ClearGlobalCredentialCommand = new RelayCommand(ClearGlobalCredential, () => !_isViewerMode && !IsBusy && HasGlobalCredential);
+            ApplyCompatibleScanOptionsCommand = new RelayCommand(ApplyCompatibleScanOptions, () => !_isViewerMode && !IsBusy);
 
             LoadCache();
             LoadCredentialSettings();

@@ -121,10 +121,22 @@ namespace NtfsAudit.App.ViewModels
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(GlobalCredentialUserName) || string.IsNullOrWhiteSpace(GlobalCredentialPassword))
+                var inputState = ClassifyGlobalCredentialInput(GlobalCredentialUserName, GlobalCredentialPassword);
+                if (inputState == GlobalCredentialInputState.Empty)
+                {
+                    _scanCredentialStore.SaveGlobal(null);
+                    GlobalCredentialUserName = string.Empty;
+                    GlobalCredentialPassword = string.Empty;
+                    ProgressText = LocalizationManager.Text("Progress.CredentialsGlobalCurrentUser");
+                    OnPropertyChanged("SelectedScanRootEffectiveCredentialSource");
+                    ClearGlobalCredentialCommand.RaiseCanExecuteChanged();
+                    return;
+                }
+
+                if (inputState == GlobalCredentialInputState.Partial)
                 {
                     WpfMessageBox.Show(
-                        LocalizationManager.Text("Validation.CredentialsGlobalRequired"),
+                        LocalizationManager.Text("Validation.CredentialsGlobalPartial"),
                         LocalizationManager.Text("Dialog.ScanCredentials"),
                         System.Windows.MessageBoxButton.OK,
                         System.Windows.MessageBoxImage.Warning);
@@ -166,6 +178,41 @@ namespace NtfsAudit.App.ViewModels
                 ProgressText = string.Format("Errore rimozione credenziali globali: {0}", ex.Message);
                 WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.ScanCredentials"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
+        }
+
+        internal static GlobalCredentialInputState ClassifyGlobalCredentialInput(string userName, string password)
+        {
+            var hasUserName = !string.IsNullOrWhiteSpace(userName);
+            var hasPassword = !string.IsNullOrWhiteSpace(password);
+            if (!hasUserName && !hasPassword)
+            {
+                return GlobalCredentialInputState.Empty;
+            }
+
+            return hasUserName && hasPassword
+                ? GlobalCredentialInputState.Complete
+                : GlobalCredentialInputState.Partial;
+        }
+
+        private void ApplyCompatibleScanOptions()
+        {
+            UseWindowsServiceMode = false;
+            ScanAllDepths = true;
+            IncludeInherited = true;
+            ResolveIdentities = false;
+            ExcludeServiceAccounts = false;
+            ExcludeAdminAccounts = false;
+            ExpandGroups = false;
+            UsePowerShell = false;
+            EnableAdvancedAudit = false;
+            ComputeEffectiveAccess = false;
+            IncludeSharePermissions = false;
+            IncludeFiles = false;
+            ReadOwnerAndSacl = false;
+            CompareBaseline = false;
+            SaveUiPreferences();
+            ProgressText = LocalizationManager.Text("Progress.CompatibleOptionsApplied");
+            UpdateCommands();
         }
 
         private void SaveScanRootSet()
@@ -331,5 +378,12 @@ namespace NtfsAudit.App.ViewModels
             return root.Trim().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         }
 
+    }
+
+    internal enum GlobalCredentialInputState
+    {
+        Empty,
+        Partial,
+        Complete
     }
 }

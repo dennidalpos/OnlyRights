@@ -128,6 +128,7 @@ namespace NtfsAudit.App.ViewModels
         public RelayCommand LoadScanRootSetCommand { get; private set; }
         public RelayCommand SaveGlobalCredentialCommand { get; private set; }
         public RelayCommand ClearGlobalCredentialCommand { get; private set; }
+        public RelayCommand ApplyCompatibleScanOptionsCommand { get; private set; }
 
         public System.Collections.Generic.IReadOnlyList<LocaleOption> AvailableLocales
         {

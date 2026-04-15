@@ -50,6 +50,7 @@
               <StackPanel>
               <GroupBox Header="{DynamicResource Scan.Section}" Style="{StaticResource AppGroupBoxStyle}" Margin="0" IsEnabled="{Binding IsScanConfigEnabled}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel>
+                  <TextBlock Text="{DynamicResource Scan.PathsAndOutput}" Style="{StaticResource SubsectionHeaderText}" />
                   <TextBlock Text="{DynamicResource Scan.FoldersToScan}" Style="{StaticResource SubsectionHeaderText}" />
                   <TextBlock Text="{DynamicResource Scan.FoldersHint}" Style="{StaticResource MicrocopyText}" ToolTip="Puoi fermare la scansione o il job con pulizia residui, modificare questo elenco e riavviare con nuove cartelle." />
                   <TextBlock Text="{DynamicResource Scan.StartHint}"
@@ -132,8 +133,6 @@
                     <Button Grid.Column="0" Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,8,0" Content="{DynamicResource Common.Browse}" AutomationProperties.Name="Sfoglia cartella output .ntaudit" Command="{Binding BrowseOutputDirectoryCommand}" />
                     <TextBox Grid.Column="1" Style="{StaticResource FieldTextBoxStyle}" AutomationProperties.Name="Cartella output report .ntaudit" ToolTip="Cartella in cui salvare automaticamente i report .ntaudit generati dalla scansione." Text="{Binding AuditOutputDirectory, UpdateSourceTrigger=PropertyChanged}" />
                   </Grid>
-                  <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ServiceMode}" IsChecked="{Binding UseWindowsServiceMode}" ToolTip="Usa l'host Windows opzionale per eseguire la scansione in background; non aggiunge funzioni di analisi rispetto alla modalita locale." />
-                  <TextBlock Text="{DynamicResource Scan.ServiceModeHint}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,6" TextWrapping="Wrap" ToolTip="Utile per scansioni lunghe o non interattive. La logica di analisi resta la stessa dell'app locale." />
                   <TextBlock Text="{DynamicResource Scan.Credentials}" Style="{StaticResource SubsectionHeaderText}" />
                   <TextBlock Text="{Binding GlobalCredentialStatusText}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,6" />
                   <StackPanel Margin="0,0,0,8">
@@ -148,21 +147,25 @@
                   </StackPanel>
                   <TextBlock Text="{Binding SelectedScanRootEffectiveCredentialSource}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,6"
                              ToolTip="{DynamicResource Credential.LocalPathCurrentUser.ToolTip}" />
-                  <Expander Header="{DynamicResource Scan.MainOptions}" IsExpanded="True">
-                    <StackPanel Margin="0,6,0,0">
-                      <Grid Margin="0,0,0,6">
-                        <Grid.ColumnDefinitions>
-                          <ColumnDefinition Width="Auto" />
-                          <ColumnDefinition Width="Auto" />
-                          <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{DynamicResource Scan.Depth}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                        <TextBox Grid.Column="1" Width="60" Height="28" AutomationProperties.Name="Profondita massima scansione" ToolTip="Numero massimo di livelli da analizzare quando l'analisi di tutte le sottocartelle è disattivata." Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0,0,12,0" />
-                        <CheckBox Grid.Column="2" Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.AllSubfolders}" IsChecked="{Binding ScanAllDepths}" Margin="0" />
-                      </Grid>
-                      <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.IncludeInherited}" IsChecked="{Binding IncludeInherited}" Margin="0" />
-                    </StackPanel>
-                  </Expander>
+                  <TextBlock Text="{DynamicResource Scan.Compatibility}" Style="{StaticResource SubsectionHeaderText}" />
+                  <TextBlock Text="{DynamicResource Scan.CompatibleOptionsHint}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" Margin="0,0,0,6" />
+                  <WrapPanel Margin="0,0,0,8">
+                    <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,8,0" Content="{DynamicResource Scan.ApplyCompatibleOptions}" AutomationProperties.Name="{DynamicResource Scan.ApplyCompatibleOptions}" Command="{Binding ApplyCompatibleScanOptionsCommand}" />
+                  </WrapPanel>
+                  <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ServiceMode}" IsChecked="{Binding UseWindowsServiceMode}" ToolTip="Usa l'host Windows opzionale per eseguire la scansione in background; non aggiunge funzioni di analisi rispetto alla modalita locale." />
+                  <TextBlock Text="{DynamicResource Scan.ServiceModeHint}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,6" TextWrapping="Wrap" ToolTip="Utile per scansioni lunghe o non interattive. La logica di analisi resta la stessa dell'app locale." />
+                  <TextBlock Text="{DynamicResource Scan.DepthOptions}" Style="{StaticResource SubsectionHeaderText}" />
+                  <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{DynamicResource Scan.Depth}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBox Grid.Column="1" Width="60" Height="28" AutomationProperties.Name="Profondita massima scansione" ToolTip="Numero massimo di livelli da analizzare quando l'analisi di tutte le sottocartelle è disattivata." Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0,0,12,0" />
+                    <CheckBox Grid.Column="2" Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.AllSubfolders}" IsChecked="{Binding ScanAllDepths}" Margin="0" />
+                  </Grid>
+                  <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.IncludeInherited}" IsChecked="{Binding IncludeInherited}" Margin="0" />
                 </StackPanel>
               </GroupBox>
 
@@ -173,18 +176,15 @@
                   <TextBlock Text="{DynamicResource Scan.IdentityHint}" Style="{StaticResource MicrocopyText}" ToolTip="Attiva la risoluzione SID, gruppi e utenti tramite resolver disponibili." />
                   <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ExpandGroups}" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
                   <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.UsePowerShell}" IsChecked="{Binding UsePowerShell}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
-                  <Expander Header="{DynamicResource Scan.AdvancedAudit}" IsExpanded="True" Margin="0,8,0,0" ToolTip="Opzioni amministrative aggiuntive per Effective Access, Share, file, Owner/SACL e baseline.">
-                    <StackPanel Margin="0,6,0,0">
-                      <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.EnableAdvancedAudit}" IsChecked="{Binding EnableAdvancedAudit}" />
-                      <StackPanel Margin="0,4,0,0" IsEnabled="{Binding IsAdvancedAuditEnabled}">
-                      <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ComputeEffectiveAccess}" IsChecked="{Binding ComputeEffectiveAccess}" />
-                      <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.IncludeSharePermissions}" IsChecked="{Binding IncludeSharePermissions}" />
-                      <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.IncludeFiles}" IsChecked="{Binding IncludeFiles}" />
-                      <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ReadOwnerAndSacl}" IsChecked="{Binding ReadOwnerAndSacl}" />
-                      <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Margin="0" Content="{DynamicResource Scan.CompareBaseline}" IsChecked="{Binding CompareBaseline}" />
-                      </StackPanel>
-                    </StackPanel>
-                  </Expander>
+                  <TextBlock Text="{DynamicResource Scan.AdvancedAudit}" Style="{StaticResource SubsectionHeaderText}" ToolTip="Opzioni amministrative aggiuntive per Effective Access, Share, file, Owner/SACL e baseline." />
+                  <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.EnableAdvancedAudit}" IsChecked="{Binding EnableAdvancedAudit}" />
+                  <StackPanel Margin="0,4,0,0" IsEnabled="{Binding IsAdvancedAuditEnabled}">
+                    <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ComputeEffectiveAccess}" IsChecked="{Binding ComputeEffectiveAccess}" />
+                    <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.IncludeSharePermissions}" IsChecked="{Binding IncludeSharePermissions}" />
+                    <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.IncludeFiles}" IsChecked="{Binding IncludeFiles}" />
+                    <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ReadOwnerAndSacl}" IsChecked="{Binding ReadOwnerAndSacl}" />
+                    <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Margin="0" Content="{DynamicResource Scan.CompareBaseline}" IsChecked="{Binding CompareBaseline}" />
+                  </StackPanel>
                   <TextBlock Text="{DynamicResource Scan.Exclusions}" Style="{StaticResource SubsectionHeaderText}" />
                   <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ExcludeServiceAccounts}" IsChecked="{Binding ExcludeServiceAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
                   <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Margin="0" Content="{DynamicResource Scan.ExcludeAdminAccounts}" IsChecked="{Binding ExcludeAdminAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
