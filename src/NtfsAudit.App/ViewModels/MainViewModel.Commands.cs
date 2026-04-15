@@ -110,7 +110,6 @@ namespace NtfsAudit.App.ViewModels
             var key = GetScanRootKey(SelectedScanRoot);
             _scanRootDfsTargets.Remove(key);
             _scanRootNamespacePaths.Remove(key);
-            _scanRootCredentialOverrides.Remove(key);
             ScanRoots.Remove(SelectedScanRoot);
             SelectedScanRoot = ScanRoots.Count > 0 ? ScanRoots[0] : null;
             OnPropertyChanged("CanStart");
@@ -165,69 +164,6 @@ namespace NtfsAudit.App.ViewModels
             catch (Exception ex)
             {
                 ProgressText = string.Format("Errore rimozione credenziali globali: {0}", ex.Message);
-                WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.ScanCredentials"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-            }
-        }
-
-        private void SaveSelectedScanRootCredential()
-        {
-            if (string.IsNullOrWhiteSpace(SelectedScanRoot))
-            {
-                return;
-            }
-
-            try
-            {
-                if (string.IsNullOrWhiteSpace(SelectedScanRootCredentialUserName) || string.IsNullOrWhiteSpace(SelectedScanRootCredentialPassword))
-                {
-                    WpfMessageBox.Show(
-                        LocalizationManager.Text("Validation.CredentialsOverrideRequired"),
-                        LocalizationManager.Text("Dialog.ScanCredentials"),
-                        System.Windows.MessageBoxButton.OK,
-                        System.Windows.MessageBoxImage.Warning);
-                    return;
-                }
-
-                var key = GetScanRootKey(SelectedScanRoot);
-                var credential = new ScanCredential
-                {
-                    UserName = SelectedScanRootCredentialUserName.Trim(),
-                    Password = SelectedScanRootCredentialPassword
-                };
-                _scanRootCredentialOverrides[key] = credential.Clone();
-                _scanCredentialStore.SaveOverride(key, credential);
-                SelectedScanRootCredentialUserName = credential.UserName;
-                SelectedScanRootCredentialPassword = credential.Password;
-                ProgressText = LocalizationManager.Format("Progress.CredentialOverrideSaved", SelectedScanRoot);
-                ClearScanRootCredentialCommand.RaiseCanExecuteChanged();
-            }
-            catch (Exception ex)
-            {
-                ProgressText = string.Format("Errore salvataggio override root: {0}", ex.Message);
-                WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.ScanCredentials"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-            }
-        }
-
-        private void ClearSelectedScanRootCredential()
-        {
-            if (string.IsNullOrWhiteSpace(SelectedScanRoot))
-            {
-                return;
-            }
-
-            try
-            {
-                var key = GetScanRootKey(SelectedScanRoot);
-                _scanRootCredentialOverrides.Remove(key);
-                _scanCredentialStore.SaveOverride(key, null);
-                SelectedScanRootCredentialUserName = string.Empty;
-                SelectedScanRootCredentialPassword = string.Empty;
-                ProgressText = LocalizationManager.Format("Progress.CredentialOverrideRemoved", SelectedScanRoot);
-                ClearScanRootCredentialCommand.RaiseCanExecuteChanged();
-            }
-            catch (Exception ex)
-            {
-                ProgressText = string.Format("Errore rimozione override root: {0}", ex.Message);
                 WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.ScanCredentials"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }

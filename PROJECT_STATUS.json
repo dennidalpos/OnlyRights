@@ -1,15 +1,3 @@
 {
-  "tasks": [
-    {
-      "id": "localization-persisted-output-residuals",
-      "status": "open",
-      "scope": "supporting",
-      "risk": "HIGH",
-      "title": "Audit remaining hardcoded strings tied to persisted scan/export/archive data",
-      "notes": [
-        "Keep .ntaudit payload tokens, Excel output shape, ACL/risk filtering values, service job payloads, and domain-derived strings stable until a separate compatibility pass defines display projection or migration behavior.",
-        "Known areas to review separately include ScanService permission/audit summaries, ExcelExporter sheet and table labels, AnalysisArchive compatibility messages, ScanExceptionClassifier diagnostics, and service command fallback diagnostics."
-      ]
-    }
-  ]
+  "tasks": []
 }

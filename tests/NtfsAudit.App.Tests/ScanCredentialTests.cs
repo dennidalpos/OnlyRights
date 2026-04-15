@@ -55,7 +55,7 @@ namespace NtfsAudit.App.Tests
             var options = new ScanOptions
             {
                 RootPath = @"\\server\share",
-                CredentialSource = "RootOverride",
+                CredentialSource = "Global",
                 Credential = new ScanCredential
                 {
                     UserName = @"CONTOSO\scanner",
@@ -97,7 +97,7 @@ namespace NtfsAudit.App.Tests
                         {
                             RootPath = @"\\server\share",
                             OutputDirectory = tempRoot,
-                            CredentialSource = "RootOverride",
+                            CredentialSource = "Global",
                             Credential = protectedCredential
                         }
                     }
@@ -112,10 +112,82 @@ namespace NtfsAudit.App.Tests
                 Assert.Null(failureReason);
                 Assert.Single(runnableOptions);
                 Assert.NotNull(runnableOptions[0].Credential);
-                Assert.Equal("RootOverride", runnableOptions[0].CredentialSource);
+                Assert.Equal("Global", runnableOptions[0].CredentialSource);
                 Assert.Equal(protectedCredential.UserName, runnableOptions[0].Credential.UserName);
                 Assert.Equal(protectedCredential.ProtectedPassword, runnableOptions[0].Credential.ProtectedPassword);
                 Assert.True(string.IsNullOrWhiteSpace(runnableOptions[0].Credential.Password));
+            }
+            finally
+            {
+                if (Directory.Exists(tempRoot))
+                {
+                    Directory.Delete(tempRoot, true);
+                }
+            }
+        }
+
+        [Fact]
+        public void ScanCredentialStore_SaveGlobal_UsesLocalMachineProtection()
+        {
+            var tempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit.Tests", Guid.NewGuid().ToString("N"));
+            var storePath = Path.Combine(tempRoot, "scan-credentials.json");
+            Directory.CreateDirectory(tempRoot);
+
+            try
+            {
+                var store = new ScanCredentialStore(storePath);
+                store.SaveGlobal(new ScanCredential
+                {
+                    UserName = @"CONTOSO\scanner",
+                    Password = "Secret!123"
+                });
+
+                var json = File.ReadAllText(storePath);
+                Assert.Contains(@"""ProtectionScope"": ""LocalMachine""", json, StringComparison.Ordinal);
+                Assert.DoesNotContain("Secret!123", json, StringComparison.Ordinal);
+
+                var loaded = store.Load();
+                Assert.NotNull(loaded.GlobalCredential);
+                Assert.Equal(@"CONTOSO\scanner", loaded.GlobalCredential.UserName);
+                Assert.Equal("Secret!123", loaded.GlobalCredential.Password);
+            }
+            finally
+            {
+                if (Directory.Exists(tempRoot))
+                {
+                    Directory.Delete(tempRoot, true);
+                }
+            }
+        }
+
+        [Fact]
+        public void ScanCredentialStore_Load_MigratesLegacyCurrentUserGlobalCredential()
+        {
+            var tempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit.Tests", Guid.NewGuid().ToString("N"));
+            var storePath = Path.Combine(tempRoot, "common", "scan-credentials.json");
+            var legacyPath = Path.Combine(tempRoot, "legacy", "scan-credentials.json");
+            Directory.CreateDirectory(Path.GetDirectoryName(legacyPath));
+
+            try
+            {
+                var legacyCredential = ScanCredentialProtector.ProtectForCurrentUser(new ScanCredential
+                {
+                    UserName = @"CONTOSO\legacy",
+                    Password = "Legacy!123"
+                });
+                File.WriteAllText(legacyPath, JsonConvert.SerializeObject(new
+                {
+                    GlobalCredential = legacyCredential
+                }, Formatting.Indented));
+
+                var store = new ScanCredentialStore(storePath, legacyPath);
+                var loaded = store.Load();
+
+                Assert.NotNull(loaded.GlobalCredential);
+                Assert.Equal(@"CONTOSO\legacy", loaded.GlobalCredential.UserName);
+                Assert.Equal("Legacy!123", loaded.GlobalCredential.Password);
+                Assert.True(File.Exists(storePath));
+                Assert.Contains(@"""ProtectionScope"": ""LocalMachine""", File.ReadAllText(storePath), StringComparison.Ordinal);
             }
             finally
             {

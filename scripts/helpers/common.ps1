@@ -24,7 +24,6 @@ function Get-RepositoryContext {
         PackagesRoot = Join-Path $artifactsRoot "packages"
         PublishRoot = Join-Path $artifactsRoot "publish"
         WixTools = Join-Path $repoRoot "tools\wix314-binaries"
-        NssmTools = Join-Path $repoRoot "tools\nssm"
     }
 }
 
@@ -78,6 +77,64 @@ function Invoke-DotNetCommand {
     if ($LASTEXITCODE -ne 0) {
         throw $ErrorMessage
     }
+}
+
+function Assert-SupportedWindowsRuntime {
+    param([string]$Runtime)
+
+    if ([string]::IsNullOrWhiteSpace($Runtime)) {
+        return
+    }
+
+    if ($Runtime -notin @("win-x86", "win-x64")) {
+        throw ("Unsupported runtime '{0}'. Supported Windows runtimes: win-x86, win-x64." -f $Runtime)
+    }
+}
+
+function Assert-SupportedPlatformTarget {
+    param([string]$PlatformTarget)
+
+    if ([string]::IsNullOrWhiteSpace($PlatformTarget)) {
+        return
+    }
+
+    if ($PlatformTarget -notin @("AnyCPU", "x86", "x64")) {
+        throw ("Unsupported platform target '{0}'. Supported platform targets: AnyCPU, x86, x64." -f $PlatformTarget)
+    }
+}
+
+function Resolve-PlatformTarget {
+    param(
+        [string]$Runtime,
+        [string]$PlatformTarget
+    )
+
+    Assert-SupportedWindowsRuntime -Runtime $Runtime
+    Assert-SupportedPlatformTarget -PlatformTarget $PlatformTarget
+
+    if (-not [string]::IsNullOrWhiteSpace($PlatformTarget)) {
+        if (($Runtime -eq "win-x86" -and $PlatformTarget -eq "x64") -or ($Runtime -eq "win-x64" -and $PlatformTarget -eq "x86")) {
+            throw ("Runtime '{0}' is incompatible with platform target '{1}'." -f $Runtime, $PlatformTarget)
+        }
+
+        return $PlatformTarget
+    }
+
+    switch ($Runtime) {
+        "win-x86" { return "x86" }
+        "win-x64" { return "x64" }
+        default { return $null }
+    }
+}
+
+function Get-PlatformTargetBuildArgument {
+    param([string]$PlatformTarget)
+
+    if ([string]::IsNullOrWhiteSpace($PlatformTarget) -or $PlatformTarget -eq "AnyCPU") {
+        return @()
+    }
+
+    return @("-p:PlatformTarget=$PlatformTarget")
 }
 
 function Get-RequiredSdkVersion {

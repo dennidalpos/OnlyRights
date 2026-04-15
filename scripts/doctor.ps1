@@ -74,12 +74,6 @@ $scExecutablePath = Join-Path ([Environment]::GetFolderPath("System")) "sc.exe"
 $msiexecPath = Join-Path ([Environment]::GetFolderPath("System")) "msiexec.exe"
 $wixCandlePath = Join-Path $context.WixTools "candle.exe"
 $wixLightPath = Join-Path $context.WixTools "light.exe"
-$nssmExecutablePath = if ([Environment]::Is64BitOperatingSystem) {
-    Join-Path $context.NssmTools "win64\nssm.exe"
-}
-else {
-    Join-Path $context.NssmTools "win32\nssm.exe"
-}
 
 $checks = @(
     (New-CheckResult -Label "SDK feature band available" -Passed $sdkInstalled -Failure ("Required SDK feature band not installed for global.json version {0}." -f $requiredSdkVersion) -Required $true),
@@ -88,8 +82,7 @@ $checks = @(
     (New-CheckResult -Label "sc.exe (Windows service management)" -Passed (Test-ExecutablePath $scExecutablePath) -Failure ("sc.exe not found: {0}" -f $scExecutablePath) -Required $false),
     (New-CheckResult -Label "msiexec.exe (MSI install tests)" -Passed (Test-ExecutablePath $msiexecPath) -Failure ("msiexec.exe not found: {0}" -f $msiexecPath) -Required $false),
     (New-CheckResult -Label "WiX candle.exe (MSI build)" -Passed (Test-ExecutablePath $wixCandlePath) -Failure ("WiX candle.exe not found: {0}" -f $wixCandlePath) -Required $false),
-    (New-CheckResult -Label "WiX light.exe (MSI build)" -Passed (Test-ExecutablePath $wixLightPath) -Failure ("WiX light.exe not found: {0}" -f $wixLightPath) -Required $false),
-    (New-CheckResult -Label "NSSM fallback executable" -Passed (Test-ExecutablePath $nssmExecutablePath) -Failure ("NSSM executable not found: {0}" -f $nssmExecutablePath) -Required $false)
+    (New-CheckResult -Label "WiX light.exe (MSI build)" -Passed (Test-ExecutablePath $wixLightPath) -Failure ("WiX light.exe not found: {0}" -f $wixLightPath) -Required $false)
 )
 
 $requiredChecks = @($checks | Where-Object { $_.Required })

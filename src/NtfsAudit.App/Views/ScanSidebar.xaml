@@ -73,7 +73,7 @@
                       <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="{DynamicResource Scan.InputDfsTarget}" VerticalAlignment="Center" Margin="0,0,6,0"
-                               ToolTip="Se il percorso inserito è un namespace DFS con più target, scegli qui il target da usare prima di avviare la scansione o aggiungere la root." />
+                               ToolTip="{DynamicResource Scan.InputDfsTarget.ToolTip}" />
                     <ComboBox Grid.Column="1"
                               Height="28"
                               Background="#FFE3F2FD"
@@ -140,25 +140,14 @@
                     <TextBlock Text="{DynamicResource Scan.GlobalUser}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,2" />
                     <TextBox Style="{StaticResource FieldTextBoxStyle}" MinWidth="0" AutomationProperties.Name="Utente globale credenziali scansione" Text="{Binding GlobalCredentialUserName, UpdateSourceTrigger=PropertyChanged}" ToolTip="Utente globale (DOMINIO\utente o utente@dominio)" />
                     <TextBlock Text="{DynamicResource Scan.GlobalPassword}" Style="{StaticResource MicrocopyText}" Margin="0,4,0,2" />
-                    <PasswordBox x:Name="GlobalCredentialPasswordBox" Height="28" AutomationProperties.Name="Password globale credenziali scansione" PasswordChanged="GlobalCredentialPasswordBox_OnPasswordChanged" ToolTip="Password credenziali globali" />
+                    <PasswordBox x:Name="GlobalCredentialPasswordBox" Height="28" AutomationProperties.Name="{DynamicResource Scan.GlobalPassword.AutomationName}" PasswordChanged="GlobalCredentialPasswordBox_OnPasswordChanged" ToolTip="{DynamicResource Scan.GlobalPassword.ToolTip}" />
                     <WrapPanel Margin="0,6,0,0">
                       <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,8,0" Content="{DynamicResource Common.Save}" AutomationProperties.Name="Salva credenziali globali" Command="{Binding SaveGlobalCredentialCommand}" />
                       <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,0,0" Content="{DynamicResource Common.Remove}" AutomationProperties.Name="Rimuovi credenziali globali" Command="{Binding ClearGlobalCredentialCommand}" />
                     </WrapPanel>
                   </StackPanel>
-                  <TextBlock Text="{Binding SelectedScanRootCredentialStatusText}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,4" />
                   <TextBlock Text="{Binding SelectedScanRootEffectiveCredentialSource}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,6"
-                             ToolTip="Per percorsi locali o non UNC l'app non applica credenziali salvate: resta l'utente corrente." />
-                  <StackPanel Margin="0,0,0,8" IsEnabled="{Binding HasSelectedScanRoot}">
-                    <TextBlock Text="{DynamicResource Scan.RootOverrideUser}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,2" />
-                    <TextBox Style="{StaticResource FieldTextBoxStyle}" MinWidth="0" AutomationProperties.Name="Utente override root selezionata" Text="{Binding SelectedScanRootCredentialUserName, UpdateSourceTrigger=PropertyChanged}" ToolTip="Utente dedicato per la root selezionata" />
-                    <TextBlock Text="{DynamicResource Scan.RootOverridePassword}" Style="{StaticResource MicrocopyText}" Margin="0,4,0,2" />
-                    <PasswordBox x:Name="SelectedScanRootCredentialPasswordBox" Height="28" AutomationProperties.Name="Password override root selezionata" PasswordChanged="SelectedScanRootCredentialPasswordBox_OnPasswordChanged" ToolTip="Password override root" />
-                    <WrapPanel Margin="0,6,0,0">
-                      <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,8,0" Content="{DynamicResource Common.Save}" AutomationProperties.Name="Salva credenziali override root" Command="{Binding SaveScanRootCredentialCommand}" />
-                      <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,0,0" Content="{DynamicResource Common.Remove}" AutomationProperties.Name="Rimuovi credenziali override root" Command="{Binding ClearScanRootCredentialCommand}" />
-                    </WrapPanel>
-                  </StackPanel>
+                             ToolTip="{DynamicResource Credential.LocalPathCurrentUser.ToolTip}" />
                   <Expander Header="{DynamicResource Scan.MainOptions}" IsExpanded="True">
                     <StackPanel Margin="0,6,0,0">
                       <Grid Margin="0,0,0,6">

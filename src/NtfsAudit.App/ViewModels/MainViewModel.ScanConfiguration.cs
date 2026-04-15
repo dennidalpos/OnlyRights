@@ -128,8 +128,6 @@ namespace NtfsAudit.App.ViewModels
         public RelayCommand LoadScanRootSetCommand { get; private set; }
         public RelayCommand SaveGlobalCredentialCommand { get; private set; }
         public RelayCommand ClearGlobalCredentialCommand { get; private set; }
-        public RelayCommand SaveScanRootCredentialCommand { get; private set; }
-        public RelayCommand ClearScanRootCredentialCommand { get; private set; }
 
         public System.Collections.Generic.IReadOnlyList<LocaleOption> AvailableLocales
         {
@@ -179,11 +177,8 @@ namespace NtfsAudit.App.ViewModels
                 _selectedScanRoot = value;
                 OnPropertyChanged("SelectedScanRoot");
                 LoadSelectedScanRootDfsTargets();
-                LoadSelectedScanRootCredential();
                 OnPropertyChanged("HasSelectedScanRoot");
                 RemoveScanRootCommand.RaiseCanExecuteChanged();
-                SaveScanRootCredentialCommand.RaiseCanExecuteChanged();
-                ClearScanRootCredentialCommand.RaiseCanExecuteChanged();
             }
         }
 
@@ -233,15 +228,9 @@ namespace NtfsAudit.App.ViewModels
                             _scanRootNamespacePaths[newKey] = namespacePath;
                             _scanRootDfsTargets.Remove(key);
                             _scanRootDfsTargets[newKey] = value;
-                            if (_scanRootCredentialOverrides.TryGetValue(key, out var overrideCredential))
-                            {
-                                _scanRootCredentialOverrides.Remove(key);
-                                _scanRootCredentialOverrides[newKey] = overrideCredential;
-                            }
                             _selectedScanRoot = value;
                             OnPropertyChanged("SelectedScanRoot");
                             LoadSelectedScanRootDfsTargets();
-                            LoadSelectedScanRootCredential();
                             OnPropertyChanged("SelectedScanRootDfsTarget");
                             OnPropertyChanged("CanStart");
                             StartCommand.RaiseCanExecuteChanged();
@@ -314,67 +303,6 @@ namespace NtfsAudit.App.ViewModels
                 }
 
                 return LocalizationManager.Format("Credential.GlobalActive", GlobalCredentialUserName);
-            }
-        }
-
-        public string SelectedScanRootCredentialUserName
-        {
-            get { return _selectedScanRootCredentialUserName; }
-            set
-            {
-                _selectedScanRootCredentialUserName = value;
-                OnPropertyChanged("SelectedScanRootCredentialUserName");
-                OnPropertyChanged("HasSelectedScanRootCredentialOverride");
-                OnPropertyChanged("SelectedScanRootCredentialStatusText");
-                OnPropertyChanged("SelectedScanRootEffectiveCredentialSource");
-                if (ClearScanRootCredentialCommand != null)
-                {
-                    ClearScanRootCredentialCommand.RaiseCanExecuteChanged();
-                }
-            }
-        }
-
-        public string SelectedScanRootCredentialPassword
-        {
-            get { return _selectedScanRootCredentialPassword; }
-            set
-            {
-                _selectedScanRootCredentialPassword = value;
-                OnPropertyChanged("SelectedScanRootCredentialPassword");
-                OnPropertyChanged("HasSelectedScanRootCredentialOverride");
-                OnPropertyChanged("SelectedScanRootCredentialStatusText");
-                OnPropertyChanged("SelectedScanRootEffectiveCredentialSource");
-                if (ClearScanRootCredentialCommand != null)
-                {
-                    ClearScanRootCredentialCommand.RaiseCanExecuteChanged();
-                }
-            }
-        }
-
-        public bool HasSelectedScanRootCredentialOverride
-        {
-            get
-            {
-                return !string.IsNullOrWhiteSpace(SelectedScanRootCredentialUserName)
-                    && !string.IsNullOrWhiteSpace(SelectedScanRootCredentialPassword);
-            }
-        }
-
-        public string SelectedScanRootCredentialStatusText
-        {
-            get
-            {
-                if (string.IsNullOrWhiteSpace(SelectedScanRoot))
-                {
-                    return LocalizationManager.Text("Credential.SelectRoot");
-                }
-
-                if (HasSelectedScanRootCredentialOverride)
-                {
-                    return LocalizationManager.Format("Credential.OverrideActive", SelectedScanRootCredentialUserName);
-                }
-
-                return LocalizationManager.Text("Credential.OverrideNone");
             }
         }
 

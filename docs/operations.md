@@ -13,7 +13,6 @@ Optional capabilities checked by `scripts/doctor.ps1`:
 - `sc.exe` for Windows Service management.
 - `msiexec.exe` for MSI install/uninstall smoke tests.
 - WiX `candle.exe` and `light.exe` under `tools/wix314-binaries`.
-- NSSM under `tools/nssm` for the optional fallback service path.
 
 ## Setup
 
@@ -59,6 +58,13 @@ Build:
 
 ```powershell
 powershell -File .\scripts\build.ps1 -Configuration Release
+```
+
+RID/platform-specific build outputs:
+
+```powershell
+powershell -File .\scripts\build.ps1 -Configuration Release -Runtime win-x64
+powershell -File .\scripts\build.ps1 -Configuration Release -Runtime win-x86
 ```
 
 Test:
@@ -142,6 +148,10 @@ The default package is framework-dependent and uses the normal `Any CPU` project
 powershell -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x64
 powershell -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86
 ```
+
+`win-x64` package output is staged under `artifacts/packages/Release/win-x64/<framework>`.
+`win-x86` package output is staged under `artifacts/packages/Release/win-x86/<framework>`.
+Build outputs created with `-Runtime win-x64` or `-Runtime win-x86` use matching `x64` or `x86` platform targets and are separated under `artifacts/build`.
 
 Self-contained package:
 

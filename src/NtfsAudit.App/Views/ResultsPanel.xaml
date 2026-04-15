@@ -23,7 +23,7 @@
                 </Border>
                 <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFFFEBEE" BorderBrush="#FFFFCDD2">
                   <StackPanel>
-                    <TextBlock Text="Deny" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{DynamicResource Results.Deny}" Style="{StaticResource InfoLabelText}" />
                     <TextBlock Text="{Binding SummaryDenyCount}" Style="{StaticResource InfoValueText}" />
                   </StackPanel>
                 </Border>
@@ -35,19 +35,19 @@
                 </Border>
                 <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFE8F5E9" BorderBrush="#FFC8E6C9">
                   <StackPanel>
-                    <TextBlock Text="File" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{DynamicResource Results.File}" Style="{StaticResource InfoLabelText}" />
                     <TextBlock Text="{Binding SummaryFilesCount}" Style="{StaticResource InfoValueText}" />
                   </StackPanel>
                 </Border>
                 <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFFFF3E0" BorderBrush="#FFFFE0B2">
                   <StackPanel>
-                    <TextBlock Text="Everyone" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{DynamicResource Results.Everyone}" Style="{StaticResource InfoLabelText}" />
                     <TextBlock Text="{Binding SummaryEveryoneCount}" Style="{StaticResource InfoValueText}" />
                   </StackPanel>
                 </Border>
                 <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFF5F5F5" BorderBrush="#FFE0E0E0">
                   <StackPanel>
-                    <TextBlock Text="Authenticated Users" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{DynamicResource Results.AuthenticatedUsers}" Style="{StaticResource InfoLabelText}" />
                     <TextBlock Text="{Binding SummaryAuthUsersCount}" Style="{StaticResource InfoValueText}" />
                   </StackPanel>
                 </Border>
@@ -78,98 +78,98 @@
                   <TextBlock Text="D Deny" Style="{StaticResource CompactBadgeText}" />
                 </Border>
               </WrapPanel>
-              <TextBlock Text="Cartella trattata" FontSize="11" Foreground="#FF546E7A" FontWeight="SemiBold" />
+              <TextBlock Text="{DynamicResource Results.ProcessedFolder}" FontSize="11" Foreground="#FF546E7A" FontWeight="SemiBold" />
               <TextBlock Text="{Binding SelectedFolderName}" FontWeight="SemiBold" FontSize="13" Foreground="#FF0D47A1" TextTrimming="CharacterEllipsis" />
               <TextBlock Text="{Binding SelectedFolderPath}" FontSize="11" Foreground="#FF546E7A" TextTrimming="CharacterEllipsis" Margin="0,0,0,6" />
               <WrapPanel Margin="0,0,0,8">
                 <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFF5F5F5" BorderBrush="#FFE0E0E0">
                   <StackPanel>
-                    <TextBlock Text="Tipo path" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{DynamicResource Results.PathKind}" Style="{StaticResource InfoLabelText}" />
                     <TextBlock Text="{Binding SelectedPathKind}" Style="{StaticResource InfoValueText}" />
                   </StackPanel>
                 </Border>
                 <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFF5F5F5" BorderBrush="#FFE0E0E0">
                   <StackPanel>
-                    <TextBlock Text="Layer letti" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{DynamicResource Results.PermissionLayers}" Style="{StaticResource InfoLabelText}" />
                     <TextBlock Text="{Binding SelectedPermissionLayers}" Style="{StaticResource InfoValueText}" />
                   </StackPanel>
                 </Border>
                 <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFF5F5F5" BorderBrush="#FFE0E0E0">
                   <StackPanel>
-                    <TextBlock Text="Rischio" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{DynamicResource Results.Risk}" Style="{StaticResource InfoLabelText}" />
                     <TextBlock Text="{Binding SelectedRiskSummary}" Style="{StaticResource InfoValueText}" />
                   </StackPanel>
                 </Border>
                 <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFF5F5F5" BorderBrush="#FFE0E0E0">
                   <StackPanel>
-                    <TextBlock Text="Scansione" Style="{StaticResource InfoLabelText}" />
+                    <TextBlock Text="{DynamicResource Results.Scan}" Style="{StaticResource InfoLabelText}" />
                     <TextBlock Text="{Binding SelectedScannedAtText}" Style="{StaticResource InfoValueText}" />
                   </StackPanel>
                 </Border>
               </WrapPanel>
               <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFF5F5F5" BorderBrush="#FFE0E0E0">
                 <StackPanel>
-                  <TextBlock Text="Avvisi acquisizione" Style="{StaticResource InfoLabelText}" />
+                  <TextBlock Text="{DynamicResource Results.AcquisitionWarnings}" Style="{StaticResource InfoLabelText}" />
                   <TextBlock Text="{Binding SelectedAcquisitionWarnings}" TextWrapping="Wrap" />
                 </StackPanel>
               </Border>
 
-              <Expander Header="Filtri persistenti" IsExpanded="False" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10"
-                        ToolTip="I filtri restano applicati tra viste e selezioni; usa questi controlli per restringere l'elenco ACL senza perdere il dataset caricato.">
+              <Expander Header="{DynamicResource Results.PersistentFilters}" IsExpanded="False" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10"
+                        ToolTip="{DynamicResource Results.PersistentFilters.ToolTip}">
                 <StackPanel>
-                  <TextBlock Text="Ricerca ACL / Gruppo / Utente" Style="{StaticResource SubsectionHeaderText}" />
+                  <TextBlock Text="{DynamicResource Results.SearchAcl}" Style="{StaticResource SubsectionHeaderText}" />
                   <Grid Margin="0,0,0,6">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="Auto" />
                       <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="Filtro ACL:" VerticalAlignment="Center" Margin="0,0,6,0" />
-                    <TextBox Grid.Column="1" Height="26" MinWidth="220" AutomationProperties.Name="Filtro ACL gruppo utente permessi" ToolTip="Filtra per ACL, gruppo, utente, SID, path, diritto o rischio." Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Column="0" Text="{DynamicResource Results.AclFilter}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBox Grid.Column="1" Height="26" MinWidth="220" AutomationProperties.Name="{DynamicResource Results.SearchAcl}" ToolTip="{DynamicResource Results.AclFilter.ToolTip}" Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
                   </Grid>
-                  <TextBlock Text="Permessi" Style="{StaticResource SubsectionHeaderText}" />
+                  <TextBlock Text="{DynamicResource Results.Permissions}" Style="{StaticResource SubsectionHeaderText}" />
                   <WrapPanel Margin="0,0,0,4">
-                    <CheckBox Margin="0,0,12,6" Content="Colora per diritto" IsChecked="{Binding ColorizeRights}" />
+                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.ColorizeByRight}" IsChecked="{Binding ColorizeRights}" />
                     <CheckBox Margin="0,0,12,6" Content="Allow" IsChecked="{Binding ShowAllow}" />
-                    <CheckBox Margin="0,0,12,6" Content="Deny" IsChecked="{Binding ShowDeny}" />
-                    <CheckBox Margin="0,0,12,6" Content="Ereditato" IsChecked="{Binding ShowInherited}" />
-                    <CheckBox Margin="0,0,12,6" Content="Esplicito" IsChecked="{Binding ShowExplicit}" />
-                    <CheckBox Margin="0,0,12,6" Content="Protetto" IsChecked="{Binding ShowProtected}" />
-                    <CheckBox Margin="0,0,12,6" Content="Disabilitato" IsChecked="{Binding ShowDisabled}" />
+                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Deny}" IsChecked="{Binding ShowDeny}" />
+                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Inherited}" IsChecked="{Binding ShowInherited}" />
+                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Explicit}" IsChecked="{Binding ShowExplicit}" />
+                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Protected}" IsChecked="{Binding ShowProtected}" />
+                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Grid.Disabled}" IsChecked="{Binding ShowDisabled}" />
                   </WrapPanel>
-                  <TextBlock Text="Identita" Style="{StaticResource SubsectionHeaderText}" />
+                  <TextBlock Text="{DynamicResource Scan.Identity}" Style="{StaticResource SubsectionHeaderText}" />
                   <WrapPanel Margin="0,0,0,4">
-                    <CheckBox Margin="0,0,12,6" Content="Everyone" IsChecked="{Binding ShowEveryone}" />
-                    <CheckBox Margin="0,0,12,6" Content="Authenticated Users" IsChecked="{Binding ShowAuthenticatedUsers}" />
-                    <CheckBox Margin="0,0,12,6" Content="Utenti di servizio" IsChecked="{Binding ShowServiceAccounts}" />
-                    <CheckBox Margin="0,0,12,6" Content="Admin" IsChecked="{Binding ShowAdminAccounts}" />
-                    <CheckBox Margin="0,0,12,6" Content="Altri" IsChecked="{Binding ShowOtherPrincipals}" />
+                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Everyone}" IsChecked="{Binding ShowEveryone}" />
+                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.AuthenticatedUsers}" IsChecked="{Binding ShowAuthenticatedUsers}" />
+                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.ServiceUsers}" IsChecked="{Binding ShowServiceAccounts}" />
+                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Admin}" IsChecked="{Binding ShowAdminAccounts}" />
+                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.OtherPrincipals}" IsChecked="{Binding ShowOtherPrincipals}" />
                   </WrapPanel>
                 </StackPanel>
               </Expander>
             </StackPanel>
             <TextBlock Grid.Row="1"
-                       Text="Seleziona una cartella nell'albero per vedere permessi, riepilogo e filtri."
+                       Text="{DynamicResource Results.SelectFolderForDetails}"
                        Style="{StaticResource MicrocopyText}"
                        TextWrapping="Wrap"
                        Visibility="{Binding HasNoSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}" />
             <Grid Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Border Style="{StaticResource EmptyStateBorderStyle}"
                     Visibility="{Binding HasNoScanResult, Converter={StaticResource BooleanToVisibilityConverter}}">
-              <TextBlock Text="I risultati appariranno qui dopo una scansione o un'importazione .ntaudit."
+              <TextBlock Text="{DynamicResource Results.EmptyAfterScan}"
                          Style="{StaticResource EmptyStateText}" />
             </Border>
             <Border Style="{StaticResource EmptyStateBorderStyle}"
                     Visibility="{Binding HasNoSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}">
-              <TextBlock Text="Seleziona una cartella dall'albero a sinistra per consultare i dettagli ACL."
+              <TextBlock Text="{DynamicResource Results.SelectTreeFolder}"
                          Style="{StaticResource EmptyStateText}" />
             </Border>
             <TabControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Visibility="{Binding HasSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}">
-              <TabItem Header="Permessi Gruppi" ToolTip="Vista permessi dei gruppi con badge, diritti e metadati ACL.">
+              <TabItem Header="{DynamicResource Results.GroupPermissions}" ToolTip="{DynamicResource Results.FilteredGroupPermissions.ToolTip}">
                 <DockPanel>
                 <TextBlock DockPanel.Dock="Top"
-                           Text="Doppio clic o Invio su una riga per aprire i membri del gruppo."
+                           Text="{DynamicResource Results.OpenGroupMembersHint}"
                            Style="{StaticResource InteractionHintText}" />
-                <DataGrid ToolTip="Risultati filtrati dei permessi gruppo." ItemsSource="{Binding FilteredGroupEntries}"
+                <DataGrid ToolTip="{DynamicResource Results.FilteredGroupPermissions.ToolTip}" ItemsSource="{Binding FilteredGroupEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"
@@ -209,12 +209,12 @@
                 </DataGrid>
                 </DockPanel>
               </TabItem>
-              <TabItem Header="Permessi Utenti" ToolTip="Vista permessi degli utenti con badge, diritti e metadati ACL.">
+              <TabItem Header="{DynamicResource Results.UserPermissions}" ToolTip="{DynamicResource Results.FilteredUserPermissions.ToolTip}">
                 <DockPanel>
                 <TextBlock DockPanel.Dock="Top"
-                           Text="Doppio clic o Invio su una riga per aprire i gruppi dell'utente."
+                           Text="{DynamicResource Results.OpenUserGroupsHint}"
                            Style="{StaticResource InteractionHintText}" />
-                <DataGrid ToolTip="Risultati filtrati dei permessi utente." ItemsSource="{Binding FilteredUserEntries}"
+                <DataGrid ToolTip="{DynamicResource Results.FilteredUserPermissions.ToolTip}" ItemsSource="{Binding FilteredUserEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"
@@ -254,8 +254,8 @@
                 </DataGrid>
                 </DockPanel>
               </TabItem>
-              <TabItem Header="Dettaglio ACL" ToolTip="Vista completa ACL (utenti, gruppi, share ed effective).">
-                <DataGrid ToolTip="Dettaglio ACL completo del nodo selezionato." ItemsSource="{Binding FilteredAllEntries}"
+              <TabItem Header="{DynamicResource Results.AllAclDetails}" ToolTip="{DynamicResource Results.AllAclDetails.ToolTip}">
+                <DataGrid ToolTip="{DynamicResource Results.AllAclDetails.ToolTip}" ItemsSource="{Binding FilteredAllEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"
@@ -293,8 +293,8 @@
                   </DataGrid.Columns>
                 </DataGrid>
               </TabItem>
-              <TabItem Header="{DynamicResource Results.ShareEntries}" ToolTip="Vista dei permessi Share SMB rilevati durante la scansione.">
-                <DataGrid ToolTip="Permessi Share SMB del nodo selezionato." ItemsSource="{Binding FilteredShareEntries}"
+              <TabItem Header="{DynamicResource Results.ShareEntries}" ToolTip="{DynamicResource Results.ShareEntries.ToolTip}">
+                <DataGrid ToolTip="{DynamicResource Results.ShareEntries.ToolTip}" ItemsSource="{Binding FilteredShareEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"
@@ -320,8 +320,8 @@
                   </DataGrid.Columns>
                 </DataGrid>
               </TabItem>
-              <TabItem Header="Effective Access" ToolTip="Vista accesso effettivo calcolato da NTFS + Share.">
-                <DataGrid ToolTip="Accesso effettivo combinato NTFS/Share del nodo selezionato." ItemsSource="{Binding FilteredEffectiveEntries}"
+              <TabItem Header="Effective Access" ToolTip="{DynamicResource Results.EffectiveEntries.ToolTip}">
+                <DataGrid ToolTip="{DynamicResource Results.EffectiveEntries.ToolTip}" ItemsSource="{Binding FilteredEffectiveEntries}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           EnableRowVirtualization="True"
@@ -346,15 +346,15 @@
                   </DataGrid.Columns>
                 </DataGrid>
               </TabItem>
-              <TabItem Header="Info Permessi" ToolTip="Riepilogo cartella e autorizzazioni in stile sicurezza/avanzate Windows.">
+              <TabItem Header="{DynamicResource Results.PermissionInfo}" ToolTip="{DynamicResource Results.PermissionInfo.ToolTip}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                   <StackPanel Margin="8">
-                    <TextBlock Text="Oggetto" Style="{StaticResource SubsectionHeaderText}" />
+                    <TextBlock Text="{DynamicResource Results.Object}" Style="{StaticResource SubsectionHeaderText}" />
                     <Border Background="#FFF5F5F5" BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,8">
                       <TextBlock Text="{Binding SelectedFolderPath}" FontWeight="SemiBold" TextWrapping="Wrap" />
                     </Border>
 
-                    <TextBlock Text="Sicurezza avanzata" Style="{StaticResource SubsectionHeaderText}" />
+                    <TextBlock Text="{DynamicResource Results.AdvancedSecurity}" Style="{StaticResource SubsectionHeaderText}" />
                     <Border BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,6">
                       <Border.Style>
                         <Style TargetType="Border">
@@ -386,7 +386,10 @@
                     <TextBlock Text="{DynamicResource Results.SelectedFolder}" Style="{StaticResource SubsectionHeaderText}" />
                     <WrapPanel>
                       <Border Background="#FFE3F2FD" BorderBrush="#FFBBDEFB" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
-                        <TextBlock Text="{Binding SelectedTotalAceCount, StringFormat=Totali: {0}}" />
+                        <TextBlock>
+                          <Run Text="{DynamicResource Results.TotalLabel}" />
+                          <Run Text="{Binding SelectedTotalAceCount, Mode=OneWay}" />
+                        </TextBlock>
                       </Border>
                       <Border BorderBrush="#FFBBDEFB" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
                         <Border.Style>
@@ -400,7 +403,10 @@
                             </Style.Triggers>
                           </Style>
                         </Border.Style>
-                        <TextBlock Text="{Binding SelectedExplicitAceCount, StringFormat=Esplicite: {0}}" />
+                        <TextBlock>
+                          <Run Text="{DynamicResource Results.ExplicitLabel}" />
+                          <Run Text="{Binding SelectedExplicitAceCount, Mode=OneWay}" />
+                        </TextBlock>
                       </Border>
                       <Border BorderBrush="#FFC8E6C9" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
                         <Border.Style>
@@ -414,7 +420,10 @@
                             </Style.Triggers>
                           </Style>
                         </Border.Style>
-                        <TextBlock Text="{Binding SelectedInheritedAceCount, StringFormat=Ereditate: {0}}" />
+                        <TextBlock>
+                          <Run Text="{DynamicResource Results.InheritedLabel}" />
+                          <Run Text="{Binding SelectedInheritedAceCount, Mode=OneWay}" />
+                        </TextBlock>
                       </Border>
                       <Border BorderBrush="#FFFFCDD2" BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,8,8">
                         <Border.Style>
@@ -428,15 +437,18 @@
                             </Style.Triggers>
                           </Style>
                         </Border.Style>
-                        <TextBlock Text="{Binding SelectedDenyAceCount, StringFormat=Deny: {0}}" />
+                        <TextBlock>
+                          <Run Text="{DynamicResource Results.DenyLabel}" />
+                          <Run Text="{Binding SelectedDenyAceCount, Mode=OneWay}" />
+                        </TextBlock>
                       </Border>
                     </WrapPanel>
                   </StackPanel>
                 </ScrollViewer>
               </TabItem>
-              <TabItem Header="{DynamicResource Results.ErrorsTab}" ToolTip="Errori raccolti durante scansione e import/export.">
+              <TabItem Header="{DynamicResource Results.ErrorsTab}" ToolTip="{DynamicResource Results.ErrorsTab.ToolTip}">
                 <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                  <DataGrid ToolTip="Elenco errori (path, tipo e messaggio)." ItemsSource="{Binding FilteredErrors}"
+                  <DataGrid ToolTip="{DynamicResource Results.ErrorsGrid.ToolTip}" ItemsSource="{Binding FilteredErrors}"
                             AutoGenerateColumns="False"
                             IsReadOnly="True"
                             EnableRowVirtualization="True"

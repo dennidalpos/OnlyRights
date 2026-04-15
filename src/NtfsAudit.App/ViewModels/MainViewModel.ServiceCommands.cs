@@ -51,7 +51,7 @@ namespace NtfsAudit.App.ViewModels
                 var serviceCommand = ResolveServiceInstallCommand();
                 if (string.IsNullOrWhiteSpace(serviceCommand))
                 {
-                    WpfMessageBox.Show("NtfsAudit.Service.exe (or NtfsAudit.Service.dll) not found. Build/publish the service project and copy the output next to the app, or use a build that includes the service.", LocalizationManager.Text("Dialog.ServiceInstall"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    WpfMessageBox.Show(LocalizationManager.Text("Service.CommandMissing"), LocalizationManager.Text("Dialog.ServiceInstall"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                     return;
                 }
 
@@ -74,7 +74,7 @@ namespace NtfsAudit.App.ViewModels
             }
             catch (Exception ex)
             {
-                WpfMessageBox.Show(string.Format("Service installation error: {0}", ex.Message), LocalizationManager.Text("Dialog.ServiceInstall"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                WpfMessageBox.Show(LocalizationManager.Format("Service.InstallError", ex.Message), LocalizationManager.Text("Dialog.ServiceInstall"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
@@ -104,7 +104,7 @@ namespace NtfsAudit.App.ViewModels
             }
             catch (Exception ex)
             {
-                WpfMessageBox.Show(string.Format("Service uninstallation error: {0}", ex.Message), LocalizationManager.Text("Dialog.ServiceUninstall"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                WpfMessageBox.Show(LocalizationManager.Format("Service.UninstallError", ex.Message), LocalizationManager.Text("Dialog.ServiceUninstall"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
             finally
             {

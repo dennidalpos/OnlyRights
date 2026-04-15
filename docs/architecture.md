@@ -14,7 +14,7 @@ The implemented product surface is:
 - Analysis archive export/import (`.ntaudit`).
 - Read-only SQLite payloads for large archive navigation.
 - Optional Windows Service execution for background scan jobs.
-- Protected local scan credentials with global credentials, per-root override credentials, and fallback to the current Windows user.
+- Protected local scan credentials with global credentials for UNC/DFS scans and fallback to the current Windows user for local paths.
 
 The repository does not implement:
 
@@ -76,7 +76,8 @@ Service job files are stored under `%ProgramData%\NtfsAudit\jobs`. Service runti
 
 Credential material is protected locally:
 
-- user-profile scan credentials use DPAPI;
+- global scan credentials are stored under `%ProgramData%\NtfsAudit\scan-credentials.json` and protected for `LocalMachine`;
+- legacy user-profile scan credentials are migrated to the common global credential store when they can be read;
 - service job credential payloads are protected for `LocalMachine`;
 - credentials are not exported into `.ntaudit` metadata.
 

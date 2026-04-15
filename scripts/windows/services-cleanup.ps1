@@ -1,6 +1,4 @@
-param(
-    [switch]$UseNssmFallback
-)
+param()
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
@@ -9,7 +7,7 @@ Set-StrictMode -Version Latest
 
 $context = Get-ServiceScriptContext -ScriptRoot (Join-Path $PSScriptRoot "..")
 try {
-    Uninstall-WindowsService -Context $context -UseNssmFallback:$UseNssmFallback
+    Uninstall-WindowsService -Context $context
 }
 catch {
     Write-Warning $_.Exception.Message

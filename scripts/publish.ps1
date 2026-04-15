@@ -13,6 +13,7 @@ Set-StrictMode -Version Latest
 
 $context = Get-RepositoryContext -ScriptRoot $PSScriptRoot
 Assert-RepositoryPrerequisites -Context $context
+Assert-SupportedWindowsRuntime -Runtime $Runtime
 
 $sourceRoot = if ($PackageRoot) {
     if ([System.IO.Path]::IsPathRooted($PackageRoot)) { $PackageRoot } else { Join-Path $context.RepoRoot $PackageRoot }

@@ -1,6 +1,8 @@
 param(
     [string]$Configuration = "Release",
     [string]$Framework,
+    [string]$Runtime,
+    [string]$PlatformTarget,
     [switch]$SkipRestore
 )
 
@@ -8,19 +10,22 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 $compileScript = Join-Path $PSScriptRoot "compile.ps1"
+$compileArgs = @{
+    Configuration = $Configuration
+}
 if ($Framework) {
-    if ($SkipRestore) {
-        & $compileScript -Configuration $Configuration -Framework $Framework -SkipRestore
-    }
-    else {
-        & $compileScript -Configuration $Configuration -Framework $Framework
-    }
+    $compileArgs.Framework = $Framework
 }
-elseif ($SkipRestore) {
-    & $compileScript -Configuration $Configuration -SkipRestore
+if ($Runtime) {
+    $compileArgs.Runtime = $Runtime
 }
-else {
-    & $compileScript -Configuration $Configuration
+if ($PlatformTarget) {
+    $compileArgs.PlatformTarget = $PlatformTarget
 }
+if ($SkipRestore) {
+    $compileArgs.SkipRestore = $true
+}
+
+& $compileScript @compileArgs
 
 Write-Host "[NtfsAudit] Build completed." -ForegroundColor Cyan

@@ -43,11 +43,6 @@ namespace NtfsAudit.App.Services
         internal static string DescribeEffectiveSource(string rootPath, string configuredSource)
         {
             var effectiveSource = ResolveEffectiveSource(rootPath, configuredSource);
-            if (effectiveSource == "RootOverride")
-            {
-                return LocalizationManager.Text("Credential.SourceRootOverride");
-            }
-
             if (effectiveSource == "Global")
             {
                 return LocalizationManager.Text("Credential.SourceGlobal");

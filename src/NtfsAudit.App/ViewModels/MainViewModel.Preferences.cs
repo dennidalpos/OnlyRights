@@ -34,41 +34,6 @@ namespace NtfsAudit.App.ViewModels
             var settings = _scanCredentialStore.Load();
             GlobalCredentialUserName = settings.GlobalCredential == null ? string.Empty : settings.GlobalCredential.UserName;
             GlobalCredentialPassword = settings.GlobalCredential == null ? string.Empty : settings.GlobalCredential.Password;
-
-            _scanRootCredentialOverrides.Clear();
-            foreach (var entry in settings.RootOverrides)
-            {
-                if (entry.Value == null || !entry.Value.IsConfigured)
-                {
-                    continue;
-                }
-
-                _scanRootCredentialOverrides[entry.Key] = entry.Value.Clone();
-            }
-
-            LoadSelectedScanRootCredential();
-        }
-
-        private void LoadSelectedScanRootCredential()
-        {
-            if (string.IsNullOrWhiteSpace(SelectedScanRoot))
-            {
-                SelectedScanRootCredentialUserName = string.Empty;
-                SelectedScanRootCredentialPassword = string.Empty;
-                return;
-            }
-
-            if (_scanRootCredentialOverrides.TryGetValue(GetScanRootKey(SelectedScanRoot), out var overrideCredential)
-                && overrideCredential != null
-                && overrideCredential.IsConfigured)
-            {
-                SelectedScanRootCredentialUserName = overrideCredential.UserName;
-                SelectedScanRootCredentialPassword = overrideCredential.Password;
-                return;
-            }
-
-            SelectedScanRootCredentialUserName = string.Empty;
-            SelectedScanRootCredentialPassword = string.Empty;
         }
 
         private ScanCredential ResolveScanCredentialForRoot(string root)
@@ -78,14 +43,6 @@ namespace NtfsAudit.App.ViewModels
 
         private ScanCredential ResolveConfiguredScanCredentialForRoot(string root)
         {
-            if (!string.IsNullOrWhiteSpace(root)
-                && _scanRootCredentialOverrides.TryGetValue(GetScanRootKey(root), out var overrideCredential)
-                && overrideCredential != null
-                && overrideCredential.IsConfigured)
-            {
-                return overrideCredential.Clone();
-            }
-
             if (HasGlobalCredential)
             {
                 return new ScanCredential
@@ -100,14 +57,6 @@ namespace NtfsAudit.App.ViewModels
 
         private string ResolveConfiguredCredentialSource(string root)
         {
-            if (!string.IsNullOrWhiteSpace(root)
-                && _scanRootCredentialOverrides.TryGetValue(GetScanRootKey(root), out var overrideCredential)
-                && overrideCredential != null
-                && overrideCredential.IsConfigured)
-            {
-                return "RootOverride";
-            }
-
             if (HasGlobalCredential)
             {
                 return "Global";
@@ -338,7 +287,7 @@ namespace NtfsAudit.App.ViewModels
             public bool ComputeEffectiveAccess { get; set; } = true;
             public bool IncludeSharePermissions { get; set; } = true;
             public bool IncludeFiles { get; set; }
-            public bool ReadOwnerAndSacl { get; set; } = true;
+            public bool ReadOwnerAndSacl { get; set; }
             public bool CompareBaseline { get; set; } = true;
             public string Locale { get; set; } = LocalizationManager.DefaultLocale;
             public List<string> ScanRoots { get; set; }

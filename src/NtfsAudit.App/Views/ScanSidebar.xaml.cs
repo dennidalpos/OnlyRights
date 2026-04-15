@@ -63,7 +63,6 @@ namespace NtfsAudit.App.Views
             }
 
             if (string.Equals(e.PropertyName, "GlobalCredentialPassword", StringComparison.Ordinal)
-                || string.Equals(e.PropertyName, "SelectedScanRootCredentialPassword", StringComparison.Ordinal)
                 || string.Equals(e.PropertyName, "SelectedScanRoot", StringComparison.Ordinal))
             {
                 SyncCredentialPasswordBoxes();
@@ -82,7 +81,6 @@ namespace NtfsAudit.App.Views
             {
                 _isSynchronizingPasswords = true;
                 GlobalCredentialPasswordBox.Password = viewModel.GlobalCredentialPassword ?? string.Empty;
-                SelectedScanRootCredentialPasswordBox.Password = viewModel.SelectedScanRootCredentialPassword ?? string.Empty;
             }
             finally
             {
@@ -104,18 +102,5 @@ namespace NtfsAudit.App.Views
             }
         }
 
-        private void SelectedScanRootCredentialPasswordBox_OnPasswordChanged(object sender, RoutedEventArgs e)
-        {
-            if (_isSynchronizingPasswords)
-            {
-                return;
-            }
-
-            var viewModel = DataContext as MainViewModel;
-            if (viewModel != null)
-            {
-                viewModel.SelectedScanRootCredentialPassword = SelectedScanRootCredentialPasswordBox.Password;
-            }
-        }
     }
 }

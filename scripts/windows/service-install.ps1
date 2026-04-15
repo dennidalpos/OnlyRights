@@ -3,7 +3,6 @@ param(
     [string]$Framework = "net8.0-windows",
     [string]$Runtime,
     [string]$ServiceCommandPath,
-    [switch]$UseNssmFallback,
     [switch]$SkipStart
 )
 
@@ -18,7 +17,7 @@ if (-not $serviceCommand) {
     throw "NtfsAudit.Service executable not found. Run scripts/pack.ps1 or scripts/build.ps1 first, or pass -ServiceCommandPath."
 }
 
-Install-WindowsService -Context $context -ServiceCommand $serviceCommand -UseNssmFallback:$UseNssmFallback
+Install-WindowsService -Context $context -ServiceCommand $serviceCommand
 if (-not $SkipStart) {
     Start-WindowsService -ServiceName $context.ServiceName
 }
@@ -26,4 +25,3 @@ if (-not $SkipStart) {
 Write-Host "[NtfsAudit] Service install completed." -ForegroundColor Cyan
 Write-Host ("  Service name: {0}" -f $context.ServiceName)
 Write-Host ("  Command: {0}" -f $serviceCommand)
-Write-Host ("  NSSM fallback: {0}" -f $UseNssmFallback.IsPresent)

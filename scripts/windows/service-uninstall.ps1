@@ -1,5 +1,4 @@
 param(
-    [switch]$UseNssmFallback,
     [switch]$SkipResidualCleanup
 )
 
@@ -9,7 +8,7 @@ Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot "..\helpers\windows-service.ps1")
 
 $context = Get-ServiceScriptContext -ScriptRoot (Join-Path $PSScriptRoot "..")
-Uninstall-WindowsService -Context $context -UseNssmFallback:$UseNssmFallback
+Uninstall-WindowsService -Context $context
 if (-not $SkipResidualCleanup) {
     Remove-ServiceResiduals
 }

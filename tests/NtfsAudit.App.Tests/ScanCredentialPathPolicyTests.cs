@@ -76,8 +76,7 @@ namespace NtfsAudit.App.Tests
         }
 
         [Theory]
-        [InlineData(@"C:\Data", "RootOverride", "CurrentUser")]
-        [InlineData(@"\\server\share", "RootOverride", "RootOverride")]
+        [InlineData(@"C:\Data", "Global", "CurrentUser")]
         [InlineData(@"\\server\share", "Global", "Global")]
         [InlineData(@"\\server\share", "CurrentUser", "CurrentUser")]
         public void ResolveEffectiveSource_FollowsPathPolicy(string path, string configuredSource, string expected)

@@ -1,10 +1,12 @@
 <Project>
   <PropertyGroup>
     <RepositoryArtifactsRoot>$(MSBuildThisFileDirectory)artifacts\</RepositoryArtifactsRoot>
+    <Platforms>AnyCPU;x86;x64</Platforms>
     <ArtifactsProjectName Condition="'$(AssemblyName)' != ''">$(AssemblyName)</ArtifactsProjectName>
     <ArtifactsProjectName Condition="'$(ArtifactsProjectName)' == ''">$(MSBuildProjectName)</ArtifactsProjectName>
-    <BaseOutputPath>$(RepositoryArtifactsRoot)build\$(ArtifactsProjectName)\</BaseOutputPath>
-    <BaseIntermediateOutputPath>$(RepositoryArtifactsRoot)build\obj\$(ArtifactsProjectName)\</BaseIntermediateOutputPath>
+    <ArtifactsPlatformSegment Condition="'$(PlatformTarget)' != '' and '$(PlatformTarget)' != 'AnyCPU'">$(PlatformTarget)\</ArtifactsPlatformSegment>
+    <BaseOutputPath>$(RepositoryArtifactsRoot)build\$(ArtifactsProjectName)\$(ArtifactsPlatformSegment)</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(RepositoryArtifactsRoot)build\obj\$(ArtifactsProjectName)\$(ArtifactsPlatformSegment)</BaseIntermediateOutputPath>
     <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
     <VSTestResultsDirectory>$(RepositoryArtifactsRoot)test-results\</VSTestResultsDirectory>
   </PropertyGroup>

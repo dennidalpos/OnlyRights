@@ -2,6 +2,7 @@ param(
     [string]$Configuration = "Release",
     [string]$Framework = "net8.0-windows",
     [string]$Runtime,
+    [string]$PlatformTarget,
     [string]$OutputRoot,
     [switch]$SkipRestore,
     [switch]$SkipBuild,
@@ -19,17 +20,11 @@ Set-StrictMode -Version Latest
 
 $context = Get-RepositoryContext -ScriptRoot $PSScriptRoot
 Assert-RepositoryPrerequisites -Context $context
+$resolvedPlatformTarget = Resolve-PlatformTarget -Runtime $Runtime -PlatformTarget $PlatformTarget
+$platformBuildArgs = Get-PlatformTargetBuildArgument -PlatformTarget $resolvedPlatformTarget
 
 if (($SelfContained -or $PublishSingleFile -or $PublishReadyToRun) -and -not $Runtime) {
-    $Runtime = "win-x64"
-}
-
-if ($Runtime -and $Runtime -notin @("win-x86", "win-x64")) {
-    throw ("Unsupported runtime '{0}'. Supported Windows package runtimes: win-x86, win-x64." -f $Runtime)
-}
-
-if ($SelfContained -and -not $Runtime) {
-    throw "Runtime required for self-contained packaging."
+    throw "Runtime required for self-contained, single-file, or ReadyToRun packaging. Use -Runtime win-x64 or -Runtime win-x86."
 }
 
 if (-not $SkipRestore) {
@@ -37,6 +32,7 @@ if (-not $SkipRestore) {
     if ($Runtime) {
         $restoreArgs += @("-r", $Runtime)
     }
+    $restoreArgs += $platformBuildArgs
 
     Invoke-DotNetCommand -Arguments $restoreArgs -ErrorMessage "Restore failed."
 }
@@ -69,6 +65,7 @@ function Invoke-PublishProject {
     if ($Runtime) {
         $publishArgs += @("-r", $Runtime, "--self-contained", $SelfContained.IsPresent.ToString().ToLowerInvariant())
     }
+    $publishArgs += $platformBuildArgs
     if ($PublishSingleFile) {
         $publishArgs += "-p:PublishSingleFile=true"
     }
@@ -92,4 +89,10 @@ if (-not $SkipService) {
 
 Write-Host "[NtfsAudit] Pack completed." -ForegroundColor Cyan
 Write-Host ("  Configuration: {0}" -f $Configuration)
+if ($Runtime) {
+    Write-Host ("  Runtime: {0}" -f $Runtime)
+}
+if ($resolvedPlatformTarget) {
+    Write-Host ("  Platform target: {0}" -f $resolvedPlatformTarget)
+}
 Write-Host ("  Packages: {0}" -f $packageRoot)

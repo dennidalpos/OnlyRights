@@ -48,24 +48,6 @@ function Resolve-ScExecutablePath {
     return "sc.exe"
 }
 
-function Resolve-NssmExecutablePath {
-    param([string]$NssmRoot)
-
-    $preferredArch = if ([Environment]::Is64BitOperatingSystem) { "win64" } else { "win32" }
-    $candidate = Join-Path $NssmRoot (Join-Path $preferredArch "nssm.exe")
-    if (Test-Path $candidate) {
-        return $candidate
-    }
-
-    $fallbackArch = if ($preferredArch -eq "win64") { "win32" } else { "win64" }
-    $fallback = Join-Path $NssmRoot (Join-Path $fallbackArch "nssm.exe")
-    if (Test-Path $fallback) {
-        return $fallback
-    }
-
-    throw ("NSSM executable not found under {0}." -f $NssmRoot)
-}
-
 function Resolve-DotnetHostPath {
     $programFiles = Resolve-SpecialFolderPath -Folder ProgramFiles
     if ($programFiles) {
@@ -257,30 +239,20 @@ function Install-WindowsService {
     param(
         $Context,
         [string]$ServiceCommand,
-        [string]$Description = "Servizio scansione NTFS Audit",
-        [switch]$UseNssmFallback
+        [string]$Description = "Servizio scansione NTFS Audit"
     )
 
     $state = Get-ServiceState -ServiceName $Context.ServiceName
-    if ($UseNssmFallback) {
-        $nssmPath = Resolve-NssmExecutablePath -NssmRoot $Context.Repository.NssmTools
-        $result = Invoke-ServiceExecutable -FilePath $nssmPath -Arguments ('install {0} "{1}"' -f $Context.ServiceName, $ServiceCommand) -RunAsAdmin
-        if ($result.ExitCode -ne 0) {
-            throw ("NSSM install failed with exit code {0}: {1}" -f $result.ExitCode, $result.Error)
-        }
+    $binPath = Format-ServiceBinPathForSc -ServiceCommand $ServiceCommand
+    $createResult = Invoke-ScCommand -Arguments ('create {0} binPath= {1} start= auto' -f $Context.ServiceName, $binPath) -AllowFailure
+    if ($createResult.ExitCode -eq 1073 -or $state.IsInstalled) {
+        Invoke-ScCommand -Arguments ('config {0} binPath= {1} start= auto' -f $Context.ServiceName, $binPath) | Out-Null
     }
-    else {
-        $binPath = Format-ServiceBinPathForSc -ServiceCommand $ServiceCommand
-        $createResult = Invoke-ScCommand -Arguments ('create {0} binPath= {1} start= auto' -f $Context.ServiceName, $binPath) -AllowFailure
-        if ($createResult.ExitCode -eq 1073 -or $state.IsInstalled) {
-            Invoke-ScCommand -Arguments ('config {0} binPath= {1} start= auto' -f $Context.ServiceName, $binPath) | Out-Null
-        }
-        elseif ($createResult.ExitCode -ne 0) {
-            throw ("Service create failed with exit code {0}." -f $createResult.ExitCode)
-        }
+    elseif ($createResult.ExitCode -ne 0) {
+        throw ("Service create failed with exit code {0}." -f $createResult.ExitCode)
+    }
 
-        Invoke-ScCommand -Arguments ('description {0} "{1}"' -f $Context.ServiceName, $Description) -AllowFailure | Out-Null
-    }
+    Invoke-ScCommand -Arguments ('description {0} "{1}"' -f $Context.ServiceName, $Description) -AllowFailure | Out-Null
 }
 
 function Start-WindowsService {
@@ -302,25 +274,12 @@ function Stop-WindowsService {
 }
 
 function Uninstall-WindowsService {
-    param(
-        $Context,
-        [switch]$UseNssmFallback
-    )
+    param($Context)
 
     Stop-WindowsService -ServiceName $Context.ServiceName
-
-    if ($UseNssmFallback) {
-        $nssmPath = Resolve-NssmExecutablePath -NssmRoot $Context.Repository.NssmTools
-        $result = Invoke-ServiceExecutable -FilePath $nssmPath -Arguments ('remove {0} confirm' -f $Context.ServiceName) -RunAsAdmin
-        if ($result.ExitCode -ne 0) {
-            throw ("NSSM remove failed with exit code {0}: {1}" -f $result.ExitCode, $result.Error)
-        }
-    }
-    else {
-        $result = Invoke-ScCommand -Arguments ('delete {0}' -f $Context.ServiceName) -AllowFailure
-        if ($result.ExitCode -ne 0 -and $result.ExitCode -ne 1060) {
-            throw ("Service delete failed with exit code {0}." -f $result.ExitCode)
-        }
+    $result = Invoke-ScCommand -Arguments ('delete {0}' -f $Context.ServiceName) -AllowFailure
+    if ($result.ExitCode -ne 0 -and $result.ExitCode -ne 1060) {
+        throw ("Service delete failed with exit code {0}." -f $result.ExitCode)
     }
 }
 

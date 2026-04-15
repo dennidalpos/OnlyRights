@@ -10,9 +10,7 @@
  * written permission from Danny Perondi.
  */
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Newtonsoft.Json;
 using NtfsAudit.App.Cache;
 using NtfsAudit.App.Models;
@@ -22,22 +20,31 @@ namespace NtfsAudit.App.Services
     public sealed class ScanCredentialStore
     {
         private readonly string _storePath;
+        private readonly string _legacyStorePath;
 
         public ScanCredentialStore()
+            : this(
+                Path.Combine(RuntimePaths.GetCommonDataRoot(), "scan-credentials.json"),
+                new LocalCacheStore().GetCacheFilePath("scan-credentials.json"))
         {
-            _storePath = new LocalCacheStore().GetCacheFilePath("scan-credentials.json");
+        }
+
+        internal ScanCredentialStore(string storePath, string legacyStorePath = null)
+        {
+            _storePath = storePath;
+            _legacyStorePath = legacyStorePath;
         }
 
         public ScanCredentialSettings Load()
         {
             try
             {
-                if (!File.Exists(_storePath))
+                var payload = LoadPayloadFromPath(_storePath);
+                if (payload == null)
                 {
-                    return new ScanCredentialSettings();
+                    payload = TryMigrateLegacyPayload();
                 }
 
-                var payload = JsonConvert.DeserializeObject<CredentialStorePayload>(File.ReadAllText(_storePath));
                 if (payload == null)
                 {
                     return new ScanCredentialSettings();
@@ -47,13 +54,7 @@ namespace NtfsAudit.App.Services
                 {
                     GlobalCredential = payload.GlobalCredential == null
                         ? null
-                        : ScanCredentialProtector.ResolveForRuntime(payload.GlobalCredential),
-                    RootOverrides = (payload.RootOverrides ?? new List<CredentialOverridePayload>())
-                        .Where(item => item != null && !string.IsNullOrWhiteSpace(item.RootPath))
-                        .ToDictionary(
-                            item => NormalizeRoot(item.RootPath),
-                            item => ScanCredentialProtector.ResolveForRuntime(item.Credential),
-                            StringComparer.OrdinalIgnoreCase)
+                        : ScanCredentialProtector.ResolveForRuntime(payload.GlobalCredential)
                 };
             }
             catch
@@ -65,49 +66,13 @@ namespace NtfsAudit.App.Services
         public void SaveGlobal(ScanCredential credential)
         {
             var payload = LoadPayload();
-            payload.GlobalCredential = ScanCredentialProtector.ProtectForCurrentUser(credential);
-            SavePayload(payload);
-        }
-
-        public void SaveOverride(string rootPath, ScanCredential credential)
-        {
-            var normalizedRoot = NormalizeRoot(rootPath);
-            if (string.IsNullOrWhiteSpace(normalizedRoot))
-            {
-                return;
-            }
-
-            var payload = LoadPayload();
-            payload.RootOverrides.RemoveAll(item => string.Equals(NormalizeRoot(item.RootPath), normalizedRoot, StringComparison.OrdinalIgnoreCase));
-            var protectedCredential = ScanCredentialProtector.ProtectForCurrentUser(credential);
-            if (protectedCredential != null)
-            {
-                payload.RootOverrides.Add(new CredentialOverridePayload
-                {
-                    RootPath = normalizedRoot,
-                    Credential = protectedCredential
-                });
-            }
-
+            payload.GlobalCredential = ScanCredentialProtector.ProtectForLocalMachine(credential);
             SavePayload(payload);
         }
 
         private CredentialStorePayload LoadPayload()
         {
-            try
-            {
-                if (!File.Exists(_storePath))
-                {
-                    return new CredentialStorePayload();
-                }
-
-                var payload = JsonConvert.DeserializeObject<CredentialStorePayload>(File.ReadAllText(_storePath));
-                return payload ?? new CredentialStorePayload();
-            }
-            catch
-            {
-                return new CredentialStorePayload();
-            }
+            return LoadPayloadFromPath(_storePath) ?? TryMigrateLegacyPayload() ?? new CredentialStorePayload();
         }
 
         private void SavePayload(CredentialStorePayload payload)
@@ -119,41 +84,64 @@ namespace NtfsAudit.App.Services
             }
 
             var normalized = payload ?? new CredentialStorePayload();
-            normalized.RootOverrides = (normalized.RootOverrides ?? new List<CredentialOverridePayload>())
-                .Where(item => item != null && !string.IsNullOrWhiteSpace(item.RootPath) && item.Credential != null)
-                .GroupBy(item => NormalizeRoot(item.RootPath), StringComparer.OrdinalIgnoreCase)
-                .Select(group => group.Last())
-                .ToList();
-
             File.WriteAllText(_storePath, JsonConvert.SerializeObject(normalized, Formatting.Indented));
         }
 
-        private static string NormalizeRoot(string rootPath)
+        private static CredentialStorePayload LoadPayloadFromPath(string path)
         {
-            if (string.IsNullOrWhiteSpace(rootPath))
+            try
             {
-                return string.Empty;
+                if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+                {
+                    return null;
+                }
+
+                return JsonConvert.DeserializeObject<CredentialStorePayload>(File.ReadAllText(path));
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private CredentialStorePayload TryMigrateLegacyPayload()
+        {
+            if (string.IsNullOrWhiteSpace(_legacyStorePath)
+                || string.Equals(_legacyStorePath, _storePath, StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
             }
 
-            return rootPath.Trim().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var legacyPayload = LoadPayloadFromPath(_legacyStorePath);
+            if (legacyPayload == null || legacyPayload.GlobalCredential == null)
+            {
+                return null;
+            }
+
+            try
+            {
+                var runtimeCredential = ScanCredentialProtector.ResolveForRuntime(legacyPayload.GlobalCredential);
+                var migratedPayload = new CredentialStorePayload
+                {
+                    GlobalCredential = ScanCredentialProtector.ProtectForLocalMachine(runtimeCredential)
+                };
+                SavePayload(migratedPayload);
+                return migratedPayload;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private sealed class CredentialStorePayload
         {
             public ScanCredential GlobalCredential { get; set; }
-            public List<CredentialOverridePayload> RootOverrides { get; set; } = new List<CredentialOverridePayload>();
-        }
-
-        private sealed class CredentialOverridePayload
-        {
-            public string RootPath { get; set; }
-            public ScanCredential Credential { get; set; }
         }
     }
 
     public sealed class ScanCredentialSettings
     {
         public ScanCredential GlobalCredential { get; set; }
-        public Dictionary<string, ScanCredential> RootOverrides { get; set; } = new Dictionary<string, ScanCredential>(StringComparer.OrdinalIgnoreCase);
     }
 }

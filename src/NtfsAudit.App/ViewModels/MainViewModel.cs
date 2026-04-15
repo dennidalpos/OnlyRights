@@ -58,13 +58,10 @@ namespace NtfsAudit.App.ViewModels
         private string _selectedScanRoot;
         private readonly Dictionary<string, string> _scanRootDfsTargets = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _scanRootNamespacePaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, ScanCredential> _scanRootCredentialOverrides = new Dictionary<string, ScanCredential>(StringComparer.OrdinalIgnoreCase);
         private ObservableCollection<string> _selectedScanRootDfsTargets = new ObservableCollection<string>();
         private string _selectedScanRootDfsTarget;
         private string _globalCredentialUserName;
         private string _globalCredentialPassword;
-        private string _selectedScanRootCredentialUserName;
-        private string _selectedScanRootCredentialPassword;
         private string _auditOutputDirectory;
         private bool _useWindowsServiceMode;
         private int _maxDepth = 5;
@@ -79,7 +76,7 @@ namespace NtfsAudit.App.ViewModels
         private bool _computeEffectiveAccess = true;
         private bool _includeSharePermissions = true;
         private bool _includeFiles;
-        private bool _readOwnerAndSacl = true;
+        private bool _readOwnerAndSacl;
         private bool _compareBaseline = true;
         private string _progressText = LocalizationManager.Text("Common.Ready");
         private string _currentPathText;
@@ -206,8 +203,6 @@ namespace NtfsAudit.App.ViewModels
             LoadScanRootSetCommand = new RelayCommand(LoadScanRootSet, () => !_isViewerMode && !IsBusy);
             SaveGlobalCredentialCommand = new RelayCommand(SaveGlobalCredential, () => !_isViewerMode && !IsBusy);
             ClearGlobalCredentialCommand = new RelayCommand(ClearGlobalCredential, () => !_isViewerMode && !IsBusy && HasGlobalCredential);
-            SaveScanRootCredentialCommand = new RelayCommand(SaveSelectedScanRootCredential, () => !_isViewerMode && !IsBusy && !string.IsNullOrWhiteSpace(SelectedScanRoot));
-            ClearScanRootCredentialCommand = new RelayCommand(ClearSelectedScanRootCredential, () => !_isViewerMode && !IsBusy && HasSelectedScanRootCredentialOverride);
 
             LoadCache();
             LoadCredentialSettings();

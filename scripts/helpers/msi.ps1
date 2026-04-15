@@ -164,6 +164,7 @@ function New-MsiSource {
 
     $builder = New-Object System.Text.StringBuilder
     $componentIds = New-Object System.Collections.Generic.List[string]
+    $hasProductIcon = Test-Path $Context.IconPath
     $files = Get-ChildItem -Path $PackageRoot -File -Recurse |
         Where-Object {
             $relativePath = Get-RelativePathCompat -BasePath $PackageRoot -TargetPath $_.FullName
@@ -180,7 +181,7 @@ function New-MsiSource {
     [void]$builder.AppendLine('    <MajorUpgrade DowngradeErrorMessage="A newer version of OnlyRights NtfsAudit is already installed." />')
     [void]$builder.AppendLine('    <MediaTemplate EmbedCab="yes" />')
     [void]$builder.AppendLine('    <Property Id="ARPNOMODIFY" Value="1" />')
-    if (Test-Path $Context.IconPath) {
+    if ($hasProductIcon) {
         [void]$builder.AppendLine(('    <Icon Id="OnlyRightsIcon.ico" SourceFile="{0}" />' -f (Escape-XmlValue $Context.IconPath)))
         [void]$builder.AppendLine('    <Property Id="ARPPRODUCTICON" Value="OnlyRightsIcon.ico" />')
     }
@@ -193,7 +194,7 @@ function New-MsiSource {
     [void]$builder.AppendLine('        <Directory Id="CompanyFolder" Name="OnlyRights">')
     [void]$builder.AppendLine('          <Directory Id="INSTALLFOLDER" Name="NtfsAudit">')
 
-    Add-MsiDirectoryContent -Builder $builder -RootPath $PackageRoot -CurrentPath $PackageRoot -DirectoryId "INSTALLFOLDER" -IndentLevel 5 -ComponentIds $componentIds -Files $files
+    Add-MsiDirectoryContent -Builder $builder -RootPath $PackageRoot -CurrentPath $PackageRoot -DirectoryId "INSTALLFOLDER" -IndentLevel 5 -ComponentIds $componentIds -Files $files -HasProductIcon:$hasProductIcon
 
     [void]$builder.AppendLine('          </Directory>')
     [void]$builder.AppendLine('        </Directory>')
@@ -225,7 +226,8 @@ function Add-MsiDirectoryContent {
         [string]$DirectoryId,
         [int]$IndentLevel,
         [System.Collections.Generic.List[string]]$ComponentIds,
-        [object[]]$Files
+        [object[]]$Files,
+        [bool]$HasProductIcon
     )
 
     $indent = ('  ' * $IndentLevel)
@@ -254,8 +256,9 @@ function Add-MsiDirectoryContent {
         [void]$Builder.AppendLine(('{0}<Component Id="{1}" Guid="{2}">' -f $indent, $componentId, (New-StableGuid -Value $relativePath)))
         if ($isMainAppExecutable) {
             [void]$Builder.AppendLine(('{0}  <File Id="{1}" Source="{2}" Name="{3}" KeyPath="yes">' -f $indent, $fileId, (Escape-XmlValue $file.FullName), (Escape-XmlValue $file.Name)))
-            [void]$Builder.AppendLine(('{0}    <Shortcut Id="StartMenuShortcut" Directory="ApplicationProgramsFolder" Name="OnlyRights NtfsAudit" WorkingDirectory="INSTALLFOLDER" Icon="OnlyRightsIcon.ico" Advertise="yes" />' -f $indent))
-            [void]$Builder.AppendLine(('{0}    <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="OnlyRights NtfsAudit" WorkingDirectory="INSTALLFOLDER" Icon="OnlyRightsIcon.ico" Advertise="yes" />' -f $indent))
+            $shortcutIcon = if ($HasProductIcon) { ' Icon="OnlyRightsIcon.ico"' } else { "" }
+            [void]$Builder.AppendLine(('{0}    <Shortcut Id="StartMenuShortcut" Directory="ApplicationProgramsFolder" Name="OnlyRights NtfsAudit" WorkingDirectory="INSTALLFOLDER"{1} Advertise="yes" />' -f $indent, $shortcutIcon))
+            [void]$Builder.AppendLine(('{0}    <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="OnlyRights NtfsAudit" WorkingDirectory="INSTALLFOLDER"{1} Advertise="yes" />' -f $indent, $shortcutIcon))
             [void]$Builder.AppendLine(('{0}  </File>' -f $indent))
             [void]$Builder.AppendLine(('{0}  <RemoveFolder Id="RemoveApplicationProgramsFolder" Directory="ApplicationProgramsFolder" On="uninstall" />' -f $indent))
         }
@@ -271,7 +274,7 @@ function Add-MsiDirectoryContent {
         $relativeDirectory = Get-RelativePathCompat -BasePath $RootPath -TargetPath $directory.FullName
         $childDirectoryId = Convert-ToSafeId -Prefix "Dir" -Value $relativeDirectory
         [void]$Builder.AppendLine(('{0}<Directory Id="{1}" Name="{2}">' -f $indent, $childDirectoryId, (Escape-XmlValue $directory.Name)))
-        Add-MsiDirectoryContent -Builder $Builder -RootPath $RootPath -CurrentPath $directory.FullName -DirectoryId $childDirectoryId -IndentLevel ($IndentLevel + 1) -ComponentIds $ComponentIds -Files $Files
+        Add-MsiDirectoryContent -Builder $Builder -RootPath $RootPath -CurrentPath $directory.FullName -DirectoryId $childDirectoryId -IndentLevel ($IndentLevel + 1) -ComponentIds $ComponentIds -Files $Files -HasProductIcon:$HasProductIcon
         [void]$Builder.AppendLine(('{0}</Directory>' -f $indent))
     }
 }

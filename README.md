@@ -26,7 +26,7 @@ The suite contains:
 - Analysis archive export/import (`.ntaudit`).
 - Read-only SQLite payloads for large archive navigation.
 - Optional Windows Service execution for background scans.
-- Protected local scan credentials with global and per-root override support.
+- Protected local scan credentials with global credential support for UNC/DFS scans and current-user fallback for local paths.
 
 ## Requirements
 
@@ -56,7 +56,7 @@ dotnet run --project .\src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj -f net8.0-wi
 
 ## Project Status
 
-[PROJECT_STATUS.json](PROJECT_STATUS.json) currently contains no tracked open residual tasks.
+[PROJECT_STATUS.json](PROJECT_STATUS.json) tracks genuine open residual work; it is empty when no residual tasks are known.
 
 The verified local workflow is Windows/PowerShell based. The repository includes scripts for setup, restore, prerequisite checks, build, tests, packaging, local publish, Windows Service smoke checks, and MSI smoke checks. It does not define a canonical lint, format, external deploy, signing, or release workflow.
 

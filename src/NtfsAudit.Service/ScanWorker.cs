@@ -348,6 +348,7 @@ namespace NtfsAudit.Service
         private void RunSingleScan(ScanOptions options, CancellationToken token)
         {
             var runtimeOptions = options == null ? null : options.Clone();
+            ApplyGlobalCredentialFallback(runtimeOptions);
             if (runtimeOptions != null && runtimeOptions.Credential != null)
             {
                 runtimeOptions.Credential = ScanCredentialProtector.ResolveForRuntime(runtimeOptions.Credential);
@@ -375,6 +376,38 @@ namespace NtfsAudit.Service
             {
                 TryDeleteFile(result == null ? null : result.TempDataPath);
                 TryDeleteFile(result == null ? null : result.ErrorPath);
+            }
+        }
+
+        private static void ApplyGlobalCredentialFallback(ScanOptions options)
+        {
+            if (options == null || options.Credential != null)
+            {
+                return;
+            }
+
+            var kind = PathResolver.DetectPathKind(options.RootPath);
+            if (kind != PathKind.Unc && kind != PathKind.Dfs)
+            {
+                options.CredentialSource = "CurrentUser";
+                return;
+            }
+
+            try
+            {
+                var settings = new ScanCredentialStore().Load();
+                if (settings.GlobalCredential == null || !settings.GlobalCredential.IsConfigured)
+                {
+                    options.CredentialSource = "CurrentUser";
+                    return;
+                }
+
+                options.Credential = settings.GlobalCredential.Clone();
+                options.CredentialSource = "Global";
+            }
+            catch
+            {
+                options.CredentialSource = "CurrentUser";
             }
         }
     }

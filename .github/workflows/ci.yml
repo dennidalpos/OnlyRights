@@ -37,6 +37,12 @@ jobs:
       - name: Pack
         run: powershell -File .\scripts\pack.ps1 -Configuration Release -SkipRestore -SkipBuild
 
+      - name: Pack x64
+        run: powershell -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x64
+
+      - name: Pack x86
+        run: powershell -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86
+
       - name: Publish
         run: powershell -File .\scripts\publish.ps1 -Configuration Release
 
@@ -51,6 +57,9 @@ jobs:
 
       - name: MSI Build
         run: powershell -File .\scripts\packaging\msi-build.ps1 -Configuration Release -SkipPack
+
+      - name: MSI Build x86
+        run: powershell -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x86 -SkipPack
 
       - name: Service Install Smoke
         run: powershell -File .\scripts\windows\service-install.ps1 -Configuration Release
