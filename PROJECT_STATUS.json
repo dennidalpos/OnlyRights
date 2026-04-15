@@ -1,3 +1,546 @@
 {
-  "tasks": []
+  "updated_at": "2026-04-16",
+  "source": {
+    "type": "technical_audit_plan",
+    "auditor_role": "Principal Windows/.NET Architect",
+    "audit_date": "2026-04-16",
+    "repository": "D:\\GITHUB\\OnlyRights",
+    "branch_audited": "main",
+    "commit_audited": "078ac1a"
+  },
+  "execution_policy": {
+    "priority_order": ["F0", "F1", "F2", "F3", "F4", "F5", "F6"],
+    "notes": [
+      "Execute F0 before code changes to restore a clean and verifiable baseline.",
+      "Execute F1 before F2 because removing the false NFS contract is simpler before moving core files.",
+      "Execute F2 only after build and tests are green.",
+      "Execute F3, F4 and F5 after F2, keeping tests and documentation aligned.",
+      "Execute F6 only after explicit approval because it is optional debt work."
+    ]
+  },
+  "findings": [
+    {
+      "id": "B1",
+      "severity": "blocking",
+      "title": "NtfsAudit.Service depends on NtfsAudit.App WPF project",
+      "status": "open",
+      "primary_files": [
+        "src/NtfsAudit.Service/NtfsAudit.Service.csproj",
+        "src/NtfsAudit.App/NtfsAudit.App.csproj",
+        "src/NtfsAudit.Viewer/NtfsAudit.Viewer.csproj",
+        "tests/NtfsAudit.App.Tests/NtfsAudit.App.Tests.csproj",
+        "NtfsAudit.sln"
+      ],
+      "summary": "The headless Windows service references the WPF application project, pulling UI concerns into daemon/runtime and test boundaries.",
+      "target_outcome": "Introduce NtfsAudit.Core and make Service depend on Core instead of App."
+    },
+    {
+      "id": "B2",
+      "severity": "blocking",
+      "title": "PathKind.Nfs declares unsupported NFS behavior",
+      "status": "open",
+      "primary_files": [
+        "src/NtfsAudit.App/Models/PathKind.cs",
+        "src/NtfsAudit.App/Services/PathResolver.cs",
+        "README.md",
+        "docs/architecture.md"
+      ],
+      "summary": "The code classifies some paths as NFS but does not implement native NFS or POSIX ACL scanning.",
+      "target_outcome": "Remove the false NFS contract and document only Windows-exposed path behavior."
+    },
+    {
+      "id": "I1",
+      "severity": "important",
+      "title": "Credential model documentation uses incorrect fallback terminology",
+      "status": "open",
+      "primary_files": [
+        "README.md",
+        "docs/architecture.md",
+        "src/NtfsAudit.App/Services/ScanCredentialPathPolicy.cs"
+      ],
+      "summary": "Local paths are forced to CurrentUser by policy; this is not a fallback.",
+      "target_outcome": "Document the effective credential policy, DPAPI scopes, service mode, and credential isolation guarantees."
+    },
+    {
+      "id": "I2",
+      "severity": "important",
+      "title": ".ntaudit archive contract is undocumented and partially inconsistent",
+      "status": "open",
+      "primary_files": [
+        "src/NtfsAudit.App/Services/AnalysisArchive.cs",
+        "src/NtfsAudit.App/Services/AnalysisArchive.Validation.cs",
+        "docs/architecture.md"
+      ],
+      "summary": "analysis.sqlite is mandatory in exported archives, but documentation implies optional large-archive behavior.",
+      "target_outcome": "Document ZIP entries, archive versioning, SQLite contract, import compatibility, and credential stripping."
+    },
+    {
+      "id": "I3",
+      "severity": "important",
+      "title": "PathResolver DFS caches are static and unbounded",
+      "status": "open",
+      "primary_files": ["src/NtfsAudit.App/Services/PathResolver.cs"],
+      "summary": "Long-running service processes can accumulate DFS cache entries without TTL or eviction.",
+      "target_outcome": "Add TTL-based lazy eviction with regression tests."
+    },
+    {
+      "id": "I4",
+      "severity": "important",
+      "title": "MainViewModel contains scan orchestration logic",
+      "status": "open",
+      "primary_files": [
+        "src/NtfsAudit.App/ViewModels/MainViewModel.ScanExecution.cs",
+        "src/NtfsAudit.App/ViewModels/MainViewModel.*.cs"
+      ],
+      "summary": "Scan orchestration is tightly coupled to WPF ViewModel state and is hard to test outside UI context.",
+      "target_outcome": "Track as follow-up refactoring candidate after Core extraction."
+    },
+    {
+      "id": "I5",
+      "severity": "important",
+      "title": "build.ps1 is a redundant wrapper around compile.ps1",
+      "status": "open",
+      "primary_files": [
+        "scripts/build.ps1",
+        "scripts/compile.ps1",
+        "docs/operations.md",
+        ".github/workflows"
+      ],
+      "summary": "Build entrypoint documentation and CI usage should be checked and made consistent.",
+      "target_outcome": "Keep one canonical command path documented, with wrapper behavior explicit if retained."
+    },
+    {
+      "id": "M1",
+      "severity": "improvement",
+      "title": "Nullable Reference Types are disabled",
+      "status": "deferred",
+      "primary_files": ["src/**/*.csproj", "tests/**/*.csproj"],
+      "summary": "Nullable type safety is currently not enforced.",
+      "target_outcome": "Consider progressive nullable enablement as separate approved debt work."
+    },
+    {
+      "id": "M2",
+      "severity": "improvement",
+      "title": "AGENTS.md missing from current HEAD",
+      "status": "open",
+      "primary_files": ["AGENTS.md"],
+      "summary": "Agent-assisted development guidance appears to have been removed from the working tree.",
+      "target_outcome": "Restore AGENTS.md from history if still intended."
+    },
+    {
+      "id": "M3",
+      "severity": "improvement",
+      "title": "No .editorconfig",
+      "status": "deferred",
+      "primary_files": [".editorconfig"],
+      "summary": "Code style is not enforced by a repository-level editor configuration.",
+      "target_outcome": "Consider adding .editorconfig as optional debt work."
+    },
+    {
+      "id": "M4",
+      "severity": "improvement",
+      "title": "Existing features are under-documented",
+      "status": "open",
+      "primary_files": ["README.md", "docs/architecture.md", "docs/operations.md"],
+      "summary": "PowerShell fallback, advanced audit, group membership export, and baseline comparison need documentation.",
+      "target_outcome": "Document implemented features without overstating support."
+    },
+    {
+      "id": "M5",
+      "severity": "improvement",
+      "title": "Coverage gaps in critical contracts",
+      "status": "open",
+      "primary_files": ["tests"],
+      "summary": "Credential isolation, legacy archive import, DFS behavior, ScanWorker lifecycle, and share permission positive retrieval need stronger coverage.",
+      "target_outcome": "Add focused tests around privacy, compatibility, and service/core boundaries."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "F0",
+      "title": "Prerequisites and baseline alignment",
+      "status": "open",
+      "priority": 0,
+      "phase": "F0",
+      "task_size": "Standard",
+      "scope": "supporting",
+      "risk": "LOW",
+      "depends_on": [],
+      "findings": ["I5", "M2"],
+      "objective": "Restore a clean, documented, and verifiable baseline before structural changes.",
+      "subtasks": [
+        {
+          "id": "F0.1",
+          "status": "open",
+          "title": "Restore AGENTS.md from git history if the removal was unintended",
+          "files": ["AGENTS.md"],
+          "acceptance": [
+            "AGENTS.md exists at repository root.",
+            "Content matches the latest intended operational guidance from history or is explicitly reconciled."
+          ]
+        },
+        {
+          "id": "F0.2",
+          "status": "open",
+          "title": "Track the audit remediation plan in PROJECT_STATUS.json",
+          "files": ["PROJECT_STATUS.json"],
+          "acceptance": [
+            "Blocking, important and improvement findings are represented as open or deferred tasks.",
+            "Tasks are ordered by priority and execution phase."
+          ]
+        },
+        {
+          "id": "F0.3",
+          "status": "open",
+          "title": "Verify and normalize build.ps1 versus compile.ps1 usage",
+          "files": ["scripts/build.ps1", "scripts/compile.ps1", "docs/operations.md", ".github/workflows"],
+          "acceptance": [
+            "Canonical build entrypoint is identified from repository scripts and CI.",
+            "Documentation states the canonical command and wrapper behavior clearly if both scripts remain.",
+            "CI usage is consistent or deliberately documented."
+          ]
+        }
+      ],
+      "verification_required": ["scripts/doctor.ps1", "scripts/build.ps1 -Configuration Release", "scripts/test.ps1"],
+      "packaging_considered": "not applicable in this phase",
+      "deploy_considered": "not applicable in this phase",
+      "compatibility_notes": ["No runtime behavior should change in F0."]
+    },
+    {
+      "id": "F1",
+      "title": "Remove unsupported PathKind.Nfs contract",
+      "status": "open",
+      "priority": 1,
+      "phase": "F1",
+      "task_size": "Standard",
+      "scope": "core",
+      "risk": "MEDIUM",
+      "depends_on": ["F0"],
+      "findings": ["B2"],
+      "objective": "Eliminate false native NFS support while preserving import compatibility for old archives.",
+      "subtasks": [
+        {
+          "id": "F1.1",
+          "status": "open",
+          "title": "Remove PathKind.Nfs from the enum",
+          "files": ["src/NtfsAudit.App/Models/PathKind.cs"],
+          "acceptance": ["PathKind no longer exposes an Nfs value for new scans."]
+        },
+        {
+          "id": "F1.2",
+          "status": "open",
+          "title": "Remove NFS detection heuristics from PathResolver",
+          "files": ["src/NtfsAudit.App/Services/PathResolver.cs"],
+          "acceptance": [
+            "nfs:// literals are not advertised as supported scan roots.",
+            "\\\\wsl$\\ paths are not classified as NFS.",
+            "\\\\nfs* and paths containing \\nfs\\ are not classified as NFS by name heuristic."
+          ]
+        },
+        {
+          "id": "F1.3",
+          "status": "open",
+          "title": "Classify WSL$ paths as Windows-exposed UNC with warning semantics if supported by existing model",
+          "files": ["src/NtfsAudit.App/Services/PathResolver.cs", "src/NtfsAudit.App/Models"],
+          "acceptance": [
+            "\\\\wsl$\\ paths resolve as PathKind.Unc or equivalent Windows-exposed path category.",
+            "Any warning added is explicit about partial or unavailable NTFS ACL semantics."
+          ]
+        },
+        {
+          "id": "F1.4",
+          "status": "open",
+          "title": "Update all PathKind.Nfs call sites",
+          "files": ["src", "tests"],
+          "acceptance": ["Repository search finds no active PathKind.Nfs references except legacy compatibility mapping or documentation of removed behavior."]
+        },
+        {
+          "id": "F1.5",
+          "status": "open",
+          "title": "Add legacy archive import compatibility for RootPathKind Nfs",
+          "files": ["src/NtfsAudit.App/Services/AnalysisArchive.DataModel.cs", "src/NtfsAudit.App/Services/AnalysisArchive*.cs"],
+          "acceptance": [
+            "Existing .ntaudit meta.json values with RootPathKind equal to Nfs import without failure.",
+            "Legacy Nfs values map to PathKind.Unc or documented Windows-exposed equivalent."
+          ]
+        },
+        {
+          "id": "F1.6",
+          "status": "open",
+          "title": "Update PathResolver and archive compatibility tests",
+          "files": ["tests"],
+          "acceptance": [
+            "Tests no longer assert PathKind.Nfs for new path detection.",
+            "Tests cover \\\\wsl$\\ classification.",
+            "Tests cover legacy RootPathKind Nfs import."
+          ]
+        },
+        {
+          "id": "F1.7",
+          "status": "open",
+          "title": "Update path support documentation",
+          "files": ["README.md", "docs/architecture.md"],
+          "acceptance": [
+            "Documentation no longer claims native NFS ACL support.",
+            "Supported path list distinguishes local, UNC/SMB, DFS, extended Windows paths, mapped drives and SMB-exposed NAS paths.",
+            "Unsupported path list includes native NFS, POSIX, HTTP/WebDAV and cloud object storage without Windows mount."
+          ]
+        }
+      ],
+      "verification_required": ["scripts/build.ps1 -Configuration Release", "scripts/test.ps1"],
+      "packaging_considered": "not applicable unless packaging inputs change",
+      "deploy_considered": "not applicable",
+      "compatibility_notes": [
+        "Legacy archives containing RootPathKind Nfs must remain importable.",
+        "Scan behavior for Windows-accessible paths should not change beyond label and warning semantics."
+      ]
+    },
+    {
+      "id": "F2",
+      "title": "Extract NtfsAudit.Core and remove Service to App dependency",
+      "status": "open",
+      "priority": 2,
+      "phase": "F2",
+      "task_size": "High-risk",
+      "scope": "core",
+      "risk": "HIGH",
+      "depends_on": ["F0", "F1"],
+      "findings": ["B1"],
+      "objective": "Separate core scan, archive, credential, cache, export and logging logic from the WPF application project.",
+      "subtasks": [
+        {
+          "id": "F2.1",
+          "status": "open",
+          "title": "Create NtfsAudit.Core class library",
+          "files": ["src/NtfsAudit.Core/NtfsAudit.Core.csproj"],
+          "acceptance": [
+            "Project targets net6.0-windows and net8.0-windows if required by App and Viewer compatibility.",
+            "Nullable and implicit using settings remain consistent with the existing repository unless intentionally changed.",
+            "Package references required by moved core code are present."
+          ]
+        },
+        {
+          "id": "F2.2",
+          "status": "open",
+          "title": "Move core folders out of NtfsAudit.App",
+          "files": [
+            "src/NtfsAudit.App/Models",
+            "src/NtfsAudit.App/Services",
+            "src/NtfsAudit.App/Cache",
+            "src/NtfsAudit.App/Export",
+            "src/NtfsAudit.App/Logging",
+            "src/NtfsAudit.Core/Models",
+            "src/NtfsAudit.Core/Services",
+            "src/NtfsAudit.Core/Cache",
+            "src/NtfsAudit.Core/Export",
+            "src/NtfsAudit.Core/Logging"
+          ],
+          "acceptance": [
+            "Moved code compiles from NtfsAudit.Core.",
+            "Core contains no dependency on WPF views, view models or application resources.",
+            "Namespaces remain stable unless a deliberate migration is implemented."
+          ]
+        },
+        {
+          "id": "F2.3",
+          "status": "open",
+          "title": "Update project references",
+          "files": [
+            "src/NtfsAudit.App/NtfsAudit.App.csproj",
+            "src/NtfsAudit.Service/NtfsAudit.Service.csproj",
+            "src/NtfsAudit.Viewer/NtfsAudit.Viewer.csproj",
+            "tests/NtfsAudit.App.Tests/NtfsAudit.App.Tests.csproj"
+          ],
+          "acceptance": [
+            "NtfsAudit.Service references NtfsAudit.Core, not NtfsAudit.App.",
+            "NtfsAudit.App references NtfsAudit.Core.",
+            "NtfsAudit.Viewer references NtfsAudit.Core when needed.",
+            "Tests reference Core as primary dependency for core tests."
+          ]
+        },
+        {
+          "id": "F2.4",
+          "status": "open",
+          "title": "Update solution and shared build configuration",
+          "files": ["NtfsAudit.sln", "Directory.Build.props"],
+          "acceptance": [
+            "NtfsAudit.Core is included in the solution.",
+            "Output path conventions remain coherent with the existing artifact layout."
+          ]
+        },
+        {
+          "id": "F2.5",
+          "status": "open",
+          "title": "Check packaging and installer assumptions after project split",
+          "files": ["scripts/pack.ps1", "scripts/msi-build.ps1", "scripts", "tools", "docs/operations.md"],
+          "acceptance": [
+            "Packaging scripts do not rely on moved source paths incorrectly.",
+            "Service output remains NtfsAudit.Service.exe.",
+            "MSI source generation includes required Core assembly outputs."
+          ]
+        },
+        {
+          "id": "F2.6",
+          "status": "open",
+          "title": "Add or update service/core boundary tests",
+          "files": ["tests"],
+          "acceptance": [
+            "At least one test or static check confirms Service can build without App reference.",
+            "Existing core behavior tests continue to pass after move."
+          ]
+        }
+      ],
+      "verification_required": [
+        "scripts/build.ps1 -Configuration Release",
+        "scripts/test.ps1",
+        "scripts/pack.ps1 -Configuration Release",
+        "scripts/msi-build.ps1 -Runtime win-x64"
+      ],
+      "verification_notes": ["MSI build and service install smoke are required before release readiness, but may be NON VERIFICATO locally if tooling or privileges are unavailable."],
+      "packaging_considered": "yes; package and MSI scripts must be checked after the project split",
+      "deploy_considered": "not applicable unless CI or release pipeline changes are made",
+      "compatibility_notes": [
+        "Keep public executable names unchanged.",
+        "Keep archive serialization compatibility by preserving namespaces unless a deliberate migration is implemented.",
+        "Core must remain compatible with net6.0-windows if App or Viewer continue targeting net6.0-windows."
+      ]
+    },
+    {
+      "id": "F3",
+      "title": "Add DFS cache TTL eviction",
+      "status": "open",
+      "priority": 3,
+      "phase": "F3",
+      "task_size": "Standard",
+      "scope": "core",
+      "risk": "MEDIUM",
+      "depends_on": ["F2"],
+      "findings": ["I3"],
+      "objective": "Prevent unbounded DFS cache growth in long-running service processes.",
+      "subtasks": [
+        { "id": "F3.1", "status": "open", "title": "Wrap DFS cache values in timestamped entries", "files": ["src/NtfsAudit.Core/Services/PathResolver.cs"], "acceptance": ["DfsCache and DfsTargetsCache entries carry creation or last-refresh timestamps."] },
+        { "id": "F3.2", "status": "open", "title": "Add configurable or internal default TTL", "files": ["src/NtfsAudit.Core/Services/PathResolver.cs"], "acceptance": ["Default TTL is one hour unless repository conventions suggest another value.", "Expired entries are refreshed on access."] },
+        { "id": "F3.3", "status": "open", "title": "Use lazy cleanup without background threads", "files": ["src/NtfsAudit.Core/Services/PathResolver.cs"], "acceptance": ["No new background cleanup thread is introduced.", "Expired entries are removed or replaced during normal lookup."] },
+        { "id": "F3.4", "status": "open", "title": "Add DFS cache TTL tests", "files": ["tests"], "acceptance": ["Tests cover cache refresh or eviction after TTL expiry.", "Tests avoid requiring a real DFS namespace unless explicitly integration-tagged."] }
+      ],
+      "verification_required": ["scripts/build.ps1 -Configuration Release", "scripts/test.ps1"],
+      "packaging_considered": "not applicable",
+      "deploy_considered": "not applicable",
+      "compatibility_notes": ["DFS resolution behavior should remain functionally equivalent except stale cache entries can refresh."]
+    },
+    {
+      "id": "F4",
+      "title": "Align documentation with implemented contracts",
+      "status": "open",
+      "priority": 4,
+      "phase": "F4",
+      "task_size": "Standard",
+      "scope": "supporting",
+      "risk": "LOW",
+      "depends_on": ["F1", "F2"],
+      "findings": ["I1", "I2", "M4"],
+      "objective": "Document the actual supported path, credential, archive, permission and packaging contracts.",
+      "subtasks": [
+        { "id": "F4.1", "status": "open", "title": "Update README path and credential wording", "files": ["README.md"], "acceptance": ["NFS support claims are removed.", "current-user fallback wording is replaced with local path policy wording.", "Quick support summary remains concise."] },
+        { "id": "F4.2", "status": "open", "title": "Update architecture documentation", "files": ["docs/architecture.md"], "acceptance": ["Supported and unsupported path categories are explicit.", "Credential source policy and DPAPI scopes are documented.", "analysis.sqlite is documented as mandatory for modern archives.", "Permission model distinguishes NTFS ACL, SMB share permissions, DFS visibility, and effective permissions."] },
+        { "id": "F4.3", "status": "open", "title": "Create archive format specification", "files": ["docs/archive-format.md"], "acceptance": ["ZIP entries data.jsonl, errors.jsonl, tree.json, folderflags.json, analysis.sqlite and meta.json are specified.", "Version matrix v1 through v7 is documented.", "SQLite presence and lazy-load threshold behavior are documented.", "Credential stripping is documented."] },
+        { "id": "F4.4", "status": "open", "title": "Create credential model documentation", "files": ["docs/credentials.md"], "acceptance": ["Local, UNC, DFS, service job and no-credential scenarios are documented.", "CurrentUser and LocalMachine DPAPI scopes are explained.", "Credential isolation guarantees and test expectations are listed."] },
+        { "id": "F4.5", "status": "open", "title": "Document implemented but under-documented features", "files": ["docs/architecture.md", "docs/operations.md", "README.md"], "acceptance": ["PowerShell identity resolution fallback is documented.", "Advanced SACL audit mode is documented.", "ExportRecord.MemberNames/group membership export is documented.", "AclDiffService/baseline comparison is documented."] },
+        { "id": "F4.6", "status": "open", "title": "Update operations documentation if packaging behavior changed", "files": ["docs/operations.md"], "acceptance": ["Artifact layout and canonical packaging commands match scripts.", "Service net8-only packaging behavior is explicit.", "net6 packaging skip-service behavior is documented if present."] }
+      ],
+      "verification_required": ["Static review of documentation against code and scripts", "scripts/build.ps1 -Configuration Release if documentation changes include build commands or generated references"],
+      "packaging_considered": "yes for operations documentation only",
+      "deploy_considered": "not applicable unless deployment documentation is changed",
+      "compatibility_notes": ["Documentation must describe current behavior and must not introduce new product claims."]
+    },
+    {
+      "id": "F5",
+      "title": "Add critical contract test coverage",
+      "status": "open",
+      "priority": 5,
+      "phase": "F5",
+      "task_size": "Standard",
+      "scope": "core",
+      "risk": "MEDIUM",
+      "depends_on": ["F1", "F2"],
+      "findings": ["M5"],
+      "objective": "Add focused tests for privacy, compatibility, DFS cache behavior, service lifecycle and export/archive contracts.",
+      "subtasks": [
+        { "id": "F5.1", "status": "open", "title": "Test credentials are absent from archive meta.json", "files": ["tests"], "acceptance": ["Serialized meta.json does not include credential secret fields."] },
+        { "id": "F5.2", "status": "open", "title": "Test credentials are absent from ErrorEntry serialization", "files": ["tests"], "acceptance": ["ErrorEntry serialization does not leak passwords, usernames beyond intended principal labels, or credential source secrets."] },
+        { "id": "F5.3", "status": "open", "title": "Test legacy Nfs archive import mapping", "files": ["tests"], "acceptance": ["Archive metadata with RootPathKind Nfs imports as Unc or documented Windows-exposed category."] },
+        { "id": "F5.4", "status": "open", "title": "Test ScanCredentialPathPolicy local path override", "files": ["tests"], "acceptance": ["Local paths force CurrentUser even when Global is configured.", "UNC and DFS paths preserve configured credential source."] },
+        { "id": "F5.5", "status": "open", "title": "Test ExportRecord JSONL does not contain credential fields", "files": ["tests"], "acceptance": ["Exported JSONL records contain no credential secrets or credential configuration payload."] },
+        { "id": "F5.6", "status": "open", "title": "Add ScanWorker basic job lifecycle test after Core extraction", "files": ["tests", "src/NtfsAudit.Service"], "acceptance": ["Service worker execution can be tested without referencing NtfsAudit.App.", "Test uses fakes or temporary files and avoids requiring service installation."] },
+        { "id": "F5.7", "status": "open", "title": "Assess positive-path SharePermissionService coverage", "files": ["tests"], "acceptance": ["A positive retrieval test is added if it can be made deterministic without environment-specific SMB/WMI dependencies.", "If not deterministic, residual integration coverage gap is documented."] }
+      ],
+      "verification_required": ["scripts/build.ps1 -Configuration Release", "scripts/test.ps1"],
+      "packaging_considered": "not applicable",
+      "deploy_considered": "not applicable",
+      "compatibility_notes": ["Tests must preserve archive import backward compatibility and credential privacy guarantees."]
+    },
+    {
+      "id": "F6",
+      "title": "Optional technical debt follow-up",
+      "status": "deferred",
+      "priority": 6,
+      "phase": "F6",
+      "task_size": "High-risk",
+      "scope": "debt",
+      "risk": "MEDIUM",
+      "depends_on": ["F2"],
+      "findings": ["I4", "M1", "M3"],
+      "objective": "Address lower-priority maintainability improvements only after explicit approval.",
+      "subtasks": [
+        { "id": "F6.1", "status": "deferred", "title": "Progressively enable Nullable Reference Types", "files": ["src/**/*.csproj", "tests/**/*.csproj", "src/**/*.cs", "tests/**/*.cs"], "acceptance": ["Nullable is enabled incrementally with warnings resolved or explicitly suppressed.", "Work is split into small reviewable changes."] },
+        { "id": "F6.2", "status": "deferred", "title": "Add repository .editorconfig", "files": [".editorconfig"], "acceptance": ["Style rules match current repository conventions.", "No large unrelated formatting churn is introduced."] },
+        { "id": "F6.3", "status": "deferred", "title": "Extract scan orchestration from MainViewModel", "files": ["src/NtfsAudit.App/ViewModels/MainViewModel.ScanExecution.cs", "src/NtfsAudit.App/ViewModels", "src/NtfsAudit.Core/Services"], "acceptance": ["Scan orchestration can be tested without WPF dispatcher or view model state.", "MainViewModel retains UI state responsibilities only.", "Behavioral parity is covered by focused tests."] }
+      ],
+      "verification_required": ["To be defined per approved F6 subtask", "scripts/build.ps1 -Configuration Release", "scripts/test.ps1"],
+      "packaging_considered": "not applicable unless project files or output layout change",
+      "deploy_considered": "not applicable",
+      "compatibility_notes": ["F6 must not be bundled with blocking remediation unless explicitly approved."]
+    }
+  ],
+  "global_verification_targets": [
+    { "command": "scripts/doctor.ps1", "applies_to": ["F0"], "status": "pending" },
+    { "command": "scripts/build.ps1 -Configuration Release", "applies_to": ["F0", "F1", "F2", "F3", "F4", "F5", "F6"], "status": "pending" },
+    { "command": "scripts/test.ps1", "applies_to": ["F0", "F1", "F2", "F3", "F5", "F6"], "status": "pending" },
+    { "command": "scripts/pack.ps1 -Configuration Release", "applies_to": ["F2"], "status": "pending" },
+    { "command": "scripts/msi-build.ps1 -Runtime win-x64", "applies_to": ["F2"], "status": "pending" }
+  ],
+  "target_contracts": {
+    "paths_supported": [
+      "Local Windows paths such as C:\\path\\to\\folder",
+      "SMB/CIFS UNC paths such as \\\\server\\share",
+      "DFS namespace paths resolved through Windows DFS APIs",
+      "Extended Windows paths such as \\\\?\\C:\\... and \\\\?\\UNC\\server\\share\\...",
+      "Mapped drives resolved to UNC through Windows APIs",
+      "NAS paths exposed through SMB/CIFS providers"
+    ],
+    "paths_unsupported": [
+      "Native NFS paths such as nfs://server/export",
+      "Native Linux/POSIX paths and POSIX ACL scanning",
+      "HTTP/WebDAV paths",
+      "Cloud object storage without a Windows filesystem mount"
+    ],
+    "archive_format": {
+      "current_version": 7,
+      "mandatory_entries_for_modern_archives": ["data.jsonl", "errors.jsonl", "tree.json", "folderflags.json", "analysis.sqlite", "meta.json"],
+      "notes": [
+        "analysis.sqlite is mandatory even for small archives.",
+        "Archives with version 5 or later require strict count validation.",
+        "Archives with version 1 or 2 are legacy and require tolerant import."
+      ]
+    },
+    "credential_policy": [
+      { "scenario": "Local path", "effective_source": "CurrentUser", "note": "Mandatory policy override; Global credentials are ignored." },
+      { "scenario": "UNC path", "effective_source": "Configured source", "note": "Global or CurrentUser is preserved." },
+      { "scenario": "DFS path", "effective_source": "Configured source", "note": "Same as UNC." },
+      { "scenario": "Service job", "effective_source": "LocalMachine DPAPI scope", "note": "Separate from interactive App credential store." },
+      { "scenario": "No credential configured", "effective_source": "Current Windows identity", "note": "Impersonation is skipped." }
+    ],
+    "permission_model": ["NTFS ACL", "SMB share permissions", "DFS visibility semantics", "Effective permissions as NTFS and share permission intersection"],
+    "packaging_outputs": ["artifacts/build", "artifacts/test-results", "artifacts/packages", "artifacts/publish", "artifacts/logs", "artifacts/msi"]
+  }
 }
