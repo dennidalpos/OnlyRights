@@ -33,10 +33,36 @@ namespace NtfsAudit.App.Views
             await ExecutePrincipalLookupAsync(() => ShowGroupMembers(entry), "Dettagli gruppo");
         }
 
+        private async void GroupEntries_OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Enter)
+            {
+                return;
+            }
+
+            var entry = GetSelectedEntry(sender);
+            if (entry == null) return;
+            e.Handled = true;
+            await ExecutePrincipalLookupAsync(() => ShowGroupMembers(entry), "Dettagli gruppo");
+        }
+
         private async void UserEntries_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             var entry = GetSelectedEntry(sender);
             if (entry == null) return;
+            await ExecutePrincipalLookupAsync(() => ShowUserGroups(entry), "Dettagli utente");
+        }
+
+        private async void UserEntries_OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Enter)
+            {
+                return;
+            }
+
+            var entry = GetSelectedEntry(sender);
+            if (entry == null) return;
+            e.Handled = true;
             await ExecutePrincipalLookupAsync(() => ShowUserGroups(entry), "Dettagli utente");
         }
 

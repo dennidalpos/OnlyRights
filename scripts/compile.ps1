@@ -16,12 +16,43 @@ if (-not $SkipRestore) {
     Invoke-DotNetCommand -Arguments @("restore", $context.Solution, "--nologo") -ErrorMessage "Restore failed."
 }
 
-$buildArgs = @("build", $context.Solution, "-c", $Configuration, "--nologo", "--no-restore")
-if ($Framework) {
-    $buildArgs += @("-f", $Framework)
+function Test-ProjectSupportsFramework {
+    param(
+        [string]$ProjectPath,
+        [string]$TargetFramework
+    )
+
+    [xml]$project = Get-Content -Path $ProjectPath -Raw
+    $frameworkValues = @()
+    foreach ($node in $project.SelectNodes("//TargetFramework")) {
+        $frameworkValues += [string]$node.InnerText
+    }
+    foreach ($node in $project.SelectNodes("//TargetFrameworks")) {
+        $frameworkValues += ([string]$node.InnerText -split ";")
+    }
+
+    return @($frameworkValues | Where-Object { $_ -eq $TargetFramework }).Count -gt 0
 }
 
-Invoke-DotNetCommand -Arguments $buildArgs -ErrorMessage "Compile failed."
+if ($Framework) {
+    $projects = @(
+        $context.AppProject,
+        $context.ViewerProject,
+        $context.ServiceProject,
+        (Join-Path $context.RepoRoot "tests\NtfsAudit.App.Tests\NtfsAudit.App.Tests.csproj")
+    ) | Where-Object { Test-ProjectSupportsFramework -ProjectPath $_ -TargetFramework $Framework }
+
+    if ($projects.Count -eq 0) {
+        throw ("No projects support target framework {0}." -f $Framework)
+    }
+
+    foreach ($project in $projects) {
+        Invoke-DotNetCommand -Arguments @("build", $project, "-c", $Configuration, "--nologo", "--no-restore", "-f", $Framework) -ErrorMessage "Compile failed."
+    }
+}
+else {
+    Invoke-DotNetCommand -Arguments @("build", $context.Solution, "-c", $Configuration, "--nologo", "--no-restore") -ErrorMessage "Compile failed."
+}
 
 Write-Host "[NtfsAudit] Compile completed." -ForegroundColor Cyan
 Write-Host ("  Configuration: {0}" -f $Configuration)

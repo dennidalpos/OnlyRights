@@ -22,9 +22,9 @@ namespace NtfsAudit.App.Services
             {
                 return new ServiceRuntimeViewState
                 {
-                    BadgeText = "Servizio non installato",
+                    BadgeText = LocalizationManager.Text("Service.NotInstalledBadge"),
                     BadgeBackground = "#FF9E9E9E",
-                    StatusText = "Servizio: non installato",
+                    StatusText = LocalizationManager.Text("Service.NotInstalledStatus"),
                     IsServiceRuntimeRunning = false
                 };
             }
@@ -33,42 +33,42 @@ namespace NtfsAudit.App.Services
             {
                 return new ServiceRuntimeViewState
                 {
-                    BadgeText = isServiceRunning ? "Servizio attivo" : "Servizio installato",
+                    BadgeText = isServiceRunning ? LocalizationManager.Text("Service.ActiveBadge") : LocalizationManager.Text("Service.InstalledBadge"),
                     BadgeBackground = isServiceRunning ? "#FF2E7D32" : "#FF1565C0",
                     StatusText = isServiceRunning
-                        ? "Servizio: avviato (stato dettagliato non disponibile)"
-                        : "Servizio: installato e fermo",
+                        ? LocalizationManager.Text("Service.StartedNoDetails")
+                        : LocalizationManager.Text("Service.InstalledStopped"),
                     IsServiceRuntimeRunning = false
                 };
             }
 
             var queuedJobs = Math.Max(0, status.PendingJobs);
             var queuedRoots = Math.Max(0, status.RemainingRootsInCurrentJob);
-            var queueText = string.Format(" | code scansioni: {0}", queuedJobs + queuedRoots);
+            var queueText = LocalizationManager.Format("Service.QueueText", queuedJobs + queuedRoots);
 
             if (status.IsRunning)
             {
-                var rootLabel = string.IsNullOrWhiteSpace(status.CurrentRootPath) ? "root sconosciuta" : status.CurrentRootPath;
+                var rootLabel = string.IsNullOrWhiteSpace(status.CurrentRootPath) ? LocalizationManager.Text("Service.UnknownRoot") : status.CurrentRootPath;
                 var progress = status.TotalRoots > 0
                     ? string.Format("{0}/{1}", status.CurrentRootIndex, status.TotalRoots)
                     : "?/?";
 
                 return new ServiceRuntimeViewState
                 {
-                    BadgeText = "Servizio attivo",
+                    BadgeText = LocalizationManager.Text("Service.ActiveBadge"),
                     BadgeBackground = "#FF2E7D32",
-                    StatusText = string.Format("Servizio in esecuzione: {0} (root {1}){2}", rootLabel, progress, queueText),
+                    StatusText = LocalizationManager.Format("Service.RunningStatus", rootLabel, progress, queueText),
                     IsServiceRuntimeRunning = true
                 };
             }
 
             return new ServiceRuntimeViewState
             {
-                BadgeText = isServiceRunning ? "Servizio attivo" : "Servizio installato",
+                BadgeText = isServiceRunning ? LocalizationManager.Text("Service.ActiveBadge") : LocalizationManager.Text("Service.InstalledBadge"),
                 BadgeBackground = isServiceRunning ? "#FF2E7D32" : "#FF1565C0",
                 StatusText = string.IsNullOrWhiteSpace(status.LastMessage)
-                    ? string.Format("Servizio: in attesa{0}", queueText)
-                    : string.Format("Servizio: {0}{1}", status.LastMessage, queueText),
+                    ? LocalizationManager.Format("Service.Waiting", queueText)
+                    : LocalizationManager.Format("Service.WithMessage", status.LastMessage, queueText),
                 IsServiceRuntimeRunning = false
             };
         }

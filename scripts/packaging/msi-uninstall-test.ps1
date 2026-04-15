@@ -19,7 +19,8 @@ $resolvedMsiPath = if ($MsiPath) {
 else {
     $outputRoot = Resolve-MsiOutputRoot -Context $context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -OutputRoot $null
     $versionValue = Normalize-MsiVersion -Version $(if ($Version) { $Version } else { "1.0.0" })
-    Join-Path $outputRoot ("{0}-{1}.msi" -f $context.InstallerName, $versionValue)
+    $architecture = Resolve-MsiArchitecture -Runtime $Runtime
+    Join-Path $outputRoot ("{0}-{1}-{2}.msi" -f $context.InstallerName, $versionValue, $architecture)
 }
 
 if (-not (Test-Path $resolvedMsiPath)) {

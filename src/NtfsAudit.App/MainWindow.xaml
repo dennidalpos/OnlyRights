@@ -2,8 +2,9 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:NtfsAudit.App.Views"
-        Title="NTFS Audit"
-        Width="980"
+        Title="{DynamicResource App.Title}"
+        Icon="Assets/OnlyRights.ico"
+        Width="1100"
         Height="640"
         MinWidth="800"
         MinHeight="480"
@@ -26,27 +27,35 @@
           <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel>
               <WrapPanel>
-                <Button Style="{StaticResource ActionButtonStyle}" Content="Avvia analisi" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" ToolTip="Avvia la scansione delle cartelle selezionate." />
-                <Button Style="{StaticResource ActionButtonStyle}" Content="Stop + pulizia" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" ToolTip="Ferma la scansione in corso e pulisce i file residui." />
-                <Button Style="{StaticResource ActionButtonStyle}" Content="Installa servizio" Command="{Binding InstallServiceCommand}" ToolTip="Installa l'host Windows opzionale per scansioni in background o non interattive." />
-                <Button Style="{StaticResource ActionButtonStyle}" Content="Disinstalla servizio" Command="{Binding UninstallServiceCommand}" ToolTip="Disinstalla l'host Windows opzionale e rimuove job/stato residui." />
-                <Button Style="{StaticResource ActionButtonStyle}" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" ToolTip="Importa un report .ntaudit esistente." />
-                <Button Style="{StaticResource ActionButtonStyle}" Content="Esporta Excel" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" ToolTip="Esporta l'elenco permessi in formato Excel (.xlsx)." />
-                <Button Style="{StaticResource ActionButtonStyle}" Content="Pulisci cache" Command="{Binding CleanupResidualFilesCommand}" ToolTip="Elimina tutti i file residui dell'app e apre la cartella dei file temporanei." />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.StartAnalysis}" AutomationProperties.Name="{DynamicResource Main.StartAnalysis}" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" ToolTip="{DynamicResource Main.StartAnalysis.ToolTip}" />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.StopAndClean}" AutomationProperties.Name="{DynamicResource Main.StopAndClean}" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" ToolTip="{DynamicResource Main.StopAndClean.ToolTip}" />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.InstallService}" AutomationProperties.Name="{DynamicResource Main.InstallService}" Command="{Binding InstallServiceCommand}" ToolTip="{DynamicResource Main.InstallService.ToolTip}" />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.UninstallService}" AutomationProperties.Name="{DynamicResource Main.UninstallService}" Command="{Binding UninstallServiceCommand}" ToolTip="{DynamicResource Main.UninstallService.ToolTip}" />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.ImportAnalysis}" AutomationProperties.Name="{DynamicResource Main.ImportAnalysis}" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" ToolTip="{DynamicResource Main.ImportAnalysis.ToolTip}" />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.ExportExcel}" AutomationProperties.Name="{DynamicResource Main.ExportExcel}" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" ToolTip="{DynamicResource Main.ExportExcel.ToolTip}" />
+                <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.CleanupResiduals}" AutomationProperties.Name="{DynamicResource Main.CleanupResiduals}" Command="{Binding CleanupResidualFilesCommand}" ToolTip="{DynamicResource Main.CleanupResiduals.ToolTip}" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,6">
+                  <TextBlock Text="{DynamicResource Common.Language}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                  <ComboBox Width="112"
+                            Height="28"
+                            ItemsSource="{Binding AvailableLocales}"
+                            SelectedItem="{Binding SelectedLocale, Mode=TwoWay}"
+                            DisplayMemberPath="DisplayName" />
+                </StackPanel>
               </WrapPanel>
             </StackPanel>
           </Border>
 
           <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
-              <Button Padding="12,4" Content="Import Analisi" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" Background="#FF616161" Foreground="White" />
+              <Button Padding="12,4" Content="{DynamicResource Main.ImportAnalysis}" AutomationProperties.Name="{DynamicResource Main.ImportAnalysis}" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" Background="#FF616161" Foreground="White" />
             </StackPanel>
           </Border>
 
           <Border Grid.Row="1" Background="#FFFFF3CD" BorderBrush="#FFFFEEBA" BorderThickness="1" CornerRadius="10" Padding="6,2"
                   HorizontalAlignment="Left"
                   Visibility="{Binding IsNotElevated, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <TextBlock Text="Non amministratore"
+            <TextBlock Text="{DynamicResource Common.NonAdmin}"
                        Foreground="#FF856404"
                        FontWeight="SemiBold" />
           </Border>
@@ -69,26 +78,26 @@
 
       <Grid Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="320" />
+          <ColumnDefinition Width="260" MinWidth="220" MaxWidth="320" />
           <ColumnDefinition Width="6" />
           <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="6" />
-          <ColumnDefinition Width="320" />
+          <ColumnDefinition Width="8" />
+          <ColumnDefinition Width="300" MinWidth="260" MaxWidth="340" />
         </Grid.ColumnDefinitions>
 
         <views:FolderTreePanel Grid.Column="0" Margin="12,12,6,12" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
 
+        <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FFE0E0E0" />
+
         <views:ResultsPanel Grid.Column="2" Margin="6,12" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
 
-        <GridSplitter Grid.Column="3" Width="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FFE0E0E0" />
-
-        <views:ScanSidebar Grid.Column="4" Margin="6,12,12,12" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+        <views:ScanSidebar Grid.Column="4" Margin="2,12,12,12" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
       </Grid>
     </Grid>
     <Border Background="#80000000" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
       <Border Background="White" Padding="24" CornerRadius="6" HorizontalAlignment="Center" VerticalAlignment="Center">
         <StackPanel>
-          <TextBlock Text="Operazione in corso..." FontWeight="SemiBold" Margin="0,0,0,12" HorizontalAlignment="Center" />
+          <TextBlock Text="{DynamicResource Common.OperationInProgress}" FontWeight="SemiBold" Margin="0,0,0,12" HorizontalAlignment="Center" />
           <ProgressBar Width="240" Height="16" IsIndeterminate="True" />
         </StackPanel>
       </Border>

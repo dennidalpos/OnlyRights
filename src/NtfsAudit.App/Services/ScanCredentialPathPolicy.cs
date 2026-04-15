@@ -45,17 +45,15 @@ namespace NtfsAudit.App.Services
             var effectiveSource = ResolveEffectiveSource(rootPath, configuredSource);
             if (effectiveSource == "RootOverride")
             {
-                return "Risoluzione effettiva: override root";
+                return LocalizationManager.Text("Credential.SourceRootOverride");
             }
 
             if (effectiveSource == "Global")
             {
-                return "Risoluzione effettiva: credenziali globali";
+                return LocalizationManager.Text("Credential.SourceGlobal");
             }
 
-            return ShouldUseConfiguredCredential(rootPath)
-                ? "Risoluzione effettiva: utente corrente"
-                : "Risoluzione effettiva: utente corrente (percorso locale o non UNC)";
+            return LocalizationManager.Text("Credential.SourceCurrentUser");
         }
     }
 }

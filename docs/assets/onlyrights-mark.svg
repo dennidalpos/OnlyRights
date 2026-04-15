@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="240" viewBox="0 0 960 240" role="img" aria-labelledby="title desc">
+  <title id="title">OnlyRights NtfsAudit mark</title>
+  <desc id="desc">A simple shield and checklist mark for the OnlyRights NtfsAudit repository.</desc>
+  <rect width="960" height="240" rx="8" fill="#f6f8fa"/>
+  <g transform="translate(56 40)">
+    <path d="M80 0 144 24v44c0 43-25 77-64 92-39-15-64-49-64-92V24L80 0Z" fill="#1f6feb"/>
+    <path d="M53 78 72 97l38-48" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g fill="#24292f" font-family="Segoe UI, Arial, sans-serif">
+    <text x="240" y="101" font-size="54" font-weight="700">OnlyRights</text>
+    <text x="242" y="150" font-size="28">NtfsAudit for Windows permission analysis</text>
+  </g>
+</svg>

@@ -409,10 +409,14 @@ namespace NtfsAudit.App.ViewModels
             OnPropertyChanged("IsNotScanning");
             OnPropertyChanged("IsScanConfigEnabled");
             OnPropertyChanged("HasScanResult");
+            OnPropertyChanged("HasNoScanResult");
+            OnPropertyChanged("HasSelectedFolder");
+            OnPropertyChanged("HasNoSelectedFolder");
             OnPropertyChanged("HasUnexportedData");
             OnPropertyChanged("StatusText");
             OnPropertyChanged("StatusBrush");
             OnPropertyChanged("CanStart");
+            OnPropertyChanged("ShouldShowStartHint");
             OnPropertyChanged("CanStop");
             OnPropertyChanged("CanExport");
             OnPropertyChanged("CanImportAnalysis");

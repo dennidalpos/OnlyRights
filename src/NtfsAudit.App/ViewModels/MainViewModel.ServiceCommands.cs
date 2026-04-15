@@ -43,7 +43,7 @@ namespace NtfsAudit.App.ViewModels
                 var serviceState = QueryServiceState();
                 if (serviceState.IsInstalled && serviceState.IsRunning)
                 {
-                    ProgressText = "Servizio Windows già installato e attivo.";
+                    ProgressText = LocalizationManager.Text("Service.StartedNoDetails");
                     RefreshServiceRuntimeStatus();
                     return;
                 }
@@ -51,7 +51,7 @@ namespace NtfsAudit.App.ViewModels
                 var serviceCommand = ResolveServiceInstallCommand();
                 if (string.IsNullOrWhiteSpace(serviceCommand))
                 {
-                    WpfMessageBox.Show("NtfsAudit.Service.exe (o NtfsAudit.Service.dll) non trovato. Compila/publisha il progetto service e copia l'output vicino all'app, oppure usa una build che includa il service.", "Installazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    WpfMessageBox.Show("NtfsAudit.Service.exe (or NtfsAudit.Service.dll) not found. Build/publish the service project and copy the output next to the app, or use a build that includes the service.", LocalizationManager.Text("Dialog.ServiceInstall"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                     return;
                 }
 
@@ -68,13 +68,13 @@ namespace NtfsAudit.App.ViewModels
 
                 ExecuteScCommand(string.Format("description {0} \"Servizio scansione NTFS Audit\"", ServiceName), "description");
                 ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
-                ProgressText = "Servizio Windows installato.";
+                ProgressText = LocalizationManager.Text("Service.InstalledBadge");
                 RefreshServiceRuntimeStatus();
-                WpfMessageBox.Show("Servizio Windows installato correttamente.", "Installazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                WpfMessageBox.Show(LocalizationManager.Text("Service.InstalledBadge"), LocalizationManager.Text("Dialog.ServiceInstall"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                WpfMessageBox.Show(string.Format("Errore installazione servizio: {0}", ex.Message), "Installazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                WpfMessageBox.Show(string.Format("Service installation error: {0}", ex.Message), LocalizationManager.Text("Dialog.ServiceInstall"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
@@ -98,13 +98,13 @@ namespace NtfsAudit.App.ViewModels
                     ThrowScOperationFailed("delete", deleteResult);
                 }
 
-                ProgressText = "Servizio Windows disinstallato.";
+                ProgressText = LocalizationManager.Text("Service.NotInstalledStatus");
                 RefreshServiceRuntimeStatus();
-                WpfMessageBox.Show("Servizio Windows disinstallato correttamente.", "Disinstallazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                WpfMessageBox.Show(LocalizationManager.Text("Service.NotInstalledStatus"), LocalizationManager.Text("Dialog.ServiceUninstall"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                WpfMessageBox.Show(string.Format("Errore disinstallazione servizio: {0}", ex.Message), "Disinstallazione servizio", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                WpfMessageBox.Show(string.Format("Service uninstallation error: {0}", ex.Message), LocalizationManager.Text("Dialog.ServiceUninstall"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
             finally
             {

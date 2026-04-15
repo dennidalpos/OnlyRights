@@ -25,7 +25,8 @@ else {
     Join-Path $env:LOCALAPPDATA $context.DefaultInstallRoot
 }
 
-$upgradeMsiPath = Join-Path (Resolve-MsiOutputRoot -Context $context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -OutputRoot $null) ("{0}-{1}.msi" -f $context.InstallerName, (Normalize-MsiVersion -Version $UpgradeVersion))
+$upgradeArchitecture = Resolve-MsiArchitecture -Runtime $Runtime
+$upgradeMsiPath = Join-Path (Resolve-MsiOutputRoot -Context $context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -OutputRoot $null) ("{0}-{1}-{2}.msi" -f $context.InstallerName, (Normalize-MsiVersion -Version $UpgradeVersion), $upgradeArchitecture)
 $logRoot = Join-Path $context.Repository.ArtifactsRoot "logs"
 Ensure-Directory -Path $logRoot
 $logPath = Join-Path $logRoot "msi-upgrade.log"

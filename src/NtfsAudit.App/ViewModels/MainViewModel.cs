@@ -81,7 +81,7 @@ namespace NtfsAudit.App.ViewModels
         private bool _includeFiles;
         private bool _readOwnerAndSacl = true;
         private bool _compareBaseline = true;
-        private string _progressText = "Pronto";
+        private string _progressText = LocalizationManager.Text("Common.Ready");
         private string _currentPathText;
         private int _processedCount;
         private int _processedFilesCount;
@@ -142,11 +142,12 @@ namespace NtfsAudit.App.ViewModels
         private string _selectedScannedAtText = "-";
         private const int MaxErrorsToLoad = 10000;
         private bool _errorsTruncated;
-        private string _serviceRuntimeStatusText = "Servizio: in attesa";
+        private string _serviceRuntimeStatusText = LocalizationManager.Text("Service.Waiting");
         private bool _isServiceRuntimeRunning;
         private bool _isServiceInstalled;
-        private string _serviceBadgeText = "Servizio non installato";
+        private string _serviceBadgeText = LocalizationManager.Text("Service.NotInstalledBadge");
         private string _serviceBadgeBackground = "#FF9E9E9E";
+        private LocaleOption _selectedLocale;
         private const string ServiceName = "NtfsAuditWorker";
 
         public MainViewModel(bool viewerMode = false)
@@ -161,6 +162,8 @@ namespace NtfsAudit.App.ViewModels
             _runtimeCleanupService = new RuntimeCleanupService();
             _serviceRuntimeStatusPresenter = new ServiceRuntimeStatusPresenter();
             _scanCredentialStore = new ScanCredentialStore();
+            _selectedLocale = LocalizationManager.ResolveLocale(LocalizationManager.CurrentLocale);
+            LocalizationManager.LocaleChanged += OnLocaleChanged;
 
             FolderTree = new ObservableCollection<FolderNodeViewModel>();
             ScanRoots = new ObservableCollection<string>();

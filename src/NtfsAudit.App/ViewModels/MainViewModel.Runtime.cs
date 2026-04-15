@@ -127,6 +127,25 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
+        private void OnLocaleChanged(object sender, EventArgs e)
+        {
+            RefreshLocalizedState();
+        }
+
+        private void RefreshLocalizedState()
+        {
+            OnPropertyChanged("StatusText");
+            OnPropertyChanged("GlobalCredentialStatusText");
+            OnPropertyChanged("SelectedScanRootCredentialStatusText");
+            OnPropertyChanged("SelectedScanRootEffectiveCredentialSource");
+            RefreshServiceRuntimeStatus();
+            if (_scanResult != null && !string.IsNullOrWhiteSpace(SelectedFolderPath))
+            {
+                var detail = GetFolderDetail(SelectedFolderPath);
+                UpdateSelectedFolderInfo(SelectedFolderPath, detail);
+            }
+        }
+
         private ServiceStateSnapshot QueryServiceState()
         {
             var queryResult = ExecuteScCommand(string.Format("query {0}", ServiceName), "query", false);
@@ -160,10 +179,10 @@ namespace NtfsAudit.App.ViewModels
                 return true;
             }
 
-            ProgressText = "Servizio Windows non installato: installa NtfsAuditWorker o disattiva 'Esegui tramite servizio Windows'.";
+            ProgressText = LocalizationManager.Text("Service.NotInstalledStatus");
             WpfMessageBox.Show(
                 ProgressText,
-                "Servizio non installato",
+                LocalizationManager.Text("Service.NotInstalledBadge"),
                 System.Windows.MessageBoxButton.OK,
                 System.Windows.MessageBoxImage.Warning);
             return false;
@@ -174,7 +193,7 @@ namespace NtfsAudit.App.ViewModels
             var nonBlockingWarnings = new List<string>();
             if (roots == null || roots.Count == 0)
             {
-                message = "Aggiungi almeno una cartella da analizzare.";
+                message = LocalizationManager.Text("Validation.AddFolder");
                 return false;
             }
 
@@ -182,7 +201,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 if (string.IsNullOrWhiteSpace(root))
                 {
-                    message = "È presente una cartella vuota nell'elenco scansione.";
+                    message = LocalizationManager.Text("Validation.EmptyFolder");
                     return false;
                 }
 
@@ -214,7 +233,7 @@ namespace NtfsAudit.App.ViewModels
                 || ex is NotSupportedException
                 || ex is ArgumentException)
             {
-                message = string.Format("Directory output non valida o non accessibile: {0}", AuditOutputDirectory);
+                message = LocalizationManager.Format("Validation.OutputInvalid", AuditOutputDirectory);
                 return false;
             }
 
@@ -237,7 +256,7 @@ namespace NtfsAudit.App.ViewModels
                 }
             }
 
-            return "Alcuni percorsi non sono verificabili in anticipo; la scansione continuera registrando automaticamente i problemi di accesso o compatibilita.";
+            return LocalizationManager.Text("Validation.SomePathsNotPreverified");
         }
 
         private static ServiceRuntimeStatus TryReadServiceRuntimeStatus(string statusPath)

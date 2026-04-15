@@ -56,10 +56,34 @@
     <Setter Property="Margin" Value="0,0,0,10" />
   </Style>
 
+  <Style x:Key="PanelBorderStyle" TargetType="Border">
+    <Setter Property="BorderBrush" Value="#DDDDDD" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="12" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+  </Style>
+
+  <Style x:Key="EmptyStateBorderStyle" TargetType="Border">
+    <Setter Property="Background" Value="#FFF5F5F5" />
+    <Setter Property="BorderBrush" Value="#FFE0E0E0" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="12" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+  </Style>
+
   <Style x:Key="InfoCardBorderStyle" TargetType="Border">
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="4" />
     <Setter Property="Padding" Value="8,6" />
+    <Setter Property="Margin" Value="0,0,8,8" />
+  </Style>
+
+  <Style x:Key="MetricPillBorderStyle" TargetType="Border">
+    <Setter Property="Padding" Value="8,6" />
+    <Setter Property="CornerRadius" Value="4" />
     <Setter Property="Margin" Value="0,0,8,8" />
   </Style>
 
@@ -93,6 +117,19 @@
     <Setter Property="FontSize" Value="11" />
     <Setter Property="Foreground" Value="#FF616161" />
     <Setter Property="Margin" Value="0,2,0,6" />
+  </Style>
+
+  <Style x:Key="EmptyStateText" TargetType="TextBlock" BasedOn="{StaticResource MicrocopyText}">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="Foreground" Value="#FF616161" />
+    <Setter Property="Margin" Value="0" />
+  </Style>
+
+  <Style x:Key="InteractionHintText" TargetType="TextBlock" BasedOn="{StaticResource MicrocopyText}">
+    <Setter Property="Margin" Value="0,4,0,6" />
+    <Setter Property="TextWrapping" Value="Wrap" />
   </Style>
 
   <Style x:Key="RightsRowStyle" TargetType="DataGridRow">
@@ -160,11 +197,30 @@
     <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
   </Style>
 
+  <Style x:Key="CompactBadgeBorderStyle" TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
+    <Setter Property="Padding" Value="4,2" />
+    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="Margin" Value="0,0,6,4" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style x:Key="InlineCompactBadgeBorderStyle" TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
+    <Setter Property="Padding" Value="2,0" />
+    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="Margin" Value="0,0,4,0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style x:Key="CompactBadgeText" TargetType="TextBlock">
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="FontSize" Value="10" />
+  </Style>
+
   <DataTemplate x:Key="PermissionBadgesTemplate">
     <StackPanel Orientation="Horizontal">
-      <Border Padding="4,0" CornerRadius="2" Margin="0,0,4,0" ToolTip="{Binding HighestRightToolTip}">
+      <Border ToolTip="{Binding HighestRightToolTip}">
         <Border.Style>
-          <Style TargetType="Border" BasedOn="{StaticResource BadgeToolTipBorder}">
+          <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
             <Setter Property="Visibility" Value="Collapsed" />
             <Setter Property="Background" Value="#FF2F80ED" />
             <Style.Triggers>
@@ -195,16 +251,16 @@
             </Style.Triggers>
           </Style>
         </Border.Style>
-        <TextBlock Text="{Binding HighestRightLabel}" Foreground="White" FontSize="10" />
+        <TextBlock Text="{Binding HighestRightLabel}" Style="{StaticResource CompactBadgeText}" />
       </Border>
-      <Border Background="#FF1976D2" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInherited, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Ereditato" Style="{StaticResource BadgeToolTipBorder}">
-        <TextBlock Text="I" Foreground="White" FontSize="10" />
+      <Border Background="#FF1976D2" Visibility="{Binding IsInherited, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Ereditato" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+        <TextBlock Text="I" Style="{StaticResource CompactBadgeText}" />
       </Border>
-      <Border Background="#FFC62828" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Protetto (ereditarietà disabilitata)" Style="{StaticResource BadgeToolTipBorder}">
-        <TextBlock Text="P" Foreground="White" FontSize="10" />
+      <Border Background="#FFC62828" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Protetto (ereditarietà disabilitata)" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+        <TextBlock Text="P" Style="{StaticResource CompactBadgeText}" />
       </Border>
-      <Border Background="#FFEB5757" Padding="2,0" CornerRadius="2" Margin="0,0,4,0" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Accesso negato (Deny esplicito)" Style="{StaticResource BadgeToolTipBorder}">
-        <TextBlock Text="D" Foreground="White" FontSize="10" />
+      <Border Background="#FFEB5757" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Accesso negato (Deny esplicito)" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+        <TextBlock Text="D" Style="{StaticResource CompactBadgeText}" />
       </Border>
     </StackPanel>
   </DataTemplate>

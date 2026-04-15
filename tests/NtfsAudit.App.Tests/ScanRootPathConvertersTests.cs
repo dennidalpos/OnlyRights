@@ -35,10 +35,10 @@ namespace NtfsAudit.App.Tests
 
             try
             {
-                Assert.Equal("Locale", converter.Convert(@"C:\data", typeof(string), null, CultureInfo.InvariantCulture));
+                Assert.Equal("Local", converter.Convert(@"C:\data", typeof(string), null, CultureInfo.InvariantCulture));
                 Assert.Equal("NFS", converter.Convert(@"\\wsl$\Ubuntu\mnt\data", typeof(string), null, CultureInfo.InvariantCulture));
                 Assert.Equal("DFS", converter.Convert(dfsPath, typeof(string), null, CultureInfo.InvariantCulture));
-                Assert.Equal("Sconosciuto", converter.Convert(null, typeof(string), null, CultureInfo.InvariantCulture));
+                Assert.Equal("Unknown", converter.Convert(null, typeof(string), null, CultureInfo.InvariantCulture));
             }
             finally
             {

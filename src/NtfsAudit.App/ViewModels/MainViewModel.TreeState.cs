@@ -350,7 +350,9 @@ namespace NtfsAudit.App.ViewModels
             var entries = detail == null ? new List<AceEntry>() : detail.AllEntries;
             SelectedPathKind = PathResolver.DetectPathKind(path).ToString();
             SelectedOwnerSummary = entries.Select(e => e.Owner).FirstOrDefault(v => !string.IsNullOrWhiteSpace(v)) ?? "-";
-            SelectedInheritanceSummary = detail != null && detail.IsInheritanceDisabled ? "Ereditarieta disabilitata" : "Ereditarieta attiva";
+            SelectedInheritanceSummary = detail != null && detail.IsInheritanceDisabled
+                ? (LocalizationManager.CurrentLocale == "it" ? "Ereditarieta disabilitata" : "Inheritance disabled")
+                : (LocalizationManager.CurrentLocale == "it" ? "Ereditarieta attiva" : "Inheritance active");
             SelectedTotalAceCount = entries.Count;
             SelectedExplicitAceCount = entries.Count(e => !e.IsInherited);
             SelectedInheritedAceCount = entries.Count(e => e.IsInherited);
@@ -368,7 +370,9 @@ namespace NtfsAudit.App.ViewModels
             var warning = entries.Select(e => e.AuditSummary).FirstOrDefault(v => !string.IsNullOrWhiteSpace(v) && v.IndexOf("non", StringComparison.OrdinalIgnoreCase) >= 0);
             if (string.IsNullOrWhiteSpace(warning) && string.Equals(SelectedPathKind, "Nfs", StringComparison.OrdinalIgnoreCase))
             {
-                warning = "Percorso NFS: alcune ACL potrebbero non essere disponibili in ambiente Windows.";
+                warning = LocalizationManager.CurrentLocale == "it"
+                    ? "Percorso NFS: alcune ACL potrebbero non essere disponibili in ambiente Windows."
+                    : "NFS path: some ACLs may be unavailable in Windows.";
             }
             SelectedAcquisitionWarnings = string.IsNullOrWhiteSpace(warning) ? "-" : warning;
             SelectedScannedAtText = _scanResult != null && _scanResult.ScannedAtUtc != default(DateTime)

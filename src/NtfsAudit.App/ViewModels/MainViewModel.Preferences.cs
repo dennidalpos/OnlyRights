@@ -201,6 +201,7 @@ namespace NtfsAudit.App.ViewModels
                 IncludeFiles = prefs.EnableAdvancedAudit && prefs.IncludeFiles;
                 ReadOwnerAndSacl = prefs.EnableAdvancedAudit && prefs.ReadOwnerAndSacl;
                 CompareBaseline = prefs.EnableAdvancedAudit && prefs.CompareBaseline;
+                SelectedLocale = LocalizationManager.ResolveLocale(prefs.Locale);
                 ScanRoots.Clear();
                 _scanRootDfsTargets.Clear();
                 _scanRootNamespacePaths.Clear();
@@ -285,6 +286,7 @@ namespace NtfsAudit.App.ViewModels
                     IncludeFiles = IncludeFiles,
                     ReadOwnerAndSacl = ReadOwnerAndSacl,
                     CompareBaseline = CompareBaseline,
+                    Locale = SelectedLocale == null ? LocalizationManager.DefaultLocale : SelectedLocale.Code,
                     ScanRoots = ScanRoots.ToList(),
                     ScanRootTargets = _scanRootDfsTargets.Select(item => new ScanRootTargetPreference
                     {
@@ -338,6 +340,7 @@ namespace NtfsAudit.App.ViewModels
             public bool IncludeFiles { get; set; }
             public bool ReadOwnerAndSacl { get; set; } = true;
             public bool CompareBaseline { get; set; } = true;
+            public string Locale { get; set; } = LocalizationManager.DefaultLocale;
             public List<string> ScanRoots { get; set; }
             public List<ScanRootTargetPreference> ScanRootTargets { get; set; }
         }

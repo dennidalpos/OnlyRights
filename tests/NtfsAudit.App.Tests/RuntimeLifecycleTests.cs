@@ -104,10 +104,10 @@ namespace NtfsAudit.App.Tests
                 });
 
             Assert.True(state.IsServiceRuntimeRunning);
-            Assert.Equal("Servizio attivo", state.BadgeText);
+            Assert.Equal("Service active", state.BadgeText);
             Assert.Contains(@"C:\data", state.StatusText, StringComparison.Ordinal);
             Assert.Contains("2/3", state.StatusText, StringComparison.Ordinal);
-            Assert.Contains("code scansioni: 5", state.StatusText, StringComparison.Ordinal);
+            Assert.Contains("queued scans: 5", state.StatusText, StringComparison.Ordinal);
         }
 
         [Fact]

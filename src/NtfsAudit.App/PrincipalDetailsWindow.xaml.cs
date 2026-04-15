@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using NtfsAudit.App.Models;
+using NtfsAudit.App.Services;
 
 namespace NtfsAudit.App
 {
@@ -46,7 +47,7 @@ namespace NtfsAudit.App
             {
                 Name = entry.Name,
                 Sid = entry.Sid,
-                Type = entry.IsGroup ? "Gruppo" : "Utente"
+                Type = entry.IsGroup ? LocalizationManager.Text("Principal.Group") : LocalizationManager.Text("Principal.User")
             }).ToList();
         }
 

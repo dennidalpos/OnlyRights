@@ -33,9 +33,9 @@ namespace NtfsAudit.App.Services
                 case PathKind.Nfs:
                     return "NFS";
                 case PathKind.Local:
-                    return "Locale";
+                    return LocalizationManager.CurrentLocale == "it" ? "Locale" : "Local";
                 default:
-                    return "Sconosciuto";
+                    return LocalizationManager.CurrentLocale == "it" ? "Sconosciuto" : "Unknown";
             }
         }
 

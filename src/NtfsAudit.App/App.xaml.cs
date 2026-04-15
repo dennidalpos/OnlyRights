@@ -28,6 +28,7 @@ namespace NtfsAudit.App
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            LocalizationManager.ApplyDefault();
             base.OnStartup(e);
             if (!EnsureSingleInstance())
             {
@@ -61,7 +62,7 @@ namespace NtfsAudit.App
 
             if (acquireResult.IsAlreadyRunning)
             {
-                MessageBox.Show("NTFS Audit è già in esecuzione.", "Istanza già attiva", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("NTFS Audit is already running.", LocalizationManager.Text("App.Title"), MessageBoxButton.OK, MessageBoxImage.Information);
                 return false;
             }
 
@@ -69,7 +70,7 @@ namespace NtfsAudit.App
                 "Impossibile inizializzare il controllo istanza unica.{0}{0}Dettagli: {1}",
                 Environment.NewLine,
                 string.IsNullOrWhiteSpace(acquireResult.ErrorMessage) ? "errore non disponibile" : acquireResult.ErrorMessage);
-            MessageBox.Show(message, "Errore avvio", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(message, LocalizationManager.Text("App.Title"), MessageBoxButton.OK, MessageBoxImage.Error);
             return false;
         }
 
@@ -89,7 +90,7 @@ namespace NtfsAudit.App
         private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             LogUnhandled("DispatcherUnhandledException", e.Exception);
-            MessageBox.Show("Errore inatteso. Controlla il file di log per i dettagli.", "Errore", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show("Unexpected error. Check the log file for details.", LocalizationManager.Text("App.Title"), MessageBoxButton.OK, MessageBoxImage.Error);
             e.Handled = true;
         }
 

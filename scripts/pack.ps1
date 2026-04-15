@@ -24,12 +24,21 @@ if (($SelfContained -or $PublishSingleFile -or $PublishReadyToRun) -and -not $Ru
     $Runtime = "win-x64"
 }
 
+if ($Runtime -and $Runtime -notin @("win-x86", "win-x64")) {
+    throw ("Unsupported runtime '{0}'. Supported Windows package runtimes: win-x86, win-x64." -f $Runtime)
+}
+
 if ($SelfContained -and -not $Runtime) {
     throw "Runtime required for self-contained packaging."
 }
 
 if (-not $SkipRestore) {
-    Invoke-DotNetCommand -Arguments @("restore", $context.Solution, "--nologo") -ErrorMessage "Restore failed."
+    $restoreArgs = @("restore", $context.Solution, "--nologo")
+    if ($Runtime) {
+        $restoreArgs += @("-r", $Runtime)
+    }
+
+    Invoke-DotNetCommand -Arguments $restoreArgs -ErrorMessage "Restore failed."
 }
 
 $packageRoot = if ($OutputRoot) {

@@ -15,6 +15,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using NtfsAudit.App.Models;
+using NtfsAudit.App.Services;
 using WpfMessageBox = System.Windows.MessageBox;
 
 namespace NtfsAudit.App.ViewModels
@@ -130,6 +131,30 @@ namespace NtfsAudit.App.ViewModels
         public RelayCommand SaveScanRootCredentialCommand { get; private set; }
         public RelayCommand ClearScanRootCredentialCommand { get; private set; }
 
+        public System.Collections.Generic.IReadOnlyList<LocaleOption> AvailableLocales
+        {
+            get { return LocalizationManager.SupportedLocales; }
+        }
+
+        public LocaleOption SelectedLocale
+        {
+            get { return _selectedLocale; }
+            set
+            {
+                var next = LocalizationManager.ResolveLocale(value == null ? null : value.Code);
+                if (_selectedLocale != null && string.Equals(_selectedLocale.Code, next.Code, StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+
+                _selectedLocale = next;
+                LocalizationManager.Apply(next.Code);
+                OnPropertyChanged("SelectedLocale");
+                PersistUiPreferencesIfAllowed();
+                RefreshLocalizedState();
+            }
+        }
+
         public string RootPath
         {
             get { return _rootPath; }
@@ -139,6 +164,7 @@ namespace NtfsAudit.App.ViewModels
                 OnPropertyChanged("RootPath");
                 UpdateDfsTargets();
                 OnPropertyChanged("CanStart");
+                OnPropertyChanged("ShouldShowStartHint");
                 AddScanRootCommand.RaiseCanExecuteChanged();
                 StartCommand.RaiseCanExecuteChanged();
                 PersistUiPreferencesIfAllowed();
@@ -284,10 +310,10 @@ namespace NtfsAudit.App.ViewModels
             {
                 if (!HasGlobalCredential)
                 {
-                    return "Nessuna credenziale globale salvata: verra usato l'utente corrente dove non esistono override.";
+                    return LocalizationManager.Text("Credential.GlobalNone");
                 }
 
-                return string.Format("Credenziale globale attiva: {0}", GlobalCredentialUserName);
+                return LocalizationManager.Format("Credential.GlobalActive", GlobalCredentialUserName);
             }
         }
 
@@ -340,15 +366,15 @@ namespace NtfsAudit.App.ViewModels
             {
                 if (string.IsNullOrWhiteSpace(SelectedScanRoot))
                 {
-                    return "Seleziona una root per configurare un override dedicato.";
+                    return LocalizationManager.Text("Credential.SelectRoot");
                 }
 
                 if (HasSelectedScanRootCredentialOverride)
                 {
-                    return string.Format("Override root attivo per {0}.", SelectedScanRootCredentialUserName);
+                    return LocalizationManager.Format("Credential.OverrideActive", SelectedScanRootCredentialUserName);
                 }
 
-                return "Nessun override salvato per la root selezionata.";
+                return LocalizationManager.Text("Credential.OverrideNone");
             }
         }
 

@@ -51,7 +51,7 @@ namespace NtfsAudit.App.ViewModels
             if (!TryValidateScanInputs(roots, out var validationMessage))
             {
                 ProgressText = validationMessage;
-                WpfMessageBox.Show(validationMessage, "Validazione scansione", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                WpfMessageBox.Show(validationMessage, LocalizationManager.Text("Dialog.ScanValidation"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 return;
             }
 
@@ -135,13 +135,13 @@ namespace NtfsAudit.App.ViewModels
                 var jobFile = Path.Combine(jobsRoot, string.Format("job_{0}.json", job.JobId));
                 File.WriteAllText(jobFile, JsonConvert.SerializeObject(job, Formatting.Indented));
                 ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
-                ProgressText = "Job inviato al servizio Windows. La scansione continua anche dopo il logout utente.";
+                ProgressText = LocalizationManager.Text("Progress.ServiceJobSent");
                 RefreshServiceRuntimeStatus();
             }
             catch (Exception ex)
             {
                 ProgressText = string.Format("Errore invio job al servizio: {0}", ex.Message);
-                WpfMessageBox.Show(ProgressText, "Servizio Windows", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.WindowsService"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
@@ -499,21 +499,21 @@ namespace NtfsAudit.App.ViewModels
                 EnsureExportOutput(outputPath);
                 _hasExported = true;
                 UpdateLastDirectory(ref _lastExportDirectory, outputPath);
-                ProgressText = string.Format("Export Excel completato: {0}", outputPath);
+                ProgressText = LocalizationManager.Format("Progress.ExcelCompleted", outputPath);
                 var warningMessage = BuildExcelWarningMessage(result);
                 if (!string.IsNullOrWhiteSpace(warningMessage))
                 {
                     WpfMessageBox.Show(
                         string.Format("ATTENZIONE: {0}", warningMessage),
-                        "Export con avvisi",
+                        LocalizationManager.Text("Dialog.ExportWarnings"),
                         System.Windows.MessageBoxButton.OK,
                         System.Windows.MessageBoxImage.Warning);
                 }
             }
             catch (Exception ex)
             {
-                ProgressText = string.Format("Errore export: {0}", ex.Message);
-                WpfMessageBox.Show(ProgressText, "Errore export", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                ProgressText = LocalizationManager.Format("Progress.ExportError", ex.Message);
+                WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.ExportError"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
             finally
             {
@@ -546,7 +546,7 @@ namespace NtfsAudit.App.ViewModels
                 var importedResult = imported.ScanResult;
                 if (importedResult == null)
                 {
-                    ProgressText = "Analisi importata non valida.";
+                    ProgressText = LocalizationManager.Text("Progress.ImportInvalid");
                     return;
                 }
                 if (importedResult.Details == null)
@@ -562,13 +562,13 @@ namespace NtfsAudit.App.ViewModels
                 if (!ValidateImportedResult(importedResult, out var validationMessage))
                 {
                     var confirm = WpfMessageBox.Show(
-                        string.Format("{0}\n\nVuoi procedere comunque?", validationMessage),
-                        "Import analisi",
+                        LocalizationManager.Format("Dialog.ProceedAnyway", validationMessage),
+                        LocalizationManager.Text("Dialog.Import"),
                         System.Windows.MessageBoxButton.YesNo,
                         System.Windows.MessageBoxImage.Warning);
                     if (confirm != System.Windows.MessageBoxResult.Yes)
                     {
-                        ProgressText = "Import annullato dall'utente.";
+                        ProgressText = LocalizationManager.Text("Progress.ImportCancelled");
                         return;
                     }
                 }
@@ -597,13 +597,13 @@ namespace NtfsAudit.App.ViewModels
                     SelectFolder(root);
                 }
                 UpdateLastDirectory(ref _lastImportDirectory, archivePath);
-                ProgressText = string.Format("Analisi importata: {0} cartelle, {1} errori", _scanResult.Details == null ? 0 : _scanResult.Details.Count, ErrorCount);
+                ProgressText = LocalizationManager.Format("Progress.Imported", _scanResult.Details == null ? 0 : _scanResult.Details.Count, ErrorCount);
                 UpdateCommands();
             }
             catch (Exception ex)
             {
-                ProgressText = string.Format("Errore import analisi: {0}", ex.Message);
-                WpfMessageBox.Show(ProgressText, "Errore import", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                ProgressText = LocalizationManager.Format("Progress.ImportError", ex.Message);
+                WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.ImportError"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
             finally
             {
@@ -621,7 +621,7 @@ namespace NtfsAudit.App.ViewModels
             var ioTempDataPath = PathResolver.ToExtendedPath(_scanResult.TempDataPath);
             if (string.IsNullOrWhiteSpace(_scanResult.TempDataPath) || !File.Exists(ioTempDataPath))
             {
-                ProgressText = "Export non disponibile: file dati scansione mancante.";
+                ProgressText = LocalizationManager.Text("Progress.ExportDataMissing");
                 WpfMessageBox.Show(ProgressText, messageTitle, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 return false;
             }
@@ -722,7 +722,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 RunOnUi(() =>
                 {
-                    ProgressText = "Scansione annullata";
+                    ProgressText = LocalizationManager.Text("Progress.ScanCancelled");
                     CurrentPathText = string.Empty;
                 });
                 throw;
@@ -731,7 +731,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 RunOnUi(() =>
                 {
-                    ProgressText = string.Format("Errore scansione: {0}", ex.Message);
+                    ProgressText = LocalizationManager.Format("Progress.ScanError", ex.Message);
                     CurrentPathText = string.Empty;
                 });
                 return null;

@@ -17,6 +17,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using NtfsAudit.App.Models;
+using NtfsAudit.App.Services;
 
 namespace NtfsAudit.App.ViewModels
 {
@@ -99,6 +100,8 @@ namespace NtfsAudit.App.ViewModels
             {
                 _selectedFolderPath = value;
                 OnPropertyChanged("SelectedFolderPath");
+                OnPropertyChanged("HasSelectedFolder");
+                OnPropertyChanged("HasNoSelectedFolder");
                 SelectedFolderName = GetFolderName(_selectedFolderPath);
             }
         }
@@ -496,15 +499,19 @@ namespace NtfsAudit.App.ViewModels
         public string SelectedScannedAtText { get { return _selectedScannedAtText; } private set { _selectedScannedAtText = value; OnPropertyChanged("SelectedScannedAtText"); } }
 
         public bool HasScanResult { get { return _scanResult != null; } }
+        public bool HasNoScanResult { get { return _scanResult == null; } }
+        public bool HasSelectedFolder { get { return _scanResult != null && !string.IsNullOrWhiteSpace(SelectedFolderPath); } }
+        public bool HasNoSelectedFolder { get { return _scanResult != null && string.IsNullOrWhiteSpace(SelectedFolderPath); } }
+        public bool ShouldShowStartHint { get { return !_isViewerMode && !_isScanning && !IsBusy && ScanRoots.Count == 0 && string.IsNullOrWhiteSpace(RootPath); } }
         public bool IsBusy { get { return _isBusy; } }
         public bool IsNotBusy { get { return !_isBusy; } }
         public string StatusText
         {
             get
             {
-                if (_isScanning || IsServiceRuntimeRunning) return "RUNNING";
-                if (_scanResult == null) return "IDLE";
-                return "FINISHED";
+                if (_isScanning || IsServiceRuntimeRunning) return LocalizationManager.Text("Common.Running");
+                if (_scanResult == null) return LocalizationManager.Text("Common.Idle");
+                return LocalizationManager.Text("Common.Finished");
             }
         }
         public string StatusBrush

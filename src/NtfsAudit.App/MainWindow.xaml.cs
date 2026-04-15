@@ -15,6 +15,7 @@ using System.Drawing;
 using System.Windows;
 using System.Windows.Threading;
 using WinForms = System.Windows.Forms;
+using NtfsAudit.App.Services;
 using NtfsAudit.App.ViewModels;
 
 namespace NtfsAudit.App
@@ -22,6 +23,7 @@ namespace NtfsAudit.App
     public partial class MainWindow : Window
     {
         private readonly WinForms.NotifyIcon _notifyIcon;
+        private readonly Icon _applicationIcon;
         private readonly DispatcherTimer _trayTimer;
         private string _lastTrayStatus;
         private bool _forceClose;
@@ -35,18 +37,19 @@ namespace NtfsAudit.App
         {
             InitializeComponent();
             DataContext = viewModel ?? new MainViewModel();
+            _applicationIcon = LoadApplicationIcon();
 
             _notifyIcon = new WinForms.NotifyIcon
             {
-                Icon = SystemIcons.Information,
+                Icon = _applicationIcon,
                 Visible = false,
-                Text = "NTFS Audit"
+                Text = LocalizationManager.Text("App.Title")
             };
             _notifyIcon.DoubleClick += (_, __) => RestoreFromTray();
 
             var trayMenu = new WinForms.ContextMenuStrip();
-            trayMenu.Items.Add("Apri", null, (_, __) => RestoreFromTray());
-            trayMenu.Items.Add("Ferma scansione / job", null, (_, __) =>
+            trayMenu.Items.Add(LocalizationManager.Text("Tray.Open"), null, (_, __) => RestoreFromTray());
+            trayMenu.Items.Add(LocalizationManager.Text("Tray.StopScan"), null, (_, __) =>
             {
                 var currentViewModel = DataContext as MainViewModel;
                 if (currentViewModel != null && currentViewModel.StopCommand.CanExecute(null))
@@ -54,7 +57,7 @@ namespace NtfsAudit.App
                     currentViewModel.StopCommand.Execute(null);
                 }
             });
-            trayMenu.Items.Add("Pulisci cache/residui", null, (_, __) =>
+            trayMenu.Items.Add(LocalizationManager.Text("Tray.CleanCache"), null, (_, __) =>
             {
                 var currentViewModel = DataContext as MainViewModel;
                 if (currentViewModel != null && currentViewModel.CleanupResidualFilesCommand.CanExecute(null))
@@ -62,7 +65,7 @@ namespace NtfsAudit.App
                     currentViewModel.CleanupResidualFilesCommand.Execute(null);
                 }
             });
-            trayMenu.Items.Add("Esci", null, (_, __) =>
+            trayMenu.Items.Add(LocalizationManager.Text("Tray.Exit"), null, (_, __) =>
             {
                 _forceClose = true;
                 _notifyIcon.Visible = false;
@@ -81,6 +84,7 @@ namespace NtfsAudit.App
                 _trayTimer.Stop();
                 _notifyIcon.Visible = false;
                 _notifyIcon.Dispose();
+                _applicationIcon.Dispose();
             };
 
             UpdateTrayStatus();
@@ -105,7 +109,7 @@ namespace NtfsAudit.App
                 && !string.IsNullOrWhiteSpace(status)
                 && !string.Equals(_lastTrayStatus, status, StringComparison.OrdinalIgnoreCase))
             {
-                _notifyIcon.ShowBalloonTip(2500, "NTFS Audit - servizio", status, WinForms.ToolTipIcon.Info);
+                _notifyIcon.ShowBalloonTip(2500, LocalizationManager.Text("Tray.ServiceTitle"), status, WinForms.ToolTipIcon.Info);
             }
 
             _lastTrayStatus = status;
@@ -120,7 +124,7 @@ namespace NtfsAudit.App
 
             Hide();
             UpdateTrayStatus();
-            _notifyIcon.ShowBalloonTip(2500, "NTFS Audit", "App ridotta in tray. Il servizio continua in background.", WinForms.ToolTipIcon.Info);
+            _notifyIcon.ShowBalloonTip(2500, LocalizationManager.Text("App.Title"), LocalizationManager.Text("Tray.Minimized"), WinForms.ToolTipIcon.Info);
         }
 
         private void RestoreFromTray()
@@ -145,7 +149,7 @@ namespace NtfsAudit.App
                 WindowState = WindowState.Minimized;
                 Hide();
                 UpdateTrayStatus();
-                _notifyIcon.ShowBalloonTip(2500, "NTFS Audit", "Servizio attivo: l'app resta nel tray finché la scansione è in corso.", WinForms.ToolTipIcon.Info);
+                _notifyIcon.ShowBalloonTip(2500, LocalizationManager.Text("App.Title"), LocalizationManager.Text("Tray.ServiceActive"), WinForms.ToolTipIcon.Info);
             }
         }
 
@@ -153,6 +157,20 @@ namespace NtfsAudit.App
         {
             if (string.IsNullOrWhiteSpace(input)) return "NTFS Audit";
             return input.Length <= 63 ? input : input.Substring(0, 63);
+        }
+
+        private static Icon LoadApplicationIcon()
+        {
+            var resourceInfo = Application.GetResourceStream(new Uri("pack://application:,,,/NtfsAudit.App;component/Assets/OnlyRights.ico", UriKind.Absolute));
+            if (resourceInfo == null || resourceInfo.Stream == null)
+            {
+                return (Icon)SystemIcons.Application.Clone();
+            }
+
+            using (resourceInfo.Stream)
+            {
+                return new Icon(resourceInfo.Stream);
+            }
         }
 
         private void MainWindow_OnClosing(object sender, CancelEventArgs e)
@@ -165,8 +183,8 @@ namespace NtfsAudit.App
 
             var result = MessageBox.Show(
                 this,
-                "Hai dati di scansione non esportati. Vuoi chiudere comunque?",
-                "Dati non esportati",
+                LocalizationManager.Text("Dialog.UnexportedDataMessage"),
+                LocalizationManager.Text("Dialog.UnexportedData"),
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
             if (result != MessageBoxResult.Yes)

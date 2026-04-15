@@ -15,6 +15,21 @@ function Get-MsiScriptContext {
         Manufacturer = "OnlyRights"
         ProductName = "OnlyRights NtfsAudit"
         DefaultInstallRoot = "OnlyRights\\NtfsAudit"
+        IconPath = Join-Path $context.RepoRoot "src\NtfsAudit.App\Assets\OnlyRights.ico"
+    }
+}
+
+function Resolve-MsiArchitecture {
+    param([string]$Runtime)
+
+    if ([string]::IsNullOrWhiteSpace($Runtime)) {
+        return "x64"
+    }
+
+    switch ($Runtime.ToLowerInvariant()) {
+        "win-x86" { return "x86" }
+        "win-x64" { return "x64" }
+        default { throw ("Unsupported MSI runtime '{0}'. Supported runtimes: win-x86, win-x64." -f $Runtime) }
     }
 }
 
@@ -143,6 +158,7 @@ function New-MsiSource {
         $Context,
         [string]$PackageRoot,
         [string]$Version,
+        [string]$Architecture = "x64",
         [string]$SourcePath
     )
 
@@ -160,11 +176,19 @@ function New-MsiSource {
     [void]$builder.AppendLine('<?xml version="1.0" encoding="UTF-8"?>')
     [void]$builder.AppendLine('<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">')
     [void]$builder.AppendLine(('  <Product Id="*" Name="{0}" Language="1033" Version="{1}" Manufacturer="{2}" UpgradeCode="{3}">' -f (Escape-XmlValue $Context.ProductName), $Version, (Escape-XmlValue $Context.Manufacturer), $Context.UpgradeCode))
-    [void]$builder.AppendLine('    <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" InstallPrivileges="limited" />')
+    [void]$builder.AppendLine(('    <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" InstallPrivileges="limited" Platform="{0}" />' -f (Escape-XmlValue $Architecture)))
     [void]$builder.AppendLine('    <MajorUpgrade DowngradeErrorMessage="A newer version of OnlyRights NtfsAudit is already installed." />')
     [void]$builder.AppendLine('    <MediaTemplate EmbedCab="yes" />')
     [void]$builder.AppendLine('    <Property Id="ARPNOMODIFY" Value="1" />')
+    if (Test-Path $Context.IconPath) {
+        [void]$builder.AppendLine(('    <Icon Id="OnlyRightsIcon.ico" SourceFile="{0}" />' -f (Escape-XmlValue $Context.IconPath)))
+        [void]$builder.AppendLine('    <Property Id="ARPPRODUCTICON" Value="OnlyRightsIcon.ico" />')
+    }
     [void]$builder.AppendLine('    <Directory Id="TARGETDIR" Name="SourceDir">')
+    [void]$builder.AppendLine('      <Directory Id="ProgramMenuFolder">')
+    [void]$builder.AppendLine('        <Directory Id="ApplicationProgramsFolder" Name="OnlyRights" />')
+    [void]$builder.AppendLine('      </Directory>')
+    [void]$builder.AppendLine('      <Directory Id="DesktopFolder" />')
     [void]$builder.AppendLine('      <Directory Id="LocalAppDataFolder">')
     [void]$builder.AppendLine('        <Directory Id="CompanyFolder" Name="OnlyRights">')
     [void]$builder.AppendLine('          <Directory Id="INSTALLFOLDER" Name="NtfsAudit">')
@@ -225,9 +249,19 @@ function Add-MsiDirectoryContent {
         $componentId = Convert-ToSafeId -Prefix "Cmp" -Value $relativePath
         $fileId = Convert-ToSafeId -Prefix "Fil" -Value $relativePath
         $removeId = Convert-ToSafeId -Prefix "Rm" -Value $relativePath
+        $isMainAppExecutable = $relativePath -eq (Join-Path "App" "NtfsAudit.App.exe")
 
         [void]$Builder.AppendLine(('{0}<Component Id="{1}" Guid="{2}">' -f $indent, $componentId, (New-StableGuid -Value $relativePath)))
-        [void]$Builder.AppendLine(('{0}  <File Id="{1}" Source="{2}" Name="{3}" KeyPath="yes" />' -f $indent, $fileId, (Escape-XmlValue $file.FullName), (Escape-XmlValue $file.Name)))
+        if ($isMainAppExecutable) {
+            [void]$Builder.AppendLine(('{0}  <File Id="{1}" Source="{2}" Name="{3}" KeyPath="yes">' -f $indent, $fileId, (Escape-XmlValue $file.FullName), (Escape-XmlValue $file.Name)))
+            [void]$Builder.AppendLine(('{0}    <Shortcut Id="StartMenuShortcut" Directory="ApplicationProgramsFolder" Name="OnlyRights NtfsAudit" WorkingDirectory="INSTALLFOLDER" Icon="OnlyRightsIcon.ico" Advertise="yes" />' -f $indent))
+            [void]$Builder.AppendLine(('{0}    <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="OnlyRights NtfsAudit" WorkingDirectory="INSTALLFOLDER" Icon="OnlyRightsIcon.ico" Advertise="yes" />' -f $indent))
+            [void]$Builder.AppendLine(('{0}  </File>' -f $indent))
+            [void]$Builder.AppendLine(('{0}  <RemoveFolder Id="RemoveApplicationProgramsFolder" Directory="ApplicationProgramsFolder" On="uninstall" />' -f $indent))
+        }
+        else {
+            [void]$Builder.AppendLine(('{0}  <File Id="{1}" Source="{2}" Name="{3}" KeyPath="yes" />' -f $indent, $fileId, (Escape-XmlValue $file.FullName), (Escape-XmlValue $file.Name)))
+        }
         [void]$Builder.AppendLine(('{0}  <RemoveFolder Id="{1}" Directory="{2}" On="uninstall" />' -f $indent, $removeId, $DirectoryId))
         [void]$Builder.AppendLine(('{0}</Component>' -f $indent))
         $ComponentIds.Add($componentId) | Out-Null

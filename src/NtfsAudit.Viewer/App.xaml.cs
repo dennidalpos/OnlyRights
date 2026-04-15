@@ -11,6 +11,7 @@
  */
 using System.Windows;
 using NtfsAudit.App;
+using NtfsAudit.App.Services;
 using NtfsAudit.App.ViewModels;
 
 namespace NtfsAudit.Viewer
@@ -21,12 +22,13 @@ namespace NtfsAudit.Viewer
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            LocalizationManager.ApplyDefault();
             base.OnStartup(e);
             EnsureSharedResourcesLoaded(Resources);
             var viewModel = new MainViewModel(true);
             var window = new MainWindow(viewModel)
             {
-                Title = "NTFS Audit Viewer"
+                Title = LocalizationManager.Text("App.ViewerTitle")
             };
             window.Show();
 

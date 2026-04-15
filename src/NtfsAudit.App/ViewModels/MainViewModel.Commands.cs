@@ -66,6 +66,7 @@ namespace NtfsAudit.App.ViewModels
         private void OnScanRootsCollectionChanged()
         {
             OnPropertyChanged("CanStart");
+            OnPropertyChanged("ShouldShowStartHint");
             StartCommand.RaiseCanExecuteChanged();
             SaveScanRootSetCommand.RaiseCanExecuteChanged();
             if (!_suspendUiPreferencePersistence)
@@ -81,8 +82,8 @@ namespace NtfsAudit.App.ViewModels
             if (selection.RequiresExplicitSelection)
             {
                 WpfMessageBox.Show(
-                    "Seleziona un target DFS dalla sidebar prima di aggiungere la root.",
-                    "Target DFS",
+                    LocalizationManager.Text("Validation.SelectDfsTarget"),
+                    "DFS",
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Warning);
                 return;
@@ -124,8 +125,8 @@ namespace NtfsAudit.App.ViewModels
                 if (string.IsNullOrWhiteSpace(GlobalCredentialUserName) || string.IsNullOrWhiteSpace(GlobalCredentialPassword))
                 {
                     WpfMessageBox.Show(
-                        "Inserisci utente e password per salvare le credenziali globali.",
-                        "Credenziali scansione",
+                        LocalizationManager.Text("Validation.CredentialsGlobalRequired"),
+                        LocalizationManager.Text("Dialog.ScanCredentials"),
                         System.Windows.MessageBoxButton.OK,
                         System.Windows.MessageBoxImage.Warning);
                     return;
@@ -139,14 +140,14 @@ namespace NtfsAudit.App.ViewModels
                 _scanCredentialStore.SaveGlobal(credential);
                 GlobalCredentialUserName = credential.UserName;
                 GlobalCredentialPassword = credential.Password;
-                ProgressText = "Credenziali globali salvate in locale in forma protetta.";
+                ProgressText = LocalizationManager.Text("Progress.CredentialsGlobalSaved");
                 OnPropertyChanged("SelectedScanRootEffectiveCredentialSource");
                 ClearGlobalCredentialCommand.RaiseCanExecuteChanged();
             }
             catch (Exception ex)
             {
                 ProgressText = string.Format("Errore salvataggio credenziali globali: {0}", ex.Message);
-                WpfMessageBox.Show(ProgressText, "Credenziali scansione", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.ScanCredentials"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
@@ -157,14 +158,14 @@ namespace NtfsAudit.App.ViewModels
                 _scanCredentialStore.SaveGlobal(null);
                 GlobalCredentialUserName = string.Empty;
                 GlobalCredentialPassword = string.Empty;
-                ProgressText = "Credenziali globali rimosse. La risoluzione torna a override root oppure utente corrente.";
+                ProgressText = LocalizationManager.Text("Progress.CredentialsGlobalRemoved");
                 OnPropertyChanged("SelectedScanRootEffectiveCredentialSource");
                 ClearGlobalCredentialCommand.RaiseCanExecuteChanged();
             }
             catch (Exception ex)
             {
                 ProgressText = string.Format("Errore rimozione credenziali globali: {0}", ex.Message);
-                WpfMessageBox.Show(ProgressText, "Credenziali scansione", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.ScanCredentials"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
@@ -180,8 +181,8 @@ namespace NtfsAudit.App.ViewModels
                 if (string.IsNullOrWhiteSpace(SelectedScanRootCredentialUserName) || string.IsNullOrWhiteSpace(SelectedScanRootCredentialPassword))
                 {
                     WpfMessageBox.Show(
-                        "Inserisci utente e password per salvare l'override della root selezionata.",
-                        "Credenziali scansione",
+                        LocalizationManager.Text("Validation.CredentialsOverrideRequired"),
+                        LocalizationManager.Text("Dialog.ScanCredentials"),
                         System.Windows.MessageBoxButton.OK,
                         System.Windows.MessageBoxImage.Warning);
                     return;
@@ -197,13 +198,13 @@ namespace NtfsAudit.App.ViewModels
                 _scanCredentialStore.SaveOverride(key, credential);
                 SelectedScanRootCredentialUserName = credential.UserName;
                 SelectedScanRootCredentialPassword = credential.Password;
-                ProgressText = string.Format("Override credenziali salvato per la root selezionata: {0}", SelectedScanRoot);
+                ProgressText = LocalizationManager.Format("Progress.CredentialOverrideSaved", SelectedScanRoot);
                 ClearScanRootCredentialCommand.RaiseCanExecuteChanged();
             }
             catch (Exception ex)
             {
                 ProgressText = string.Format("Errore salvataggio override root: {0}", ex.Message);
-                WpfMessageBox.Show(ProgressText, "Credenziali scansione", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.ScanCredentials"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
@@ -221,13 +222,13 @@ namespace NtfsAudit.App.ViewModels
                 _scanCredentialStore.SaveOverride(key, null);
                 SelectedScanRootCredentialUserName = string.Empty;
                 SelectedScanRootCredentialPassword = string.Empty;
-                ProgressText = string.Format("Override credenziali rimosso per la root selezionata: {0}", SelectedScanRoot);
+                ProgressText = LocalizationManager.Format("Progress.CredentialOverrideRemoved", SelectedScanRoot);
                 ClearScanRootCredentialCommand.RaiseCanExecuteChanged();
             }
             catch (Exception ex)
             {
                 ProgressText = string.Format("Errore rimozione override root: {0}", ex.Message);
-                WpfMessageBox.Show(ProgressText, "Credenziali scansione", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.ScanCredentials"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
@@ -266,7 +267,7 @@ namespace NtfsAudit.App.ViewModels
             catch (Exception ex)
             {
                 ProgressText = string.Format("Errore salvataggio set cartelle: {0}", ex.Message);
-                WpfMessageBox.Show(ProgressText, "Set cartelle", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.FolderSet"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
@@ -336,7 +337,7 @@ namespace NtfsAudit.App.ViewModels
             catch (Exception ex)
             {
                 ProgressText = string.Format("Errore caricamento set cartelle: {0}", ex.Message);
-                WpfMessageBox.Show(ProgressText, "Set cartelle", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.FolderSet"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
