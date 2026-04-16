@@ -11,6 +11,8 @@
  */
 using System.Collections.Generic;
 
+#nullable enable
+
 namespace NtfsAudit.App.Models
 {
     public class AclDiffSummary

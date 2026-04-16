@@ -11,16 +11,18 @@
  */
 using Newtonsoft.Json;
 
+#nullable enable
+
 namespace NtfsAudit.App.Models
 {
     public class ScanCredential
     {
-        public string UserName { get; set; }
-        public string ProtectedPassword { get; set; }
-        public string ProtectionScope { get; set; }
+        public string? UserName { get; set; }
+        public string? ProtectedPassword { get; set; }
+        public string? ProtectionScope { get; set; }
 
         [JsonIgnore]
-        public string Password { get; set; }
+        public string? Password { get; set; }
 
         [JsonIgnore]
         public bool IsConfigured

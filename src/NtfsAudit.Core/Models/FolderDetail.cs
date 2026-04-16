@@ -11,6 +11,8 @@
  */
 using System.Collections.Generic;
 
+#nullable enable
+
 namespace NtfsAudit.App.Models
 {
     public class FolderDetail
@@ -41,7 +43,7 @@ namespace NtfsAudit.App.Models
         public bool HasShareEntries { get; set; }
         public bool HasEffectiveEntries { get; set; }
         public bool EntriesLoaded { get; set; } = true;
-        public AclDiffSummary DiffSummary { get; set; }
-        public AclDiffSummary BaselineSummary { get; set; }
+        public AclDiffSummary? DiffSummary { get; set; }
+        public AclDiffSummary? BaselineSummary { get; set; }
     }
 }

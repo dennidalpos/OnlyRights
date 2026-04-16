@@ -27,6 +27,10 @@ if (($SelfContained -or $PublishSingleFile -or $PublishReadyToRun) -and -not $Ru
     throw "Runtime required for self-contained, single-file, or ReadyToRun packaging. Use -Runtime win-x64 or -Runtime win-x86."
 }
 
+if ($Framework -eq "net6.0-windows" -and -not $SkipService) {
+    throw "Service packaging is not available for net6.0-windows because NtfsAudit.Service targets net8.0-windows only. Re-run with -SkipService."
+}
+
 if (-not $SkipRestore) {
     $restoreArgs = @("restore", $context.Solution, "--nologo")
     if ($Runtime) {

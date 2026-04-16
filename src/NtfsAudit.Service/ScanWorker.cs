@@ -300,32 +300,6 @@ namespace NtfsAudit.Service
             }
         }
 
-        private static string BuildScanNameFromRoot(string root)
-        {
-            if (string.IsNullOrWhiteSpace(root)) return "scan";
-            var normalized = root.Trim().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            if (string.IsNullOrWhiteSpace(normalized)) return "scan";
-
-            string name;
-            if (normalized.StartsWith("\\", StringComparison.Ordinal))
-            {
-                var segments = normalized.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
-                name = segments.Length > 0 ? segments[segments.Length - 1] : string.Empty;
-            }
-            else
-            {
-                name = Path.GetFileName(normalized);
-                if (string.IsNullOrWhiteSpace(name) && normalized.Length >= 2 && normalized[1] == ':')
-                {
-                    name = normalized.Substring(0, 1);
-                }
-            }
-
-            if (string.IsNullOrWhiteSpace(name)) name = "scan";
-            foreach (var c in Path.GetInvalidFileNameChars()) name = name.Replace(c, '_');
-            return name;
-        }
-
         private static void TryDeleteFile(string path)
         {
             if (string.IsNullOrWhiteSpace(path))
@@ -368,8 +342,7 @@ namespace NtfsAudit.Service
                 if (string.IsNullOrWhiteSpace(runtimeOptions.OutputDirectory)) return;
                 Directory.CreateDirectory(runtimeOptions.OutputDirectory);
                 var archive = new AnalysisArchive();
-                var name = BuildScanNameFromRoot(runtimeOptions.RootPath);
-                var output = Path.Combine(runtimeOptions.OutputDirectory, string.Format("{0}_{1}.ntaudit", name, DateTime.Now.ToString("yyyy_MM_dd_HH_mm")));
+                var output = ScanExportPathBuilder.BuildUniqueArchivePath(runtimeOptions.OutputDirectory, runtimeOptions.RootPath, "ntaudit");
                 archive.Export(result, runtimeOptions.RootPath, output);
             }
             finally

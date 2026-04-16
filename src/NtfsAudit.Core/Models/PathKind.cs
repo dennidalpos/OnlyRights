@@ -9,6 +9,8 @@
  * commercial use, or reuse of this file is prohibited without prior
  * written permission from Danny Perondi.
  */
+#nullable enable
+
 namespace NtfsAudit.App.Models
 {
     public enum PathKind

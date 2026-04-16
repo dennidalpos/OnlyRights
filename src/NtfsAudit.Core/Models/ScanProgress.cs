@@ -11,6 +11,8 @@
  */
 using System;
 
+#nullable enable
+
 namespace NtfsAudit.App.Models
 {
     public class ScanProgress
@@ -20,7 +22,7 @@ namespace NtfsAudit.App.Models
         public int QueueCount { get; set; }
         public int Errors { get; set; }
         public TimeSpan Elapsed { get; set; }
-        public string Stage { get; set; }
-        public string CurrentPath { get; set; }
+        public string? Stage { get; set; }
+        public string? CurrentPath { get; set; }
     }
 }

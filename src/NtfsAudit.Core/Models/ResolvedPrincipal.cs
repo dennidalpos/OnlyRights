@@ -9,12 +9,14 @@
  * commercial use, or reuse of this file is prohibited without prior
  * written permission from Danny Perondi.
  */
+#nullable enable
+
 namespace NtfsAudit.App.Models
 {
     public class ResolvedPrincipal
     {
-        public string Sid { get; set; }
-        public string Name { get; set; }
+        public string? Sid { get; set; }
+        public string? Name { get; set; }
         public bool IsGroup { get; set; }
         public bool IsDisabled { get; set; }
         public bool IsServiceAccount { get; set; }

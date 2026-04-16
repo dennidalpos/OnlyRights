@@ -54,7 +54,7 @@ dotnet run --project .\src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj -f net8.0-wi
 - [Operations, CI, testing, packaging, and release notes](docs/development/operations.md)
 - [Archive format](docs/reference/archive-format.md)
 - [Credential policy](docs/reference/credentials.md)
-- [Open residual work](PROJECT_STATUS.json)
+- [Project status tracking](PROJECT_STATUS.json)
 
 ## License
 

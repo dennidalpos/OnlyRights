@@ -157,6 +157,22 @@ namespace NtfsAudit.App.ViewModels
                     ExecuteScan,
                     token);
             }
+            catch (OperationCanceledException)
+            {
+                RunOnUi(() =>
+                {
+                    ProgressText = LocalizationManager.Text("Progress.ScanCancelled");
+                    CurrentPathText = string.Empty;
+                });
+            }
+            catch (Exception ex)
+            {
+                RunOnUi(() =>
+                {
+                    ProgressText = LocalizationManager.Format("Progress.ScanError", ex.Message);
+                    CurrentPathText = string.Empty;
+                });
+            }
             finally
             {
                 RunOnUi(() =>
@@ -180,41 +196,6 @@ namespace NtfsAudit.App.ViewModels
                     UpdateCommands();
                 });
             }
-        }
-
-        private static string SanitizeFileName(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
-            foreach (var c in Path.GetInvalidFileNameChars())
-            {
-                value = value.Replace(c, '_');
-            }
-            return value;
-        }
-
-        private static string BuildScanNameFromRoot(string root)
-        {
-            if (string.IsNullOrWhiteSpace(root)) return "scan";
-            var normalized = root.Trim().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            if (string.IsNullOrWhiteSpace(normalized)) return "scan";
-
-            string name;
-            if (normalized.StartsWith("\\", StringComparison.Ordinal))
-            {
-                var segments = normalized.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
-                name = segments.Length > 0 ? segments[segments.Length - 1] : string.Empty;
-            }
-            else
-            {
-                name = Path.GetFileName(normalized);
-                if (string.IsNullOrWhiteSpace(name) && normalized.Length >= 2 && normalized[1] == ':')
-                {
-                    name = normalized.Substring(0, 1);
-                }
-            }
-
-            name = SanitizeFileName(name);
-            return string.IsNullOrWhiteSpace(name) ? "scan" : name;
         }
 
         private void StopScan()

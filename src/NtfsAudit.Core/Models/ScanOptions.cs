@@ -9,14 +9,16 @@
  * commercial use, or reuse of this file is prohibited without prior
  * written permission from Danny Perondi.
  */
+#nullable enable
+
 namespace NtfsAudit.App.Models
 {
     public class ScanOptions
     {
-        public string RootPath { get; set; }
-        public string OutputDirectory { get; set; }
-        public string CredentialSource { get; set; }
-        public ScanCredential Credential { get; set; }
+        public string? RootPath { get; set; }
+        public string? OutputDirectory { get; set; }
+        public string? CredentialSource { get; set; }
+        public ScanCredential? Credential { get; set; }
         public int MaxDepth { get; set; }
         public bool ScanAllDepths { get; set; }
         public bool IncludeInherited { get; set; }

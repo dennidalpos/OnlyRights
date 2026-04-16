@@ -9,12 +9,14 @@
  * commercial use, or reuse of this file is prohibited without prior
  * written permission from Danny Perondi.
  */
+#nullable enable
+
 namespace NtfsAudit.App.Models
 {
     public class ErrorEntry
     {
-        public string Path { get; set; }
-        public string ErrorType { get; set; }
-        public string Message { get; set; }
+        public string? Path { get; set; }
+        public string? ErrorType { get; set; }
+        public string? Message { get; set; }
     }
 }

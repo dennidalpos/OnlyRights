@@ -9,6 +9,8 @@
  * commercial use, or reuse of this file is prohibited without prior
  * written permission from Danny Perondi.
  */
+#nullable enable
+
 namespace NtfsAudit.App.Models
 {
     public enum PermissionLayer
@@ -26,12 +28,12 @@ namespace NtfsAudit.App.Models
 
     public abstract class PermissionEntry
     {
-        public string PrincipalName { get; set; }
-        public string PrincipalSid { get; set; }
-        public string PrincipalType { get; set; }
+        public string? PrincipalName { get; set; }
+        public string? PrincipalSid { get; set; }
+        public string? PrincipalType { get; set; }
         public PermissionDecision AccessType { get; set; }
         public int RightsMask { get; set; }
-        public string RightsSummary { get; set; }
+        public string? RightsSummary { get; set; }
         public bool IsInherited { get; set; }
         public bool AppliesToThisFolder { get; set; }
         public bool AppliesToSubfolders { get; set; }
@@ -46,10 +48,10 @@ namespace NtfsAudit.App.Models
             Source = PermissionLayer.Ntfs;
         }
 
-        public string FolderPath { get; set; }
-        public string TargetPath { get; set; }
-        public string InheritanceFlags { get; set; }
-        public string PropagationFlags { get; set; }
+        public string? FolderPath { get; set; }
+        public string? TargetPath { get; set; }
+        public string? InheritanceFlags { get; set; }
+        public string? PropagationFlags { get; set; }
     }
 
     public class SharePermission : PermissionEntry
@@ -59,8 +61,8 @@ namespace NtfsAudit.App.Models
             Source = PermissionLayer.Share;
         }
 
-        public string ShareName { get; set; }
-        public string ShareServer { get; set; }
+        public string? ShareName { get; set; }
+        public string? ShareServer { get; set; }
     }
 
     public class EffectivePermission : PermissionEntry
@@ -70,8 +72,8 @@ namespace NtfsAudit.App.Models
             Source = PermissionLayer.Effective;
         }
 
-        public string FolderPath { get; set; }
-        public string TargetPath { get; set; }
+        public string? FolderPath { get; set; }
+        public string? TargetPath { get; set; }
         public int ShareRightsMask { get; set; }
         public int NtfsRightsMask { get; set; }
     }

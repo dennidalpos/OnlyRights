@@ -11,19 +11,21 @@
  */
 using System.Collections.Generic;
 
+#nullable enable
+
 namespace NtfsAudit.App.Models
 {
     public class AceEntry
     {
-        public string FolderPath { get; set; }
-        public string PrincipalName { get; set; }
-        public string PrincipalSid { get; set; }
-        public string PrincipalType { get; set; }
+        public string? FolderPath { get; set; }
+        public string? PrincipalName { get; set; }
+        public string? PrincipalSid { get; set; }
+        public string? PrincipalType { get; set; }
         public PermissionLayer PermissionLayer { get; set; }
-        public string AllowDeny { get; set; }
-        public string RightsSummary { get; set; }
+        public string? AllowDeny { get; set; }
+        public string? RightsSummary { get; set; }
         public int RightsMask { get; set; }
-        public string EffectiveRightsSummary { get; set; }
+        public string? EffectiveRightsSummary { get; set; }
         public int EffectiveRightsMask { get; set; }
         public int ShareRightsMask { get; set; }
         public int NtfsRightsMask { get; set; }
@@ -31,24 +33,24 @@ namespace NtfsAudit.App.Models
         public bool AppliesToThisFolder { get; set; }
         public bool AppliesToSubfolders { get; set; }
         public bool AppliesToFiles { get; set; }
-        public string InheritanceFlags { get; set; }
-        public string PropagationFlags { get; set; }
-        public string Source { get; set; }
+        public string? InheritanceFlags { get; set; }
+        public string? PropagationFlags { get; set; }
+        public string? Source { get; set; }
         public PathKind PathKind { get; set; }
         public int Depth { get; set; }
-        public string ResourceType { get; set; }
-        public string TargetPath { get; set; }
-        public string Owner { get; set; }
-        public string ShareName { get; set; }
-        public string ShareServer { get; set; }
-        public string AuditSummary { get; set; }
-        public string RiskLevel { get; set; }
+        public string? ResourceType { get; set; }
+        public string? TargetPath { get; set; }
+        public string? Owner { get; set; }
+        public string? ShareName { get; set; }
+        public string? ShareServer { get; set; }
+        public string? AuditSummary { get; set; }
+        public string? RiskLevel { get; set; }
         public bool IsDisabled { get; set; }
         public bool IsServiceAccount { get; set; }
         public bool IsAdminAccount { get; set; }
         public bool HasExplicitPermissions { get; set; }
         public bool IsInheritanceDisabled { get; set; }
-        public List<string> MemberNames { get; set; }
+        public List<string>? MemberNames { get; set; }
         public string MembersSummary
         {
             get { return MemberNames == null ? string.Empty : string.Join(", ", MemberNames); }
@@ -131,12 +133,12 @@ namespace NtfsAudit.App.Models
             }
         }
 
-        private string GetRightsSummaryForFlags()
+        private string? GetRightsSummaryForFlags()
         {
             return string.IsNullOrWhiteSpace(EffectiveRightsSummary) ? RightsSummary : EffectiveRightsSummary;
         }
 
-        private bool HasRight(string summary, string right)
+        private bool HasRight(string? summary, string right)
         {
             if (string.IsNullOrWhiteSpace(summary)) return false;
             var parts = summary.Split(new[] { '|', ',' }, System.StringSplitOptions.RemoveEmptyEntries);

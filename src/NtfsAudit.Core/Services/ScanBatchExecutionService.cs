@@ -45,7 +45,7 @@ namespace NtfsAudit.App.Services
             if (createRootOptions == null) throw new ArgumentNullException(nameof(createRootOptions));
             if (executeRootScan == null) throw new ArgumentNullException(nameof(executeRootScan));
 
-            var firstRoot = roots == null || roots.Count == 0 ? optionsTemplate.RootPath : roots[0];
+            var firstRoot = roots == null || roots.Count == 0 ? optionsTemplate.RootPath ?? string.Empty : roots[0];
             var aggregateResult = new ScanResult
             {
                 RootPath = firstRoot,
@@ -142,7 +142,7 @@ namespace NtfsAudit.App.Services
 
             var outputDirectory = PathResolver.FromExtendedPath(options.OutputDirectory).Trim();
             Directory.CreateDirectory(PathResolver.ToExtendedPath(outputDirectory));
-            var outputFile = Path.Combine(outputDirectory, BuildExportFileName(root, "ntaudit"));
+            var outputFile = ScanExportPathBuilder.BuildUniqueArchivePath(outputDirectory, root, "ntaudit");
             _analysisArchive.Export(result, root, outputFile);
         }
 
@@ -186,47 +186,5 @@ namespace NtfsAudit.App.Services
             }
         }
 
-        private static string BuildExportFileName(string rootPath, string extension)
-        {
-            var baseName = BuildScanNameFromRoot(rootPath ?? string.Empty);
-            if (string.IsNullOrWhiteSpace(baseName)) baseName = "Root";
-            var timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm");
-            return string.Format("{0}_{1}.{2}", baseName, timestamp, extension);
-        }
-
-        private static string BuildScanNameFromRoot(string root)
-        {
-            if (string.IsNullOrWhiteSpace(root)) return "scan";
-            var normalized = root.Trim().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            if (string.IsNullOrWhiteSpace(normalized)) return "scan";
-
-            string name;
-            if (normalized.StartsWith("\\", StringComparison.Ordinal))
-            {
-                var segments = normalized.Split(new[] { '\\' }, StringSplitOptions.RemoveEmptyEntries);
-                name = segments.Length > 0 ? segments[segments.Length - 1] : string.Empty;
-            }
-            else
-            {
-                name = Path.GetFileName(normalized);
-                if (string.IsNullOrWhiteSpace(name) && normalized.Length >= 2 && normalized[1] == ':')
-                {
-                    name = normalized.Substring(0, 1);
-                }
-            }
-
-            name = SanitizeFileName(name);
-            return string.IsNullOrWhiteSpace(name) ? "scan" : name;
-        }
-
-        private static string SanitizeFileName(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
-            foreach (var c in Path.GetInvalidFileNameChars())
-            {
-                value = value.Replace(c, '_');
-            }
-            return value;
-        }
     }
 }

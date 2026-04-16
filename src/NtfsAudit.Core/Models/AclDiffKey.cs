@@ -11,18 +11,20 @@
  */
 using System;
 
+#nullable enable
+
 namespace NtfsAudit.App.Models
 {
-    public class AclDiffKey : IEquatable<AclDiffKey>
+    public class AclDiffKey : IEquatable<AclDiffKey?>
     {
-        public string Sid { get; set; }
-        public string AllowDeny { get; set; }
+        public string? Sid { get; set; }
+        public string? AllowDeny { get; set; }
         public int RightsMask { get; set; }
-        public string InheritanceFlags { get; set; }
-        public string PropagationFlags { get; set; }
+        public string? InheritanceFlags { get; set; }
+        public string? PropagationFlags { get; set; }
         public bool IsInherited { get; set; }
 
-        public bool Equals(AclDiffKey other)
+        public bool Equals(AclDiffKey? other)
         {
             if (other == null) return false;
             return string.Equals(Sid, other.Sid, StringComparison.OrdinalIgnoreCase)
@@ -33,7 +35,7 @@ namespace NtfsAudit.App.Models
                 && IsInherited == other.IsInherited;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return Equals(obj as AclDiffKey);
         }

@@ -41,11 +41,7 @@ namespace NtfsAudit.App.ViewModels
 
         private string BuildExportFileName(string rootPath, string extension)
         {
-            var safeRoot = rootPath ?? string.Empty;
-            var baseName = BuildScanNameFromRoot(safeRoot);
-            if (string.IsNullOrWhiteSpace(baseName)) baseName = "Root";
-            var timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm");
-            return string.Format("{0}_{1}.{2}", baseName, timestamp, extension);
+            return ScanExportPathBuilder.BuildExportFileName(rootPath, extension);
         }
 
         private string ResolveInitialDirectory(string preferredDirectory, string rootPath)
