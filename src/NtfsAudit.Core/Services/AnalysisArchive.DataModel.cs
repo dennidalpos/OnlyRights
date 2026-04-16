@@ -504,7 +504,7 @@ namespace NtfsAudit.App.Services
         private class ArchiveMeta
         {
             public string RootPath { get; set; }
-            public PathKind RootPathKind { get; set; }
+            public string RootPathKind { get; set; }
             public DateTime CreatedAt { get; set; }
             public int Version { get; set; }
             public ScanOptions ScanOptions { get; set; }

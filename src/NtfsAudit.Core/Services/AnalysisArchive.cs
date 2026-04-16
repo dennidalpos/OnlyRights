@@ -84,7 +84,7 @@ namespace NtfsAudit.App.Services
                     AddJsonEntry(archive, MetaEntryName, new ArchiveMeta
                     {
                         RootPath = resolvedRootPath,
-                        RootPathKind = resolvedPathKind,
+                        RootPathKind = resolvedPathKind.ToString(),
                         CreatedAt = result.ScannedAtUtc == default(DateTime) ? DateTime.UtcNow : result.ScannedAtUtc,
                         Version = CurrentArchiveVersion,
                         ScanOptions = exportOptions,
@@ -181,7 +181,7 @@ namespace NtfsAudit.App.Services
                     Details = details,
                     TreeMap = treeMap,
                     RootPath = resolvedRootPath,
-                    RootPathKind = meta.RootPathKind == PathKind.Unknown ? PathResolver.DetectPathKind(resolvedRootPath) : meta.RootPathKind,
+                    RootPathKind = NormalizeImportedRootPathKind(meta.RootPathKind, resolvedRootPath),
                     ScanOptions = scanOptions,
                     ScannedAtUtc = NormalizeImportedTimestamp(meta.CreatedAt, ioArchivePath)
                 };

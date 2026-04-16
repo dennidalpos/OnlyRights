@@ -12,6 +12,7 @@
 using System;
 using System.IO;
 using System.Security.AccessControl;
+using NtfsAudit.App.Models;
 using NtfsAudit.App.Services;
 using Xunit;
 
@@ -78,6 +79,40 @@ namespace NtfsAudit.App.Tests
             Assert.Null(result);
             Assert.NotNull(service.LastDiagnostic);
             Assert.Equal("SharePermissionsAccessDenied", service.LastDiagnostic.ErrorType);
+        }
+
+        [Fact]
+        public void TryGetSharePermissions_ReturnsLoadedPermissions_ForSharePaths()
+        {
+            var expected = new SharePermissionContext(
+                "nas01",
+                "public",
+                new System.Collections.Generic.List<SharePermission>
+                {
+                    new SharePermission
+                    {
+                        ShareName = "public",
+                        ShareServer = "nas01",
+                        PrincipalName = "Everyone",
+                        PrincipalSid = "S-1-1-0",
+                        PrincipalType = "Group",
+                        AccessType = PermissionDecision.Allow,
+                        RightsMask = (int)FileSystemRights.ReadAndExecute,
+                        RightsSummary = "Read"
+                    }
+                });
+            var service = new SharePermissionService(
+                null,
+                _ => Tuple.Create("nas01", "public"),
+                (server, share, options) => expected);
+
+            var result = service.TryGetSharePermissions(@"\\nas01\public\folder");
+
+            Assert.Same(expected, result);
+            Assert.Null(service.LastDiagnostic);
+            Assert.Equal("nas01", result.Server);
+            Assert.Equal("public", result.ShareName);
+            Assert.Single(result.Permissions);
         }
     }
 }

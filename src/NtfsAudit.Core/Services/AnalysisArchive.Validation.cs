@@ -188,7 +188,7 @@ namespace NtfsAudit.App.Services
         {
             if (!File.Exists(metaPath))
             {
-                return new ArchiveMeta { Version = 1, RootPathKind = PathKind.Unknown };
+                return new ArchiveMeta { Version = 1, RootPathKind = PathKind.Unknown.ToString() };
             }
 
             try
@@ -202,8 +202,25 @@ namespace NtfsAudit.App.Services
             }
             catch
             {
-                return new ArchiveMeta { Version = 1, RootPathKind = PathKind.Unknown };
+                return new ArchiveMeta { Version = 1, RootPathKind = PathKind.Unknown.ToString() };
             }
+        }
+
+        private static PathKind NormalizeImportedRootPathKind(string value, string rootPath)
+        {
+            if (string.Equals(value, "Nfs", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(value, "4", StringComparison.OrdinalIgnoreCase))
+            {
+                return PathKind.Unc;
+            }
+
+            PathKind parsed;
+            if (Enum.TryParse(value, true, out parsed) && Enum.IsDefined(typeof(PathKind), parsed))
+            {
+                return parsed == PathKind.Unknown ? PathResolver.DetectPathKind(rootPath) : parsed;
+            }
+
+            return PathResolver.DetectPathKind(rootPath);
         }
     }
 }

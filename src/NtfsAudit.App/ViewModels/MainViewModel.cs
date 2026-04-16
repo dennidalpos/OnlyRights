@@ -41,6 +41,7 @@ namespace NtfsAudit.App.ViewModels
         private readonly GroupMembershipCache _groupMembershipCache;
         private readonly ExcelExporter _excelExporter;
         private readonly AnalysisArchive _analysisArchive;
+        private readonly ScanBatchExecutionService _scanBatchExecutionService;
         private readonly AnalysisSqliteStore _analysisSqliteStore;
         private readonly RuntimeCleanupService _runtimeCleanupService;
         private readonly ServiceRuntimeStatusPresenter _serviceRuntimeStatusPresenter;
@@ -165,6 +166,7 @@ namespace NtfsAudit.App.ViewModels
             _groupMembershipCache = new GroupMembershipCache(TimeSpan.FromHours(2));
             _excelExporter = new ExcelExporter();
             _analysisArchive = new AnalysisArchive();
+            _scanBatchExecutionService = new ScanBatchExecutionService(_analysisArchive);
             _analysisSqliteStore = new AnalysisSqliteStore();
             _runtimeCleanupService = new RuntimeCleanupService();
             _serviceRuntimeStatusPresenter = new ServiceRuntimeStatusPresenter();

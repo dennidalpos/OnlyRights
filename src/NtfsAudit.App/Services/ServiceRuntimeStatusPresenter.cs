@@ -12,11 +12,13 @@
 using System;
 using NtfsAudit.App.Models;
 
+#nullable enable
+
 namespace NtfsAudit.App.Services
 {
     internal sealed class ServiceRuntimeStatusPresenter
     {
-        public ServiceRuntimeViewState Build(bool isServiceInstalled, bool isServiceRunning, ServiceRuntimeStatus status)
+        public ServiceRuntimeViewState Build(bool isServiceInstalled, bool isServiceRunning, ServiceRuntimeStatus? status)
         {
             if (!isServiceInstalled)
             {
@@ -76,9 +78,9 @@ namespace NtfsAudit.App.Services
 
     internal sealed class ServiceRuntimeViewState
     {
-        public string BadgeText { get; set; }
-        public string BadgeBackground { get; set; }
-        public string StatusText { get; set; }
+        public string BadgeText { get; set; } = string.Empty;
+        public string BadgeBackground { get; set; } = string.Empty;
+        public string StatusText { get; set; } = string.Empty;
         public bool IsServiceRuntimeRunning { get; set; }
     }
 }

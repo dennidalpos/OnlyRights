@@ -21,10 +21,11 @@ namespace NtfsAudit.App.Services
 {
     public static class PathResolver
     {
-        private static readonly Dictionary<string, string> DfsCache =
-            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private static readonly Dictionary<string, List<string>> DfsTargetsCache =
-            new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, DfsCacheEntry<string>> DfsCache =
+            new Dictionary<string, DfsCacheEntry<string>>(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, DfsCacheEntry<List<string>>> DfsTargetsCache =
+            new Dictionary<string, DfsCacheEntry<List<string>>>(StringComparer.OrdinalIgnoreCase);
+        private static TimeSpan DfsCacheTtl = TimeSpan.FromHours(1);
 
         public static string ToExtendedPath(string path)
         {
@@ -108,15 +109,7 @@ namespace NtfsAudit.App.Services
         {
             if (string.IsNullOrWhiteSpace(input)) return PathKind.Unknown;
             var trimmed = input.Trim();
-            if (trimmed.StartsWith("nfs://", StringComparison.OrdinalIgnoreCase))
-            {
-                return PathKind.Nfs;
-            }
             var normalized = FromExtendedPath(trimmed).Replace('/', '\\');
-            if (IsLikelyNfsPath(normalized))
-            {
-                return PathKind.Nfs;
-            }
             if (normalized.StartsWith("\\\\", StringComparison.Ordinal))
             {
                 var targets = TryResolveDfsTargets(normalized);
@@ -141,16 +134,6 @@ namespace NtfsAudit.App.Services
             server = parts[0];
             share = parts[1];
             return !string.IsNullOrWhiteSpace(server) && !string.IsNullOrWhiteSpace(share);
-        }
-
-        private static bool IsLikelyNfsPath(string normalized)
-        {
-            if (string.IsNullOrWhiteSpace(normalized)) return false;
-            var path = normalized.Replace('/', '\\').ToLowerInvariant();
-            if (path.StartsWith("\\\\wsl$\\", StringComparison.Ordinal)) return true;
-            if (path.Contains("\\nfs\\")) return true;
-            if (path.StartsWith("\\\\nfs", StringComparison.Ordinal)) return true;
-            return false;
         }
 
         private static string TryGetUncPath(string drive)
@@ -202,7 +185,7 @@ namespace NtfsAudit.App.Services
             string cached;
             lock (DfsCache)
             {
-                if (DfsCache.TryGetValue(normalized, out cached))
+                if (TryGetFreshCacheValue(DfsCache, normalized, out cached))
                 {
                     return string.IsNullOrWhiteSpace(cached) ? null : cached;
                 }
@@ -256,7 +239,8 @@ namespace NtfsAudit.App.Services
 
             lock (DfsTargetsCache)
             {
-                if (DfsTargetsCache.TryGetValue(normalized, out var cached))
+                List<string> cached;
+                if (TryGetFreshCacheValue(DfsTargetsCache, normalized, out cached))
                 {
                     return new List<string>(cached);
                 }
@@ -382,7 +366,7 @@ namespace NtfsAudit.App.Services
         {
             lock (DfsCache)
             {
-                DfsCache[key] = value ?? string.Empty;
+                DfsCache[key] = new DfsCacheEntry<string>(value ?? string.Empty, DateTime.UtcNow);
             }
         }
 
@@ -390,7 +374,67 @@ namespace NtfsAudit.App.Services
         {
             lock (DfsTargetsCache)
             {
-                DfsTargetsCache[key] = targets == null ? new List<string>() : new List<string>(targets);
+                DfsTargetsCache[key] = new DfsCacheEntry<List<string>>(
+                    targets == null ? new List<string>() : new List<string>(targets),
+                    DateTime.UtcNow);
+            }
+        }
+
+        private static bool TryGetFreshCacheValue<T>(
+            Dictionary<string, DfsCacheEntry<T>> cache,
+            string key,
+            out T value)
+        {
+            value = default(T);
+            DfsCacheEntry<T> entry;
+            if (!cache.TryGetValue(key, out entry))
+            {
+                return false;
+            }
+
+            if (DateTime.UtcNow - entry.CachedAtUtc > DfsCacheTtl)
+            {
+                cache.Remove(key);
+                return false;
+            }
+
+            value = entry.Value;
+            return true;
+        }
+
+        internal static void SetDfsCacheTtlForTest(TimeSpan ttl)
+        {
+            DfsCacheTtl = ttl;
+        }
+
+        internal static void ResetDfsCacheForTest()
+        {
+            DfsCacheTtl = TimeSpan.FromHours(1);
+            lock (DfsCache)
+            {
+                DfsCache.Clear();
+            }
+            lock (DfsTargetsCache)
+            {
+                DfsTargetsCache.Clear();
+            }
+        }
+
+        internal static void SetDfsPathCacheForTest(string path, string resolvedPath, DateTime cachedAtUtc)
+        {
+            lock (DfsCache)
+            {
+                DfsCache[path] = new DfsCacheEntry<string>(resolvedPath ?? string.Empty, cachedAtUtc);
+            }
+        }
+
+        internal static void SetDfsTargetsCacheForTest(string path, List<string> targets, DateTime cachedAtUtc)
+        {
+            lock (DfsTargetsCache)
+            {
+                DfsTargetsCache[path] = new DfsCacheEntry<List<string>>(
+                    targets == null ? new List<string>() : new List<string>(targets),
+                    cachedAtUtc);
             }
         }
 
@@ -453,6 +497,18 @@ namespace NtfsAudit.App.Services
             public uint State { get; set; }
             public string ServerName { get; set; }
             public string ShareName { get; set; }
+        }
+
+        private sealed class DfsCacheEntry<T>
+        {
+            public DfsCacheEntry(T value, DateTime cachedAtUtc)
+            {
+                Value = value;
+                CachedAtUtc = cachedAtUtc;
+            }
+
+            public T Value { get; private set; }
+            public DateTime CachedAtUtc { get; private set; }
         }
     }
 }

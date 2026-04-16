@@ -25,68 +25,7 @@ namespace NtfsAudit.App.ViewModels
             Dictionary<string, FolderDetail> details,
             string fallbackRoot)
         {
-            if (details == null || details.Count == 0)
-            {
-                if (string.IsNullOrWhiteSpace(fallbackRoot))
-                {
-                    return null;
-                }
-                return new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
-                {
-                    [fallbackRoot] = new List<string>()
-                };
-            }
-
-            var normalizedRoot = NormalizeTreePath(fallbackRoot);
-            var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-            foreach (var path in details.Keys.Where(key => !string.IsNullOrWhiteSpace(key)))
-            {
-                var normalizedPath = NormalizeTreePath(path);
-                if (!IsWithinRoot(normalizedPath, normalizedRoot))
-                {
-                    continue;
-                }
-                var current = path;
-                if (!map.ContainsKey(current))
-                {
-                    map[current] = new List<string>();
-                }
-
-                while (true)
-                {
-                    var parent = SafeGetParentPath(current);
-                    if (string.IsNullOrWhiteSpace(parent))
-                    {
-                        break;
-                    }
-                    var normalizedParent = NormalizeTreePath(parent);
-                    if (!IsWithinRoot(normalizedParent, normalizedRoot))
-                    {
-                        break;
-                    }
-                    if (!map.ContainsKey(parent))
-                    {
-                        map[parent] = new List<string>();
-                    }
-                    if (!map[parent].Contains(current, StringComparer.OrdinalIgnoreCase))
-                    {
-                        map[parent].Add(current);
-                    }
-                    if (!string.IsNullOrWhiteSpace(normalizedRoot)
-                        && string.Equals(normalizedParent, normalizedRoot, StringComparison.OrdinalIgnoreCase))
-                    {
-                        break;
-                    }
-                    current = parent;
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(fallbackRoot) && !map.ContainsKey(fallbackRoot))
-            {
-                map[fallbackRoot] = new List<string>();
-            }
-
-            return map;
+            return ScanResultTreeMapBuilder.BuildFromDetails(details, fallbackRoot);
         }
 
         private Dictionary<string, List<string>> BuildTreeMapFromExportRecords(string dataPath, string fallbackRoot)
@@ -146,83 +85,18 @@ namespace NtfsAudit.App.ViewModels
 
         private void AddPathWithAncestors(Dictionary<string, List<string>> map, string path, string normalizedRoot)
         {
-            if (!IsWithinRoot(NormalizeTreePath(path), normalizedRoot))
-            {
-                return;
-            }
-            var current = path;
-            if (!map.ContainsKey(current))
-            {
-                map[current] = new List<string>();
-            }
-
-            while (true)
-            {
-                var parent = SafeGetParentPath(current);
-                if (string.IsNullOrWhiteSpace(parent))
-                {
-                    break;
-                }
-                var normalizedParent = NormalizeTreePath(parent);
-                if (!IsWithinRoot(normalizedParent, normalizedRoot))
-                {
-                    break;
-                }
-                if (!map.ContainsKey(parent))
-                {
-                    map[parent] = new List<string>();
-                }
-                if (!map[parent].Contains(current, StringComparer.OrdinalIgnoreCase))
-                {
-                    map[parent].Add(current);
-                }
-                if (!string.IsNullOrWhiteSpace(normalizedRoot)
-                    && string.Equals(normalizedParent, normalizedRoot, StringComparison.OrdinalIgnoreCase))
-                {
-                    break;
-                }
-                current = parent;
-            }
-        }
-
-        private string SafeGetParentPath(string path)
-        {
-            try
-            {
-                var parent = Directory.GetParent(path);
-                return parent == null ? null : parent.FullName;
-            }
-            catch
-            {
-                return null;
-            }
+            ScanResultTreeMapBuilder.AddPathWithAncestors(map, path, normalizedRoot);
         }
 
         private static string NormalizeTreePath(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) return string.Empty;
-            var normalized = PathResolver.FromExtendedPath(path);
-            return normalized.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            return ScanResultTreeMapBuilder.NormalizeTreePath(path);
         }
 
         private static bool IsWithinRoot(string candidate, string root)
         {
-            if (string.IsNullOrWhiteSpace(candidate))
-            {
-                return false;
-            }
-            if (string.IsNullOrWhiteSpace(root))
-            {
-                return true;
-            }
-            if (string.Equals(candidate, root, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-            var rootWithSeparator = root.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal)
-                ? root
-                : root + Path.DirectorySeparatorChar;
-            return candidate.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase);
+            return ScanResultTreeMapBuilder.IsWithinRoot(candidate, root);
         }
 
         private void ApplyDiffs(ScanResult result)

@@ -34,7 +34,10 @@ namespace NtfsAudit.App.Services
             using (var stream = entry.Open())
             using (var writer = new StreamWriter(stream))
             {
-                writer.Write(JsonConvert.SerializeObject(data));
+                writer.Write(JsonConvert.SerializeObject(data, new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                }));
             }
         }
 

@@ -72,12 +72,15 @@ namespace NtfsAudit.App.ViewModels
 
         private string DescribeEffectiveCredentialSource(string root)
         {
-            return ScanCredentialPathPolicy.DescribeEffectiveSource(root, ResolveConfiguredCredentialSource(root));
+            var effectiveSource = ScanCredentialPathPolicy.ResolveEffectiveSource(root, ResolveConfiguredCredentialSource(root));
+            return effectiveSource == "Global"
+                ? LocalizationManager.Text("Credential.SourceGlobal")
+                : LocalizationManager.Text("Credential.SourceCurrentUser");
         }
 
         private ScanOptions BuildOptionsForRoot(ScanOptions template, string root, bool protectCredentialForService)
         {
-            var options = CloneOptions(template, root);
+            var options = ScanBatchExecutionService.CloneOptions(template, root);
             var credential = ResolveScanCredentialForRoot(root);
             options.CredentialSource = ResolveCredentialSource(root);
             options.Credential = protectCredentialForService

@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\NtfsAudit.Core\NtfsAudit.Core.csproj" />
     <ProjectReference Include="..\NtfsAudit.App\NtfsAudit.App.csproj" />
   </ItemGroup>
 </Project>

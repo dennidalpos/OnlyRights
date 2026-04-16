@@ -14,6 +14,7 @@ function Get-RepositoryContext {
     [pscustomobject]@{
         RepoRoot = $repoRoot
         Solution = Join-Path $repoRoot "NtfsAudit.sln"
+        CoreProject = Join-Path $repoRoot "src\NtfsAudit.Core\NtfsAudit.Core.csproj"
         AppProject = Join-Path $repoRoot "src\NtfsAudit.App\NtfsAudit.App.csproj"
         ViewerProject = Join-Path $repoRoot "src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj"
         ServiceProject = Join-Path $repoRoot "src\NtfsAudit.Service\NtfsAudit.Service.csproj"
@@ -40,6 +41,7 @@ function Assert-RepositoryPrerequisites {
 
     foreach ($requiredPath in @(
         @{ Path = $Context.Solution; Label = "Solution" },
+        @{ Path = $Context.CoreProject; Label = "Core project" },
         @{ Path = $Context.AppProject; Label = "App project" },
         @{ Path = $Context.ViewerProject; Label = "Viewer project" },
         @{ Path = $Context.ServiceProject; Label = "Service project" },

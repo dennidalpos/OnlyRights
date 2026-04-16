@@ -30,8 +30,6 @@ namespace NtfsAudit.App.Services
                     return "DFS";
                 case PathKind.Unc:
                     return "SMB Share";
-                case PathKind.Nfs:
-                    return "NFS";
                 case PathKind.Local:
                     return LocalizationManager.CurrentLocale == "it" ? "Locale" : "Local";
                 default:
@@ -57,8 +55,6 @@ namespace NtfsAudit.App.Services
                     return new SolidColorBrush(Color.FromRgb(232, 245, 233));
                 case PathKind.Unc:
                     return new SolidColorBrush(Color.FromRgb(227, 242, 253));
-                case PathKind.Nfs:
-                    return new SolidColorBrush(Color.FromRgb(255, 243, 224));
                 default:
                     return new SolidColorBrush(Color.FromRgb(245, 245, 245));
             }

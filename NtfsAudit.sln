@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NtfsAudit.App.Tests", "test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NtfsAudit.Service", "src\NtfsAudit.Service\NtfsAudit.Service.csproj", "{DA832CA1-954E-4DE5-B996-B7530312074E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NtfsAudit.Core", "src\NtfsAudit.Core\NtfsAudit.Core.csproj", "{15F040B9-0637-4B6B-81F5-F399683E8400}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,5 +34,9 @@ Global
 		{DA832CA1-954E-4DE5-B996-B7530312074E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DA832CA1-954E-4DE5-B996-B7530312074E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DA832CA1-954E-4DE5-B996-B7530312074E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15F040B9-0637-4B6B-81F5-F399683E8400}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15F040B9-0637-4B6B-81F5-F399683E8400}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15F040B9-0637-4B6B-81F5-F399683E8400}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15F040B9-0637-4B6B-81F5-F399683E8400}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

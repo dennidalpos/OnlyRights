@@ -16,7 +16,6 @@ namespace NtfsAudit.App.Models
         Unknown = 0,
         Local = 1,
         Unc = 2,
-        Dfs = 3,
-        Nfs = 4
+        Dfs = 3
     }
 }

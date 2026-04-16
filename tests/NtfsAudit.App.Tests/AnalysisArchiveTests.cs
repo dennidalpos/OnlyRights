@@ -562,6 +562,166 @@ namespace NtfsAudit.App.Tests
             }
         }
 
+        [Fact]
+        public void Import_MapsLegacyNfsRootPathKindToUnc()
+        {
+            var tempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit.Tests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempRoot);
+
+            try
+            {
+                var dataPath = Path.Combine(tempRoot, "scan.jsonl");
+                var errorPath = Path.Combine(tempRoot, "errors.jsonl");
+                var archivePath = Path.Combine(tempRoot, "legacy_nfs.ntaudit");
+
+                var line = Newtonsoft.Json.JsonConvert.SerializeObject(new ExportRecord
+                {
+                    FolderPath = @"\\server\share",
+                    PrincipalName = "Everyone",
+                    PrincipalSid = "S-1-1-0",
+                    PrincipalType = "Group",
+                    PermissionLayer = PermissionLayer.Ntfs,
+                    AllowDeny = "Allow",
+                    RightsSummary = "Read",
+                    EffectiveRightsSummary = "Read",
+                    HasExplicitPermissions = true
+                });
+                File.WriteAllText(dataPath, line + Environment.NewLine);
+                File.WriteAllText(errorPath, string.Empty);
+
+                var archive = new AnalysisArchive();
+                archive.Export(new ScanResult
+                {
+                    TempDataPath = dataPath,
+                    ErrorPath = errorPath,
+                    RootPath = @"\\server\share",
+                    RootPathKind = PathKind.Unc,
+                    Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase),
+                    TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase),
+                    ScanOptions = new ScanOptions { RootPath = @"\\server\share" },
+                    ScannedAtUtc = DateTime.UtcNow
+                }, @"\\server\share", archivePath);
+
+                RewriteArchiveMeta(archivePath, text => text.Replace("\"RootPathKind\":\"Unc\"", "\"RootPathKind\":\"Nfs\""));
+
+                var imported = archive.Import(archivePath);
+
+                Assert.Equal(PathKind.Unc, imported.RootPathKind);
+                Assert.Equal(PathKind.Unc, imported.ScanResult.RootPathKind);
+            }
+            finally
+            {
+                if (Directory.Exists(tempRoot))
+                {
+                    Directory.Delete(tempRoot, true);
+                }
+            }
+        }
+
+        [Fact]
+        public void Export_StripsCredentialsFromMetaJson()
+        {
+            var tempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit.Tests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempRoot);
+
+            try
+            {
+                var dataPath = Path.Combine(tempRoot, "scan.jsonl");
+                var errorPath = Path.Combine(tempRoot, "errors.jsonl");
+                var archivePath = Path.Combine(tempRoot, "privacy.ntaudit");
+
+                var line = Newtonsoft.Json.JsonConvert.SerializeObject(new ExportRecord
+                {
+                    FolderPath = @"\\server\share",
+                    PrincipalName = "Everyone",
+                    PrincipalSid = "S-1-1-0",
+                    PrincipalType = "Group",
+                    PermissionLayer = PermissionLayer.Ntfs,
+                    AllowDeny = "Allow",
+                    RightsSummary = "Read",
+                    EffectiveRightsSummary = "Read",
+                    HasExplicitPermissions = true
+                });
+                File.WriteAllText(dataPath, line + Environment.NewLine);
+                File.WriteAllText(errorPath, string.Empty);
+
+                var archive = new AnalysisArchive();
+                archive.Export(new ScanResult
+                {
+                    TempDataPath = dataPath,
+                    ErrorPath = errorPath,
+                    RootPath = @"\\server\share",
+                    RootPathKind = PathKind.Unc,
+                    Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase),
+                    TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase),
+                    ScanOptions = new ScanOptions
+                    {
+                        RootPath = @"\\server\share",
+                        CredentialSource = "Global",
+                        Credential = new ScanCredential
+                        {
+                            UserName = @"CONTOSO\scanner",
+                            Password = "Secret!123",
+                            ProtectedPassword = "protected-secret",
+                            ProtectionScope = "CurrentUser"
+                        }
+                    },
+                    ScannedAtUtc = DateTime.UtcNow
+                }, @"\\server\share", archivePath);
+
+                var metaText = ReadArchiveEntry(archivePath, "meta.json");
+
+                Assert.DoesNotContain("Secret!123", metaText, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain("protected-secret", metaText, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain(@"CONTOSO\scanner", metaText, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain("CredentialSource", metaText, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain("Credential", metaText, StringComparison.OrdinalIgnoreCase);
+            }
+            finally
+            {
+                if (Directory.Exists(tempRoot))
+                {
+                    Directory.Delete(tempRoot, true);
+                }
+            }
+        }
+
+        private static string ReadArchiveEntry(string archivePath, string entryName)
+        {
+            using (var zip = System.IO.Compression.ZipFile.OpenRead(archivePath))
+            {
+                var entry = zip.GetEntry(entryName);
+                Assert.NotNull(entry);
+                using (var stream = entry.Open())
+                using (var reader = new StreamReader(stream))
+                {
+                    return reader.ReadToEnd();
+                }
+            }
+        }
+
+        private static void RewriteArchiveMeta(string archivePath, Func<string, string> rewrite)
+        {
+            using (var zip = System.IO.Compression.ZipFile.Open(archivePath, System.IO.Compression.ZipArchiveMode.Update))
+            {
+                var metaEntry = zip.GetEntry("meta.json");
+                Assert.NotNull(metaEntry);
+                string metaText;
+                using (var stream = metaEntry.Open())
+                using (var reader = new StreamReader(stream))
+                {
+                    metaText = reader.ReadToEnd();
+                }
+
+                metaEntry.Delete();
+                var rewritten = zip.CreateEntry("meta.json");
+                using (var stream = rewritten.Open())
+                using (var writer = new StreamWriter(stream))
+                {
+                    writer.Write(rewrite(metaText));
+                }
+            }
+        }
 
     }
 }

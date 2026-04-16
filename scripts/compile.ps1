@@ -44,6 +44,7 @@ function Test-ProjectSupportsFramework {
 }
 
 $allProjects = @(
+    $context.CoreProject,
     $context.AppProject,
     $context.ViewerProject,
     $context.ServiceProject,

@@ -13,7 +13,6 @@ using NtfsAudit.App.Services;
 using Xunit;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace NtfsAudit.App.Tests
 {
@@ -86,19 +85,43 @@ namespace NtfsAudit.App.Tests
         }
 
         [Fact]
-        public void DetectPathKind_ReturnsNfs_ForNfsSchemePaths()
+        public void DetectPathKind_ReturnsUnknown_ForNfsSchemePaths()
         {
             var kind = PathResolver.DetectPathKind("nfs://server/export/share");
 
-            Assert.Equal(Models.PathKind.Nfs, kind);
+            Assert.Equal(Models.PathKind.Unknown, kind);
         }
 
         [Fact]
-        public void DetectPathKind_ReturnsNfs_ForWslMountedShares()
+        public void DetectPathKind_ReturnsUnc_ForWslMountedShares()
         {
             var kind = PathResolver.DetectPathKind(@"\\wsl$\Ubuntu\mnt\data");
 
-            Assert.Equal(Models.PathKind.Nfs, kind);
+            Assert.Equal(Models.PathKind.Unc, kind);
+        }
+
+        [Fact]
+        public void DetectPathKind_DoesNotUseNfsNameHeuristics()
+        {
+            Assert.Equal(Models.PathKind.Unc, PathResolver.DetectPathKind(@"\\nfs01\share"));
+            Assert.Equal(Models.PathKind.Unc, PathResolver.DetectPathKind(@"\\server\share\nfs\folder"));
+        }
+
+        [Fact]
+        public void DetectPathKind_RefreshesExpiredDfsTargetCache()
+        {
+            var dfsPath = BuildUniqueDfsPath();
+            PathResolver.SetDfsTargetsCacheForTest(dfsPath, new List<string> { @"\\server-a\share\folder" }, DateTime.UtcNow.AddHours(-2));
+            PathResolver.SetDfsCacheTtlForTest(TimeSpan.FromMinutes(1));
+
+            try
+            {
+                Assert.Equal(Models.PathKind.Unc, PathResolver.DetectPathKind(dfsPath));
+            }
+            finally
+            {
+                PathResolver.ResetDfsCacheForTest();
+            }
         }
 
         private static string BuildUniqueDfsPath()
@@ -108,18 +131,12 @@ namespace NtfsAudit.App.Tests
 
         private static void SeedDfsTargets(string path, List<string> targets)
         {
-            GetDfsTargetsCache()[path] = targets;
+            PathResolver.SetDfsTargetsCacheForTest(path, targets, DateTime.UtcNow);
         }
 
         private static void RemoveDfsTargets(string path)
         {
-            GetDfsTargetsCache().Remove(path);
-        }
-
-        private static Dictionary<string, List<string>> GetDfsTargetsCache()
-        {
-            var field = typeof(PathResolver).GetField("DfsTargetsCache", BindingFlags.NonPublic | BindingFlags.Static);
-            return (Dictionary<string, List<string>>)field.GetValue(null);
+            PathResolver.ResetDfsCacheForTest();
         }
     }
 }

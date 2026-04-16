@@ -11,7 +11,6 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using NtfsAudit.App.Models;
 using NtfsAudit.App.Services;
 using Xunit;
@@ -91,18 +90,12 @@ namespace NtfsAudit.App.Tests
 
         private static void SeedDfsTargets(string path, List<string> targets)
         {
-            GetDfsTargetsCache()[path] = targets;
+            PathResolver.SetDfsTargetsCacheForTest(path, targets, DateTime.UtcNow);
         }
 
         private static void RemoveDfsTargets(string path)
         {
-            GetDfsTargetsCache().Remove(path);
-        }
-
-        private static Dictionary<string, List<string>> GetDfsTargetsCache()
-        {
-            var field = typeof(PathResolver).GetField("DfsTargetsCache", BindingFlags.NonPublic | BindingFlags.Static);
-            return (Dictionary<string, List<string>>)field.GetValue(null);
+            PathResolver.ResetDfsCacheForTest();
         }
     }
 }

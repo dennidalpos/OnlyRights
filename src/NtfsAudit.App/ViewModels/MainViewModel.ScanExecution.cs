@@ -147,60 +147,21 @@ namespace NtfsAudit.App.ViewModels
 
         private void ExecuteBatchScan(List<string> roots, ScanOptions optionsTemplate, CancellationToken token)
         {
-            var aggregateResult = new ScanResult
-            {
-                RootPath = roots == null || roots.Count == 0 ? RootPath : roots[0],
-                Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase),
-                TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase),
-                ScanOptions = CloneOptions(optionsTemplate, roots == null || roots.Count == 0 ? RootPath : roots[0]),
-                ScannedAtUtc = DateTime.UtcNow
-            };
-
+            ScanResult aggregateResult = null;
             try
             {
-                foreach (var root in roots)
-                {
-                    token.ThrowIfCancellationRequested();
-                    var options = BuildOptionsForRoot(optionsTemplate, root, false);
-                    var result = ExecuteScan(options, token);
-                    if (result == null)
-                    {
-                        continue;
-                    }
-
-                    if (result.TreeMap == null || result.TreeMap.Count == 0)
-                    {
-                        result.TreeMap = BuildTreeMapFromDetails(result.Details, result.RootPath);
-                    }
-
-                    var previousTempDataPath = aggregateResult.TempDataPath;
-                    var previousErrorPath = aggregateResult.ErrorPath;
-                    MergeScanResult(aggregateResult, result);
-                    if (!string.IsNullOrWhiteSpace(previousTempDataPath)
-                        && !string.Equals(previousTempDataPath, aggregateResult.TempDataPath, StringComparison.OrdinalIgnoreCase))
-                    {
-                        RuntimeCleanupService.TryDeleteFile(previousTempDataPath);
-                    }
-                    if (!string.IsNullOrWhiteSpace(previousErrorPath)
-                        && !string.Equals(previousErrorPath, aggregateResult.ErrorPath, StringComparison.OrdinalIgnoreCase))
-                    {
-                        RuntimeCleanupService.TryDeleteFile(previousErrorPath);
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(options.OutputDirectory))
-                    {
-                        var outputDirectory = PathResolver.FromExtendedPath(options.OutputDirectory).Trim();
-                        Directory.CreateDirectory(PathResolver.ToExtendedPath(outputDirectory));
-                        var outputFile = BuildExportPath(outputDirectory, root, "ntaudit");
-                        _analysisArchive.Export(result, root, outputFile);
-                    }
-                }
+                aggregateResult = _scanBatchExecutionService.Execute(
+                    roots,
+                    optionsTemplate,
+                    (template, root) => BuildOptionsForRoot(template, root, false),
+                    ExecuteScan,
+                    token);
             }
             finally
             {
                 RunOnUi(() =>
                 {
-                    if (aggregateResult.Details != null && aggregateResult.Details.Count > 0)
+                    if (aggregateResult != null && aggregateResult.Details != null && aggregateResult.Details.Count > 0)
                     {
                         _scanResult = aggregateResult;
                         _hasExported = false;
@@ -219,106 +180,6 @@ namespace NtfsAudit.App.ViewModels
                     UpdateCommands();
                 });
             }
-        }
-
-        private static void MergeScanResult(ScanResult aggregate, ScanResult current)
-        {
-            if (aggregate == null || current == null)
-            {
-                return;
-            }
-
-            if (!string.IsNullOrWhiteSpace(current.TempDataPath)) aggregate.TempDataPath = current.TempDataPath;
-            if (!string.IsNullOrWhiteSpace(current.ErrorPath)) aggregate.ErrorPath = current.ErrorPath;
-            if (!string.IsNullOrWhiteSpace(current.SqliteDatabasePath)) aggregate.SqliteDatabasePath = current.SqliteDatabasePath;
-            aggregate.UsesSqliteBackend = aggregate.UsesSqliteBackend || current.UsesSqliteBackend;
-            if (!string.IsNullOrWhiteSpace(current.RootPath) && string.IsNullOrWhiteSpace(aggregate.RootPath)) aggregate.RootPath = current.RootPath;
-            if (aggregate.RootPathKind == PathKind.Unknown && current.RootPathKind != PathKind.Unknown) aggregate.RootPathKind = current.RootPathKind;
-            if (current.ScannedAtUtc != default(DateTime)) aggregate.ScannedAtUtc = current.ScannedAtUtc;
-
-            if (aggregate.Details == null) aggregate.Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase);
-            if (current.Details != null)
-            {
-                foreach (var detailPair in current.Details)
-                {
-                    if (detailPair.Value == null) continue;
-                    FolderDetail existing;
-                    if (!aggregate.Details.TryGetValue(detailPair.Key, out existing))
-                    {
-                        aggregate.Details[detailPair.Key] = detailPair.Value;
-                        continue;
-                    }
-
-                    MergeFolderDetail(existing, detailPair.Value);
-                }
-            }
-
-            if (aggregate.TreeMap == null) aggregate.TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-            if (current.TreeMap != null)
-            {
-                MergeTreeMap(aggregate.TreeMap, current.TreeMap);
-            }
-        }
-
-        private static void MergeFolderDetail(FolderDetail target, FolderDetail source)
-        {
-            FolderDetailMerger.Merge(target, source);
-        }
-
-        private static void MergeTreeMap(Dictionary<string, List<string>> target, Dictionary<string, List<string>> source)
-        {
-            if (target == null || source == null)
-            {
-                return;
-            }
-
-            foreach (var node in source)
-            {
-                List<string> children;
-                if (!target.TryGetValue(node.Key, out children) || children == null)
-                {
-                    target[node.Key] = node.Value == null ? new List<string>() : new List<string>(node.Value);
-                    continue;
-                }
-
-                if (node.Value == null)
-                {
-                    continue;
-                }
-
-                foreach (var child in node.Value)
-                {
-                    if (!children.Contains(child, StringComparer.OrdinalIgnoreCase))
-                    {
-                        children.Add(child);
-                    }
-                }
-            }
-        }
-
-        private static ScanOptions CloneOptions(ScanOptions template, string root)
-        {
-            return new ScanOptions
-            {
-                RootPath = root,
-                OutputDirectory = template.OutputDirectory,
-                CredentialSource = template.CredentialSource,
-                Credential = template.Credential == null ? null : template.Credential.Clone(),
-                MaxDepth = template.MaxDepth,
-                ScanAllDepths = template.ScanAllDepths,
-                IncludeInherited = template.IncludeInherited,
-                ResolveIdentities = template.ResolveIdentities,
-                ExcludeServiceAccounts = template.ExcludeServiceAccounts,
-                ExcludeAdminAccounts = template.ExcludeAdminAccounts,
-                ExpandGroups = template.ExpandGroups,
-                UsePowerShell = template.UsePowerShell,
-                EnableAdvancedAudit = template.EnableAdvancedAudit,
-                ComputeEffectiveAccess = template.ComputeEffectiveAccess,
-                IncludeSharePermissions = template.IncludeSharePermissions,
-                IncludeFiles = template.IncludeFiles,
-                ReadOwnerAndSacl = template.ReadOwnerAndSacl,
-                CompareBaseline = template.CompareBaseline
-            };
         }
 
         private static string SanitizeFileName(string value)

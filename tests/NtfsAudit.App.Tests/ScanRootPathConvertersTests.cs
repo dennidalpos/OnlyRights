@@ -12,7 +12,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Reflection;
 using System.Windows;
 using System.Windows.Media;
 using NtfsAudit.App.Services;
@@ -36,7 +35,7 @@ namespace NtfsAudit.App.Tests
             try
             {
                 Assert.Equal("Local", converter.Convert(@"C:\data", typeof(string), null, CultureInfo.InvariantCulture));
-                Assert.Equal("NFS", converter.Convert(@"\\wsl$\Ubuntu\mnt\data", typeof(string), null, CultureInfo.InvariantCulture));
+                Assert.Equal("SMB Share", converter.Convert(@"\\wsl$\Ubuntu\mnt\data", typeof(string), null, CultureInfo.InvariantCulture));
                 Assert.Equal("DFS", converter.Convert(dfsPath, typeof(string), null, CultureInfo.InvariantCulture));
                 Assert.Equal("Unknown", converter.Convert(null, typeof(string), null, CultureInfo.InvariantCulture));
             }
@@ -60,7 +59,7 @@ namespace NtfsAudit.App.Tests
             try
             {
                 Assert.Equal(Color.FromRgb(245, 245, 245), GetColor(converter.Convert(@"C:\data", typeof(Brush), null, CultureInfo.InvariantCulture)));
-                Assert.Equal(Color.FromRgb(255, 243, 224), GetColor(converter.Convert(@"\\wsl$\Ubuntu\mnt\data", typeof(Brush), null, CultureInfo.InvariantCulture)));
+                Assert.Equal(Color.FromRgb(227, 242, 253), GetColor(converter.Convert(@"\\wsl$\Ubuntu\mnt\data", typeof(Brush), null, CultureInfo.InvariantCulture)));
                 Assert.Equal(Color.FromRgb(232, 245, 233), GetColor(converter.Convert(dfsPath, typeof(Brush), null, CultureInfo.InvariantCulture)));
             }
             finally
@@ -112,19 +111,12 @@ namespace NtfsAudit.App.Tests
 
         private static void SeedDfsTargets(string path, List<string> targets)
         {
-            GetDfsTargetsCache()[path] = targets;
+            PathResolver.SetDfsTargetsCacheForTest(path, targets, DateTime.UtcNow);
         }
 
         private static void RemoveDfsTargets(string path)
         {
-            GetDfsTargetsCache().Remove(path);
-        }
-
-        private static Dictionary<string, List<string>> GetDfsTargetsCache()
-        {
-            var field = typeof(PathResolver).GetField("DfsTargetsCache", BindingFlags.NonPublic | BindingFlags.Static);
-            Assert.NotNull(field);
-            return Assert.IsType<Dictionary<string, List<string>>>(field.GetValue(null));
+            PathResolver.ResetDfsCacheForTest();
         }
     }
 }

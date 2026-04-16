@@ -40,15 +40,5 @@ namespace NtfsAudit.App.Services
                 : "CurrentUser";
         }
 
-        internal static string DescribeEffectiveSource(string rootPath, string configuredSource)
-        {
-            var effectiveSource = ResolveEffectiveSource(rootPath, configuredSource);
-            if (effectiveSource == "Global")
-            {
-                return LocalizationManager.Text("Credential.SourceGlobal");
-            }
-
-            return LocalizationManager.Text("Credential.SourceCurrentUser");
-        }
     }
 }
