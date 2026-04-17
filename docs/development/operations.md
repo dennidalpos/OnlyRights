@@ -21,19 +21,19 @@ Optional capabilities checked by `scripts/doctor.ps1`:
 Recommended first-run setup:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
+pwsh -ExecutionPolicy Bypass -File .\scripts\setup.ps1
 ```
 
 Setup runs bootstrap, doctor, and a Release build. Use `-SkipBuild` to run only bootstrap and doctor:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -SkipBuild
+pwsh -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -SkipBuild
 ```
 
 Use `-RequireOptionalTools` when service and MSI tooling must be present:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -RequireOptionalTools
+pwsh -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -RequireOptionalTools
 ```
 
 ## Canonical Commands
@@ -41,19 +41,19 @@ powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -RequireOptionalToo
 Restore:
 
 ```powershell
-powershell -File .\scripts\bootstrap.ps1
+pwsh -File .\scripts\bootstrap.ps1
 ```
 
 Prerequisite check:
 
 ```powershell
-powershell -File .\scripts\doctor.ps1
+pwsh -File .\scripts\doctor.ps1
 ```
 
 Build:
 
 ```powershell
-powershell -File .\scripts\build.ps1 -Configuration Release
+pwsh -File .\scripts\build.ps1 -Configuration Release
 ```
 
 `scripts/build.ps1` is the canonical build entrypoint used by CI. It delegates to `scripts/compile.ps1`, which handles restore/build orchestration and project/framework filtering.
@@ -61,19 +61,19 @@ powershell -File .\scripts\build.ps1 -Configuration Release
 Test:
 
 ```powershell
-powershell -File .\scripts\test.ps1 -Configuration Release
+pwsh -File .\scripts\test.ps1 -Configuration Release
 ```
 
 Package:
 
 ```powershell
-powershell -File .\scripts\pack.ps1 -Configuration Release
+pwsh -File .\scripts\pack.ps1 -Configuration Release
 ```
 
 Publish local package output:
 
 ```powershell
-powershell -File .\scripts\publish.ps1 -Configuration Release
+pwsh -File .\scripts\publish.ps1 -Configuration Release
 ```
 
 Run the main app:
@@ -117,14 +117,14 @@ For exact commands, inspect `.github/workflows/ci.yml`; it is the source of trut
 Default framework-dependent package:
 
 ```powershell
-powershell -File .\scripts\pack.ps1 -Configuration Release
+pwsh -File .\scripts\pack.ps1 -Configuration Release
 ```
 
 RID-specific packages:
 
 ```powershell
-powershell -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x64
-powershell -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86
+pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x64
+pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86
 ```
 
 `win-x64` and `win-x86` outputs are staged under `artifacts/packages/<Configuration>/<Runtime>/<Framework>`. Matching build outputs use separated `x64` or `x86` platform targets under `artifacts/build`.
@@ -134,16 +134,16 @@ powershell -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86
 Self-contained package:
 
 ```powershell
-powershell -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x64 -SelfContained -PublishSingleFile
-powershell -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86 -SelfContained -PublishSingleFile
+pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x64 -SelfContained -PublishSingleFile
+pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86 -SelfContained -PublishSingleFile
 ```
 
 MSI build:
 
 ```powershell
-powershell -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Version 1.0.0
-powershell -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x64 -Version 1.0.0
-powershell -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x86 -Version 1.0.0
+pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Version 1.0.0
+pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x64 -Version 1.0.0
+pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x86 -Version 1.0.0
 ```
 
 The MSI build uses local WiX binaries from `tools/wix314-binaries`. Runtime-specific MSIs are staged under `artifacts/packages/<Configuration>/<Runtime>/<Framework>/installer` and include an architecture suffix, such as `OnlyRights-NtfsAudit-1.0.0-x64.msi` or `OnlyRights-NtfsAudit-1.0.0-x86.msi`.
@@ -153,20 +153,20 @@ The MSI build uses local WiX binaries from `tools/wix314-binaries`. Runtime-spec
 Install and start the service from the canonical package/build locations:
 
 ```powershell
-powershell -File .\scripts\windows\service-install.ps1 -Configuration Release
+pwsh -File .\scripts\windows\service-install.ps1 -Configuration Release
 ```
 
 Stop and uninstall the service:
 
 ```powershell
-powershell -File .\scripts\windows\service-uninstall.ps1
+pwsh -File .\scripts\windows\service-uninstall.ps1
 ```
 
 Start/stop helpers:
 
 ```powershell
-powershell -File .\scripts\windows\service-start.ps1
-powershell -File .\scripts\windows\service-stop.ps1
+pwsh -File .\scripts\windows\service-start.ps1
+pwsh -File .\scripts\windows\service-stop.ps1
 ```
 
 ## Smoke Tests
@@ -174,19 +174,19 @@ powershell -File .\scripts\windows\service-stop.ps1
 MSI install:
 
 ```powershell
-powershell -File .\scripts\packaging\msi-install-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic -SkipBuild
+pwsh -File .\scripts\packaging\msi-install-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic -SkipBuild
 ```
 
 MSI uninstall:
 
 ```powershell
-powershell -File .\scripts\packaging\msi-uninstall-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic
+pwsh -File .\scripts\packaging\msi-uninstall-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic
 ```
 
 MSI upgrade:
 
 ```powershell
-powershell -File .\scripts\packaging\msi-upgrade-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\upgrade
+pwsh -File .\scripts\packaging\msi-upgrade-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\upgrade
 ```
 
 Manual app smoke path:
@@ -213,25 +213,25 @@ Locale smoke path:
 Remove build, package, publish outputs, and legacy build folders:
 
 ```powershell
-powershell -File .\scripts\clean.ps1
+pwsh -File .\scripts\clean.ps1
 ```
 
 Clean runtime cache, logs, scan temp data, and service jobs while preserving analysis import/export workspaces:
 
 ```powershell
-powershell -File .\scripts\clean.ps1 -CleanOperationalData
+pwsh -File .\scripts\clean.ps1 -CleanOperationalData
 ```
 
 Clean analysis import/export data explicitly:
 
 ```powershell
-powershell -File .\scripts\clean.ps1 -CleanImportExportData
+pwsh -File .\scripts\clean.ps1 -CleanImportExportData
 ```
 
 Return to a source-only local state without reverting Git changes:
 
 ```powershell
-powershell -File .\scripts\reset-repo-state.ps1
+pwsh -File .\scripts\reset-repo-state.ps1
 ```
 
 ## Release Boundaries

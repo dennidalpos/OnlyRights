@@ -33,7 +33,7 @@ The legal project name is **OnlyRights**. The application components use the tec
 From the repository root:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
+pwsh -ExecutionPolicy Bypass -File .\scripts\setup.ps1
 ```
 
 Run the main application:
