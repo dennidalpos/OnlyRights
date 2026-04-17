@@ -71,6 +71,16 @@ namespace NtfsAudit.App.Services
             return Path.Combine(GetCommonDataRoot(), "jobs");
         }
 
+        internal static string GetSchedulesRoot()
+        {
+            return Path.Combine(GetCommonDataRoot(), "schedules");
+        }
+
+        internal static string GetScheduleStatusPath()
+        {
+            return Path.Combine(GetCommonDataRoot(), "schedule-status.json");
+        }
+
         internal static string GetServiceStatusPath()
         {
             return Path.Combine(GetCommonDataRoot(), "service-status.json");

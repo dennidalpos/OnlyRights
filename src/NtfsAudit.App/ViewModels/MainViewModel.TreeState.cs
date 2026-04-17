@@ -362,7 +362,7 @@ namespace NtfsAudit.App.ViewModels
             if (entries.Count > 0) layers.Add("NTFS");
             if (detail != null && detail.HasShareEntries) layers.Add("Share");
             if (detail != null && detail.HasEffectiveEntries) layers.Add("Effective");
-            if (string.Equals(SelectedPathKind, "Nfs", StringComparison.OrdinalIgnoreCase)) layers.Add("NFS");
+            if (string.Equals(SelectedPathKind, "Unsupported", StringComparison.OrdinalIgnoreCase)) layers.Add("Unsupported");
             SelectedPermissionLayers = layers.Count == 0 ? "-" : string.Join(", ", layers);
             SelectedRiskSummary = LocalizationManager.Format(
                 "Results.RiskSummaryFormat",
@@ -370,7 +370,7 @@ namespace NtfsAudit.App.ViewModels
                 entries.Count(e => string.Equals(NormalizeRiskLevel(e.RiskLevel), "medium", StringComparison.Ordinal)),
                 entries.Count(e => string.Equals(NormalizeRiskLevel(e.RiskLevel), "low", StringComparison.Ordinal)));
             var warning = entries.Select(e => e.AuditSummary).FirstOrDefault(v => !string.IsNullOrWhiteSpace(v) && v.IndexOf("non", StringComparison.OrdinalIgnoreCase) >= 0);
-            if (string.IsNullOrWhiteSpace(warning) && string.Equals(SelectedPathKind, "Nfs", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(warning) && string.Equals(SelectedPathKind, "Unsupported", StringComparison.OrdinalIgnoreCase))
             {
                 warning = LocalizationManager.Text("Results.NfsWarning");
             }

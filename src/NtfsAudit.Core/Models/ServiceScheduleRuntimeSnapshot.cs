@@ -9,17 +9,14 @@
  * commercial use, or reuse of this file is prohibited without prior
  * written permission from Danny Perondi.
  */
+using System.Collections.Generic;
+
 #nullable enable
 
 namespace NtfsAudit.App.Models
 {
-    public enum PathKind
+    public sealed class ServiceScheduleRuntimeSnapshot
     {
-        Unknown = 0,
-        Local = 1,
-        UncSmb = 2,
-        Dfs = 3,
-        WslUnc = 4,
-        Unsupported = 5
+        public List<ServiceScheduleStatusSnapshot> Schedules { get; set; } = new List<ServiceScheduleStatusSnapshot>();
     }
 }

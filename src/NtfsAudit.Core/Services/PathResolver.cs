@@ -122,7 +122,7 @@ namespace NtfsAudit.App.Services
                 }
 
                 var targets = TryResolveDfsTargets(normalized);
-                return targets.Count > 0 ? PathKind.Dfs : PathKind.Unc;
+                return targets.Count > 0 ? PathKind.Dfs : PathKind.UncSmb;
             }
             if (normalized.Length >= 2 && normalized[1] == ':')
             {

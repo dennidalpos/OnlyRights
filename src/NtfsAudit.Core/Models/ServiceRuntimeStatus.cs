@@ -24,6 +24,10 @@ namespace NtfsAudit.App.Models
         public int TotalRoots { get; set; }
         public int PendingJobs { get; set; }
         public int RemainingRootsInCurrentJob { get; set; }
+        public int ScheduleDefinitionCount { get; set; }
+        public int EnabledScheduleCount { get; set; }
+        public DateTime? NextScheduledRunLocal { get; set; }
+        public string? CurrentActivity { get; set; }
         public DateTime StartedAtUtc { get; set; }
         public DateTime LastUpdateUtc { get; set; }
         public string? LastMessage { get; set; }

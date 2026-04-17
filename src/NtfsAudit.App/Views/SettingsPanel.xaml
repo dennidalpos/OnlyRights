@@ -1,0 +1,135 @@
+<UserControl x:Class="NtfsAudit.App.Views.SettingsPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel>
+      <GroupBox Header="{DynamicResource Main.Settings}" Style="{StaticResource AppGroupBoxStyle}">
+        <StackPanel>
+          <TextBlock Text="{Binding ServiceSchedulingAvailabilityText}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
+          <TextBlock Text="{DynamicResource Scan.OutputReport}" Style="{StaticResource SubsectionHeaderText}" />
+          <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,8,0" Content="{DynamicResource Common.Browse}" Command="{Binding BrowseOutputDirectoryCommand}" />
+            <TextBox Grid.Column="1" Style="{StaticResource FieldTextBoxStyle}" Text="{Binding AuditOutputDirectory, UpdateSourceTrigger=PropertyChanged}" />
+          </Grid>
+          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ServiceMode}" IsChecked="{Binding UseWindowsServiceMode}" />
+          <TextBlock Text="{Binding PathCompatibilitySummaryText}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
+          <TextBlock Text="{DynamicResource Common.Language}" Style="{StaticResource SubsectionHeaderText}" />
+          <ComboBox Style="{StaticResource FieldComboBoxStyle}" ItemsSource="{Binding AvailableLocales}" SelectedItem="{Binding SelectedLocale, Mode=TwoWay}" DisplayMemberPath="DisplayName" />
+        </StackPanel>
+      </GroupBox>
+
+      <GroupBox Header="{DynamicResource Scan.Section}" Style="{StaticResource AppGroupBoxStyle}">
+        <StackPanel>
+          <TextBlock Text="{DynamicResource Scan.DepthOptions}" Style="{StaticResource SubsectionHeaderText}" />
+          <Grid Margin="0,0,0,6">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="{DynamicResource Scan.Depth}" VerticalAlignment="Center" Margin="0,0,6,0" />
+            <TextBox Grid.Column="1" Width="60" Height="28" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0,0,12,0" />
+            <CheckBox Grid.Column="2" Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.AllSubfolders}" IsChecked="{Binding ScanAllDepths}" Margin="0" />
+          </Grid>
+          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.IncludeInherited}" IsChecked="{Binding IncludeInherited}" Margin="0" />
+          <TextBlock Text="{DynamicResource Scan.Identity}" Style="{StaticResource SubsectionHeaderText}" />
+          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ResolveIdentities}" IsChecked="{Binding ResolveIdentities}" />
+          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ExpandGroups}" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
+          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.UsePowerShell}" IsChecked="{Binding UsePowerShell}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
+          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ExcludeServiceAccounts}" IsChecked="{Binding ExcludeServiceAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
+          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ExcludeAdminAccounts}" IsChecked="{Binding ExcludeAdminAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
+          <TextBlock Text="{DynamicResource Scan.AdvancedAudit}" Style="{StaticResource SubsectionHeaderText}" />
+          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.EnableAdvancedAudit}" IsChecked="{Binding EnableAdvancedAudit}" />
+          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ComputeEffectiveAccess}" IsChecked="{Binding ComputeEffectiveAccess}" IsEnabled="{Binding IsAdvancedAuditEnabled}" />
+          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.IncludeSharePermissions}" IsChecked="{Binding IncludeSharePermissions}" IsEnabled="{Binding SupportsSharePermissionsForSelection}" />
+          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.IncludeFiles}" IsChecked="{Binding IncludeFiles}" IsEnabled="{Binding IsAdvancedAuditEnabled}" />
+          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ReadOwnerAndSacl}" IsChecked="{Binding ReadOwnerAndSacl}" IsEnabled="{Binding IsAdvancedAuditEnabled}" />
+          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.CompareBaseline}" IsChecked="{Binding CompareBaseline}" IsEnabled="{Binding IsAdvancedAuditEnabled}" />
+        </StackPanel>
+      </GroupBox>
+
+      <GroupBox Header="{DynamicResource Scan.Credentials}" Style="{StaticResource AppGroupBoxStyle}">
+        <StackPanel>
+          <TextBlock Text="{Binding GlobalCredentialStatusText}" Style="{StaticResource MicrocopyText}" />
+          <TextBlock Text="{Binding SelectedScanRootEffectiveCredentialSource}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
+          <TextBlock Text="{DynamicResource Scan.GlobalUser}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,2" />
+          <TextBox Style="{StaticResource FieldTextBoxStyle}" Text="{Binding GlobalCredentialUserName, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding SupportsConfiguredCredentialForSelection}" />
+          <TextBlock Text="{DynamicResource Scan.GlobalPassword}" Style="{StaticResource MicrocopyText}" Margin="0,4,0,2" />
+          <PasswordBox x:Name="GlobalCredentialPasswordBox" Height="28" PasswordChanged="GlobalCredentialPasswordBox_OnPasswordChanged" IsEnabled="{Binding SupportsConfiguredCredentialForSelection}" />
+          <WrapPanel Margin="0,6,0,0">
+            <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,8,0" Content="{DynamicResource Common.Save}" Command="{Binding SaveGlobalCredentialCommand}" IsEnabled="{Binding SupportsConfiguredCredentialForSelection}" />
+            <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Common.Remove}" Command="{Binding ClearGlobalCredentialCommand}" IsEnabled="{Binding SupportsConfiguredCredentialForSelection}" />
+          </WrapPanel>
+        </StackPanel>
+      </GroupBox>
+
+      <GroupBox Header="{DynamicResource Main.Service}" Style="{StaticResource AppGroupBoxStyle}">
+        <StackPanel>
+          <TextBlock Text="{Binding ServiceRuntimeStatusText}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding ServiceScheduleSummaryText}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding ServiceNextRunText}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
+          <WrapPanel Margin="0,0,0,8">
+            <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.InstallService}" Command="{Binding InstallServiceCommand}" />
+            <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.ServiceStart}" Command="{Binding StartServiceRuntimeCommand}" />
+            <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.ServiceStop}" Command="{Binding StopServiceRuntimeCommand}" />
+            <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.UninstallService}" Command="{Binding UninstallServiceCommand}" />
+          </WrapPanel>
+          <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.RefreshService}" Command="{Binding RefreshSchedulesCommand}" Width="160" />
+        </StackPanel>
+      </GroupBox>
+
+      <GroupBox Header="{DynamicResource Main.Scheduling}" Style="{StaticResource AppGroupBoxStyle}">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="140" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <WrapPanel Grid.Row="0" Margin="0,0,0,8">
+            <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.NewSchedule}" Command="{Binding NewScheduleCommand}" />
+            <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Common.Save}" Command="{Binding SaveScheduleCommand}" />
+            <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Common.Remove}" Command="{Binding DeleteScheduleCommand}" />
+          </WrapPanel>
+          <ListBox Grid.Row="1" ItemsSource="{Binding ServiceSchedules}" SelectedItem="{Binding SelectedServiceSchedule}">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Border Padding="8" Margin="0,0,0,6" BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="4">
+                  <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="{Binding Definition.Name}" FontWeight="SemiBold" />
+                      <Border Background="{Binding StatusBadgeBackground}" CornerRadius="8" Padding="6,1" Margin="8,0,0,0">
+                        <TextBlock Text="{Binding StatusBadgeText}" Foreground="White" FontSize="10" />
+                      </Border>
+                    </StackPanel>
+                    <TextBlock Text="{Binding FrequencyLabel}" Style="{StaticResource MicrocopyText}" />
+                    <TextBlock Text="{Binding RootsSummary}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding NextRunText}" Style="{StaticResource MicrocopyText}" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <StackPanel Grid.Row="2" Margin="0,8,0,0">
+            <TextBlock Text="{DynamicResource Main.ScheduleName}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,2" />
+            <TextBox Style="{StaticResource FieldTextBoxStyle}" Text="{Binding ScheduleName, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock Text="{DynamicResource Main.ScheduleFrequency}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" />
+            <ComboBox Style="{StaticResource FieldComboBoxStyle}" ItemsSource="{Binding AvailableScheduleFrequencies}" SelectedItem="{Binding ScheduleFrequencyKind}" />
+            <TextBlock Text="{DynamicResource Main.ScheduleDate}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" Visibility="{Binding IsOneShotSchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <DatePicker SelectedDate="{Binding ScheduleOneShotDate}" Visibility="{Binding IsOneShotSchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <TextBlock Text="{DynamicResource Main.ScheduleTime}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" />
+            <TextBox Style="{StaticResource FieldTextBoxStyle}" Text="{Binding ScheduleTimeText, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock Text="{DynamicResource Main.ScheduleDayOfWeek}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" Visibility="{Binding IsWeeklySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <ComboBox Style="{StaticResource FieldComboBoxStyle}" ItemsSource="{Binding AvailableScheduleDays}" SelectedItem="{Binding ScheduleDayOfWeek}" Visibility="{Binding IsWeeklySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <TextBlock Text="{DynamicResource Main.ScheduleDayOfMonth}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" Visibility="{Binding IsMonthlySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <TextBox Style="{StaticResource FieldTextBoxStyle}" Text="{Binding ScheduleDayOfMonth}" Visibility="{Binding IsMonthlySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Main.ScheduleEnabled}" IsChecked="{Binding ScheduleEnabled}" Margin="0,8,0,0" />
+          </StackPanel>
+        </Grid>
+      </GroupBox>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

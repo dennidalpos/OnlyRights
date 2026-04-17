@@ -32,12 +32,7 @@ if (-not (Test-Path $resolvedMsiPath)) {
     throw ("MSI not found: {0}" -f $resolvedMsiPath)
 }
 
-$resolvedInstallRoot = if ($InstallRoot) {
-    Resolve-RepositoryRelativePath -RepoRoot $context.Repository.RepoRoot -Path $InstallRoot
-}
-else {
-    Join-Path $env:LOCALAPPDATA $context.DefaultInstallRoot
-}
+$resolvedInstallRoot = Resolve-MsiInstallRoot -Context $context -Runtime $Runtime -InstallRoot $InstallRoot
 
 $logRoot = Join-Path $context.Repository.ArtifactsRoot "logs"
 Ensure-Directory -Path $logRoot

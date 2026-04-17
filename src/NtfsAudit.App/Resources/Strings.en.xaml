@@ -8,6 +8,7 @@
   <sys:String x:Key="Common.Add">Add</sys:String>
   <sys:String x:Key="Common.Remove">Remove</sys:String>
   <sys:String x:Key="Common.Save">Save</sys:String>
+  <sys:String x:Key="Common.Close">Close</sys:String>
   <sys:String x:Key="Badge.Read.Label">R Read</sys:String>
   <sys:String x:Key="Badge.List.Label">L List</sys:String>
   <sys:String x:Key="Badge.ReadAndExecute.Label">RX R&amp;E</sys:String>
@@ -37,6 +38,8 @@
   <sys:String x:Key="Main.StopAndClean.ToolTip">Stop the running scan, clear the service queue, and clean residual runtime files.</sys:String>
   <sys:String x:Key="Main.InstallService">Install service</sys:String>
   <sys:String x:Key="Main.InstallService.ToolTip">Install the optional Windows host for background or non-interactive scans.</sys:String>
+  <sys:String x:Key="Main.ServiceStart">Start service</sys:String>
+  <sys:String x:Key="Main.ServiceStop">Stop service</sys:String>
   <sys:String x:Key="Main.UninstallService">Uninstall service</sys:String>
   <sys:String x:Key="Main.UninstallService.ToolTip">Uninstall the optional Windows host and remove residual jobs/state.</sys:String>
   <sys:String x:Key="Main.ImportAnalysis">Import analysis</sys:String>
@@ -45,6 +48,18 @@
   <sys:String x:Key="Main.ExportExcel.ToolTip">Export the permissions list to Excel (.xlsx).</sys:String>
   <sys:String x:Key="Main.CleanupResiduals">Clean runtime residuals</sys:String>
   <sys:String x:Key="Main.CleanupResiduals.ToolTip">Delete runtime cache, jobs, and temporary app files, then open the temporary files folder.</sys:String>
+  <sys:String x:Key="Main.Settings">Settings</sys:String>
+  <sys:String x:Key="Main.Service">Service</sys:String>
+  <sys:String x:Key="Main.Scheduling">Scheduling</sys:String>
+  <sys:String x:Key="Main.RefreshService">Refresh service status</sys:String>
+  <sys:String x:Key="Main.NewSchedule">New schedule</sys:String>
+  <sys:String x:Key="Main.ScheduleName">Schedule name</sys:String>
+  <sys:String x:Key="Main.ScheduleFrequency">Frequency</sys:String>
+  <sys:String x:Key="Main.ScheduleDate">Date</sys:String>
+  <sys:String x:Key="Main.ScheduleTime">Time (HH:mm)</sys:String>
+  <sys:String x:Key="Main.ScheduleDayOfWeek">Day of week</sys:String>
+  <sys:String x:Key="Main.ScheduleDayOfMonth">Day of month</sys:String>
+  <sys:String x:Key="Main.ScheduleEnabled">Schedule enabled</sys:String>
   <sys:String x:Key="Scan.Status">Scan status</sys:String>
   <sys:String x:Key="Scan.FoldersProcessed">Folders processed: </sys:String>
   <sys:String x:Key="Scan.FilesProcessed">Files processed: </sys:String>
@@ -178,6 +193,7 @@
   <sys:String x:Key="Results.EmptyAfterScan">Results will appear here after a scan or .ntaudit import.</sys:String>
   <sys:String x:Key="Results.SelectTreeFolder">Select a folder from the tree on the left to view ACL details.</sys:String>
   <sys:String x:Key="Results.GroupPermissions">Group permissions</sys:String>
+  <sys:String x:Key="Results.HierarchyTab">Hierarchy</sys:String>
   <sys:String x:Key="Results.UserPermissions">User permissions</sys:String>
   <sys:String x:Key="Results.OpenGroupMembersHint">Double-click or press Enter on a row to open group members.</sys:String>
   <sys:String x:Key="Results.OpenUserGroupsHint">Double-click or press Enter on a row to open the user's groups.</sys:String>

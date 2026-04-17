@@ -33,6 +33,28 @@ function Resolve-MsiArchitecture {
     }
 }
 
+function Resolve-MsiInstallRoot {
+    param(
+        $Context,
+        [string]$Runtime,
+        [string]$InstallRoot
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($InstallRoot)) {
+        return (Resolve-RepositoryRelativePath -RepoRoot $Context.Repository.RepoRoot -Path $InstallRoot)
+    }
+
+    $architecture = Resolve-MsiArchitecture -Runtime $Runtime
+    if ($architecture -eq "x86") {
+        $programFilesRoot = if (${env:ProgramFiles(x86)}) { ${env:ProgramFiles(x86)} } else { [Environment]::GetFolderPath("ProgramFiles") }
+    }
+    else {
+        $programFilesRoot = if ($env:ProgramW6432) { $env:ProgramW6432 } else { [Environment]::GetFolderPath("ProgramFiles") }
+    }
+
+    return (Join-Path $programFilesRoot $Context.DefaultInstallRoot)
+}
+
 function Normalize-MsiVersion {
     param([string]$Version)
 
@@ -200,7 +222,7 @@ function New-MsiSource {
     [void]$builder.AppendLine('<?xml version="1.0" encoding="UTF-8"?>')
     [void]$builder.AppendLine('<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">')
     [void]$builder.AppendLine(('  <Product Id="*" Name="{0}" Language="1033" Version="{1}" Manufacturer="{2}" UpgradeCode="{3}">' -f (Escape-XmlValue $Context.ProductName), $Version, (Escape-XmlValue $Context.Manufacturer), $Context.UpgradeCode))
-    [void]$builder.AppendLine(('    <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" InstallPrivileges="limited" Platform="{0}" />' -f (Escape-XmlValue $Architecture)))
+    [void]$builder.AppendLine(('    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" InstallPrivileges="elevated" Platform="{0}" />' -f (Escape-XmlValue $Architecture)))
     [void]$builder.AppendLine('    <MajorUpgrade DowngradeErrorMessage="A newer version of OnlyRights NtfsAudit is already installed." />')
     [void]$builder.AppendLine('    <MediaTemplate EmbedCab="yes" />')
     [void]$builder.AppendLine('    <Property Id="ARPNOMODIFY" Value="1" />')
@@ -213,7 +235,8 @@ function New-MsiSource {
     [void]$builder.AppendLine('        <Directory Id="ApplicationProgramsFolder" Name="OnlyRights" />')
     [void]$builder.AppendLine('      </Directory>')
     [void]$builder.AppendLine('      <Directory Id="DesktopFolder" />')
-    [void]$builder.AppendLine('      <Directory Id="LocalAppDataFolder">')
+    $programFilesFolderId = if ($Architecture -eq "x64") { "ProgramFiles64Folder" } else { "ProgramFilesFolder" }
+    [void]$builder.AppendLine(('      <Directory Id="{0}">' -f $programFilesFolderId))
     [void]$builder.AppendLine('        <Directory Id="CompanyFolder" Name="OnlyRights">')
     [void]$builder.AppendLine('          <Directory Id="INSTALLFOLDER" Name="NtfsAudit">')
 
@@ -275,6 +298,7 @@ function Add-MsiDirectoryContent {
         $fileId = Convert-ToSafeId -Prefix "Fil" -Value $relativePath
         $removeId = Convert-ToSafeId -Prefix "Rm" -Value $relativePath
         $isMainAppExecutable = $relativePath -eq (Join-Path "App" "NtfsAudit.App.exe")
+        $isServiceExecutable = $relativePath -eq (Join-Path "Service" "NtfsAudit.Service.exe")
 
         [void]$Builder.AppendLine(('{0}<Component Id="{1}" Guid="{2}">' -f $indent, $componentId, (New-StableGuid -Value $relativePath)))
         if ($isMainAppExecutable) {
@@ -287,6 +311,10 @@ function Add-MsiDirectoryContent {
         }
         else {
             [void]$Builder.AppendLine(('{0}  <File Id="{1}" Source="{2}" Name="{3}" KeyPath="yes" />' -f $indent, $fileId, (Escape-XmlValue $file.FullName), (Escape-XmlValue $file.Name)))
+        }
+        if ($isServiceExecutable) {
+            [void]$Builder.AppendLine(('{0}  <ServiceInstall Id="NtfsAuditWorkerInstall" Name="NtfsAuditWorker" DisplayName="OnlyRights NtfsAudit Worker" Description="Background scheduler and scan worker for OnlyRights NtfsAudit." Start="auto" Type="ownProcess" ErrorControl="normal" Vital="yes" Account="LocalSystem" />' -f $indent))
+            [void]$Builder.AppendLine(('{0}  <ServiceControl Id="NtfsAuditWorkerControl" Name="NtfsAuditWorker" Start="install" Stop="both" Remove="uninstall" Wait="yes" />' -f $indent))
         }
         [void]$Builder.AppendLine(('{0}  <RemoveFolder Id="{1}" Directory="{2}" On="uninstall" />' -f $indent, $removeId, $DirectoryId))
         [void]$Builder.AppendLine(('{0}</Component>' -f $indent))

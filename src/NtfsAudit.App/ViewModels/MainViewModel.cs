@@ -46,11 +46,14 @@ namespace NtfsAudit.App.ViewModels
         private readonly RuntimeCleanupService _runtimeCleanupService;
         private readonly ServiceRuntimeStatusPresenter _serviceRuntimeStatusPresenter;
         private readonly ScanCredentialStore _scanCredentialStore;
+        private readonly ServiceScheduleFileStore _serviceScheduleStore;
+        private readonly ServiceSchedulePlanner _serviceSchedulePlanner;
         private ScanResult _scanResult;
         private CancellationTokenSource _cts;
         private bool _isScanning;
         private bool _isBusy;
         private bool _isViewerMode;
+        private bool _isSettingsOpen;
         private DispatcherTimer _scanTimer;
         private DispatcherTimer _serviceStatusTimer;
         private DateTime _scanStart;
@@ -79,6 +82,7 @@ namespace NtfsAudit.App.ViewModels
         private bool _includeFiles;
         private bool _readOwnerAndSacl;
         private bool _compareBaseline = true;
+        private ScanPathCompatibilityEvaluation _pathCompatibility = new ScanPathCompatibilityEvaluation();
         private string _progressText = LocalizationManager.Text("Common.Ready");
         private string _currentPathText;
         private int _processedCount;
@@ -146,7 +150,19 @@ namespace NtfsAudit.App.ViewModels
         private bool _isServiceInstalled;
         private string _serviceBadgeText = LocalizationManager.Text("Service.NotInstalledBadge");
         private string _serviceBadgeBackground = "#FF9E9E9E";
+        private string _serviceNextRunText = "-";
+        private string _serviceScheduleSummaryText = "-";
         private LocaleOption _selectedLocale;
+        private ObservableCollection<ResultHierarchyNodeViewModel> _resultHierarchy = new ObservableCollection<ResultHierarchyNodeViewModel>();
+        private ObservableCollection<ServiceScheduleItemViewModel> _serviceSchedules = new ObservableCollection<ServiceScheduleItemViewModel>();
+        private ServiceScheduleItemViewModel _selectedServiceSchedule;
+        private string _scheduleName = "Daily audit";
+        private ServiceScheduleFrequencyKind _scheduleFrequencyKind = ServiceScheduleFrequencyKind.Daily;
+        private DateTime _scheduleOneShotDate = DateTime.Today;
+        private DateTime _scheduleTimeOfDay = DateTime.Today.AddHours(9);
+        private DayOfWeek _scheduleDayOfWeek = DayOfWeek.Monday;
+        private int _scheduleDayOfMonth = 1;
+        private bool _scheduleEnabled = true;
         private const string ServiceName = "NtfsAuditWorker";
 
         public MainViewModel(bool viewerMode = false)
@@ -172,6 +188,8 @@ namespace NtfsAudit.App.ViewModels
             _runtimeCleanupService = new RuntimeCleanupService();
             _serviceRuntimeStatusPresenter = new ServiceRuntimeStatusPresenter();
             _scanCredentialStore = scanCredentialStore ?? new ScanCredentialStore();
+            _serviceScheduleStore = new ServiceScheduleFileStore();
+            _serviceSchedulePlanner = new ServiceSchedulePlanner();
             _selectedLocale = LocalizationManager.ResolveLocale(LocalizationManager.CurrentLocale);
             LocalizationManager.LocaleChanged += OnLocaleChanged;
 
@@ -217,9 +235,19 @@ namespace NtfsAudit.App.ViewModels
             SaveGlobalCredentialCommand = new RelayCommand(SaveGlobalCredential, () => !_isViewerMode && !IsBusy);
             ClearGlobalCredentialCommand = new RelayCommand(ClearGlobalCredential, () => !_isViewerMode && !IsBusy && HasGlobalCredential);
             ApplyCompatibleScanOptionsCommand = new RelayCommand(ApplyCompatibleScanOptions, () => !_isViewerMode && !IsBusy);
+            ToggleSettingsCommand = new RelayCommand(ToggleSettings, () => !_isViewerMode);
+            CloseSettingsCommand = new RelayCommand(CloseSettings, () => !_isViewerMode && IsSettingsOpen);
+            RefreshSchedulesCommand = new RelayCommand(RefreshServiceSchedules, () => !_isViewerMode);
+            StartServiceRuntimeCommand = new RelayCommand(StartServiceRuntime, () => !_isViewerMode && IsServiceInstalled);
+            StopServiceRuntimeCommand = new RelayCommand(StopServiceRuntime, () => !_isViewerMode && IsServiceInstalled);
+            NewScheduleCommand = new RelayCommand(PrepareNewSchedule, () => CanManageServiceSchedules);
+            SaveScheduleCommand = new RelayCommand(SaveScheduleDefinition, () => CanSaveSchedule);
+            DeleteScheduleCommand = new RelayCommand(DeleteScheduleDefinition, () => CanDeleteSchedule);
 
             LoadCache();
             LoadCredentialSettings();
+            RefreshCompatibilityState();
+            RefreshServiceSchedules();
             InitializeScanTimer();
             InitializeServiceStatusMonitor();
         }

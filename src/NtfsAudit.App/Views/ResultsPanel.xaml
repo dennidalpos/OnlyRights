@@ -160,6 +160,32 @@
                          Style="{StaticResource EmptyStateText}" />
             </Border>
             <TabControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Visibility="{Binding HasSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}">
+              <TabItem Header="{DynamicResource Results.HierarchyTab}">
+                <TreeView ItemsSource="{Binding ResultHierarchy}">
+                    <TreeView.ItemContainerStyle>
+                      <Style TargetType="TreeViewItem">
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                      </Style>
+                    </TreeView.ItemContainerStyle>
+                    <TreeView.ItemTemplate>
+                      <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                        <StackPanel Margin="0,0,0,4">
+                          <StackPanel Orientation="Horizontal">
+                            <Border Background="{Binding KindBackground}" CornerRadius="8" Padding="6,1" Margin="0,0,6,0">
+                              <TextBlock Text="{Binding KindLabel}" Foreground="White" FontSize="10" />
+                            </Border>
+                            <Border Background="{Binding AccentBackground}" CornerRadius="8" Padding="6,1" Margin="0,0,6,0"
+                                    Visibility="{Binding HasAccent, Converter={StaticResource BooleanToVisibilityConverter}}">
+                              <TextBlock Text="{Binding AccentText}" Foreground="White" FontSize="10" />
+                            </Border>
+                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                          </StackPanel>
+                          <TextBlock Text="{Binding Subtitle}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                        </StackPanel>
+                      </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+                  </TreeView>
+              </TabItem>
               <TabItem Header="{DynamicResource Results.GroupPermissions}" ToolTip="{DynamicResource Results.FilteredGroupPermissions.ToolTip}">
                 <DockPanel>
                 <TextBlock DockPanel.Dock="Top"

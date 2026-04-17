@@ -2,13 +2,13 @@
 
 ![OnlyRights NtfsAudit mark](docs/assets/onlyrights-mark.svg)
 
-OnlyRights is the Windows-first repository for the `NtfsAudit` suite: a WPF desktop application, a read-only archive viewer, and an optional Windows Service host for NTFS and SMB permission auditing.
+OnlyRights is the Windows-first repository for the `NtfsAudit` suite: a WPF desktop application, a read-only archive viewer, and an optional Windows Service host for NTFS and SMB permission auditing on Windows-managed filesystem paths.
 
 The legal project name is **OnlyRights**. The shipped application components use the technical name **NtfsAudit**.
 
-## Overview
+## Product Overview
 
-The repository contains:
+The repository contains three Windows-target components:
 
 - `NtfsAudit.App`: the main WPF application for scans, filtering, export, and archive reopen.
 - `NtfsAudit.Viewer`: a read-only WPF viewer for `.ntaudit` archives.
@@ -22,6 +22,10 @@ The repository contains:
 - Export Excel reports and `.ntaudit` analysis archives.
 - Reopen archives in the main app or the read-only viewer.
 - Protect stored scan credentials with Windows DPAPI-backed handling.
+- Install and monitor the optional `NtfsAuditWorker` Windows Service.
+- Create persisted service-backed scan schedules from the app Settings surface.
+
+The repository does not evidence cross-platform runtime support, a web UI, or public HTTP APIs.
 
 ## Windows-First Setup
 
@@ -49,11 +53,11 @@ Run the read-only viewer:
 dotnet run --project .\src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj -f net8.0-windows
 ```
 
-Build, test, packaging, MSI, service smoke, and CI-oriented commands are kept in the technical operations documentation.
+Build, test, packaging, MSI, service, and CI-facing commands are kept in the technical operations documentation.
 
 ## Current Status
 
-- The canonical Windows setup, build, test, package, publish, service-smoke, MSI-smoke, and app/viewer startup commands were run successfully in the latest local verification pass.
+- The latest repository maintenance verification pass executed `scripts/doctor.ps1`, targeted service scheduling tests, service install smoke, MSI install smoke, and MSI upgrade smoke successfully.
 - Repository-aligned residual work is tracked in [PROJECT_STATUS.json](PROJECT_STATUS.json) when real open tasks remain.
 
 ## Technical Documentation

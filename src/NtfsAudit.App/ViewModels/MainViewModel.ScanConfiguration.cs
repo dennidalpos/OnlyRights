@@ -162,6 +162,7 @@ namespace NtfsAudit.App.ViewModels
                 _rootPath = value;
                 OnPropertyChanged("RootPath");
                 UpdateDfsTargets();
+                RefreshCompatibilityState();
                 OnPropertyChanged("CanStart");
                 OnPropertyChanged("ShouldShowStartHint");
                 AddScanRootCommand.RaiseCanExecuteChanged();
@@ -178,6 +179,7 @@ namespace NtfsAudit.App.ViewModels
                 _selectedScanRoot = value;
                 OnPropertyChanged("SelectedScanRoot");
                 LoadSelectedScanRootDfsTargets();
+                 RefreshCompatibilityState();
                 OnPropertyChanged("HasSelectedScanRoot");
                 RemoveScanRootCommand.RaiseCanExecuteChanged();
             }
@@ -487,7 +489,7 @@ namespace NtfsAudit.App.ViewModels
             get { return _includeSharePermissions; }
             set
             {
-                _includeSharePermissions = value;
+                _includeSharePermissions = SupportsSharePermissionsForSelection && value;
                 OnPropertyChanged("IncludeSharePermissions");
                 PersistUiPreferencesIfAllowed();
             }

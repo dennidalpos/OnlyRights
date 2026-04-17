@@ -339,6 +339,8 @@ namespace NtfsAudit.App.Tests
                 serviceDataRoot,
                 jobsRoot,
                 statusPath,
+                new ServiceScheduleFileStore(Path.Combine(serviceDataRoot, "schedules"), Path.Combine(serviceDataRoot, "schedule-status.json")),
+                new ServiceSchedulePlanner(),
                 status => statuses.Add(CloneStatus(status)),
                 scanExecutor);
         }

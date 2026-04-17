@@ -9,17 +9,17 @@
  * commercial use, or reuse of this file is prohibited without prior
  * written permission from Danny Perondi.
  */
+using System;
+
 #nullable enable
 
 namespace NtfsAudit.App.Models
 {
-    public enum PathKind
+    public sealed class ServiceScheduleEvaluation
     {
-        Unknown = 0,
-        Local = 1,
-        UncSmb = 2,
-        Dfs = 3,
-        WslUnc = 4,
-        Unsupported = 5
+        public bool IsDue { get; set; }
+        public DateTime? DueRunLocal { get; set; }
+        public DateTime? NextRunLocal { get; set; }
+        public bool IsExpired { get; set; }
     }
 }

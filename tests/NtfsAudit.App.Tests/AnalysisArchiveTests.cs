@@ -55,7 +55,7 @@ namespace NtfsAudit.App.Tests
                     TempDataPath = dataPath,
                     ErrorPath = errorPath,
                     RootPath = @"\\server\share",
-                    RootPathKind = PathKind.Unc,
+                    RootPathKind = PathKind.UncSmb,
                     Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase),
                     TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase),
                     ScanOptions = new ScanOptions { RootPath = @"\\server\share" },
@@ -563,7 +563,7 @@ namespace NtfsAudit.App.Tests
         }
 
         [Fact]
-        public void Import_MapsLegacyNfsRootPathKindToUnc()
+        public void Import_MapsLegacyNfsRootPathKindToUncSmb()
         {
             var tempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit.Tests", Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(tempRoot);
@@ -595,19 +595,19 @@ namespace NtfsAudit.App.Tests
                     TempDataPath = dataPath,
                     ErrorPath = errorPath,
                     RootPath = @"\\server\share",
-                    RootPathKind = PathKind.Unc,
+                    RootPathKind = PathKind.UncSmb,
                     Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase),
                     TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase),
                     ScanOptions = new ScanOptions { RootPath = @"\\server\share" },
                     ScannedAtUtc = DateTime.UtcNow
                 }, @"\\server\share", archivePath);
 
-                RewriteArchiveMeta(archivePath, text => text.Replace("\"RootPathKind\":\"Unc\"", "\"RootPathKind\":\"Nfs\""));
+                RewriteArchiveMeta(archivePath, text => text.Replace("\"RootPathKind\":\"UncSmb\"", "\"RootPathKind\":\"Nfs\""));
 
                 var imported = archive.Import(archivePath);
 
-                Assert.Equal(PathKind.Unc, imported.RootPathKind);
-                Assert.Equal(PathKind.Unc, imported.ScanResult.RootPathKind);
+                Assert.Equal(PathKind.UncSmb, imported.RootPathKind);
+                Assert.Equal(PathKind.UncSmb, imported.ScanResult.RootPathKind);
             }
             finally
             {
@@ -651,7 +651,7 @@ namespace NtfsAudit.App.Tests
                     TempDataPath = dataPath,
                     ErrorPath = errorPath,
                     RootPath = @"\\server\share",
-                    RootPathKind = PathKind.Unc,
+                    RootPathKind = PathKind.UncSmb,
                     Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase),
                     TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase),
                     ScanOptions = new ScanOptions

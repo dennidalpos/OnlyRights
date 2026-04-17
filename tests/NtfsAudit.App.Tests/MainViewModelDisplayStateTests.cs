@@ -112,10 +112,11 @@ namespace NtfsAudit.App.Tests
         }
 
         [Fact]
-        public void ApplyCompatibleScanOptionsCommand_SetsMaximumCompatibilityPreset()
+        public void ApplyCompatibleScanOptionsCommand_ReevaluatesCompatibilityForSelectedRoots()
         {
             var viewModel = new MainViewModel();
 
+            viewModel.RootPath = @"C:\Data";
             viewModel.UseWindowsServiceMode = true;
             viewModel.ScanAllDepths = false;
             viewModel.IncludeInherited = false;
@@ -133,20 +134,12 @@ namespace NtfsAudit.App.Tests
 
             viewModel.ApplyCompatibleScanOptionsCommand.Execute(null);
 
-            Assert.False(viewModel.UseWindowsServiceMode);
-            Assert.True(viewModel.ScanAllDepths);
-            Assert.True(viewModel.IncludeInherited);
-            Assert.False(viewModel.ResolveIdentities);
-            Assert.False(viewModel.ExcludeServiceAccounts);
-            Assert.False(viewModel.ExcludeAdminAccounts);
-            Assert.False(viewModel.ExpandGroups);
-            Assert.False(viewModel.UsePowerShell);
-            Assert.False(viewModel.EnableAdvancedAudit);
-            Assert.False(viewModel.ComputeEffectiveAccess);
+            Assert.True(viewModel.UseWindowsServiceMode);
+            Assert.False(viewModel.ScanAllDepths);
+            Assert.False(viewModel.IncludeInherited);
+            Assert.True(viewModel.ResolveIdentities);
             Assert.False(viewModel.IncludeSharePermissions);
-            Assert.False(viewModel.IncludeFiles);
-            Assert.False(viewModel.ReadOwnerAndSacl);
-            Assert.False(viewModel.CompareBaseline);
+            Assert.Contains("SMB", viewModel.PathCompatibilitySummaryText, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]

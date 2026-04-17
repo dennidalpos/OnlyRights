@@ -65,6 +65,7 @@ namespace NtfsAudit.App.ViewModels
 
         private void OnScanRootsCollectionChanged()
         {
+            RefreshCompatibilityState();
             OnPropertyChanged("CanStart");
             OnPropertyChanged("ShouldShowStartHint");
             StartCommand.RaiseCanExecuteChanged();
@@ -196,23 +197,8 @@ namespace NtfsAudit.App.ViewModels
 
         private void ApplyCompatibleScanOptions()
         {
-            UseWindowsServiceMode = false;
-            ScanAllDepths = true;
-            IncludeInherited = true;
-            ResolveIdentities = false;
-            ExcludeServiceAccounts = false;
-            ExcludeAdminAccounts = false;
-            ExpandGroups = false;
-            UsePowerShell = false;
-            EnableAdvancedAudit = false;
-            ComputeEffectiveAccess = false;
-            IncludeSharePermissions = false;
-            IncludeFiles = false;
-            ReadOwnerAndSacl = false;
-            CompareBaseline = false;
-            SaveUiPreferences();
-            ProgressText = LocalizationManager.Text("Progress.CompatibleOptionsApplied");
-            UpdateCommands();
+            RefreshCompatibilityState();
+            ProgressText = PathCompatibilitySummaryText;
         }
 
         private void SaveScanRootSet()

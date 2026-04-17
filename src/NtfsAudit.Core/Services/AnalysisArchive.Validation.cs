@@ -211,7 +211,12 @@ namespace NtfsAudit.App.Services
             if (string.Equals(value, "Nfs", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(value, "4", StringComparison.OrdinalIgnoreCase))
             {
-                return PathKind.Unc;
+                return PathKind.UncSmb;
+            }
+
+            if (string.Equals(value, "Unc", StringComparison.OrdinalIgnoreCase))
+            {
+                return PathKind.UncSmb;
             }
 
             PathKind parsed;

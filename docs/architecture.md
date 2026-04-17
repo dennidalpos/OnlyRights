@@ -14,6 +14,7 @@ Implemented:
 - Analysis archive export/import (`.ntaudit`).
 - Read-only archive viewing.
 - Optional Windows Service execution for background scan jobs.
+- Service-backed persisted scan schedules created from the app Settings surface.
 - Protected scan credentials with path-based execution policy.
 
 Not implemented:
@@ -65,6 +66,8 @@ The service runs long or non-interactive scans outside the main UI process. It d
 Runtime service paths:
 
 - `%ProgramData%\NtfsAudit\jobs`: service job files.
+- `%ProgramData%\NtfsAudit\schedules`: persisted schedule definitions.
+- `%ProgramData%\NtfsAudit\schedule-status.json`: persisted scheduler runtime state.
 - `%ProgramData%\NtfsAudit\service-status.json`: service runtime status.
 
 Service install, start, stop, uninstall, and smoke-test commands are documented in [operations](development/operations.md).

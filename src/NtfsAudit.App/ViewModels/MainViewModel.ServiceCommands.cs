@@ -415,5 +415,38 @@ namespace NtfsAudit.App.ViewModels
             return WindowsServiceInstallCommandResolver.FormatBinPathForSc(serviceCommand);
         }
 
+        private void StartServiceRuntime()
+        {
+            try
+            {
+                ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
+                RefreshServiceRuntimeStatus();
+                ProgressText = LocalizationManager.Text("Service.StartedNoDetails");
+            }
+            catch (Exception ex)
+            {
+                ProgressText = string.Format("Errore avvio servizio: {0}", ex.Message);
+            }
+        }
+
+        private void StopServiceRuntime()
+        {
+            try
+            {
+                var stopResult = ExecuteScCommand(string.Format("stop {0}", ServiceName), "stop", false);
+                if (stopResult.ExitCode != 0 && stopResult.ExitCode != 1060 && stopResult.ExitCode != 1062)
+                {
+                    ThrowScOperationFailed("stop", stopResult);
+                }
+
+                RefreshServiceRuntimeStatus();
+                ProgressText = LocalizationManager.Text("Service.InstalledStopped");
+            }
+            catch (Exception ex)
+            {
+                ProgressText = string.Format("Errore arresto servizio: {0}", ex.Message);
+            }
+        }
+
     }
 }

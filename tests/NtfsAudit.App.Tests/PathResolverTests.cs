@@ -57,7 +57,7 @@ namespace NtfsAudit.App.Tests
         {
             var kind = PathResolver.DetectPathKind("//server/share/folder");
 
-            Assert.True(kind == Models.PathKind.Unc || kind == Models.PathKind.Dfs);
+            Assert.True(kind == Models.PathKind.UncSmb || kind == Models.PathKind.Dfs);
         }
 
         [Fact]
@@ -65,7 +65,7 @@ namespace NtfsAudit.App.Tests
         {
             var kind = PathResolver.DetectPathKind(@"\\10.20.30.40\share\folder");
 
-            Assert.Equal(Models.PathKind.Unc, kind);
+            Assert.Equal(Models.PathKind.UncSmb, kind);
         }
 
         [Fact]
@@ -103,8 +103,8 @@ namespace NtfsAudit.App.Tests
         [Fact]
         public void DetectPathKind_DoesNotUseNfsNameHeuristics()
         {
-            Assert.Equal(Models.PathKind.Unc, PathResolver.DetectPathKind(@"\\nfs01\share"));
-            Assert.Equal(Models.PathKind.Unc, PathResolver.DetectPathKind(@"\\server\share\nfs\folder"));
+            Assert.Equal(Models.PathKind.UncSmb, PathResolver.DetectPathKind(@"\\nfs01\share"));
+            Assert.Equal(Models.PathKind.UncSmb, PathResolver.DetectPathKind(@"\\server\share\nfs\folder"));
         }
 
         [Fact]
@@ -116,7 +116,7 @@ namespace NtfsAudit.App.Tests
 
             try
             {
-                Assert.Equal(Models.PathKind.Unc, PathResolver.DetectPathKind(dfsPath));
+                Assert.Equal(Models.PathKind.UncSmb, PathResolver.DetectPathKind(dfsPath));
             }
             finally
             {

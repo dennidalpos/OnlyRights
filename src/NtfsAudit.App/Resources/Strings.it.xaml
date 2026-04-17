@@ -7,6 +7,7 @@
   <sys:String x:Key="Common.Add">Aggiungi</sys:String>
   <sys:String x:Key="Common.Remove">Rimuovi</sys:String>
   <sys:String x:Key="Common.Save">Salva</sys:String>
+  <sys:String x:Key="Common.Close">Chiudi</sys:String>
   <sys:String x:Key="Badge.Read.Label">R Lettura</sys:String>
   <sys:String x:Key="Badge.List.Label">L Elenco</sys:String>
   <sys:String x:Key="Badge.ReadAndExecute.Label">RX R&amp;E</sys:String>
@@ -36,6 +37,8 @@
   <sys:String x:Key="Main.StopAndClean.ToolTip">Ferma la scansione in corso, svuota la coda servizio e pulisce i file runtime residui.</sys:String>
   <sys:String x:Key="Main.InstallService">Installa servizio</sys:String>
   <sys:String x:Key="Main.InstallService.ToolTip">Installa l'host Windows opzionale per scansioni in background o non interattive.</sys:String>
+  <sys:String x:Key="Main.ServiceStart">Avvia servizio</sys:String>
+  <sys:String x:Key="Main.ServiceStop">Ferma servizio</sys:String>
   <sys:String x:Key="Main.UninstallService">Disinstalla servizio</sys:String>
   <sys:String x:Key="Main.UninstallService.ToolTip">Disinstalla l'host Windows opzionale e rimuove job/stato residui.</sys:String>
   <sys:String x:Key="Main.ImportAnalysis">Importa analisi</sys:String>
@@ -44,6 +47,18 @@
   <sys:String x:Key="Main.ExportExcel.ToolTip">Esporta l'elenco permessi in formato Excel (.xlsx).</sys:String>
   <sys:String x:Key="Main.CleanupResiduals">Pulisci residui runtime</sys:String>
   <sys:String x:Key="Main.CleanupResiduals.ToolTip">Elimina cache, job e file temporanei runtime dell'app e apre la cartella dei file temporanei.</sys:String>
+  <sys:String x:Key="Main.Settings">Impostazioni</sys:String>
+  <sys:String x:Key="Main.Service">Servizio</sys:String>
+  <sys:String x:Key="Main.Scheduling">Pianificazione</sys:String>
+  <sys:String x:Key="Main.RefreshService">Aggiorna stato servizio</sys:String>
+  <sys:String x:Key="Main.NewSchedule">Nuova schedule</sys:String>
+  <sys:String x:Key="Main.ScheduleName">Nome schedule</sys:String>
+  <sys:String x:Key="Main.ScheduleFrequency">Frequenza</sys:String>
+  <sys:String x:Key="Main.ScheduleDate">Data</sys:String>
+  <sys:String x:Key="Main.ScheduleTime">Ora (HH:mm)</sys:String>
+  <sys:String x:Key="Main.ScheduleDayOfWeek">Giorno settimana</sys:String>
+  <sys:String x:Key="Main.ScheduleDayOfMonth">Giorno mese</sys:String>
+  <sys:String x:Key="Main.ScheduleEnabled">Schedule abilitata</sys:String>
   <sys:String x:Key="Scan.Status">Stato scansione</sys:String>
   <sys:String x:Key="Scan.FoldersProcessed">Cartelle analizzate: </sys:String>
   <sys:String x:Key="Scan.FilesProcessed">File analizzati: </sys:String>
@@ -177,6 +192,7 @@
   <sys:String x:Key="Results.EmptyAfterScan">I risultati appariranno qui dopo una scansione o un'importazione .ntaudit.</sys:String>
   <sys:String x:Key="Results.SelectTreeFolder">Seleziona una cartella dall'albero a sinistra per consultare i dettagli ACL.</sys:String>
   <sys:String x:Key="Results.GroupPermissions">Permessi Gruppi</sys:String>
+  <sys:String x:Key="Results.HierarchyTab">Gerarchia</sys:String>
   <sys:String x:Key="Results.UserPermissions">Permessi Utenti</sys:String>
   <sys:String x:Key="Results.OpenGroupMembersHint">Doppio clic o Invio su una riga per aprire i membri del gruppo.</sys:String>
   <sys:String x:Key="Results.OpenUserGroupsHint">Doppio clic o Invio su una riga per aprire i gruppi dell'utente.</sys:String>

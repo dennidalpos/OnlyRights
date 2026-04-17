@@ -47,6 +47,9 @@ namespace NtfsAudit.App.Services
             var queuedJobs = Math.Max(0, status.PendingJobs);
             var queuedRoots = Math.Max(0, status.RemainingRootsInCurrentJob);
             var queueText = LocalizationManager.Format("Service.QueueText", queuedJobs + queuedRoots);
+            var scheduleText = status.EnabledScheduleCount > 0
+                ? string.Format(" | schedules: {0}, next: {1}", status.EnabledScheduleCount, status.NextScheduledRunLocal.HasValue ? status.NextScheduledRunLocal.Value.ToString("g") : "-")
+                : string.Empty;
 
             if (status.IsRunning)
             {
@@ -59,7 +62,7 @@ namespace NtfsAudit.App.Services
                 {
                     BadgeText = LocalizationManager.Text("Service.ActiveBadge"),
                     BadgeBackground = "#FF2E7D32",
-                    StatusText = LocalizationManager.Format("Service.RunningStatus", rootLabel, progress, queueText),
+                    StatusText = LocalizationManager.Format("Service.RunningStatus", rootLabel, progress, queueText) + scheduleText,
                     IsServiceRuntimeRunning = true
                 };
             }
@@ -69,8 +72,8 @@ namespace NtfsAudit.App.Services
                 BadgeText = isServiceRunning ? LocalizationManager.Text("Service.ActiveBadge") : LocalizationManager.Text("Service.InstalledBadge"),
                 BadgeBackground = isServiceRunning ? "#FF2E7D32" : "#FF1565C0",
                 StatusText = string.IsNullOrWhiteSpace(status.LastMessage)
-                    ? LocalizationManager.Format("Service.Waiting", queueText)
-                    : LocalizationManager.Format("Service.WithMessage", status.LastMessage, queueText),
+                    ? LocalizationManager.Format("Service.Waiting", queueText) + scheduleText
+                    : LocalizationManager.Format("Service.WithMessage", status.LastMessage, queueText) + scheduleText,
                 IsServiceRuntimeRunning = false
             };
         }

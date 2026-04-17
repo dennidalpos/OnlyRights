@@ -18,12 +18,7 @@ $context = Get-MsiScriptContext -ScriptRoot (Join-Path $PSScriptRoot "..")
 & (Join-Path $PSScriptRoot "msi-build.ps1") -Configuration $Configuration -Framework $Framework -Runtime $Runtime -Version $UpgradeVersion
 & (Join-Path $PSScriptRoot "msi-install-test.ps1") -Configuration $Configuration -Framework $Framework -Runtime $Runtime -Version $BaseVersion -InstallRoot $InstallRoot -SkipBuild
 
-$resolvedInstallRoot = if ($InstallRoot) {
-    Resolve-RepositoryRelativePath -RepoRoot $context.Repository.RepoRoot -Path $InstallRoot
-}
-else {
-    Join-Path $env:LOCALAPPDATA $context.DefaultInstallRoot
-}
+$resolvedInstallRoot = Resolve-MsiInstallRoot -Context $context -Runtime $Runtime -InstallRoot $InstallRoot
 
 $upgradeArchitecture = Resolve-MsiArchitecture -Runtime $Runtime
 $upgradeMsiPath = Join-Path (Resolve-MsiOutputRoot -Context $context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -OutputRoot $null) ("{0}-{1}-{2}.msi" -f $context.InstallerName, (Normalize-MsiVersion -Version $UpgradeVersion), $upgradeArchitecture)

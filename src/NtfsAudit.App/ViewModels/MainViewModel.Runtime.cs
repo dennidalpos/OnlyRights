@@ -117,10 +117,15 @@ namespace NtfsAudit.App.ViewModels
             ServiceBadgeBackground = viewState.BadgeBackground;
             ServiceRuntimeStatusText = viewState.StatusText;
             IsServiceRuntimeRunning = viewState.IsServiceRuntimeRunning;
+            ServiceNextRunText = status != null && status.NextScheduledRunLocal.HasValue
+                ? status.NextScheduledRunLocal.Value.ToString("g")
+                : "Nessuna";
             if (viewState.IsServiceRuntimeRunning && !_isScanning)
             {
                 ProgressText = ServiceRuntimeStatusText;
             }
+
+            RefreshServiceSchedules();
         }
 
         private void OnLocaleChanged(object sender, EventArgs e)

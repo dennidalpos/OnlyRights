@@ -501,6 +501,7 @@ namespace NtfsAudit.App.ViewModels
 
         public bool HasScanResult { get { return _scanResult != null; } }
         public bool HasNoScanResult { get { return _scanResult == null; } }
+        public bool HasResultHierarchy { get { return _resultHierarchy != null && _resultHierarchy.Count > 0; } }
         public bool HasSelectedFolder { get { return _scanResult != null && !string.IsNullOrWhiteSpace(SelectedFolderPath); } }
         public bool HasNoSelectedFolder { get { return _scanResult != null && string.IsNullOrWhiteSpace(SelectedFolderPath); } }
         public bool ShouldShowStartHint { get { return !_isViewerMode && !_isScanning && !IsBusy && ScanRoots.Count == 0 && string.IsNullOrWhiteSpace(RootPath); } }
@@ -564,6 +565,7 @@ namespace NtfsAudit.App.ViewModels
             }
             foreach (var entry in detail.ShareEntries) ShareEntries.Add(entry);
             foreach (var entry in detail.EffectiveEntries) EffectiveEntries.Add(entry);
+            RebuildResultHierarchy(detail);
             UpdateSummary(detail);
             UpdateSelectedFolderInfo(path, detail);
         }

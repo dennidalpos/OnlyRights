@@ -1,4 +1,70 @@
 {
   "updated_at": "2026-04-17",
-  "tasks": []
+  "tasks": [
+    {
+      "id": "residual-msi-clean-install-validation",
+      "priority": 1,
+      "execution_order": 1,
+      "status": "open",
+      "title": "Validare installazione MSI su host Windows pulito, path default e refresh UI Settings",
+      "profile": "Service/Agent",
+      "scope": "core",
+      "risk": "HIGH",
+      "why": "Le verifiche reali eseguite in questo repository con scripts/packaging/msi-build.ps1, scripts/packaging/msi-install-test.ps1, Get-Service e sc.exe qc hanno confermato nell'ambiente corrente l'installazione del payload App/Service in un root custom e la registrazione del servizio NtfsAuditWorker dal path MSI. Rimangono non verificati un host Windows pulito senza stato pregresso, il percorso installativo default sotto Program Files e il refresh della sezione Service nelle Settings dopo installazione MSI.",
+      "steps": [
+        "Installare l'MSI generato su una macchina Windows pulita supportata, senza service helper o preregistrazioni pregresse.",
+        "Verificare che NtfsAudit.App e NtfsAudit.Service siano installati nel path default sotto Program Files e che NtfsAuditWorker risulti registrato dal solo installer.",
+        "Aprire NtfsAudit.App dopo l'installazione e verificare che la sezione Service nelle Settings mostri stato installato/running coerente dopo refresh."
+      ],
+      "done_when": [
+        "Installazione completata su host pulito senza passaggi manuali extra per il servizio.",
+        "Servizio presente in SCM con binary path coerente al path default dell'installer in Program Files.",
+        "App rileva correttamente stato servizio e controlli base dalla UI Settings."
+      ]
+    },
+    {
+      "id": "residual-scheduled-scan-e2e-validation",
+      "priority": 2,
+      "execution_order": 2,
+      "status": "open",
+      "title": "Validare una scansione schedulata end-to-end con servizio installato",
+      "profile": "Service/Agent",
+      "scope": "core",
+      "risk": "HIGH",
+      "why": "ServiceSchedulingTests e RuntimeLifecycleTests coprono planner, persistenza schedule, materializzazione job_*.json e stato runtime del worker, e il smoke MSI locale ha confermato installazione e registrazione del servizio. Non esiste ancora una prova reale del flusso NtfsAudit.App -> servizio Windows installato -> trigger schedule -> scansione completata.",
+      "steps": [
+        "Creare da NtfsAudit.App una schedule persistita per un root supportato con servizio installato e stato running.",
+        "Attendere il trigger previsto e verificare che il servizio materializzi un solo job dovuto senza duplicazioni.",
+        "Verificare aggiornamento di next run, last message e stato runtime del servizio dopo l'enqueue e dopo il completamento.",
+        "Verificare che le credenziali runtime seguano la policy esistente per il tipo di path usato."
+      ],
+      "done_when": [
+        "Una schedule dovuta genera esattamente un job standard nel pipeline esistente.",
+        "La scansione parte e termina senza percorso alternativo dedicato.",
+        "Stato runtime e prossimo run risultano coerenti in app e nei file operativi."
+      ]
+    },
+    {
+      "id": "residual-msi-upgrade-uninstall-validation",
+      "priority": 3,
+      "execution_order": 3,
+      "status": "open",
+      "title": "Validare upgrade MSI da baseline supportata e uninstall senza cleanup helper",
+      "profile": "Service/Agent",
+      "scope": "core",
+      "risk": "HIGH",
+      "why": "Le verifiche reali eseguite con scripts/packaging/msi-upgrade-test.ps1 hanno confermato build/install/upgrade/disinstallazione nello stesso ambiente sul percorso sintetico 1.0.0 -> 1.0.1. Il percorso di uninstall richiama pero scripts/windows/services-cleanup.ps1 e quindi non prova che il solo MSI rimuova il servizio. Manca inoltre una verifica pratica da una baseline supportata esterna al run sintetico locale.",
+      "steps": [
+        "Installare una baseline supportata precedente o equivalente esterna al run sintetico locale e aggiornare con l'MSI corrente.",
+        "Verificare che l'upgrade mantenga o riallinei il comando del servizio senza registrazioni duplicate.",
+        "Eseguire uninstall completa senza cleanup helper aggiuntivi e verificare rimozione del servizio, dei binari installati e delle entry installer correlate.",
+        "Verificare che non restino riferimenti operativi non attesi dopo uninstall, esclusi eventuali dati runtime deliberatamente persistenti."
+      ],
+      "done_when": [
+        "Upgrade completato senza duplicare o corrompere la registrazione del servizio.",
+        "Uninstall MSI rimuove servizio e payload installato in modo coerente senza cleanup helper manuali o script extra.",
+        "Nessun passaggio manuale di cleanup risulta necessario per il flusso supportato."
+      ]
+    }
+  ]
 }

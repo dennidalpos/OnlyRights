@@ -10,6 +10,7 @@
  * written permission from Danny Perondi.
  */
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -29,6 +30,8 @@ namespace NtfsAudit.Service
         private readonly string _serviceDataRoot;
         private readonly string _jobsRoot;
         private readonly string _statusPath;
+        private readonly ServiceScheduleFileStore _scheduleStore;
+        private readonly ServiceSchedulePlanner _schedulePlanner;
         private readonly Action<ServiceRuntimeStatus> _statusWriter;
         private readonly Action<ScanOptions, CancellationToken> _scanExecutor;
 
@@ -39,6 +42,8 @@ namespace NtfsAudit.Service
                 Path.Combine(DefaultServiceDataRoot, "jobs"),
                 Path.Combine(DefaultServiceDataRoot, "service-status.json"),
                 null,
+                null,
+                null,
                 null)
         {
         }
@@ -48,6 +53,8 @@ namespace NtfsAudit.Service
             string serviceDataRoot,
             string jobsRoot,
             string statusPath,
+            ServiceScheduleFileStore scheduleStore,
+            ServiceSchedulePlanner schedulePlanner,
             Action<ServiceRuntimeStatus> statusWriter,
             Action<ScanOptions, CancellationToken> scanExecutor)
         {
@@ -55,6 +62,8 @@ namespace NtfsAudit.Service
             _serviceDataRoot = string.IsNullOrWhiteSpace(serviceDataRoot) ? DefaultServiceDataRoot : serviceDataRoot;
             _jobsRoot = string.IsNullOrWhiteSpace(jobsRoot) ? Path.Combine(_serviceDataRoot, "jobs") : jobsRoot;
             _statusPath = string.IsNullOrWhiteSpace(statusPath) ? Path.Combine(_serviceDataRoot, "service-status.json") : statusPath;
+            _scheduleStore = scheduleStore ?? new ServiceScheduleFileStore();
+            _schedulePlanner = schedulePlanner ?? new ServiceSchedulePlanner();
             _statusWriter = statusWriter ?? PersistServiceStatus;
             _scanExecutor = scanExecutor ?? RunSingleScan;
         }
@@ -89,28 +98,29 @@ namespace NtfsAudit.Service
 
         internal void ProcessJobs(CancellationToken token)
         {
+            var scheduleSummary = MaterializeScheduledJobs();
             if (!Directory.Exists(_jobsRoot))
             {
-                UpdateServiceStatus(new ServiceRuntimeStatus
+                UpdateServiceStatus(BuildStatus(new ServiceRuntimeStatus
                 {
                     IsRunning = false,
                     PendingJobs = 0,
                     RemainingRootsInCurrentJob = 0,
                     LastUpdateUtc = DateTime.UtcNow,
                     LastMessage = "In attesa di job"
-                });
+                }, scheduleSummary));
                 return;
             }
 
             var files = Directory.GetFiles(_jobsRoot, "job_*.json").OrderBy(path => path).ToArray();
-            UpdateServiceStatus(new ServiceRuntimeStatus
+            UpdateServiceStatus(BuildStatus(new ServiceRuntimeStatus
             {
                 IsRunning = false,
                 PendingJobs = files.Length,
                 RemainingRootsInCurrentJob = 0,
                 LastUpdateUtc = DateTime.UtcNow,
                 LastMessage = files.Length > 0 ? "Job in coda" : "In attesa di job"
-            });
+            }, scheduleSummary));
 
             for (var fileIndex = 0; fileIndex < files.Length; fileIndex++)
             {
@@ -128,7 +138,7 @@ namespace NtfsAudit.Service
                 {
                     token.ThrowIfCancellationRequested();
                     var options = optionsList[index];
-                    UpdateServiceStatus(new ServiceRuntimeStatus
+                    UpdateServiceStatus(BuildStatus(new ServiceRuntimeStatus
                     {
                         IsRunning = true,
                         CurrentJobId = job.JobId,
@@ -139,8 +149,9 @@ namespace NtfsAudit.Service
                         RemainingRootsInCurrentJob = Math.Max(0, optionsList.Count - (index + 1)),
                         StartedAtUtc = startedAt,
                         LastUpdateUtc = DateTime.UtcNow,
+                        CurrentActivity = string.IsNullOrWhiteSpace(job.JobId) ? "Scansione in corso" : string.Format("Esecuzione job {0}", job.JobId),
                         LastMessage = string.Format("Scansione root {0}/{1}", index + 1, optionsList.Count)
-                    });
+                    }, scheduleSummary));
 
                     try
                     {
@@ -169,14 +180,15 @@ namespace NtfsAudit.Service
                 var pending = Directory.Exists(_jobsRoot)
                     ? Directory.GetFiles(_jobsRoot, "job_*.json").Length
                     : 0;
-                UpdateServiceStatus(new ServiceRuntimeStatus
+                scheduleSummary = MaterializeScheduledJobs();
+                UpdateServiceStatus(BuildStatus(new ServiceRuntimeStatus
                 {
                     IsRunning = false,
                     PendingJobs = pending,
                     RemainingRootsInCurrentJob = 0,
                     LastUpdateUtc = DateTime.UtcNow,
                     LastMessage = BuildCompletionMessage(pending, failedRoots)
-                });
+                }, scheduleSummary));
             }
         }
 
@@ -206,14 +218,14 @@ namespace NtfsAudit.Service
                     failureReason ?? "errore sconosciuto",
                     quarantineError == null ? "errore non disponibile" : quarantineError.Message);
 
-            UpdateServiceStatus(new ServiceRuntimeStatus
+            UpdateServiceStatus(BuildStatus(new ServiceRuntimeStatus
             {
                 IsRunning = false,
                 PendingJobs = pending,
                 RemainingRootsInCurrentJob = 0,
                 LastUpdateUtc = DateTime.UtcNow,
                 LastMessage = lastMessage
-            });
+            }, MaterializeScheduledJobs()));
         }
 
         private string BuildCompletionMessage(int pendingJobs, int failedRoots)
@@ -382,6 +394,125 @@ namespace NtfsAudit.Service
             {
                 options.CredentialSource = "CurrentUser";
             }
+        }
+
+        private ServiceRuntimeStatus BuildStatus(ServiceRuntimeStatus status, SchedulePollSummary scheduleSummary)
+        {
+            status = status ?? new ServiceRuntimeStatus();
+            status.ScheduleDefinitionCount = scheduleSummary == null ? 0 : scheduleSummary.DefinitionCount;
+            status.EnabledScheduleCount = scheduleSummary == null ? 0 : scheduleSummary.EnabledDefinitionCount;
+            status.NextScheduledRunLocal = scheduleSummary == null ? null : scheduleSummary.NextRunLocal;
+            if (string.IsNullOrWhiteSpace(status.CurrentActivity))
+            {
+                status.CurrentActivity = scheduleSummary == null || scheduleSummary.DefinitionCount == 0
+                    ? "Service idle"
+                    : string.Format("Scheduler attivo ({0} definizioni)", scheduleSummary.EnabledDefinitionCount);
+            }
+
+            return status;
+        }
+
+        private SchedulePollSummary MaterializeScheduledJobs()
+        {
+            var definitions = _scheduleStore.LoadDefinitions();
+            var runtimeSnapshot = _scheduleStore.LoadRuntimeSnapshot();
+            var statuses = runtimeSnapshot.Schedules == null
+                ? new List<ServiceScheduleStatusSnapshot>()
+                : runtimeSnapshot.Schedules.Select(snapshot => snapshot == null ? null : snapshot.Clone()).Where(snapshot => snapshot != null).ToList();
+            var nowLocal = DateTime.Now;
+
+            foreach (var definition in definitions)
+            {
+                var snapshot = statuses.FirstOrDefault(item => string.Equals(item.ScheduleId, definition.ScheduleId, StringComparison.OrdinalIgnoreCase));
+                if (snapshot == null)
+                {
+                    snapshot = new ServiceScheduleStatusSnapshot { ScheduleId = definition.ScheduleId };
+                    statuses.Add(snapshot);
+                }
+
+                var evaluation = _schedulePlanner.EvaluateDueRun(definition, nowLocal, snapshot.LastEnqueuedRunLocal);
+                snapshot.NextRunLocal = evaluation.NextRunLocal;
+
+                if (!evaluation.IsDue || !evaluation.DueRunLocal.HasValue)
+                {
+                    snapshot.UpdatedAtUtc = DateTime.UtcNow;
+                    if (string.IsNullOrWhiteSpace(snapshot.LastMessage))
+                    {
+                        snapshot.LastMessage = definition.IsEnabled ? "In attesa della prossima esecuzione" : "Schedule disabilitata";
+                    }
+                    continue;
+                }
+
+                var dueRunLocal = evaluation.DueRunLocal.Value;
+                var job = BuildScheduledJob(definition, dueRunLocal);
+                Directory.CreateDirectory(_jobsRoot);
+                var jobPath = Path.Combine(_jobsRoot, string.Format("job_{0}.json", job.JobId));
+                File.WriteAllText(jobPath, JsonConvert.SerializeObject(job, Formatting.Indented));
+
+                snapshot.LastEnqueuedRunLocal = dueRunLocal;
+                snapshot.LastJobCreatedAtUtc = DateTime.UtcNow;
+                snapshot.LastJobId = job.JobId;
+                snapshot.LastMessage = string.Format("Job schedulato per {0}", dueRunLocal.ToString("g"));
+                snapshot.NextRunLocal = evaluation.NextRunLocal;
+                snapshot.UpdatedAtUtc = DateTime.UtcNow;
+            }
+
+            runtimeSnapshot.Schedules = statuses;
+            _scheduleStore.SaveRuntimeSnapshot(runtimeSnapshot);
+
+            return new SchedulePollSummary
+            {
+                DefinitionCount = definitions.Count,
+                EnabledDefinitionCount = definitions.Count(definition => definition.IsEnabled),
+                NextRunLocal = statuses
+                    .Where(snapshot => snapshot.NextRunLocal.HasValue)
+                    .Select(snapshot => snapshot.NextRunLocal.Value)
+                    .OrderBy(value => value)
+                    .Cast<DateTime?>()
+                    .FirstOrDefault()
+            };
+        }
+
+        private static ServiceScanJob BuildScheduledJob(ServiceScheduleDefinition definition, DateTime dueRunLocal)
+        {
+            var template = definition.Template == null ? new ServiceScheduledScanTemplate() : definition.Template.Clone();
+            var options = (template.Roots ?? new List<string>())
+                .Where(root => !string.IsNullOrWhiteSpace(root))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(root => new ScanOptions
+                {
+                    RootPath = root,
+                    OutputDirectory = template.OutputDirectory,
+                    MaxDepth = template.MaxDepth,
+                    ScanAllDepths = template.ScanAllDepths,
+                    IncludeInherited = template.IncludeInherited,
+                    ResolveIdentities = template.ResolveIdentities,
+                    ExcludeServiceAccounts = template.ResolveIdentities && template.ExcludeServiceAccounts,
+                    ExcludeAdminAccounts = template.ResolveIdentities && template.ExcludeAdminAccounts,
+                    ExpandGroups = template.ResolveIdentities && template.ExpandGroups,
+                    UsePowerShell = template.ResolveIdentities && template.UsePowerShell,
+                    EnableAdvancedAudit = template.EnableAdvancedAudit,
+                    ComputeEffectiveAccess = template.EnableAdvancedAudit && template.ComputeEffectiveAccess,
+                    IncludeSharePermissions = template.EnableAdvancedAudit && template.IncludeSharePermissions,
+                    IncludeFiles = template.EnableAdvancedAudit && template.IncludeFiles,
+                    ReadOwnerAndSacl = template.EnableAdvancedAudit && template.ReadOwnerAndSacl,
+                    CompareBaseline = template.EnableAdvancedAudit && template.CompareBaseline
+                })
+                .ToList();
+
+            return new ServiceScanJob
+            {
+                JobId = string.Format("schedule_{0}_{1}", definition.ScheduleId, dueRunLocal.ToString("yyyyMMddHHmmss")),
+                CreatedAtUtc = DateTime.UtcNow,
+                ScanOptions = options
+            };
+        }
+
+        private sealed class SchedulePollSummary
+        {
+            public int DefinitionCount { get; set; }
+            public int EnabledDefinitionCount { get; set; }
+            public DateTime? NextRunLocal { get; set; }
         }
     }
 }

@@ -278,6 +278,7 @@ namespace NtfsAudit.App.ViewModels
                 FolderTree.Clear();
                 _fullTreeMap = null;
                 _currentFilteredTreeMap = null;
+                ResultHierarchy.Clear();
                 GroupEntries.Clear();
                 UserEntries.Clear();
                 AllEntries.Clear();
@@ -483,6 +484,42 @@ namespace NtfsAudit.App.ViewModels
             SaveGlobalCredentialCommand.RaiseCanExecuteChanged();
             ClearGlobalCredentialCommand.RaiseCanExecuteChanged();
             ApplyCompatibleScanOptionsCommand.RaiseCanExecuteChanged();
+            if (ToggleSettingsCommand != null)
+            {
+                ToggleSettingsCommand.RaiseCanExecuteChanged();
+            }
+            if (CloseSettingsCommand != null)
+            {
+                CloseSettingsCommand.RaiseCanExecuteChanged();
+            }
+            if (RefreshSchedulesCommand != null)
+            {
+                RefreshSchedulesCommand.RaiseCanExecuteChanged();
+            }
+            if (StartServiceRuntimeCommand != null)
+            {
+                StartServiceRuntimeCommand.RaiseCanExecuteChanged();
+            }
+            if (StopServiceRuntimeCommand != null)
+            {
+                StopServiceRuntimeCommand.RaiseCanExecuteChanged();
+            }
+            if (NewScheduleCommand != null)
+            {
+                NewScheduleCommand.RaiseCanExecuteChanged();
+            }
+            if (SaveScheduleCommand != null)
+            {
+                SaveScheduleCommand.RaiseCanExecuteChanged();
+            }
+            if (DeleteScheduleCommand != null)
+            {
+                DeleteScheduleCommand.RaiseCanExecuteChanged();
+            }
+            OnPropertyChanged("CanManageServiceSchedules");
+            OnPropertyChanged("CanSaveSchedule");
+            OnPropertyChanged("CanDeleteSchedule");
+            OnPropertyChanged("ServiceSchedulingAvailabilityText");
         }
     }
 }
