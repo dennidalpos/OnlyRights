@@ -55,6 +55,19 @@ function Resolve-MsiInstallRoot {
     return (Join-Path $programFilesRoot $Context.DefaultInstallRoot)
 }
 
+function Format-MsiPropertyArgument {
+    param(
+        [string]$Name,
+        [string]$Value
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Name)) {
+        throw "MSI property name is required."
+    }
+
+    return ('{0}="{1}"' -f $Name, ($Value -replace '"', '""'))
+}
+
 function Normalize-MsiVersion {
     param([string]$Version)
 

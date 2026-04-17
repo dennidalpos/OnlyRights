@@ -29,6 +29,7 @@ namespace NtfsAudit.App.Tests
             Assert.Contains("<ServiceControl", script, StringComparison.Ordinal);
             Assert.Contains("ProgramFiles64Folder", script, StringComparison.Ordinal);
             Assert.Contains("function Resolve-MsiInstallRoot", script, StringComparison.Ordinal);
+            Assert.Contains("function Format-MsiPropertyArgument", script, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -41,9 +42,23 @@ namespace NtfsAudit.App.Tests
             Assert.Contains("Resolve-MsiInstallRoot", installScript, StringComparison.Ordinal);
             Assert.Contains("Resolve-MsiInstallRoot", uninstallScript, StringComparison.Ordinal);
             Assert.Contains("Resolve-MsiInstallRoot", upgradeScript, StringComparison.Ordinal);
+            Assert.Contains("Format-MsiPropertyArgument", installScript, StringComparison.Ordinal);
+            Assert.Contains("Format-MsiPropertyArgument", upgradeScript, StringComparison.Ordinal);
             Assert.DoesNotContain("LOCALAPPDATA", installScript, StringComparison.Ordinal);
             Assert.DoesNotContain("LOCALAPPDATA", uninstallScript, StringComparison.Ordinal);
             Assert.DoesNotContain("LOCALAPPDATA", upgradeScript, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public void MsiInstallAndUpgradeScripts_FormatInstallFolderProperty()
+        {
+            var installScript = LoadScript("scripts", "packaging", "msi-install-test.ps1");
+            var upgradeScript = LoadScript("scripts", "packaging", "msi-upgrade-test.ps1");
+
+            Assert.Contains("$installFolderArgument = Format-MsiPropertyArgument -Name \"INSTALLFOLDER\" -Value $resolvedInstallRoot", installScript, StringComparison.Ordinal);
+            Assert.Contains("$installFolderArgument = Format-MsiPropertyArgument -Name \"INSTALLFOLDER\" -Value $resolvedInstallRoot", upgradeScript, StringComparison.Ordinal);
+            Assert.DoesNotContain("INSTALLFOLDER=$resolvedInstallRoot", installScript, StringComparison.Ordinal);
+            Assert.DoesNotContain("INSTALLFOLDER=$resolvedInstallRoot", upgradeScript, StringComparison.Ordinal);
         }
 
         private static string LoadScript(params string[] pathSegments)

@@ -51,12 +51,13 @@ namespace NtfsAudit.App.Services
             var isDue = mostRecent.HasValue
                 && mostRecent.Value <= nowLocal
                 && (!lastEnqueuedRunLocal.HasValue || mostRecent.Value > lastEnqueuedRunLocal.Value);
+            var dueRunLocal = isDue ? mostRecent : null;
 
             return new ServiceScheduleEvaluation
             {
                 IsDue = isDue,
-                DueRunLocal = isDue ? mostRecent : null,
-                NextRunLocal = isDue ? GetNextOccurrence(definition, mostRecent.Value) : nextRun,
+                DueRunLocal = dueRunLocal,
+                NextRunLocal = dueRunLocal.HasValue ? GetNextOccurrence(definition, dueRunLocal.Value) : nextRun,
                 IsExpired = false
             };
         }

@@ -3,34 +3,61 @@
   "tasks": [
     {
       "id": "residual-msi-clean-install-validation",
+      "category": "technical_debt",
       "priority": 1,
       "execution_order": 1,
       "status": "open",
-      "title": "Validare installazione MSI su host Windows pulito, path default e refresh UI Settings",
-      "profile": "Service/Agent",
+      "title": "Validare installazione MSI su host Windows pulito e refresh UI Settings",
+      "profile": "Windows Service / Agent / Background Component",
       "scope": "core",
       "risk": "HIGH",
-      "why": "Le verifiche reali eseguite in questo repository con scripts/packaging/msi-build.ps1, scripts/packaging/msi-install-test.ps1, Get-Service e sc.exe qc hanno confermato nell'ambiente corrente l'installazione del payload App/Service in un root custom e la registrazione del servizio NtfsAuditWorker dal path MSI. Rimangono non verificati un host Windows pulito senza stato pregresso, il percorso installativo default sotto Program Files e il refresh della sezione Service nelle Settings dopo installazione MSI.",
+      "files": [
+        "scripts\\packaging\\msi-install-test.ps1",
+        "src\\NtfsAudit.App\\Views\\SettingsPanel.xaml",
+        "src\\NtfsAudit.App\\ViewModels\\MainViewModel.Settings.cs"
+      ],
+      "evidence": [
+        "Il 2026-04-17 pwsh -File .\\scripts\\packaging\\msi-install-test.ps1 -Configuration Release -SkipBuild ha installato correttamente l'MSI nel path default C:\\Program Files\\OnlyRights\\NtfsAudit.",
+        "Il 2026-04-17 Get-Service NtfsAuditWorker e sc.exe qc NtfsAuditWorker hanno confermato servizio running con binary path \"C:\\Program Files\\OnlyRights\\NtfsAudit\\Service\\NtfsAudit.Service.exe\".",
+        "Il repository non contiene un test o smoke automatizzato che verifichi host Windows pulito e refresh della sezione Service nelle Settings subito dopo installazione MSI."
+      ],
+      "impact": "La validazione finale dell'esperienza installativa Windows-first dipende ancora da una prova reale su host pulito e da una verifica UI post-installazione.",
+      "recommended_action": "Eseguire installazione MSI su una macchina Windows pulita supportata e verificare dalla UI Settings che stato servizio e controlli correlati vengano riletti correttamente senza passaggi manuali extra.",
+      "verification_state": "NOT_VERIFIED",
+      "why": "Le verifiche reali eseguite in questo repository hanno confermato installazione MSI nel path default Program Files e registrazione del servizio NtfsAuditWorker nell'ambiente corrente. Rimangono non verificati un host Windows pulito senza stato pregresso e il refresh della sezione Service nelle Settings dopo installazione MSI.",
       "steps": [
         "Installare l'MSI generato su una macchina Windows pulita supportata, senza service helper o preregistrazioni pregresse.",
-        "Verificare che NtfsAudit.App e NtfsAudit.Service siano installati nel path default sotto Program Files e che NtfsAuditWorker risulti registrato dal solo installer.",
         "Aprire NtfsAudit.App dopo l'installazione e verificare che la sezione Service nelle Settings mostri stato installato/running coerente dopo refresh."
       ],
       "done_when": [
         "Installazione completata su host pulito senza passaggi manuali extra per il servizio.",
-        "Servizio presente in SCM con binary path coerente al path default dell'installer in Program Files.",
         "App rileva correttamente stato servizio e controlli base dalla UI Settings."
       ]
     },
     {
       "id": "residual-scheduled-scan-e2e-validation",
+      "category": "technical_debt",
       "priority": 2,
       "execution_order": 2,
       "status": "open",
       "title": "Validare una scansione schedulata end-to-end con servizio installato",
-      "profile": "Service/Agent",
+      "profile": "Windows Service / Agent / Background Component",
       "scope": "core",
       "risk": "HIGH",
+      "files": [
+        "src\\NtfsAudit.App\\ViewModels\\MainViewModel.Settings.cs",
+        "src\\NtfsAudit.Service\\ScanWorker.cs",
+        "tests\\NtfsAudit.App.Tests\\ServiceSchedulingTests.cs",
+        "tests\\NtfsAudit.App.Tests\\RuntimeLifecycleTests.cs"
+      ],
+      "evidence": [
+        "Il 2026-04-17 pwsh -File .\\scripts\\test.ps1 -Configuration Release ha superato 134 test, inclusi ServiceSchedulingTests e RuntimeLifecycleTests.",
+        "ServiceSchedulingTests copre planner, persistenza schedule e quarantena file invalidi; RuntimeLifecycleTests copre materializzazione job_*.json e stato runtime del worker.",
+        "Il repository non contiene uno script versionato o un test automatico che eserciti il flusso completo NtfsAudit.App -> servizio Windows installato -> trigger schedule -> scansione completata."
+      ],
+      "impact": "Il comportamento schedulato resta coperto da unit test e smoke separati, ma manca la conferma reale del flusso integrato lato app e servizio installato.",
+      "recommended_action": "Creare una schedule reale da NtfsAudit.App con servizio installato/running, attendere il trigger dovuto e verificare enqueue singolo, completamento scansione e aggiornamento coerente di next run e runtime status.",
+      "verification_state": "NOT_VERIFIED",
       "why": "ServiceSchedulingTests e RuntimeLifecycleTests coprono planner, persistenza schedule, materializzazione job_*.json e stato runtime del worker, e il smoke MSI locale ha confermato installazione e registrazione del servizio. Non esiste ancora una prova reale del flusso NtfsAudit.App -> servizio Windows installato -> trigger schedule -> scansione completata.",
       "steps": [
         "Creare da NtfsAudit.App una schedule persistita per un root supportato con servizio installato e stato running.",
@@ -46,13 +73,27 @@
     },
     {
       "id": "residual-msi-upgrade-uninstall-validation",
+      "category": "behavior_inconsistency",
       "priority": 3,
       "execution_order": 3,
       "status": "open",
       "title": "Validare upgrade MSI da baseline supportata e uninstall senza cleanup helper",
-      "profile": "Service/Agent",
+      "profile": "Windows Service / Agent / Background Component",
       "scope": "core",
       "risk": "HIGH",
+      "files": [
+        "scripts\\packaging\\msi-upgrade-test.ps1",
+        "scripts\\packaging\\msi-uninstall-test.ps1",
+        "scripts\\windows\\services-cleanup.ps1"
+      ],
+      "evidence": [
+        "Il 2026-04-17 pwsh -File .\\scripts\\packaging\\msi-upgrade-test.ps1 -Configuration Release -InstallRoot artifacts\\publish\\msi-smoke\\upgrade ha verificato localmente il percorso sintetico 1.0.0 -> 1.0.1.",
+        "scripts\\packaging\\msi-uninstall-test.ps1 invoca ancora scripts\\windows\\services-cleanup.ps1 dopo msiexec /x.",
+        "Il cleanup helper maschera l'evidenza che il solo MSI rimuova servizio e residui supportati senza interventi aggiuntivi."
+      ],
+      "impact": "Lo smoke corrente prova upgrade e disinstallazione locale, ma non dimostra ancora il flusso supportato di uninstall MSI autonoma né una baseline esterna realmente supportata.",
+      "recommended_action": "Eseguire upgrade da una baseline supportata esterna al run sintetico locale e verificare uninstall completa senza scripts\\windows\\services-cleanup.ps1 o altri cleanup manuali.",
+      "verification_state": "NOT_VERIFIED",
       "why": "Le verifiche reali eseguite con scripts/packaging/msi-upgrade-test.ps1 hanno confermato build/install/upgrade/disinstallazione nello stesso ambiente sul percorso sintetico 1.0.0 -> 1.0.1. Il percorso di uninstall richiama pero scripts/windows/services-cleanup.ps1 e quindi non prova che il solo MSI rimuova il servizio. Manca inoltre una verifica pratica da una baseline supportata esterna al run sintetico locale.",
       "steps": [
         "Installare una baseline supportata precedente o equivalente esterna al run sintetico locale e aggiornare con l'MSI corrente.",

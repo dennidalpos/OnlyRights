@@ -26,7 +26,8 @@ $logRoot = Join-Path $context.Repository.ArtifactsRoot "logs"
 Ensure-Directory -Path $logRoot
 $logPath = Join-Path $logRoot "msi-upgrade.log"
 
-$exitCode = Invoke-Msiexec -Arguments @("/i", $upgradeMsiPath, "/qn", "/norestart", "INSTALLFOLDER=$resolvedInstallRoot", "/l*v", $logPath)
+$installFolderArgument = Format-MsiPropertyArgument -Name "INSTALLFOLDER" -Value $resolvedInstallRoot
+$exitCode = Invoke-Msiexec -Arguments @("/i", $upgradeMsiPath, "/qn", "/norestart", $installFolderArgument, "/l*v", $logPath)
 if ($exitCode -ne 0) {
     throw ("MSI upgrade failed with exit code {0}. See {1}." -f $exitCode, $logPath)
 }

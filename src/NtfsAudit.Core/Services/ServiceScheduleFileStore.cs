@@ -53,7 +53,7 @@ namespace NtfsAudit.App.Services
                     continue;
                 }
 
-                definitions.Add(definition);
+                definitions.Add(definition!);
             }
 
             return definitions;
@@ -112,7 +112,7 @@ namespace NtfsAudit.App.Services
             File.WriteAllText(_statusPath, JsonConvert.SerializeObject(snapshot ?? new ServiceScheduleRuntimeSnapshot(), Formatting.Indented));
         }
 
-        internal bool TryLoadDefinition(string filePath, out ServiceScheduleDefinition definition, out string failureReason)
+        internal bool TryLoadDefinition(string filePath, out ServiceScheduleDefinition? definition, out string? failureReason)
         {
             definition = null;
             failureReason = null;
