@@ -18,7 +18,7 @@ namespace NtfsAudit.App.Services
         internal static bool ShouldUseConfiguredCredential(string rootPath)
         {
             var kind = PathResolver.DetectPathKind(rootPath);
-            return kind == PathKind.Unc || kind == PathKind.Dfs;
+            return ScanPathCompatibilityPolicy.SupportsConfiguredCredential(kind);
         }
 
         internal static ScanCredential ResolveRuntimeCredential(string rootPath, ScanCredential configuredCredential)

@@ -19,6 +19,7 @@ function Get-RepositoryContext {
         ViewerProject = Join-Path $repoRoot "src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj"
         ServiceProject = Join-Path $repoRoot "src\NtfsAudit.Service\NtfsAudit.Service.csproj"
         GlobalJson = Join-Path $repoRoot "global.json"
+        DirectoryBuildProps = Join-Path $repoRoot "Directory.Build.props"
         ArtifactsRoot = $artifactsRoot
         BuildRoot = Join-Path $artifactsRoot "build"
         TestResultsRoot = Join-Path $artifactsRoot "test-results"
@@ -45,7 +46,8 @@ function Assert-RepositoryPrerequisites {
         @{ Path = $Context.AppProject; Label = "App project" },
         @{ Path = $Context.ViewerProject; Label = "Viewer project" },
         @{ Path = $Context.ServiceProject; Label = "Service project" },
-        @{ Path = $Context.GlobalJson; Label = "global.json" }
+        @{ Path = $Context.GlobalJson; Label = "global.json" },
+        @{ Path = $Context.DirectoryBuildProps; Label = "Directory.Build.props" }
     )) {
         if (-not (Test-Path $requiredPath.Path)) {
             throw ("{0} not found: {1}" -f $requiredPath.Label, $requiredPath.Path)
@@ -201,4 +203,33 @@ function Resolve-RepositoryRelativePath {
     }
 
     return (Join-Path $RepoRoot $Path)
+}
+
+function Resolve-RepositoryVersion {
+    param($Context)
+
+    if ($null -eq $Context -or [string]::IsNullOrWhiteSpace($Context.DirectoryBuildProps) -or -not (Test-Path $Context.DirectoryBuildProps)) {
+        return $null
+    }
+
+    try {
+        [xml]$props = Get-Content -Path $Context.DirectoryBuildProps -Raw
+        $propertyNames = @("OnlyRightsVersion", "Version", "VersionPrefix")
+        foreach ($propertyName in $propertyNames) {
+            foreach ($propertyGroup in @($props.Project.PropertyGroup)) {
+                if ($null -eq $propertyGroup) {
+                    continue
+                }
+
+                $value = $propertyGroup.$propertyName
+                if (-not [string]::IsNullOrWhiteSpace($value)) {
+                    return $value.Trim()
+                }
+            }
+        }
+    }
+    catch {
+    }
+
+    return $null
 }

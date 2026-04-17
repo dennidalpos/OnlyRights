@@ -56,7 +56,7 @@ namespace NtfsAudit.App.ViewModels
 
             if (_errorsTruncated)
             {
-                ProgressText = string.Format("Errori caricati parzialmente ({0}): limita uso RAM. Esporta il report completo per analisi totale.", MaxErrorsToLoad);
+                ProgressText = LocalizationManager.Format("Progress.ErrorsPartiallyLoaded", MaxErrorsToLoad);
             }
         }
 
@@ -175,7 +175,7 @@ namespace NtfsAudit.App.ViewModels
                 || MatchesFilter(entry.Owner, term)
                 || MatchesFilter(entry.ShareName, term)
                 || MatchesFilter(entry.ShareServer, term)
-                || MatchesFilter(entry.RiskLevel, term)
+                || MatchesRiskFilter(entry, term)
                 || MatchesFilter(entry.Source, term)
                 || MatchesFilter(entry.PathKind.ToString(), term)
                 || MatchesMemberFilter(entry.MemberNames, term);
@@ -211,6 +211,51 @@ namespace NtfsAudit.App.ViewModels
                 && value.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
+        private bool MatchesRiskFilter(AceEntry entry, string filter)
+        {
+            return entry != null
+                && (MatchesFilter(entry.RiskLevel, filter)
+                    || MatchesFilter(GetRiskAliases(entry.RiskLevel), filter));
+        }
+
+        private static string NormalizeRiskLevel(string riskLevel)
+        {
+            if (string.IsNullOrWhiteSpace(riskLevel))
+            {
+                return string.Empty;
+            }
+
+            switch (riskLevel.Trim().ToLowerInvariant())
+            {
+                case "alto":
+                case "high":
+                    return "high";
+                case "medio":
+                case "medium":
+                    return "medium";
+                case "basso":
+                case "low":
+                    return "low";
+                default:
+                    return string.Empty;
+            }
+        }
+
+        private static string GetRiskAliases(string riskLevel)
+        {
+            switch (NormalizeRiskLevel(riskLevel))
+            {
+                case "high":
+                    return "High Alto";
+                case "medium":
+                    return "Medium Medio";
+                case "low":
+                    return "Low Basso";
+                default:
+                    return string.Empty;
+            }
+        }
+
         private bool IsEveryone(string sid, string name)
         {
             return string.Equals(sid, "S-1-1-0", StringComparison.OrdinalIgnoreCase)
@@ -240,6 +285,7 @@ namespace NtfsAudit.App.ViewModels
                 EffectiveEntries.Clear();
                 Errors.Clear();
                 SelectedFolderPath = string.Empty;
+                SelectedInheritanceDisabled = false;
                 ProcessedCount = 0;
                 ProcessedFilesCount = 0;
                 ErrorCount = 0;

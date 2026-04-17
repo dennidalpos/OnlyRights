@@ -29,8 +29,7 @@ Ensure-Directory -Path $resolvedOutputRoot
 Remove-DirectoryIfExists -Path $msiRoot
 Ensure-Directory -Path $msiRoot
 
-$appExecutable = Join-Path $resolvedPackageRoot "App\NtfsAudit.App.exe"
-$resolvedVersion = Resolve-MsiVersion -Version $Version -AppExecutablePath $appExecutable
+$resolvedVersion = Resolve-MsiArtifactVersion -Context $context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -Version $Version -PackageRoot $resolvedPackageRoot
 $msiArchitecture = Resolve-MsiArchitecture -Runtime $Runtime
 $wxsPath = Join-Path $msiRoot "OnlyRights.NtfsAudit.wxs"
 $wixObjPath = Join-Path $msiRoot "OnlyRights.NtfsAudit.wixobj"

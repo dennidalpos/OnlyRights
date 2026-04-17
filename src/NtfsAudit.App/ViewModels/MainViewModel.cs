@@ -130,6 +130,7 @@ namespace NtfsAudit.App.ViewModels
         private string _selectedPathKind = "Unknown";
         private string _selectedOwnerSummary = "-";
         private string _selectedInheritanceSummary = "-";
+        private bool _selectedInheritanceDisabled;
         private int _selectedTotalAceCount;
         private int _selectedExplicitAceCount;
         private int _selectedInheritedAceCount;

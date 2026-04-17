@@ -35,8 +35,9 @@ namespace NtfsAudit.App.Tests
             try
             {
                 Assert.Equal("Local", converter.Convert(@"C:\data", typeof(string), null, CultureInfo.InvariantCulture));
-                Assert.Equal("SMB Share", converter.Convert(@"\\wsl$\Ubuntu\mnt\data", typeof(string), null, CultureInfo.InvariantCulture));
+                Assert.Equal("WSL Share", converter.Convert(@"\\wsl$\Ubuntu\mnt\data", typeof(string), null, CultureInfo.InvariantCulture));
                 Assert.Equal("DFS", converter.Convert(dfsPath, typeof(string), null, CultureInfo.InvariantCulture));
+                Assert.Equal("Unsupported", converter.Convert("nfs://server/export/share", typeof(string), null, CultureInfo.InvariantCulture));
                 Assert.Equal("Unknown", converter.Convert(null, typeof(string), null, CultureInfo.InvariantCulture));
             }
             finally
@@ -59,8 +60,9 @@ namespace NtfsAudit.App.Tests
             try
             {
                 Assert.Equal(Color.FromRgb(245, 245, 245), GetColor(converter.Convert(@"C:\data", typeof(Brush), null, CultureInfo.InvariantCulture)));
-                Assert.Equal(Color.FromRgb(227, 242, 253), GetColor(converter.Convert(@"\\wsl$\Ubuntu\mnt\data", typeof(Brush), null, CultureInfo.InvariantCulture)));
+                Assert.Equal(Color.FromRgb(255, 243, 224), GetColor(converter.Convert(@"\\wsl$\Ubuntu\mnt\data", typeof(Brush), null, CultureInfo.InvariantCulture)));
                 Assert.Equal(Color.FromRgb(232, 245, 233), GetColor(converter.Convert(dfsPath, typeof(Brush), null, CultureInfo.InvariantCulture)));
+                Assert.Equal(Color.FromRgb(255, 235, 238), GetColor(converter.Convert("nfs://server/export/share", typeof(Brush), null, CultureInfo.InvariantCulture)));
             }
             finally
             {

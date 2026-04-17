@@ -60,6 +60,11 @@ namespace NtfsAudit.App.Tests
             Assert.Contains("Progress.CredentialsGlobalCurrentUser", englishKeys);
             Assert.Contains("Progress.CompatibleOptionsApplied", englishKeys);
             Assert.Contains("Validation.CredentialsGlobalPartial", englishKeys);
+            Assert.Contains("Scan.RootBrowse.AutomationName", englishKeys);
+            Assert.Contains("Tree.BadgesLegend", englishKeys);
+            Assert.Contains("Results.RiskSummaryFormat", englishKeys);
+            Assert.Contains("Dialog.GroupDetails", englishKeys);
+            Assert.Contains("Progress.ErrorsPartiallyLoaded", englishKeys);
         }
 
         [Fact]

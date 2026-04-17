@@ -489,6 +489,7 @@ namespace NtfsAudit.App.ViewModels
         public string SelectedPathKind { get { return _selectedPathKind; } private set { _selectedPathKind = value; OnPropertyChanged("SelectedPathKind"); } }
         public string SelectedOwnerSummary { get { return _selectedOwnerSummary; } private set { _selectedOwnerSummary = value; OnPropertyChanged("SelectedOwnerSummary"); } }
         public string SelectedInheritanceSummary { get { return _selectedInheritanceSummary; } private set { _selectedInheritanceSummary = value; OnPropertyChanged("SelectedInheritanceSummary"); } }
+        public bool SelectedInheritanceDisabled { get { return _selectedInheritanceDisabled; } private set { _selectedInheritanceDisabled = value; OnPropertyChanged("SelectedInheritanceDisabled"); } }
         public int SelectedTotalAceCount { get { return _selectedTotalAceCount; } private set { _selectedTotalAceCount = value; OnPropertyChanged("SelectedTotalAceCount"); } }
         public int SelectedExplicitAceCount { get { return _selectedExplicitAceCount; } private set { _selectedExplicitAceCount = value; OnPropertyChanged("SelectedExplicitAceCount"); } }
         public int SelectedInheritedAceCount { get { return _selectedInheritedAceCount; } private set { _selectedInheritedAceCount = value; OnPropertyChanged("SelectedInheritedAceCount"); } }
@@ -586,9 +587,9 @@ namespace NtfsAudit.App.ViewModels
 
             var entries = detail.AllEntries;
             SummaryTotalEntries = entries.Count;
-            SummaryHighRisk = entries.Count(entry => string.Equals(entry.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase));
-            SummaryMediumRisk = entries.Count(entry => string.Equals(entry.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase));
-            SummaryLowRisk = entries.Count(entry => string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase));
+            SummaryHighRisk = entries.Count(entry => string.Equals(NormalizeRiskLevel(entry.RiskLevel), "high", StringComparison.Ordinal));
+            SummaryMediumRisk = entries.Count(entry => string.Equals(NormalizeRiskLevel(entry.RiskLevel), "medium", StringComparison.Ordinal));
+            SummaryLowRisk = entries.Count(entry => string.Equals(NormalizeRiskLevel(entry.RiskLevel), "low", StringComparison.Ordinal));
             SummaryDenyCount = entries.Count(entry => string.Equals(entry.AllowDeny, "Deny", StringComparison.OrdinalIgnoreCase));
             SummaryEveryoneCount = entries.Count(entry => IsEveryone(entry.PrincipalSid, entry.PrincipalName));
             SummaryAuthUsersCount = entries.Count(entry => IsAuthenticatedUsers(entry.PrincipalSid, entry.PrincipalName));

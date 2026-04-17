@@ -14,7 +14,7 @@ Credential behavior is path-based and implemented by `ScanCredentialPathPolicy`.
 
 Interactive app credentials can be read from legacy user-profile storage when migration is possible.
 
-The common global credential store is `%ProgramData%\NtfsAudit\scan-credentials.json` and uses the `LocalMachine` DPAPI scope so the service can resolve scheduled work.
+The common global credential store is `%ProgramData%\NtfsAudit\scan-credentials.json` and uses the `LocalMachine` DPAPI scope so the service can resolve background work queued from the app.
 
 Service job credentials are protected independently for `LocalMachine`. The service does not read WPF UI state and does not reference `NtfsAudit.App`.
 

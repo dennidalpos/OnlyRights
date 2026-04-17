@@ -1,5 +1,10 @@
 <Project>
   <PropertyGroup>
+    <OnlyRightsVersion>1.0.0</OnlyRightsVersion>
+    <Version>$(OnlyRightsVersion)</Version>
+    <AssemblyVersion>$(OnlyRightsVersion)</AssemblyVersion>
+    <FileVersion>$(OnlyRightsVersion)</FileVersion>
+    <InformationalVersion>$(OnlyRightsVersion)</InformationalVersion>
     <RepositoryArtifactsRoot>$(MSBuildThisFileDirectory)artifacts\</RepositoryArtifactsRoot>
     <Platforms>AnyCPU;x86;x64</Platforms>
     <ArtifactsProjectName Condition="'$(AssemblyName)' != ''">$(AssemblyName)</ArtifactsProjectName>

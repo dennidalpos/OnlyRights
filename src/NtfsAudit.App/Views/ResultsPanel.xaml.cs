@@ -15,6 +15,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using NtfsAudit.App.Models;
+using NtfsAudit.App.Services;
 using NtfsAudit.App.ViewModels;
 
 namespace NtfsAudit.App.Views
@@ -30,7 +31,7 @@ namespace NtfsAudit.App.Views
         {
             var entry = GetSelectedEntry(sender);
             if (entry == null) return;
-            await ExecutePrincipalLookupAsync(() => ShowGroupMembers(entry), "Dettagli gruppo");
+            await ExecutePrincipalLookupAsync(() => ShowGroupMembers(entry), LocalizationManager.Text("Dialog.GroupDetails"));
         }
 
         private async void GroupEntries_OnKeyDown(object sender, KeyEventArgs e)
@@ -43,14 +44,14 @@ namespace NtfsAudit.App.Views
             var entry = GetSelectedEntry(sender);
             if (entry == null) return;
             e.Handled = true;
-            await ExecutePrincipalLookupAsync(() => ShowGroupMembers(entry), "Dettagli gruppo");
+            await ExecutePrincipalLookupAsync(() => ShowGroupMembers(entry), LocalizationManager.Text("Dialog.GroupDetails"));
         }
 
         private async void UserEntries_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             var entry = GetSelectedEntry(sender);
             if (entry == null) return;
-            await ExecutePrincipalLookupAsync(() => ShowUserGroups(entry), "Dettagli utente");
+            await ExecutePrincipalLookupAsync(() => ShowUserGroups(entry), LocalizationManager.Text("Dialog.UserDetails"));
         }
 
         private async void UserEntries_OnKeyDown(object sender, KeyEventArgs e)
@@ -63,7 +64,7 @@ namespace NtfsAudit.App.Views
             var entry = GetSelectedEntry(sender);
             if (entry == null) return;
             e.Handled = true;
-            await ExecutePrincipalLookupAsync(() => ShowUserGroups(entry), "Dettagli utente");
+            await ExecutePrincipalLookupAsync(() => ShowUserGroups(entry), LocalizationManager.Text("Dialog.UserDetails"));
         }
 
         private async Task ExecutePrincipalLookupAsync(Func<Task> operation, string contextTitle)
@@ -74,7 +75,7 @@ namespace NtfsAudit.App.Views
             }
             catch (Exception ex)
             {
-                var message = string.Format("Impossibile caricare i dettagli richiesti. Verifica connettività AD/permesse e riprova.\n\nDettagli: {0}", ex.Message);
+                var message = LocalizationManager.Format("Dialog.LookupErrorMessage", ex.Message);
                 var owner = Window.GetWindow(this);
                 if (owner != null)
                 {
@@ -100,11 +101,11 @@ namespace NtfsAudit.App.Views
             {
                 if (owner != null)
                 {
-                    MessageBox.Show(owner, "SID non disponibile per il gruppo selezionato.", "Dettagli gruppo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show(owner, LocalizationManager.Text("Dialog.GroupSidUnavailable"), LocalizationManager.Text("Dialog.GroupDetails"), MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
                 {
-                    MessageBox.Show("SID non disponibile per il gruppo selezionato.", "Dettagli gruppo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show(LocalizationManager.Text("Dialog.GroupSidUnavailable"), LocalizationManager.Text("Dialog.GroupDetails"), MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 return;
             }
@@ -112,7 +113,7 @@ namespace NtfsAudit.App.Views
             var viewModel = DataContext as MainViewModel;
             if (viewModel == null) return;
             var members = await viewModel.GetGroupMembersAsync(entry.PrincipalSid);
-            var title = string.Format("Membri del gruppo: {0}", entry.PrincipalName);
+            var title = LocalizationManager.Format("Dialog.GroupMembersTitle", entry.PrincipalName);
             var window = new PrincipalDetailsWindow(title, members);
             if (owner != null)
             {
@@ -129,11 +130,11 @@ namespace NtfsAudit.App.Views
             {
                 if (owner != null)
                 {
-                    MessageBox.Show(owner, "SID non disponibile per l'utente selezionato.", "Dettagli utente", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show(owner, LocalizationManager.Text("Dialog.UserSidUnavailable"), LocalizationManager.Text("Dialog.UserDetails"), MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
                 {
-                    MessageBox.Show("SID non disponibile per l'utente selezionato.", "Dettagli utente", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show(LocalizationManager.Text("Dialog.UserSidUnavailable"), LocalizationManager.Text("Dialog.UserDetails"), MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 return;
             }
@@ -141,7 +142,7 @@ namespace NtfsAudit.App.Views
             var viewModel = DataContext as MainViewModel;
             if (viewModel == null) return;
             var groups = await viewModel.GetUserGroupsAsync(entry.PrincipalSid);
-            var title = string.Format("Gruppi dell'utente: {0}", entry.PrincipalName);
+            var title = LocalizationManager.Format("Dialog.UserGroupsTitle", entry.PrincipalName);
             var window = new PrincipalDetailsWindow(title, groups);
             if (owner != null)
             {

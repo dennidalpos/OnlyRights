@@ -89,15 +89,15 @@ namespace NtfsAudit.App.Tests
         {
             var kind = PathResolver.DetectPathKind("nfs://server/export/share");
 
-            Assert.Equal(Models.PathKind.Unknown, kind);
+            Assert.Equal(Models.PathKind.Unsupported, kind);
         }
 
         [Fact]
-        public void DetectPathKind_ReturnsUnc_ForWslMountedShares()
+        public void DetectPathKind_ReturnsWslUnc_ForWslMountedShares()
         {
             var kind = PathResolver.DetectPathKind(@"\\wsl$\Ubuntu\mnt\data");
 
-            Assert.Equal(Models.PathKind.Unc, kind);
+            Assert.Equal(Models.PathKind.WslUnc, kind);
         }
 
         [Fact]
@@ -122,6 +122,14 @@ namespace NtfsAudit.App.Tests
             {
                 PathResolver.ResetDfsCacheForTest();
             }
+        }
+
+        [Theory]
+        [InlineData("/mnt/share")]
+        [InlineData("~/share")]
+        public void DetectPathKind_ReturnsUnsupported_ForNonWindowsRoots(string path)
+        {
+            Assert.Equal(Models.PathKind.Unsupported, PathResolver.DetectPathKind(path));
         }
 
         private static string BuildUniqueDfsPath()

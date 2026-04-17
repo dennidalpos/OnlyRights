@@ -47,7 +47,8 @@ namespace NtfsAudit.App
             {
                 Name = entry.Name,
                 Sid = entry.Sid,
-                Type = entry.IsGroup ? LocalizationManager.Text("Principal.Group") : LocalizationManager.Text("Principal.User")
+                Type = entry.IsGroup ? LocalizationManager.Text("Principal.Group") : LocalizationManager.Text("Principal.User"),
+                IsDisabled = entry.IsDisabled
             }).ToList();
         }
 
@@ -56,6 +57,7 @@ namespace NtfsAudit.App
             public string Name { get; set; }
             public string Sid { get; set; }
             public string Type { get; set; }
+            public bool IsDisabled { get; set; }
         }
     }
 }

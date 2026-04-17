@@ -7,11 +7,11 @@
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
-    <TextBlock x:Name="HeaderText" Style="{StaticResource SectionHeaderText}" ToolTip="Riepilogo principal selezionato." />
+    <TextBlock x:Name="HeaderText" Style="{StaticResource SectionHeaderText}" ToolTip="{DynamicResource Principal.Header.ToolTip}" />
     <Grid Grid.Row="1">
       <TextBlock x:Name="EmptyText" Text="{DynamicResource Principal.Empty}" Style="{StaticResource EmptyStateText}" Visibility="Collapsed" />
       <DataGrid x:Name="EntriesGrid"
-                ToolTip="Dettaglio membri, SID, tipo e stato dell'identità selezionata."
+                ToolTip="{DynamicResource Principal.Grid.ToolTip}"
                 AutoGenerateColumns="False"
                 IsReadOnly="True"
                 EnableRowVirtualization="True"
@@ -23,7 +23,7 @@
                 MinColumnWidth="80">
         <DataGrid.Columns>
           <DataGridTextColumn Header="{DynamicResource Grid.Name}" Binding="{Binding Name}" Width="200" />
-          <DataGridTextColumn Header="SID" Binding="{Binding Sid}" Width="240" />
+          <DataGridTextColumn Header="{DynamicResource Grid.Sid}" Binding="{Binding Sid}" Width="240" />
           <DataGridTextColumn Header="{DynamicResource Grid.Type}" Binding="{Binding Type}" Width="120" />
           <DataGridCheckBoxColumn Header="{DynamicResource Grid.Disabled}" Binding="{Binding IsDisabled, Mode=OneWay}" Width="120" />
         </DataGrid.Columns>

@@ -110,8 +110,17 @@ namespace NtfsAudit.App.Services
             if (string.IsNullOrWhiteSpace(input)) return PathKind.Unknown;
             var trimmed = input.Trim();
             var normalized = FromExtendedPath(trimmed).Replace('/', '\\');
+            if (ScanPathCompatibilityPolicy.LooksLikeUnsupportedRoot(trimmed))
+            {
+                return PathKind.Unsupported;
+            }
             if (normalized.StartsWith("\\\\", StringComparison.Ordinal))
             {
+                if (normalized.StartsWith(@"\\wsl$\", StringComparison.OrdinalIgnoreCase))
+                {
+                    return PathKind.WslUnc;
+                }
+
                 var targets = TryResolveDfsTargets(normalized);
                 return targets.Count > 0 ? PathKind.Dfs : PathKind.Unc;
             }

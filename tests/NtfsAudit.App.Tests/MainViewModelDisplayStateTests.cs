@@ -10,7 +10,10 @@
  * written permission from Danny Perondi.
  */
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
+using System.Windows;
 using NtfsAudit.App.Models;
 using NtfsAudit.App.Services;
 using NtfsAudit.App.ViewModels;
@@ -144,6 +147,71 @@ namespace NtfsAudit.App.Tests
             Assert.False(viewModel.IncludeFiles);
             Assert.False(viewModel.ReadOwnerAndSacl);
             Assert.False(viewModel.CompareBaseline);
+        }
+
+        [Fact]
+        public void AclFilter_MatchesEnglishRiskAliases_WhenEntriesUseStoredItalianRiskLabels()
+        {
+            var viewModel = new MainViewModel();
+            viewModel.AllEntries.Add(new AceEntry
+            {
+                PrincipalName = "CONTOSO\\ops-team",
+                PrincipalSid = "S-1-5-21-100",
+                PrincipalType = "Group",
+                PermissionLayer = PermissionLayer.Ntfs,
+                AllowDeny = "Allow",
+                RiskLevel = "Alto",
+                ResourceType = "Folder",
+                FolderPath = @"C:\AuditRoot"
+            });
+
+            viewModel.AclFilter = "High";
+
+            Assert.Single(viewModel.FilteredAllEntries);
+        }
+
+        [Fact]
+        public void SelectFolder_UsesLocalizedInheritanceAndRiskSummary()
+        {
+            LocalizationManager.Apply(new ResourceDictionary(), "en");
+            var viewModel = new MainViewModel();
+            var scanResult = new ScanResult
+            {
+                RootPath = @"C:\AuditRoot",
+                Details = new Dictionary<string, FolderDetail>
+                {
+                    [@"C:\AuditRoot"] = new FolderDetail
+                    {
+                        IsInheritanceDisabled = true,
+                        HasFolderEntries = true,
+                        AllEntries =
+                        {
+                            new AceEntry
+                            {
+                                FolderPath = @"C:\AuditRoot",
+                                PrincipalName = @"CONTOSO\ops-team",
+                                PrincipalSid = "S-1-5-21-200",
+                                PrincipalType = "Group",
+                                PermissionLayer = PermissionLayer.Ntfs,
+                                AllowDeny = "Allow",
+                                RiskLevel = "Alto",
+                                ResourceType = "Folder",
+                                Owner = @"CONTOSO\owner"
+                            }
+                        }
+                    }
+                }
+            };
+
+            typeof(MainViewModel)
+                .GetField("_scanResult", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(viewModel, scanResult);
+
+            viewModel.SelectFolder(@"C:\AuditRoot");
+
+            Assert.True(viewModel.SelectedInheritanceDisabled);
+            Assert.Equal("Inheritance disabled", viewModel.SelectedInheritanceSummary);
+            Assert.Equal("High: 1, Medium: 0, Low: 0", viewModel.SelectedRiskSummary);
         }
 
         private static void ClearScanInputs(MainViewModel viewModel)

@@ -114,6 +114,11 @@ For exact commands, inspect `.github/workflows/ci.yml`; it is the source of trut
 
 `scripts/pack.ps1` creates publish-style package directories under `artifacts/packages`. App, Viewer, and Service outputs include `NtfsAudit.Core` through project references.
 
+Current default framework-dependent package behavior:
+
+- Packages created without `-Runtime` prune non-Windows `runtimes\` subdirectories and keep only Windows runtime assets.
+- The Viewer package keeps the shared `NtfsAudit.App.dll` dependency but removes duplicate `NtfsAudit.App` entrypoint files so the distribution exposes only `NtfsAudit.Viewer.exe`.
+
 Default framework-dependent package:
 
 ```powershell
@@ -141,12 +146,12 @@ pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86 -SelfConta
 MSI build:
 
 ```powershell
-pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Version 1.0.0
-pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x64 -Version 1.0.0
-pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x86 -Version 1.0.0
+pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release
+pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x64
+pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x86
 ```
 
-The MSI build uses local WiX binaries from `tools/wix314-binaries`. Runtime-specific MSIs are staged under `artifacts/packages/<Configuration>/<Runtime>/<Framework>/installer` and include an architecture suffix, such as `OnlyRights-NtfsAudit-1.0.0-x64.msi` or `OnlyRights-NtfsAudit-1.0.0-x86.msi`.
+The MSI build uses local WiX binaries from `tools/wix314-binaries`. When `-Version` is omitted, `scripts\packaging\msi-build.ps1` resolves the version from the repository-owned version declared in `Directory.Build.props`, which is also consumed by the application projects. Runtime-specific MSIs are staged under `artifacts/packages/<Configuration>/<Runtime>/<Framework>/installer` and include an architecture suffix, such as `OnlyRights-NtfsAudit-1.0.0-x64.msi` or `OnlyRights-NtfsAudit-1.0.0-x86.msi`.
 
 ## Service Scripts
 

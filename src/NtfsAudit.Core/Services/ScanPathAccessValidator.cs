@@ -58,6 +58,12 @@ namespace NtfsAudit.App.Services
                 throw new ArgumentNullException("attributeReader");
             }
 
+            var kind = PathResolver.DetectPathKind(rootPath);
+            if (kind == PathKind.Unsupported)
+            {
+                return ScanPathCompatibilityPolicy.BuildUnsupportedRootMessage(rootPath);
+            }
+
             var attributes = attributeReader(rootPath);
             if ((attributes & FileAttributes.Directory) == 0)
             {

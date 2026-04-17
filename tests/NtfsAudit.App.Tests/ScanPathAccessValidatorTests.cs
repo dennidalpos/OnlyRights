@@ -40,6 +40,18 @@ namespace NtfsAudit.App.Tests
             Assert.Equal(@"Il percorso selezionato è un file e non una cartella: \\server\share\report.txt", message);
         }
 
+        [Fact]
+        public void ValidateDirectoryRootCore_ReturnsUnsupportedMessage_ForUnsupportedRoots()
+        {
+            var message = ScanPathAccessValidator.ValidateDirectoryRootCore(
+                "nfs://server/export/share",
+                _ => FileAttributes.Directory);
+
+            Assert.Equal(
+                "Percorso o provider non supportato in ambiente Windows: nfs://server/export/share",
+                message);
+        }
+
         [Theory]
         [InlineData("Method failed with unexpected error code 1326.")]
         [InlineData("Nome utente o password non corretta.")]

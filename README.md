@@ -2,35 +2,36 @@
 
 ![OnlyRights NtfsAudit mark](docs/assets/onlyrights-mark.svg)
 
-OnlyRights is the repository for the Windows `NtfsAudit` suite: a desktop-first toolset for inspecting NTFS and SMB share permissions, exporting audit results, and reopening saved analyses.
+OnlyRights is the Windows-first repository for the `NtfsAudit` suite: a WPF desktop application, a read-only archive viewer, and an optional Windows Service host for NTFS and SMB permission auditing.
 
-The legal project name is **OnlyRights**. The application components use the technical name **NtfsAudit**.
+The legal project name is **OnlyRights**. The shipped application components use the technical name **NtfsAudit**.
 
-## Components
+## Overview
 
-- `NtfsAudit.App`: WPF application for scans, filtering, export, import, and local operation.
-- `NtfsAudit.Viewer`: read-only WPF viewer for `.ntaudit` archives.
-- `NtfsAudit.Service`: optional Windows Service host for background scan jobs.
+The repository contains:
 
-## Capabilities
+- `NtfsAudit.App`: the main WPF application for scans, filtering, export, and archive reopen.
+- `NtfsAudit.Viewer`: a read-only WPF viewer for `.ntaudit` archives.
+- `NtfsAudit.Service`: an optional Windows Service host for background scan jobs.
 
-- Scan Windows-visible filesystem roots: local paths, SMB/CIFS UNC paths, DFS namespaces, extended Windows paths, mapped drives, and SMB-exposed NAS paths.
-- Collect NTFS ACLs and optional SMB share permissions.
-- Resolve SIDs and principals, including optional PowerShell Active Directory fallback.
-- Calculate effective permissions, risk metrics, group membership data, and ACL baseline comparisons.
+## Verified Feature Set
+
+- Scan Windows-visible filesystem roots including local paths, UNC paths, DFS namespaces, mapped drives, extended Windows paths, and SMB-exposed NAS paths.
+- Read NTFS ACLs and optionally collect SMB share permissions.
+- Resolve principals and identities, calculate effective permissions, and compute risk/baseline data.
 - Export Excel reports and `.ntaudit` analysis archives.
-- Reopen archives in the main app or read-only viewer.
-- Protect scan credentials with path-based policy and DPAPI-backed storage.
+- Reopen archives in the main app or the read-only viewer.
+- Protect stored scan credentials with Windows DPAPI-backed handling.
 
-## Requirements
+## Windows-First Setup
 
-- Windows.
-- .NET SDK 8 compatible with [global.json](global.json).
-- `Microsoft.NET.Sdk.WindowsDesktop` support in the selected .NET SDK.
+Requirements:
 
-## Quick Start
+- Windows
+- .NET SDK 8 compatible with [global.json](global.json)
+- `Microsoft.NET.Sdk.WindowsDesktop` support in the selected SDK
 
-From the repository root:
+Initial setup from the repository root:
 
 ```powershell
 pwsh -ExecutionPolicy Bypass -File .\scripts\setup.ps1
@@ -48,13 +49,19 @@ Run the read-only viewer:
 dotnet run --project .\src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj -f net8.0-windows
 ```
 
-## Documentation
+Build, test, packaging, MSI, service smoke, and CI-oriented commands are kept in the technical operations documentation.
+
+## Current Status
+
+- The canonical Windows setup, build, test, package, publish, service-smoke, MSI-smoke, and app/viewer startup commands were run successfully in the latest local verification pass.
+- Repository-aligned residual work is tracked in [PROJECT_STATUS.json](PROJECT_STATUS.json) when real open tasks remain.
+
+## Technical Documentation
 
 - [Architecture](docs/architecture.md)
-- [Operations, CI, testing, packaging, and release notes](docs/development/operations.md)
+- [Operations and CI-facing commands](docs/development/operations.md)
 - [Archive format](docs/reference/archive-format.md)
 - [Credential policy](docs/reference/credentials.md)
-- [Project status tracking](PROJECT_STATUS.json)
 
 ## License
 

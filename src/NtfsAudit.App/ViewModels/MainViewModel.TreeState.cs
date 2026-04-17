@@ -350,9 +350,10 @@ namespace NtfsAudit.App.ViewModels
             var entries = detail == null ? new List<AceEntry>() : detail.AllEntries;
             SelectedPathKind = PathResolver.DetectPathKind(path).ToString();
             SelectedOwnerSummary = entries.Select(e => e.Owner).FirstOrDefault(v => !string.IsNullOrWhiteSpace(v)) ?? "-";
-            SelectedInheritanceSummary = detail != null && detail.IsInheritanceDisabled
-                ? (LocalizationManager.CurrentLocale == "it" ? "Ereditarieta disabilitata" : "Inheritance disabled")
-                : (LocalizationManager.CurrentLocale == "it" ? "Ereditarieta attiva" : "Inheritance active");
+            SelectedInheritanceDisabled = detail != null && detail.IsInheritanceDisabled;
+            SelectedInheritanceSummary = LocalizationManager.Text(SelectedInheritanceDisabled
+                ? "Results.InheritanceDisabled"
+                : "Results.InheritanceActive");
             SelectedTotalAceCount = entries.Count;
             SelectedExplicitAceCount = entries.Count(e => !e.IsInherited);
             SelectedInheritedAceCount = entries.Count(e => e.IsInherited);
@@ -363,16 +364,15 @@ namespace NtfsAudit.App.ViewModels
             if (detail != null && detail.HasEffectiveEntries) layers.Add("Effective");
             if (string.Equals(SelectedPathKind, "Nfs", StringComparison.OrdinalIgnoreCase)) layers.Add("NFS");
             SelectedPermissionLayers = layers.Count == 0 ? "-" : string.Join(", ", layers);
-            SelectedRiskSummary = string.Format("High: {0}, Medium: {1}, Low: {2}",
-                entries.Count(e => string.Equals(e.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase)),
-                entries.Count(e => string.Equals(e.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase)),
-                entries.Count(e => string.Equals(e.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase)));
+            SelectedRiskSummary = LocalizationManager.Format(
+                "Results.RiskSummaryFormat",
+                entries.Count(e => string.Equals(NormalizeRiskLevel(e.RiskLevel), "high", StringComparison.Ordinal)),
+                entries.Count(e => string.Equals(NormalizeRiskLevel(e.RiskLevel), "medium", StringComparison.Ordinal)),
+                entries.Count(e => string.Equals(NormalizeRiskLevel(e.RiskLevel), "low", StringComparison.Ordinal)));
             var warning = entries.Select(e => e.AuditSummary).FirstOrDefault(v => !string.IsNullOrWhiteSpace(v) && v.IndexOf("non", StringComparison.OrdinalIgnoreCase) >= 0);
             if (string.IsNullOrWhiteSpace(warning) && string.Equals(SelectedPathKind, "Nfs", StringComparison.OrdinalIgnoreCase))
             {
-                warning = LocalizationManager.CurrentLocale == "it"
-                    ? "Percorso NFS: alcune ACL potrebbero non essere disponibili in ambiente Windows."
-                    : "NFS path: some ACLs may be unavailable in Windows.";
+                warning = LocalizationManager.Text("Results.NfsWarning");
             }
             SelectedAcquisitionWarnings = string.IsNullOrWhiteSpace(warning) ? "-" : warning;
             SelectedScannedAtText = _scanResult != null && _scanResult.ScannedAtUtc != default(DateTime)

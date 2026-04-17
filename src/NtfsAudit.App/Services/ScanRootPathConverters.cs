@@ -28,10 +28,14 @@ namespace NtfsAudit.App.Services
             {
                 case PathKind.Dfs:
                     return "DFS";
+                case PathKind.WslUnc:
+                    return "WSL Share";
                 case PathKind.Unc:
                     return "SMB Share";
                 case PathKind.Local:
                     return LocalizationManager.CurrentLocale == "it" ? "Locale" : "Local";
+                case PathKind.Unsupported:
+                    return LocalizationManager.CurrentLocale == "it" ? "Non supportato" : "Unsupported";
                 default:
                     return LocalizationManager.CurrentLocale == "it" ? "Sconosciuto" : "Unknown";
             }
@@ -53,8 +57,12 @@ namespace NtfsAudit.App.Services
             {
                 case PathKind.Dfs:
                     return new SolidColorBrush(Color.FromRgb(232, 245, 233));
+                case PathKind.WslUnc:
+                    return new SolidColorBrush(Color.FromRgb(255, 243, 224));
                 case PathKind.Unc:
                     return new SolidColorBrush(Color.FromRgb(227, 242, 253));
+                case PathKind.Unsupported:
+                    return new SolidColorBrush(Color.FromRgb(255, 235, 238));
                 default:
                     return new SolidColorBrush(Color.FromRgb(245, 245, 245));
             }

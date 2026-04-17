@@ -45,6 +45,12 @@
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
+  <Style x:Key="FieldComboBoxStyle" TargetType="ComboBox">
+    <Setter Property="Height" Value="28" />
+    <Setter Property="MinWidth" Value="120" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
   <Style x:Key="OptionCheckBoxStyle" TargetType="CheckBox">
     <Setter Property="Margin" Value="0,0,0,6" />
   </Style>
@@ -87,6 +93,13 @@
     <Setter Property="Margin" Value="0,0,8,8" />
   </Style>
 
+  <Style x:Key="StatusBadgeBorderStyle" TargetType="Border">
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="10,4" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
   <Style x:Key="InfoLabelText" TargetType="TextBlock">
     <Setter Property="FontSize" Value="10" />
     <Setter Property="Foreground" Value="#FF546E7A" />
@@ -117,6 +130,12 @@
     <Setter Property="FontSize" Value="11" />
     <Setter Property="Foreground" Value="#FF616161" />
     <Setter Property="Margin" Value="0,2,0,6" />
+  </Style>
+
+  <Style x:Key="ToolbarLabelText" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="#FF424242" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
   <Style x:Key="EmptyStateText" TargetType="TextBlock" BasedOn="{StaticResource MicrocopyText}">
@@ -218,48 +237,55 @@
 
   <DataTemplate x:Key="PermissionBadgesTemplate">
     <StackPanel Orientation="Horizontal">
-      <Border ToolTip="{Binding HighestRightToolTip}">
+      <Border>
         <Border.Style>
           <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
             <Setter Property="Visibility" Value="Collapsed" />
             <Setter Property="Background" Value="#FF2F80ED" />
+            <Setter Property="ToolTip" Value="{DynamicResource Badge.Read.ToolTip}" />
             <Style.Triggers>
               <DataTrigger Binding="{Binding HighestRightKey}" Value="Full">
                 <Setter Property="Visibility" Value="Visible" />
                 <Setter Property="Background" Value="#FF9B51E0" />
+                <Setter Property="ToolTip" Value="{DynamicResource Badge.Full.ToolTip}" />
               </DataTrigger>
               <DataTrigger Binding="{Binding HighestRightKey}" Value="Modify">
                 <Setter Property="Visibility" Value="Visible" />
                 <Setter Property="Background" Value="#FFF2994A" />
+                <Setter Property="ToolTip" Value="{DynamicResource Badge.Modify.ToolTip}" />
               </DataTrigger>
               <DataTrigger Binding="{Binding HighestRightKey}" Value="ReadAndExecute">
                 <Setter Property="Visibility" Value="Visible" />
                 <Setter Property="Background" Value="#FF2F80ED" />
+                <Setter Property="ToolTip" Value="{DynamicResource Badge.ReadAndExecute.ToolTip}" />
               </DataTrigger>
               <DataTrigger Binding="{Binding HighestRightKey}" Value="Write">
                 <Setter Property="Visibility" Value="Visible" />
                 <Setter Property="Background" Value="#FF27AE60" />
+                <Setter Property="ToolTip" Value="{DynamicResource Badge.Write.ToolTip}" />
               </DataTrigger>
               <DataTrigger Binding="{Binding HighestRightKey}" Value="List">
                 <Setter Property="Visibility" Value="Visible" />
                 <Setter Property="Background" Value="#FF2F80ED" />
+                <Setter Property="ToolTip" Value="{DynamicResource Badge.List.ToolTip}" />
               </DataTrigger>
               <DataTrigger Binding="{Binding HighestRightKey}" Value="Read">
                 <Setter Property="Visibility" Value="Visible" />
                 <Setter Property="Background" Value="#FF2F80ED" />
+                <Setter Property="ToolTip" Value="{DynamicResource Badge.Read.ToolTip}" />
               </DataTrigger>
             </Style.Triggers>
           </Style>
         </Border.Style>
         <TextBlock Text="{Binding HighestRightLabel}" Style="{StaticResource CompactBadgeText}" />
       </Border>
-      <Border Background="#FF1976D2" Visibility="{Binding IsInherited, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Ereditato" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+      <Border Background="#FF1976D2" Visibility="{Binding IsInherited, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="{DynamicResource Badge.Inherited.ToolTip}" Style="{StaticResource InlineCompactBadgeBorderStyle}">
         <TextBlock Text="I" Style="{StaticResource CompactBadgeText}" />
       </Border>
-      <Border Background="#FFC62828" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Protetto (ereditarietà disabilitata)" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+      <Border Background="#FFC62828" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="{DynamicResource Badge.Protected.ToolTip}" Style="{StaticResource InlineCompactBadgeBorderStyle}">
         <TextBlock Text="P" Style="{StaticResource CompactBadgeText}" />
       </Border>
-      <Border Background="#FFEB5757" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="Accesso negato (Deny esplicito)" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+      <Border Background="#FFEB5757" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="{DynamicResource Badge.ExplicitDeny.ToolTip}" Style="{StaticResource InlineCompactBadgeBorderStyle}">
         <TextBlock Text="D" Style="{StaticResource CompactBadgeText}" />
       </Border>
     </StackPanel>

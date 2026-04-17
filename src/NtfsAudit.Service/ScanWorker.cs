@@ -360,7 +360,7 @@ namespace NtfsAudit.Service
             }
 
             var kind = PathResolver.DetectPathKind(options.RootPath);
-            if (kind != PathKind.Unc && kind != PathKind.Dfs)
+            if (!ScanPathCompatibilityPolicy.SupportsConfiguredCredential(kind))
             {
                 options.CredentialSource = "CurrentUser";
                 return;

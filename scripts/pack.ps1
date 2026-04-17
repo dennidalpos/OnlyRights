@@ -80,15 +80,62 @@ function Invoke-PublishProject {
     Invoke-DotNetCommand -Arguments $publishArgs -ErrorMessage ("Package publish failed for {0}." -f $ProjectPath)
 }
 
-Invoke-PublishProject -ProjectPath $context.AppProject -TargetPath (Join-Path $packageRoot "App") -TargetFramework $Framework
+function Remove-NonWindowsRuntimeAssets {
+    param([string]$TargetPath)
+
+    $runtimeRoot = Join-Path $TargetPath "runtimes"
+    if (-not (Test-Path $runtimeRoot)) {
+        return
+    }
+
+    foreach ($runtimeDirectory in (Get-ChildItem -Path $runtimeRoot -Directory)) {
+        if ($runtimeDirectory.Name -like "win*") {
+            continue
+        }
+
+        Remove-Item -LiteralPath $runtimeDirectory.FullName -Recurse -Force
+    }
+}
+
+function Remove-ViewerDuplicateEntrypoints {
+    param([string]$TargetPath)
+
+    foreach ($fileName in @(
+        "NtfsAudit.App.exe",
+        "NtfsAudit.App.deps.json",
+        "NtfsAudit.App.runtimeconfig.json",
+        "NtfsAudit.App.pdb",
+        "NtfsAudit.App.xml"
+    )) {
+        $candidate = Join-Path $TargetPath $fileName
+        if (Test-Path $candidate) {
+            Remove-Item -LiteralPath $candidate -Force
+        }
+    }
+}
+
+$appTargetPath = Join-Path $packageRoot "App"
+Invoke-PublishProject -ProjectPath $context.AppProject -TargetPath $appTargetPath -TargetFramework $Framework
+if (-not $Runtime) {
+    Remove-NonWindowsRuntimeAssets -TargetPath $appTargetPath
+}
 
 if (-not $SkipViewer) {
-    Invoke-PublishProject -ProjectPath $context.ViewerProject -TargetPath (Join-Path $packageRoot "Viewer") -TargetFramework $Framework
+    $viewerTargetPath = Join-Path $packageRoot "Viewer"
+    Invoke-PublishProject -ProjectPath $context.ViewerProject -TargetPath $viewerTargetPath -TargetFramework $Framework
+    Remove-ViewerDuplicateEntrypoints -TargetPath $viewerTargetPath
+    if (-not $Runtime) {
+        Remove-NonWindowsRuntimeAssets -TargetPath $viewerTargetPath
+    }
 }
 
 if (-not $SkipService) {
     $serviceFramework = "net8.0-windows"
-    Invoke-PublishProject -ProjectPath $context.ServiceProject -TargetPath (Join-Path $packageRoot "Service") -TargetFramework $serviceFramework
+    $serviceTargetPath = Join-Path $packageRoot "Service"
+    Invoke-PublishProject -ProjectPath $context.ServiceProject -TargetPath $serviceTargetPath -TargetFramework $serviceFramework
+    if (-not $Runtime) {
+        Remove-NonWindowsRuntimeAssets -TargetPath $serviceTargetPath
+    }
 }
 
 Write-Host "[NtfsAudit] Pack completed." -ForegroundColor Cyan

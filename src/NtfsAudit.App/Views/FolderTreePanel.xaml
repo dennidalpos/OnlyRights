@@ -19,36 +19,36 @@
                   <TextBlock Text="{DynamicResource Tree.BadgesHint}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,6" />
                   <TextBlock Text="{DynamicResource Tree.Filters}" Style="{StaticResource SubsectionHeaderText}" />
                   <WrapPanel Margin="0,0,0,4">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con permessi NTFS espliciti.">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="{DynamicResource Tree.ExplicitNtfs.ToolTip}">
                                             <Border Background="#FF00897B" Style="{StaticResource InlineCompactBadgeBorderStyle}"><TextBlock Text="N" Style="{StaticResource CompactBadgeText}" /></Border>
                       <CheckBox Content="{DynamicResource Tree.ExplicitNtfs}" IsChecked="{Binding TreeFilterExplicitOnly}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi protetti (ereditarieta disabilitata).">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="{DynamicResource Tree.Protected.ToolTip}">
                                             <Border Background="#FFC62828" Style="{StaticResource InlineCompactBadgeBorderStyle}"><TextBlock Text="P" Style="{StaticResource CompactBadgeText}" /></Border>
                       <CheckBox Content="{DynamicResource Tree.Protected}" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con differenze ACL rispetto alla cartella padre immediata (confronto gerarchico).">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="{DynamicResource Tree.DiffParent.ToolTip}">
                                             <Border Background="#FF455A64" Style="{StaticResource InlineCompactBadgeBorderStyle}"><TextBlock Text="DP" Style="{StaticResource CompactBadgeText}" /></Border>
                       <CheckBox Content="{DynamicResource Tree.DiffParent}" IsChecked="{Binding TreeFilterDiffOnly}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con regole Deny esplicite.">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="{DynamicResource Tree.ExplicitDeny.ToolTip}">
                                             <Border Background="#FFAD1457" Style="{StaticResource InlineCompactBadgeBorderStyle}"><TextBlock Text="D" Style="{StaticResource CompactBadgeText}" /></Border>
                       <CheckBox Content="{DynamicResource Tree.ExplicitDeny}" IsChecked="{Binding TreeFilterExplicitDenyOnly}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi con differenze ACL rispetto alla baseline/policy attesa (confronto assoluto).">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="{DynamicResource Tree.BaselineMismatch.ToolTip}">
                                             <Border Background="#FF455A64" Style="{StaticResource InlineCompactBadgeBorderStyle}"><TextBlock Text="B" Style="{StaticResource CompactBadgeText}" /></Border>
                       <CheckBox Content="{DynamicResource Tree.BaselineMismatch}" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi che contengono file analizzati.">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="{DynamicResource Tree.WithFiles.ToolTip}">
                                             <Border Background="#FF616161" Style="{StaticResource InlineCompactBadgeBorderStyle}"><TextBlock Text="F" Style="{StaticResource CompactBadgeText}" /></Border>
                       <CheckBox Content="{DynamicResource Tree.WithFiles}" IsChecked="{Binding TreeFilterFilesOnly}" />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="Mostra o nasconde i nodi di tipo cartella.">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="{DynamicResource Tree.FoldersOnly.ToolTip}">
                                             <Border Background="#FF455A64" Style="{StaticResource InlineCompactBadgeBorderStyle}"><TextBlock Text="C" Style="{StaticResource CompactBadgeText}" /></Border>
                       <CheckBox Content="{DynamicResource Tree.FoldersOnly}" IsChecked="{Binding TreeFilterFoldersOnly}" />
                     </StackPanel>
                   </WrapPanel>
-                  <TextBlock Text="DP = confronto con la cartella padre | B = confronto con baseline/policy attesa" Style="{StaticResource MicrocopyText}" />
+                  <TextBlock Text="{DynamicResource Tree.BadgesLegend}" Style="{StaticResource MicrocopyText}" />
                   <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Tree.ResetFilters}" Width="140" Margin="0,0,0,8" Command="{Binding ResetTreeFiltersCommand}" />
                                   </StackPanel>
               </Expander>
@@ -78,9 +78,9 @@
               <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                   <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="DIR" Margin="0,0,6,0" Foreground="#FF546E7A" FontWeight="SemiBold" />
+                    <TextBlock Text="{DynamicResource Tree.RootTypeLabel}" Margin="0,0,6,0" Foreground="#FF546E7A" FontWeight="SemiBold" />
                     <TextBlock Text="{Binding DisplayName}" />
-                    <Border Background="#FFC62828" ToolTip="Protetto (ereditarieta disabilitata)"><Border.Style>
+                    <Border Background="#FFC62828" ToolTip="{DynamicResource Tree.ProtectedBadge.ToolTip}"><Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
                           <Setter Property="Visibility" Value="Collapsed" />
                           <Setter Property="Margin" Value="6,0,0,0" />
@@ -93,7 +93,7 @@
                       </Border.Style>
                       <TextBlock Text="P" Style="{StaticResource CompactBadgeText}" />
                     </Border>
-                    <Border Background="#FF455A64" ToolTip="Differenze rispetto alla cartella padre">
+                    <Border Background="#FF455A64" ToolTip="{DynamicResource Tree.DiffBadge.ToolTip}">
                       <Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
                           <Setter Property="Visibility" Value="Collapsed" />
@@ -107,7 +107,7 @@
                       </Border.Style>
                       <TextBlock Text="{Binding DiffLabel}" Style="{StaticResource CompactBadgeText}" />
                     </Border>
-                    <Border Background="#FFAD1457" ToolTip="Accesso negato (Deny espliciti)">
+                    <Border Background="#FFAD1457" ToolTip="{DynamicResource Tree.DenyBadge.ToolTip}">
                       <Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
                           <Setter Property="Visibility" Value="Collapsed" />
@@ -121,7 +121,7 @@
                       </Border.Style>
                       <TextBlock Text="{Binding DenyExplicitLabel}" Style="{StaticResource CompactBadgeText}" />
                     </Border>
-                    <Border Background="#FF455A64" ToolTip="Differenze rispetto alla baseline">
+                    <Border Background="#FF455A64" ToolTip="{DynamicResource Tree.BaselineBadge.ToolTip}">
                       <Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
                           <Setter Property="Visibility" Value="Collapsed" />
@@ -135,7 +135,7 @@
                       </Border.Style>
                       <TextBlock Text="{Binding BaselineMismatchLabel}" Style="{StaticResource CompactBadgeText}" />
                     </Border>
-                    <Border Background="#FF00897B" ToolTip="Permessi NTFS espliciti">
+                    <Border Background="#FF00897B" ToolTip="{DynamicResource Tree.ExplicitNtfsBadge.ToolTip}">
                       <Border.Style>
                         <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
                           <Setter Property="Visibility" Value="Collapsed" />

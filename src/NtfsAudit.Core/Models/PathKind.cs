@@ -18,6 +18,8 @@ namespace NtfsAudit.App.Models
         Unknown = 0,
         Local = 1,
         Unc = 2,
-        Dfs = 3
+        Dfs = 3,
+        WslUnc = 4,
+        Unsupported = 5
     }
 }

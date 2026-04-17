@@ -47,11 +47,19 @@ function Normalize-MsiVersion {
 function Resolve-MsiVersion {
     param(
         [string]$Version,
-        [string]$AppExecutablePath
+        [string]$AppExecutablePath,
+        $RepositoryContext
     )
 
     if (-not [string]::IsNullOrWhiteSpace($Version)) {
         return (Normalize-MsiVersion -Version $Version)
+    }
+
+    if ($null -ne $RepositoryContext) {
+        $repositoryVersion = Resolve-RepositoryVersion -Context $RepositoryContext
+        if (-not [string]::IsNullOrWhiteSpace($repositoryVersion)) {
+            return (Normalize-MsiVersion -Version $repositoryVersion)
+        }
     }
 
     if (-not [string]::IsNullOrWhiteSpace($AppExecutablePath) -and (Test-Path $AppExecutablePath)) {
@@ -71,6 +79,21 @@ function Resolve-MsiVersion {
     }
 
     return "1.0.0"
+}
+
+function Resolve-MsiArtifactVersion {
+    param(
+        $Context,
+        [string]$Configuration = "Release",
+        [string]$Framework = "net8.0-windows",
+        [string]$Runtime,
+        [string]$Version,
+        [string]$PackageRoot
+    )
+
+    $resolvedPackageRoot = Resolve-PackageRootForMsi -Context $Context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -PackageRoot $PackageRoot
+    $appExecutable = Join-Path $resolvedPackageRoot "App\NtfsAudit.App.exe"
+    return Resolve-MsiVersion -Version $Version -AppExecutablePath $appExecutable -RepositoryContext $Context.Repository
 }
 
 function Resolve-PackageRootForMsi {

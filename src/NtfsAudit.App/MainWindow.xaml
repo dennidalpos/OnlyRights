@@ -25,34 +25,52 @@
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <StackPanel>
-              <WrapPanel>
+            <Grid x:Name="ActionToolbarLayout">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+
+              <WrapPanel x:Name="PrimaryActionToolbar" Grid.Row="0">
                 <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.StartAnalysis}" AutomationProperties.Name="{DynamicResource Main.StartAnalysis}" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" ToolTip="{DynamicResource Main.StartAnalysis.ToolTip}" />
                 <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.StopAndClean}" AutomationProperties.Name="{DynamicResource Main.StopAndClean}" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" ToolTip="{DynamicResource Main.StopAndClean.ToolTip}" />
                 <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.InstallService}" AutomationProperties.Name="{DynamicResource Main.InstallService}" Command="{Binding InstallServiceCommand}" ToolTip="{DynamicResource Main.InstallService.ToolTip}" />
                 <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.UninstallService}" AutomationProperties.Name="{DynamicResource Main.UninstallService}" Command="{Binding UninstallServiceCommand}" ToolTip="{DynamicResource Main.UninstallService.ToolTip}" />
-                <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.ImportAnalysis}" AutomationProperties.Name="{DynamicResource Main.ImportAnalysis}" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" ToolTip="{DynamicResource Main.ImportAnalysis.ToolTip}" />
-                <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.ExportExcel}" AutomationProperties.Name="{DynamicResource Main.ExportExcel}" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" ToolTip="{DynamicResource Main.ExportExcel.ToolTip}" />
-                <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.CleanupResiduals}" AutomationProperties.Name="{DynamicResource Main.CleanupResiduals}" Command="{Binding CleanupResidualFilesCommand}" ToolTip="{DynamicResource Main.CleanupResiduals.ToolTip}" />
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,6">
-                  <TextBlock Text="{DynamicResource Common.Language}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                  <ComboBox Width="112"
-                            Height="28"
-                            ItemsSource="{Binding AvailableLocales}"
-                            SelectedItem="{Binding SelectedLocale, Mode=TwoWay}"
-                            DisplayMemberPath="DisplayName" />
-                </StackPanel>
               </WrapPanel>
-            </StackPanel>
+
+              <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <WrapPanel x:Name="SecondaryActionToolbar" Grid.Column="0">
+                  <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.ImportAnalysis}" AutomationProperties.Name="{DynamicResource Main.ImportAnalysis}" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" ToolTip="{DynamicResource Main.ImportAnalysis.ToolTip}" />
+                  <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.ExportExcel}" AutomationProperties.Name="{DynamicResource Main.ExportExcel}" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" ToolTip="{DynamicResource Main.ExportExcel.ToolTip}" />
+                  <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.CleanupResiduals}" AutomationProperties.Name="{DynamicResource Main.CleanupResiduals}" Command="{Binding CleanupResidualFilesCommand}" ToolTip="{DynamicResource Main.CleanupResiduals.ToolTip}" />
+                </WrapPanel>
+
+                <Border x:Name="LocaleToolbarPanel" Grid.Column="1" Margin="12,0,0,6" VerticalAlignment="Center">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{DynamicResource Common.Language}" Style="{StaticResource ToolbarLabelText}" Margin="0,0,6,0" />
+                    <ComboBox Width="112"
+                              Style="{StaticResource FieldComboBoxStyle}"
+                              ItemsSource="{Binding AvailableLocales}"
+                              SelectedItem="{Binding SelectedLocale, Mode=TwoWay}"
+                              DisplayMemberPath="DisplayName" />
+                  </StackPanel>
+                </Border>
+              </Grid>
+            </Grid>
           </Border>
 
           <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,0,0,8" Visibility="{Binding IsViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel Orientation="Horizontal">
-              <Button Padding="12,4" Content="{DynamicResource Main.ImportAnalysis}" AutomationProperties.Name="{DynamicResource Main.ImportAnalysis}" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" Background="#FF616161" Foreground="White" />
+              <Button Style="{StaticResource ActionButtonStyle}" Margin="0" Content="{DynamicResource Main.ImportAnalysis}" AutomationProperties.Name="{DynamicResource Main.ImportAnalysis}" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" />
             </StackPanel>
           </Border>
 
-          <Border Grid.Row="1" Background="#FFFFF3CD" BorderBrush="#FFFFEEBA" BorderThickness="1" CornerRadius="10" Padding="6,2"
+          <Border Grid.Row="1" Background="#FFFFF3CD" BorderBrush="#FFFFEEBA" Style="{StaticResource StatusBadgeBorderStyle}" Padding="8,3"
                   HorizontalAlignment="Left"
                   Visibility="{Binding IsNotElevated, Converter={StaticResource BooleanToVisibilityConverter}}">
             <TextBlock Text="{DynamicResource Common.NonAdmin}"
@@ -65,7 +83,7 @@
               <ColumnDefinition Width="12" />
               <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Border Grid.Column="0" Background="{Binding ServiceBadgeBackground}" BorderBrush="#FFCFD8DC" BorderThickness="1" CornerRadius="10" Padding="8,3" VerticalAlignment="Top">
+            <Border Grid.Column="0" Background="{Binding ServiceBadgeBackground}" BorderBrush="#FFCFD8DC" Style="{StaticResource StatusBadgeBorderStyle}" VerticalAlignment="Top">
               <TextBlock Text="{Binding ServiceBadgeText}" Foreground="White" FontWeight="SemiBold" />
             </Border>
             <StackPanel Grid.Column="2">

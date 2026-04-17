@@ -23,6 +23,7 @@ namespace NtfsAudit.App.Tests
         [InlineData(@"C:\Data", false)]
         [InlineData(@"\\server\share", true)]
         [InlineData(@"\\10.0.0.5\share", true)]
+        [InlineData(@"\\wsl$\Ubuntu\mnt\data", true)]
         public void ShouldUseConfiguredCredential_DistinguishesLocalAndUncPaths(string path, bool expected)
         {
             Assert.Equal(expected, ScanCredentialPathPolicy.ShouldUseConfiguredCredential(path));
