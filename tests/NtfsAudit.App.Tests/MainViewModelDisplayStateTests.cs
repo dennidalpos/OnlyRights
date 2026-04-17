@@ -145,6 +145,7 @@ namespace NtfsAudit.App.Tests
         [Fact]
         public void ScheduleEditor_DisablesSaveAndShowsValidation_WhenTimeIsInvalid()
         {
+            LocalizationManager.Apply(new ResourceDictionary(), "en");
             var viewModel = new MainViewModel();
             viewModel.ScanRoots.Add(@"C:\Data");
 
@@ -163,6 +164,7 @@ namespace NtfsAudit.App.Tests
         [Fact]
         public void ScheduleEditor_ShowsReadyHint_WhenNameRootsAndTimeAreValid()
         {
+            LocalizationManager.Apply(new ResourceDictionary(), "en");
             var viewModel = new MainViewModel();
             viewModel.ScanRoots.Add(@"C:\Data");
 
@@ -181,6 +183,7 @@ namespace NtfsAudit.App.Tests
         [Fact]
         public void ServiceInstallationState_RefreshesServiceAndScheduleButtons()
         {
+            LocalizationManager.Apply(new ResourceDictionary(), "en");
             var viewModel = new MainViewModel();
             viewModel.ScanRoots.Add(@"C:\Data");
             viewModel.ScheduleName = "Nightly";

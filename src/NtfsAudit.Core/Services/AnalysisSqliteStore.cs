@@ -333,9 +333,15 @@ namespace NtfsAudit.App.Services
             summary.IsInheritanceDisabled = summary.IsInheritanceDisabled || entry.IsInheritanceDisabled;
             summary.HasFileEntries = summary.HasFileEntries || string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase);
             summary.HasFolderEntries = summary.HasFolderEntries || !string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase);
-            summary.HasHighRiskEntries = summary.HasHighRiskEntries || string.Equals(entry.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase);
-            summary.HasMediumRiskEntries = summary.HasMediumRiskEntries || string.Equals(entry.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase);
-            summary.HasLowRiskEntries = summary.HasLowRiskEntries || string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase);
+            summary.HasHighRiskEntries = summary.HasHighRiskEntries
+                || string.Equals(entry.RiskLevel, "High", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entry.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase);
+            summary.HasMediumRiskEntries = summary.HasMediumRiskEntries
+                || string.Equals(entry.RiskLevel, "Medium", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entry.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase);
+            summary.HasLowRiskEntries = summary.HasLowRiskEntries
+                || string.Equals(entry.RiskLevel, "Low", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase);
             summary.HasShareEntries = summary.HasShareEntries || entry.PermissionLayer == PermissionLayer.Share;
             summary.HasEffectiveEntries = summary.HasEffectiveEntries || entry.PermissionLayer == PermissionLayer.Effective;
         }

@@ -57,8 +57,8 @@ Build, test, packaging, MSI, service, and CI-facing commands are kept in the tec
 
 ## Current Status
 
-- The current workspace verification pass executed `pwsh -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -SkipBuild`, `pwsh -File .\scripts\build.ps1 -Configuration Release -SkipRestore`, `pwsh -File .\scripts\test.ps1 -Configuration Release -SkipRestore`, `pwsh -File .\scripts\pack.ps1 -Configuration Release -SkipRestore -SkipBuild`, and `pwsh -File .\scripts\publish.ps1 -Configuration Release` successfully on April 17, 2026.
-- `pwsh -File .\scripts\test.ps1 -Configuration Release -SkipRestore` passed 139 tests in this workspace.
+- The current workspace verification pass executed `pwsh -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -SkipBuild`, `pwsh -File .\scripts\build.ps1 -Configuration Release -SkipRestore`, `pwsh -File .\scripts\test.ps1 -Configuration Release -SkipRestore`, `pwsh -File .\scripts\pack.ps1 -Configuration Release -SkipRestore -SkipBuild`, and `pwsh -File .\scripts\publish.ps1 -Configuration Release` successfully on April 18, 2026.
+- `pwsh -File .\scripts\test.ps1 -Configuration Release -SkipRestore` passed 149 tests in this workspace.
 - Repository-aligned residual work is tracked in [PROJECT_STATUS.json](PROJECT_STATUS.json) when real open tasks remain.
 
 ## Technical Documentation

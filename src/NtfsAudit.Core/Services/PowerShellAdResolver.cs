@@ -158,7 +158,7 @@ namespace NtfsAudit.App.Services
             var trimmed = output.Trim();
             if (!(trimmed.StartsWith("{") || trimmed.StartsWith("[")))
             {
-                SetDiagnostic("Output JSON non valido da PowerShell AD.");
+                SetDiagnostic("Invalid JSON output from PowerShell AD.");
                 return false;
             }
 
@@ -170,7 +170,7 @@ namespace NtfsAudit.App.Services
             }
             catch
             {
-                SetDiagnostic("Output JSON non valido da PowerShell AD.");
+                SetDiagnostic("Invalid JSON output from PowerShell AD.");
                 return false;
             }
         }
@@ -201,7 +201,7 @@ namespace NtfsAudit.App.Services
             }
 
             AvailabilityDiagnostic = string.IsNullOrWhiteSpace(LastDiagnostic)
-                ? "Modulo ActiveDirectory non disponibile in PowerShell."
+                ? "ActiveDirectory module is unavailable in PowerShell."
                 : LastDiagnostic;
             Debug.WriteLine(string.Format("[PowerShellAdResolver] unavailable: {0}", AvailabilityDiagnostic));
             return false;
@@ -217,7 +217,7 @@ namespace NtfsAudit.App.Services
                 executionResult = _scriptExecutor(script);
                 if (executionResult == null)
                 {
-                    SetDiagnostic(string.Format("PowerShell AD non ha prodotto un risultato durante {0}.", operation));
+                    SetDiagnostic(string.Format("PowerShell AD produced no result during {0}.", operation));
                     return null;
                 }
 
@@ -226,7 +226,7 @@ namespace NtfsAudit.App.Services
 
             if (!_fileExists(_powershellPath))
             {
-                SetDiagnostic(string.Format("powershell.exe non trovato: {0}", _powershellPath));
+                SetDiagnostic(string.Format("powershell.exe was not found: {0}", _powershellPath));
                 return null;
             }
 
@@ -246,7 +246,7 @@ namespace NtfsAudit.App.Services
                 {
                     if (process == null)
                     {
-                        SetDiagnostic("Impossibile avviare powershell.exe.");
+                        SetDiagnostic("Unable to start powershell.exe.");
                         return null;
                     }
 
@@ -262,7 +262,7 @@ namespace NtfsAudit.App.Services
                         {
                         }
 
-                        SetDiagnostic(string.Format("Timeout PowerShell AD durante {0}.", operation));
+                        SetDiagnostic(string.Format("PowerShell AD timed out during {0}.", operation));
                         return null;
                     }
 
@@ -276,7 +276,7 @@ namespace NtfsAudit.App.Services
             }
             catch (Exception ex)
             {
-                SetDiagnostic(string.Format("Errore esecuzione PowerShell AD durante {0}: {1}", operation, ex.Message));
+                SetDiagnostic(string.Format("PowerShell AD execution error during {0}: {1}", operation, ex.Message));
                 return null;
             }
 
@@ -291,7 +291,7 @@ namespace NtfsAudit.App.Services
             if (executionResult.ExitCode != 0)
             {
                 SetDiagnostic(string.Format(
-                    "PowerShell AD fallito durante {0} (exit code {1}): {2}",
+                    "PowerShell AD failed during {0} (exit code {1}): {2}",
                     operation,
                     executionResult.ExitCode,
                     TruncateDiagnostic(string.IsNullOrWhiteSpace(error) ? output : error)));
@@ -303,7 +303,7 @@ namespace NtfsAudit.App.Services
                 if (!string.IsNullOrWhiteSpace(error))
                 {
                     SetDiagnostic(string.Format(
-                        "PowerShell AD non ha prodotto output valido durante {0}: {1}",
+                        "PowerShell AD produced no valid output during {0}: {1}",
                         operation,
                         TruncateDiagnostic(error)));
                 }

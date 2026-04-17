@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Windows;
 using NtfsAudit.App.Models;
 using NtfsAudit.App.Services;
 using Newtonsoft.Json;
@@ -76,7 +77,7 @@ namespace NtfsAudit.App.Tests
 
                     Assert.Equal(0, removedEntries);
                     Assert.Single(diagnostics);
-                    Assert.Contains("Impossibile rimuovere file runtime", diagnostics[0], StringComparison.Ordinal);
+                    Assert.Contains("Unable to remove runtime file", diagnostics[0], StringComparison.Ordinal);
                 }
             }
             finally
@@ -88,6 +89,7 @@ namespace NtfsAudit.App.Tests
         [Fact]
         public void ServiceRuntimeStatusPresenter_FormatsRunningQueueState()
         {
+            LocalizationManager.Apply(new ResourceDictionary(), "en");
             var presenter = new ServiceRuntimeStatusPresenter();
 
             var state = presenter.Build(
@@ -229,7 +231,7 @@ namespace NtfsAudit.App.Tests
 
                 var finalStatus = statuses.Last();
                 Assert.False(finalStatus.IsRunning);
-                Assert.Equal("Ultimo job completato", finalStatus.LastMessage);
+                Assert.Equal("Last job completed", finalStatus.LastMessage);
                 Assert.Equal(0, finalStatus.PendingJobs);
             }
             finally
@@ -263,7 +265,7 @@ namespace NtfsAudit.App.Tests
                 var quarantinedFiles = Directory.GetFiles(Path.Combine(jobsRoot, "invalid"), "job_invalid_*.json");
                 Assert.Single(quarantinedFiles);
                 Assert.True(File.Exists(quarantinedFiles[0] + ".txt"));
-                Assert.Contains(statuses, status => !status.IsRunning && status.LastMessage.IndexOf("Job non valido isolato", StringComparison.OrdinalIgnoreCase) >= 0);
+                Assert.Contains(statuses, status => !status.IsRunning && status.LastMessage.IndexOf("Invalid job quarantined", StringComparison.OrdinalIgnoreCase) >= 0);
             }
             finally
             {
@@ -315,8 +317,8 @@ namespace NtfsAudit.App.Tests
                 worker.ProcessJobs(CancellationToken.None);
 
                 Assert.Equal(new[] { @"C:\broken-root", @"C:\healthy-root" }, executedRoots);
-                Assert.Contains(statuses, status => status.LastMessage.IndexOf("Errore servizio (scansione root 1/2): scan boom", StringComparison.OrdinalIgnoreCase) >= 0);
-                Assert.Contains("1 errore di scansione", statuses.Last().LastMessage, StringComparison.OrdinalIgnoreCase);
+                Assert.Contains(statuses, status => status.LastMessage.IndexOf("Service error (root scan 1/2): scan boom", StringComparison.OrdinalIgnoreCase) >= 0);
+                Assert.Contains("1 scan error", statuses.Last().LastMessage, StringComparison.OrdinalIgnoreCase);
             }
             finally
             {

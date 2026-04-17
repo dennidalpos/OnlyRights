@@ -61,6 +61,19 @@ namespace NtfsAudit.App.Tests
             Assert.DoesNotContain("INSTALLFOLDER=$resolvedInstallRoot", upgradeScript, StringComparison.Ordinal);
         }
 
+        [Fact]
+        public void MsiUninstallScript_VerifiesServiceAndInstallRootWithoutCleanupHelper()
+        {
+            var uninstallScript = LoadScript("scripts", "packaging", "msi-uninstall-test.ps1");
+
+            Assert.Contains("Get-ServiceScriptContext", uninstallScript, StringComparison.Ordinal);
+            Assert.Contains("Get-ServiceState", uninstallScript, StringComparison.Ordinal);
+            Assert.Contains("MSI uninstall left service", uninstallScript, StringComparison.Ordinal);
+            Assert.Contains("MSI uninstall left install root on disk", uninstallScript, StringComparison.Ordinal);
+            Assert.DoesNotContain("services-cleanup.ps1", uninstallScript, StringComparison.Ordinal);
+            Assert.DoesNotContain("Remove-Item -Path $resolvedInstallRoot", uninstallScript, StringComparison.Ordinal);
+        }
+
         private static string LoadScript(params string[] pathSegments)
         {
             var root = FindRepositoryRoot();

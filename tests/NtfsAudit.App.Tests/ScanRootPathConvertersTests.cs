@@ -24,6 +24,7 @@ namespace NtfsAudit.App.Tests
         [Fact]
         public void LabelConverter_ReturnsExpectedLabelsForKnownPathKinds()
         {
+            LocalizationManager.Apply(new ResourceDictionary(), "en");
             var converter = new ScanRootPathKindLabelConverter();
             var dfsPath = BuildUniqueDfsPath();
             SeedDfsTargets(dfsPath, new List<string>
@@ -35,7 +36,7 @@ namespace NtfsAudit.App.Tests
             try
             {
                 Assert.Equal("Local", converter.Convert(@"C:\data", typeof(string), null, CultureInfo.InvariantCulture));
-                Assert.Equal("WSL Share", converter.Convert(@"\\wsl$\Ubuntu\mnt\data", typeof(string), null, CultureInfo.InvariantCulture));
+                Assert.Equal("WSL UNC", converter.Convert(@"\\wsl$\Ubuntu\mnt\data", typeof(string), null, CultureInfo.InvariantCulture));
                 Assert.Equal("DFS", converter.Convert(dfsPath, typeof(string), null, CultureInfo.InvariantCulture));
                 Assert.Equal("Unsupported", converter.Convert("nfs://server/export/share", typeof(string), null, CultureInfo.InvariantCulture));
                 Assert.Equal("Unknown", converter.Convert(null, typeof(string), null, CultureInfo.InvariantCulture));

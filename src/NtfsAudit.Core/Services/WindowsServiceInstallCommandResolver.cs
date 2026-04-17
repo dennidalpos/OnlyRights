@@ -74,7 +74,7 @@ namespace NtfsAudit.App.Services
         {
             if (string.IsNullOrWhiteSpace(serviceCommand))
             {
-                throw new InvalidOperationException("Percorso servizio non valido.");
+                throw new InvalidOperationException("Service path is invalid.");
             }
 
             var sanitizedCommand = serviceCommand.Replace("\"", string.Empty);

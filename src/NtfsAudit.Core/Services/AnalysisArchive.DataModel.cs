@@ -132,9 +132,15 @@ namespace NtfsAudit.App.Services
 
                 detail.HasFileEntries = detail.HasFileEntries || string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase);
                 detail.HasFolderEntries = detail.HasFolderEntries || !string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase);
-                detail.HasHighRiskEntries = detail.HasHighRiskEntries || string.Equals(entry.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase);
-                detail.HasMediumRiskEntries = detail.HasMediumRiskEntries || string.Equals(entry.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase);
-                detail.HasLowRiskEntries = detail.HasLowRiskEntries || string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase);
+                detail.HasHighRiskEntries = detail.HasHighRiskEntries
+                    || string.Equals(entry.RiskLevel, "High", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(entry.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase);
+                detail.HasMediumRiskEntries = detail.HasMediumRiskEntries
+                    || string.Equals(entry.RiskLevel, "Medium", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(entry.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase);
+                detail.HasLowRiskEntries = detail.HasLowRiskEntries
+                    || string.Equals(entry.RiskLevel, "Low", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase);
             }
 
             return details;

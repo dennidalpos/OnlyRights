@@ -37,7 +37,7 @@ namespace NtfsAudit.App.Tests
                 @"\\server\share\report.txt",
                 _ => FileAttributes.Normal);
 
-            Assert.Equal(@"Il percorso selezionato è un file e non una cartella: \\server\share\report.txt", message);
+            Assert.Equal(@"The selected path is a file, not a folder: \\server\share\report.txt", message);
         }
 
         [Fact]
@@ -48,7 +48,7 @@ namespace NtfsAudit.App.Tests
                 _ => FileAttributes.Directory);
 
             Assert.Equal(
-                "Percorso o provider non supportato in ambiente Windows: nfs://server/export/share",
+                "Unsupported path or provider in Windows: nfs://server/export/share",
                 message);
         }
 
@@ -62,7 +62,7 @@ namespace NtfsAudit.App.Tests
                 @"\\server\share",
                 new InvalidOperationException(errorMessage));
 
-            Assert.Equal(@"Credenziali non valide o rifiutate per il percorso: \\server\share", message);
+            Assert.Equal(@"Invalid or rejected credentials for path: \\server\share", message);
         }
 
         [Fact]
@@ -72,7 +72,7 @@ namespace NtfsAudit.App.Tests
                 @"\\server\share",
                 new Win32Exception(1326));
 
-            Assert.Equal(@"Credenziali non valide o rifiutate per il percorso: \\server\share", message);
+            Assert.Equal(@"Invalid or rejected credentials for path: \\server\share", message);
         }
 
         [Fact]
@@ -82,7 +82,7 @@ namespace NtfsAudit.App.Tests
                 @"\\server\share",
                 new UnauthorizedAccessException("denied"));
 
-            Assert.Equal(@"Accesso negato al percorso: \\server\share", message);
+            Assert.Equal(@"Access denied for path: \\server\share", message);
         }
 
         [Fact]
@@ -92,7 +92,7 @@ namespace NtfsAudit.App.Tests
                 @"\\server\share",
                 new IOException("network path not found"));
 
-            Assert.Equal(@"Percorso non valido o non raggiungibile: \\server\share", message);
+            Assert.Equal(@"Path is invalid or unreachable: \\server\share", message);
         }
 
         [Fact]
@@ -102,7 +102,7 @@ namespace NtfsAudit.App.Tests
                 @"\\server\share",
                 new NotSupportedException("filesystem unsupported"));
 
-            Assert.Equal(@"Filesystem o provider non supportato per il percorso: \\server\share", message);
+            Assert.Equal(@"Unsupported filesystem or provider for path: \\server\share", message);
         }
 
         [Fact]
@@ -112,7 +112,7 @@ namespace NtfsAudit.App.Tests
                 @"\\server\share",
                 new PrivilegeNotHeldException("SeSecurityPrivilege"));
 
-            Assert.Equal(@"Privilegi insufficienti per leggere owner o audit del percorso: \\server\share. La scansione prosegue con i dati disponibili.", message);
+            Assert.Equal(@"Insufficient privileges to read owner or audit data for path: \\server\share. The scan continues with the available data.", message);
         }
 
         [Fact]
@@ -132,7 +132,7 @@ namespace NtfsAudit.App.Tests
                 path => throw new UnauthorizedAccessException("denied"));
 
             Assert.False(result.IsBlocking);
-            Assert.Equal(@"Accesso negato al percorso: \\server\share", result.Message);
+            Assert.Equal(@"Access denied for path: \\server\share", result.Message);
         }
     }
 }

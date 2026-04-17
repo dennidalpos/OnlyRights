@@ -98,7 +98,7 @@ namespace NtfsAudit.App.Services
             }
             catch (Exception ex)
             {
-                AddDiagnostic(diagnostics, string.Format("Impossibile rimuovere directory runtime: {0}. Dettagli: {1}", directoryPath, ex.Message));
+                AddDiagnostic(diagnostics, string.Format("Unable to remove runtime directory: {0}. Details: {1}", directoryPath, ex.Message));
                 return 0;
             }
         }
@@ -128,7 +128,7 @@ namespace NtfsAudit.App.Services
             }
             catch (Exception ex)
             {
-                AddDiagnostic(diagnostics, string.Format("Impossibile rimuovere file runtime: {0}. Dettagli: {1}", path, ex.Message));
+                AddDiagnostic(diagnostics, string.Format("Unable to remove runtime file: {0}. Details: {1}", path, ex.Message));
                 return 0;
             }
         }

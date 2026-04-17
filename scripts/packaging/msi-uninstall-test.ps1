@@ -11,6 +11,7 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 . (Join-Path $PSScriptRoot "..\helpers\msi.ps1")
+. (Join-Path $PSScriptRoot "..\helpers\windows-service.ps1")
 
 $context = Get-MsiScriptContext -ScriptRoot (Join-Path $PSScriptRoot "..")
 $resolvedMsiPath = if ($MsiPath) {
@@ -38,11 +39,15 @@ if ($exitCode -ne 0) {
     throw ("MSI uninstall failed with exit code {0}. See {1}." -f $exitCode, $logPath)
 }
 
-if (Test-Path $resolvedInstallRoot) {
-    Remove-Item -Path $resolvedInstallRoot -Recurse -Force -ErrorAction SilentlyContinue
+$serviceContext = Get-ServiceScriptContext -ScriptRoot (Join-Path $PSScriptRoot "..")
+$serviceState = Get-ServiceState -ServiceName $serviceContext.ServiceName
+if ($serviceState.IsInstalled) {
+    throw ("MSI uninstall left service '{0}' installed." -f $serviceContext.ServiceName)
 }
 
-& (Join-Path $PSScriptRoot "..\windows\services-cleanup.ps1")
+if (Test-Path $resolvedInstallRoot) {
+    throw ("MSI uninstall left install root on disk: {0}" -f $resolvedInstallRoot)
+}
 
 Write-Host "[NtfsAudit] MSI uninstall test completed." -ForegroundColor Cyan
 Write-Host ("  MSI: {0}" -f $resolvedMsiPath)

@@ -40,7 +40,7 @@ namespace NtfsAudit.App.Services
             {
                 if (accessSections.HasFlag(AccessControlSections.Audit))
                 {
-                    auditFailureReason = "SACL non disponibile (privilegi)";
+                    auditFailureReason = "SACL unavailable (privileges)";
                 }
                 if (incrementError != null)
                 {
@@ -75,7 +75,7 @@ namespace NtfsAudit.App.Services
             {
                 if (accessSections.HasFlag(AccessControlSections.Audit))
                 {
-                    auditFailureReason = "SACL non disponibile (accesso negato)";
+                    auditFailureReason = "SACL unavailable (access denied)";
                 }
                 if (incrementError != null)
                 {
@@ -157,15 +157,15 @@ namespace NtfsAudit.App.Services
             }
             catch (PrivilegeNotHeldException)
             {
-                return "SACL non disponibile (privilegi)";
+                return "SACL unavailable (privileges)";
             }
             catch (UnauthorizedAccessException)
             {
-                return "SACL non disponibile (accesso negato)";
+                return "SACL unavailable (access denied)";
             }
             catch (InvalidOperationException)
             {
-                return "SACL non disponibile (sezione audit mancante)";
+                return "SACL unavailable (audit section missing)";
             }
             catch
             {
@@ -181,12 +181,12 @@ namespace NtfsAudit.App.Services
             }
 
             var summary = BuildAuditSummary(security, options);
-            return string.IsNullOrWhiteSpace(summary) ? "Nessuna voce SACL" : summary;
+            return string.IsNullOrWhiteSpace(summary) ? "No SACL entries" : summary;
         }
 
         private static string EvaluateRisk(AceEntry entry)
         {
-            if (entry == null) return "Basso";
+            if (entry == null) return "Low";
             var allow = string.Equals(entry.AllowDeny, "Allow", StringComparison.OrdinalIgnoreCase);
             var principal = entry.PrincipalSid ?? entry.PrincipalName ?? string.Empty;
             var rightsSummary = string.IsNullOrWhiteSpace(entry.EffectiveRightsSummary)
@@ -199,21 +199,21 @@ namespace NtfsAudit.App.Services
 
             if (allow && isBroadPrincipal && rank >= 4)
             {
-                return "Alto";
+                return "High";
             }
             if (allow && (isBroadPrincipal && rank >= 2))
             {
-                return "Medio";
+                return "Medium";
             }
             if (!allow)
             {
-                return "Medio";
+                return "Medium";
             }
             if (entry.IsInheritanceDisabled)
             {
-                return "Medio";
+                return "Medium";
             }
-            return "Basso";
+            return "Low";
         }
 
         private static bool IsEveryone(string sidOrName)
@@ -237,9 +237,15 @@ namespace NtfsAudit.App.Services
             detail.HasEffectiveEntries = detail.EffectiveEntries.Count > 0;
             detail.HasFileEntries = detail.AllEntries.Any(entry => string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase));
             detail.HasFolderEntries = detail.AllEntries.Any(entry => !string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase));
-            detail.HasHighRiskEntries = detail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase));
-            detail.HasMediumRiskEntries = detail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase));
-            detail.HasLowRiskEntries = detail.AllEntries.Any(entry => string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase));
+            detail.HasHighRiskEntries = detail.AllEntries.Any(entry =>
+                string.Equals(entry.RiskLevel, "High", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entry.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase));
+            detail.HasMediumRiskEntries = detail.AllEntries.Any(entry =>
+                string.Equals(entry.RiskLevel, "Medium", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entry.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase));
+            detail.HasLowRiskEntries = detail.AllEntries.Any(entry =>
+                string.Equals(entry.RiskLevel, "Low", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase));
         }
 
         private static bool IsDfsCachePath(string path)

@@ -82,7 +82,7 @@ namespace NtfsAudit.Service
                 }
                 catch (Exception ex)
                 {
-                    ReportWorkerError("loop principale", ex, 0, null, null, 0, 0, 0);
+                    ReportWorkerError("main loop", ex, 0, null, null, 0, 0, 0);
                 }
 
                 try
@@ -107,7 +107,7 @@ namespace NtfsAudit.Service
                     PendingJobs = 0,
                     RemainingRootsInCurrentJob = 0,
                     LastUpdateUtc = DateTime.UtcNow,
-                    LastMessage = "In attesa di job"
+                    LastMessage = "Waiting for jobs"
                 }, scheduleSummary));
                 return;
             }
@@ -119,7 +119,7 @@ namespace NtfsAudit.Service
                 PendingJobs = files.Length,
                 RemainingRootsInCurrentJob = 0,
                 LastUpdateUtc = DateTime.UtcNow,
-                LastMessage = files.Length > 0 ? "Job in coda" : "In attesa di job"
+                LastMessage = files.Length > 0 ? "Jobs queued" : "Waiting for jobs"
             }, scheduleSummary));
 
             for (var fileIndex = 0; fileIndex < files.Length; fileIndex++)
@@ -149,8 +149,8 @@ namespace NtfsAudit.Service
                         RemainingRootsInCurrentJob = Math.Max(0, optionsList.Count - (index + 1)),
                         StartedAtUtc = startedAt,
                         LastUpdateUtc = DateTime.UtcNow,
-                        CurrentActivity = string.IsNullOrWhiteSpace(job.JobId) ? "Scansione in corso" : string.Format("Esecuzione job {0}", job.JobId),
-                        LastMessage = string.Format("Scansione root {0}/{1}", index + 1, optionsList.Count)
+                        CurrentActivity = string.IsNullOrWhiteSpace(job.JobId) ? "Scan running" : string.Format("Running job {0}", job.JobId),
+                        LastMessage = string.Format("Scanning root {0}/{1}", index + 1, optionsList.Count)
                     }, scheduleSummary));
 
                     try
@@ -165,7 +165,7 @@ namespace NtfsAudit.Service
                     {
                         failedRoots++;
                         ReportWorkerError(
-                            string.Format("scansione root {0}/{1}", index + 1, optionsList.Count),
+                            string.Format("root scan {0}/{1}", index + 1, optionsList.Count),
                             ex,
                             Math.Max(0, files.Length - fileIndex - 1),
                             job.JobId,
@@ -212,11 +212,11 @@ namespace NtfsAudit.Service
                 ? Directory.GetFiles(_jobsRoot, "job_*.json").Length
                 : Math.Max(0, pendingJobs - fileIndex - 1);
             var lastMessage = quarantined
-                ? string.Format("Job non valido isolato: {0}", failureReason ?? "errore sconosciuto")
+                ? string.Format("Invalid job quarantined: {0}", failureReason ?? "unknown error")
                 : string.Format(
-                    "Job non valido rimosso dopo errore quarantena: {0} ({1})",
-                    failureReason ?? "errore sconosciuto",
-                    quarantineError == null ? "errore non disponibile" : quarantineError.Message);
+                    "Invalid job removed after quarantine failure: {0} ({1})",
+                    failureReason ?? "unknown error",
+                    quarantineError == null ? "error unavailable" : quarantineError.Message);
 
             UpdateServiceStatus(BuildStatus(new ServiceRuntimeStatus
             {
@@ -233,14 +233,14 @@ namespace NtfsAudit.Service
             if (failedRoots > 0)
             {
                 var errorSummary = failedRoots == 1
-                    ? "1 errore di scansione"
-                    : string.Format("{0} errori di scansione", failedRoots);
+                    ? "1 scan error"
+                    : string.Format("{0} scan errors", failedRoots);
                 return pendingJobs > 0
-                    ? string.Format("Job completato con {0}, altri job in coda", errorSummary)
-                    : string.Format("Ultimo job completato con {0}", errorSummary);
+                    ? string.Format("Job completed with {0}; other jobs are queued", errorSummary)
+                    : string.Format("Last job completed with {0}", errorSummary);
             }
 
-            return pendingJobs > 0 ? "Job completato, altri job in coda" : "Ultimo job completato";
+            return pendingJobs > 0 ? "Job completed; other jobs are queued" : "Last job completed";
         }
 
         private void UpdateServiceStatus(ServiceRuntimeStatus status)
@@ -256,7 +256,7 @@ namespace NtfsAudit.Service
             }
             catch (Exception ex)
             {
-                TryWriteConsoleError(string.Format("Errore aggiornamento stato servizio: {0}", ex));
+                TryWriteConsoleError(string.Format("Service status update error: {0}", ex));
             }
         }
 
@@ -277,9 +277,9 @@ namespace NtfsAudit.Service
             int remainingRoots)
         {
             var message = string.Format(
-                "Errore servizio ({0}): {1}",
-                string.IsNullOrWhiteSpace(context) ? "contesto sconosciuto" : context,
-                exception == null ? "errore non disponibile" : exception.Message);
+                "Service error ({0}): {1}",
+                string.IsNullOrWhiteSpace(context) ? "unknown context" : context,
+                exception == null ? "error unavailable" : exception.Message);
 
             TryWriteConsoleError(exception == null ? message : string.Format("{0}{1}{2}", message, Environment.NewLine, exception));
             UpdateServiceStatus(new ServiceRuntimeStatus
@@ -406,7 +406,7 @@ namespace NtfsAudit.Service
             {
                 status.CurrentActivity = scheduleSummary == null || scheduleSummary.DefinitionCount == 0
                     ? "Service idle"
-                    : string.Format("Scheduler attivo ({0} definizioni)", scheduleSummary.EnabledDefinitionCount);
+                    : string.Format("Scheduler active ({0} definitions)", scheduleSummary.EnabledDefinitionCount);
             }
 
             return status;
@@ -438,7 +438,7 @@ namespace NtfsAudit.Service
                     snapshot.UpdatedAtUtc = DateTime.UtcNow;
                     if (string.IsNullOrWhiteSpace(snapshot.LastMessage))
                     {
-                        snapshot.LastMessage = definition.IsEnabled ? "In attesa della prossima esecuzione" : "Schedule disabilitata";
+                        snapshot.LastMessage = definition.IsEnabled ? "Waiting for the next run" : "Schedule disabled";
                     }
                     continue;
                 }
@@ -452,7 +452,7 @@ namespace NtfsAudit.Service
                 snapshot.LastEnqueuedRunLocal = dueRunLocal;
                 snapshot.LastJobCreatedAtUtc = DateTime.UtcNow;
                 snapshot.LastJobId = job.JobId;
-                snapshot.LastMessage = string.Format("Job schedulato per {0}", dueRunLocal.ToString("g"));
+                snapshot.LastMessage = string.Format("Job scheduled for {0}", dueRunLocal.ToString("g"));
                 snapshot.NextRunLocal = evaluation.NextRunLocal;
                 snapshot.UpdatedAtUtc = DateTime.UtcNow;
             }

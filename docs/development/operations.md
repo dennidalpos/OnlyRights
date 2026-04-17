@@ -188,6 +188,8 @@ MSI uninstall:
 pwsh -File .\scripts\packaging\msi-uninstall-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic
 ```
 
+The uninstall smoke now fails if `msiexec /x` leaves either the `NtfsAuditWorker` service registration or the requested install root on disk.
+
 MSI upgrade:
 
 ```powershell
@@ -210,7 +212,7 @@ Locale smoke path:
 1. Start `NtfsAudit.App`.
 2. Confirm the first-run UI is English when no `ui-preferences.json` locale is present.
 3. Switch the selector to `Italiano`.
-4. Confirm toolbar, sidebar, tree, status, and dialog text update without restart.
+4. Confirm toolbar, root input, tree, status, and dialog text update without restart.
 5. Restart the app and confirm the selected locale is persisted.
 
 ## Cleanup

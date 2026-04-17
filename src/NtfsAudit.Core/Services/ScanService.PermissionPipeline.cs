@@ -118,7 +118,7 @@ namespace NtfsAudit.App.Services
                 {
                     FolderPath = folderKey,
                     TargetPath = targetPath,
-                    ResourceType = isFile ? "File" : "Cartella",
+                    ResourceType = isFile ? "File" : "Folder",
                     Owner = owner,
                     AuditSummary = auditSummary,
                     PrincipalName = resolved.Name,
@@ -138,7 +138,7 @@ namespace NtfsAudit.App.Services
                     AppliesToFiles = scope.AppliesToFiles,
                     InheritanceFlags = rule.InheritanceFlags.ToString(),
                     PropagationFlags = rule.PropagationFlags.ToString(),
-                    Source = isFile ? "File" : "Diretto",
+                    Source = isFile ? "File" : "Direct",
                     Depth = depth,
                     IsDisabled = resolved.IsDisabled,
                     IsServiceAccount = resolved.IsServiceAccount,
@@ -170,7 +170,7 @@ namespace NtfsAudit.App.Services
                 {
                     foreach (var member in members)
                     {
-                        var source = string.Format("Gruppo:{0}", resolved.Name);
+                        var source = string.Format("Group:{0}", resolved.Name);
                         if (options.ResolveIdentities && options.ExcludeServiceAccounts && member.IsServiceAccount)
                         {
                             continue;
@@ -183,7 +183,7 @@ namespace NtfsAudit.App.Services
                         {
                             FolderPath = folderKey,
                             TargetPath = targetPath,
-                            ResourceType = isFile ? "File" : "Cartella",
+                            ResourceType = isFile ? "File" : "Folder",
                             Owner = owner,
                             AuditSummary = auditSummary,
                             PrincipalName = member.Name,
@@ -360,7 +360,7 @@ namespace NtfsAudit.App.Services
                 {
                     FolderPath = folderKey,
                     TargetPath = targetPath,
-                    ResourceType = isFile ? "File" : "Cartella",
+                    ResourceType = isFile ? "File" : "Folder",
                     Owner = owner,
                     AuditSummary = auditSummary,
                     PrincipalName = resolved.Name,
@@ -450,7 +450,7 @@ namespace NtfsAudit.App.Services
                 {
                     FolderPath = folderKey,
                     TargetPath = targetPath,
-                    ResourceType = isFile ? "File" : "Cartella",
+                    ResourceType = isFile ? "File" : "Folder",
                     Owner = owner,
                     AuditSummary = auditSummary,
                     PrincipalName = resolved.Name,
@@ -518,7 +518,7 @@ namespace NtfsAudit.App.Services
                 {
                     var message = string.IsNullOrWhiteSpace(diagnostic.TechnicalDetails)
                         ? diagnostic.Message
-                        : string.Format("{0} Dettagli: {1}", diagnostic.Message, diagnostic.TechnicalDetails);
+                        : string.Format("{0} Details: {1}", diagnostic.Message, diagnostic.TechnicalDetails);
                     errorQueue.Add(BuildErrorEntry(diagnostic.Path, diagnostic.ErrorType, message));
                 }
 

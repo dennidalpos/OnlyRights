@@ -27,7 +27,7 @@ namespace NtfsAudit.App.Tests
                 new PrivilegeNotHeldException("SeSecurityPrivilege"));
 
             Assert.Equal("SecurityPrivilegeUnavailable", entry.ErrorType);
-            Assert.Contains("La scansione prosegue con i dati disponibili.", entry.Message, StringComparison.Ordinal);
+            Assert.Contains("The scan continues with the available data.", entry.Message, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -38,7 +38,7 @@ namespace NtfsAudit.App.Tests
                 new NotSupportedException("unsupported filesystem"));
 
             Assert.Equal("PathUnsupported", entry.ErrorType);
-            Assert.Contains(@"Filesystem o provider non supportato per il percorso: \\server\share", entry.Message, StringComparison.Ordinal);
+            Assert.Contains(@"Unsupported filesystem or provider for path: \\server\share", entry.Message, StringComparison.Ordinal);
         }
 
         [Fact]
@@ -49,7 +49,7 @@ namespace NtfsAudit.App.Tests
                 new IOException("network path not found"));
 
             Assert.Equal("PathUnavailable", entry.ErrorType);
-            Assert.Contains(@"Percorso non valido o non raggiungibile: \\server\share", entry.Message, StringComparison.Ordinal);
+            Assert.Contains(@"Path is invalid or unreachable: \\server\share", entry.Message, StringComparison.Ordinal);
         }
     }
 }

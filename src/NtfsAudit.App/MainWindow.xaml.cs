@@ -13,6 +13,7 @@ using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Threading;
 using WinForms = System.Windows.Forms;
 using NtfsAudit.App.Services;
@@ -191,6 +192,18 @@ namespace NtfsAudit.App
             {
                 e.Cancel = true;
             }
+        }
+
+        private void MainWindow_OnPreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            var viewModel = DataContext as MainViewModel;
+            if (viewModel == null || !viewModel.IsSettingsOpen || e == null || e.Key != Key.Escape)
+            {
+                return;
+            }
+
+            viewModel.CloseSettingsCommand.Execute(null);
+            e.Handled = true;
         }
     }
 }

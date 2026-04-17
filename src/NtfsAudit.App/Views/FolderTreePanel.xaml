@@ -2,158 +2,197 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Border Style="{StaticResource PanelBorderStyle}">
-          <Grid>
-            <Grid.RowDefinitions>
-              <RowDefinition Height="Auto" />
-              <RowDefinition Height="Auto" />
-              <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" Text="{DynamicResource Tree.Title}" Style="{StaticResource SectionHeaderText}" />
-            <StackPanel Grid.Row="1" Margin="0,0,0,8">
-              <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,8,0" Content="{DynamicResource Tree.ExpandAll}" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
-                <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,0,6" Content="{DynamicResource Tree.CollapseAll}" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
-              </StackPanel>
-              <Expander Header="{DynamicResource Tree.LegendFilters}" IsExpanded="False" IsEnabled="{Binding HasScanResult}">
-                <StackPanel Margin="0,6,0,0">
-                  <TextBlock Text="{DynamicResource Tree.BadgesHint}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,6" />
-                  <TextBlock Text="{DynamicResource Tree.Filters}" Style="{StaticResource SubsectionHeaderText}" />
-                  <WrapPanel Margin="0,0,0,4">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="{DynamicResource Tree.ExplicitNtfs.ToolTip}">
-                                            <Border Background="#FF00897B" Style="{StaticResource InlineCompactBadgeBorderStyle}"><TextBlock Text="N" Style="{StaticResource CompactBadgeText}" /></Border>
-                      <CheckBox Content="{DynamicResource Tree.ExplicitNtfs}" IsChecked="{Binding TreeFilterExplicitOnly}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="{DynamicResource Tree.Protected.ToolTip}">
-                                            <Border Background="#FFC62828" Style="{StaticResource InlineCompactBadgeBorderStyle}"><TextBlock Text="P" Style="{StaticResource CompactBadgeText}" /></Border>
-                      <CheckBox Content="{DynamicResource Tree.Protected}" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="{DynamicResource Tree.DiffParent.ToolTip}">
-                                            <Border Background="#FF455A64" Style="{StaticResource InlineCompactBadgeBorderStyle}"><TextBlock Text="DP" Style="{StaticResource CompactBadgeText}" /></Border>
-                      <CheckBox Content="{DynamicResource Tree.DiffParent}" IsChecked="{Binding TreeFilterDiffOnly}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="{DynamicResource Tree.ExplicitDeny.ToolTip}">
-                                            <Border Background="#FFAD1457" Style="{StaticResource InlineCompactBadgeBorderStyle}"><TextBlock Text="D" Style="{StaticResource CompactBadgeText}" /></Border>
-                      <CheckBox Content="{DynamicResource Tree.ExplicitDeny}" IsChecked="{Binding TreeFilterExplicitDenyOnly}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="{DynamicResource Tree.BaselineMismatch.ToolTip}">
-                                            <Border Background="#FF455A64" Style="{StaticResource InlineCompactBadgeBorderStyle}"><TextBlock Text="B" Style="{StaticResource CompactBadgeText}" /></Border>
-                      <CheckBox Content="{DynamicResource Tree.BaselineMismatch}" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="{DynamicResource Tree.WithFiles.ToolTip}">
-                                            <Border Background="#FF616161" Style="{StaticResource InlineCompactBadgeBorderStyle}"><TextBlock Text="F" Style="{StaticResource CompactBadgeText}" /></Border>
-                      <CheckBox Content="{DynamicResource Tree.WithFiles}" IsChecked="{Binding TreeFilterFilesOnly}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4" ToolTip="{DynamicResource Tree.FoldersOnly.ToolTip}">
-                                            <Border Background="#FF455A64" Style="{StaticResource InlineCompactBadgeBorderStyle}"><TextBlock Text="C" Style="{StaticResource CompactBadgeText}" /></Border>
-                      <CheckBox Content="{DynamicResource Tree.FoldersOnly}" IsChecked="{Binding TreeFilterFoldersOnly}" />
-                    </StackPanel>
-                  </WrapPanel>
-                  <TextBlock Text="{DynamicResource Tree.BadgesLegend}" Style="{StaticResource MicrocopyText}" />
-                  <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Tree.ResetFilters}" Width="140" Margin="0,0,0,8" Command="{Binding ResetTreeFiltersCommand}" />
-                                  </StackPanel>
-              </Expander>
-            </StackPanel>
-            <Border Grid.Row="2"
-                    Style="{StaticResource EmptyStateBorderStyle}"
-                    Visibility="{Binding HasNoScanResult, Converter={StaticResource BooleanToVisibilityConverter}}">
-              <TextBlock Text="{DynamicResource Tree.Empty}"
-                         Style="{StaticResource EmptyStateText}" />
-            </Border>
-            <TreeView x:Name="FolderTreeView" Grid.Row="2" ItemsSource="{Binding FolderTree}" AutomationProperties.Name="{DynamicResource Tree.AutomationName}" Visibility="{Binding HasScanResult, Converter={StaticResource BooleanToVisibilityConverter}}" SelectedItemChanged="TreeView_OnSelectedItemChanged" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling">
-              <TreeView.ItemContainerStyle>
-                <Style TargetType="TreeViewItem">
-                  <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                  <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
-                  <Setter Property="Background" Value="Transparent" />
-                  <Setter Property="Foreground" Value="#FF212121" />
-                  <Style.Triggers>
-                    <Trigger Property="IsSelected" Value="True">
-                      <Setter Property="Background" Value="#FFBBDEFB" />
-                      <Setter Property="Foreground" Value="#FF0D47A1" />
-                      <Setter Property="FontWeight" Value="SemiBold" />
-                    </Trigger>
-                  </Style.Triggers>
-                </Style>
-              </TreeView.ItemContainerStyle>
-              <TreeView.ItemTemplate>
-                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{DynamicResource Tree.RootTypeLabel}" Margin="0,0,6,0" Foreground="#FF546E7A" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding DisplayName}" />
-                    <Border Background="#FFC62828" ToolTip="{DynamicResource Tree.ProtectedBadge.ToolTip}"><Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
-                          <Setter Property="Visibility" Value="Collapsed" />
-                          <Setter Property="Margin" Value="6,0,0,0" />
-                          <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsProtected}" Value="True">
-                              <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </Border.Style>
-                      <TextBlock Text="P" Style="{StaticResource CompactBadgeText}" />
-                    </Border>
-                    <Border Background="#FF455A64" ToolTip="{DynamicResource Tree.DiffBadge.ToolTip}">
-                      <Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
-                          <Setter Property="Visibility" Value="Collapsed" />
-                          <Setter Property="Margin" Value="6,0,0,0" />
-                          <Style.Triggers>
-                            <DataTrigger Binding="{Binding HasDiff}" Value="True">
-                              <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </Border.Style>
-                      <TextBlock Text="{Binding DiffLabel}" Style="{StaticResource CompactBadgeText}" />
-                    </Border>
-                    <Border Background="#FFAD1457" ToolTip="{DynamicResource Tree.DenyBadge.ToolTip}">
-                      <Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
-                          <Setter Property="Visibility" Value="Collapsed" />
-                          <Setter Property="Margin" Value="6,0,0,0" />
-                          <Style.Triggers>
-                            <DataTrigger Binding="{Binding HasDenyExplicit}" Value="True">
-                              <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </Border.Style>
-                      <TextBlock Text="{Binding DenyExplicitLabel}" Style="{StaticResource CompactBadgeText}" />
-                    </Border>
-                    <Border Background="#FF455A64" ToolTip="{DynamicResource Tree.BaselineBadge.ToolTip}">
-                      <Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
-                          <Setter Property="Visibility" Value="Collapsed" />
-                          <Setter Property="Margin" Value="6,0,0,0" />
-                          <Style.Triggers>
-                            <DataTrigger Binding="{Binding HasBaselineMismatch}" Value="True">
-                              <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </Border.Style>
-                      <TextBlock Text="{Binding BaselineMismatchLabel}" Style="{StaticResource CompactBadgeText}" />
-                    </Border>
-                    <Border Background="#FF00897B" ToolTip="{DynamicResource Tree.ExplicitNtfsBadge.ToolTip}">
-                      <Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
-                          <Setter Property="Visibility" Value="Collapsed" />
-                          <Setter Property="Margin" Value="6,0,0,0" />
-                          <Style.Triggers>
-                            <DataTrigger Binding="{Binding HasExplicitNtfs}" Value="True">
-                              <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </Border.Style>
-                      <TextBlock Text="{Binding ExplicitNtfsLabel}" Style="{StaticResource CompactBadgeText}" />
-                    </Border>
-                  </StackPanel>
-                </HierarchicalDataTemplate>
-              </TreeView.ItemTemplate>
-            </TreeView>
-          </Grid>
-        </Border>
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
 
+      <TextBlock Grid.Row="0" Text="{DynamicResource Tree.Title}" Style="{StaticResource SectionHeaderText}" />
+
+      <Grid Grid.Row="1" Margin="0,0,0,10">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <WrapPanel Grid.Row="0" Margin="0,0,0,8">
+          <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,8,0" Content="{DynamicResource Tree.ExpandAll}" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
+          <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,0,0" Content="{DynamicResource Tree.CollapseAll}" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
+        </WrapPanel>
+
+        <Expander Grid.Row="1"
+                  Header="{DynamicResource Tree.LegendFilters}"
+                  IsExpanded="False"
+                  IsEnabled="{Binding HasScanResult}">
+          <Border Background="{StaticResource SurfaceMutedBrush}"
+                  BorderBrush="{StaticResource BorderSoftBrush}"
+                  BorderThickness="1"
+                  CornerRadius="6"
+                  Padding="10"
+                  Margin="0,4,0,0">
+            <StackPanel>
+              <WrapPanel Margin="0,0,0,6">
+                <StackPanel Orientation="Horizontal" Margin="0,0,10,6" ToolTip="{DynamicResource Tree.ExplicitNtfs.ToolTip}">
+                  <Border Background="#FF00897B" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+                    <TextBlock Text="N" Style="{StaticResource CompactBadgeText}" />
+                  </Border>
+                  <CheckBox Content="{DynamicResource Tree.ExplicitNtfs}" IsChecked="{Binding TreeFilterExplicitOnly}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,10,6" ToolTip="{DynamicResource Tree.Protected.ToolTip}">
+                  <Border Background="#FFC62828" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+                    <TextBlock Text="P" Style="{StaticResource CompactBadgeText}" />
+                  </Border>
+                  <CheckBox Content="{DynamicResource Tree.Protected}" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,10,6" ToolTip="{DynamicResource Tree.DiffParent.ToolTip}">
+                  <Border Background="#FF455A64" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+                    <TextBlock Text="DP" Style="{StaticResource CompactBadgeText}" />
+                  </Border>
+                  <CheckBox Content="{DynamicResource Tree.DiffParent}" IsChecked="{Binding TreeFilterDiffOnly}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,10,6" ToolTip="{DynamicResource Tree.ExplicitDeny.ToolTip}">
+                  <Border Background="#FFAD1457" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+                    <TextBlock Text="D" Style="{StaticResource CompactBadgeText}" />
+                  </Border>
+                  <CheckBox Content="{DynamicResource Tree.ExplicitDeny}" IsChecked="{Binding TreeFilterExplicitDenyOnly}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,10,6" ToolTip="{DynamicResource Tree.BaselineMismatch.ToolTip}">
+                  <Border Background="#FF455A64" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+                    <TextBlock Text="B" Style="{StaticResource CompactBadgeText}" />
+                  </Border>
+                  <CheckBox Content="{DynamicResource Tree.BaselineMismatch}" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,10,6" ToolTip="{DynamicResource Tree.WithFiles.ToolTip}">
+                  <Border Background="#FF616161" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+                    <TextBlock Text="F" Style="{StaticResource CompactBadgeText}" />
+                  </Border>
+                  <CheckBox Content="{DynamicResource Tree.WithFiles}" IsChecked="{Binding TreeFilterFilesOnly}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,10,6" ToolTip="{DynamicResource Tree.FoldersOnly.ToolTip}">
+                  <Border Background="#FF455A64" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+                    <TextBlock Text="C" Style="{StaticResource CompactBadgeText}" />
+                  </Border>
+                  <CheckBox Content="{DynamicResource Tree.FoldersOnly}" IsChecked="{Binding TreeFilterFoldersOnly}" />
+                </StackPanel>
+              </WrapPanel>
+              <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Tree.ResetFilters}" Width="138" Margin="0" Command="{Binding ResetTreeFiltersCommand}" />
+            </StackPanel>
+          </Border>
+        </Expander>
+      </Grid>
+
+      <Border Grid.Row="2"
+              Style="{StaticResource EmptyStateBorderStyle}"
+              Visibility="{Binding HasNoScanResult, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <TextBlock Text="{DynamicResource Tree.Empty}"
+                   Style="{StaticResource EmptyStateText}" />
+      </Border>
+
+      <TreeView x:Name="FolderTreeView"
+                Grid.Row="2"
+                ItemsSource="{Binding FolderTree}"
+                AutomationProperties.Name="{DynamicResource Tree.AutomationName}"
+                Visibility="{Binding HasScanResult, Converter={StaticResource BooleanToVisibilityConverter}}"
+                SelectedItemChanged="TreeView_OnSelectedItemChanged"
+                VirtualizingStackPanel.IsVirtualizing="True"
+                VirtualizingStackPanel.VirtualizationMode="Recycling">
+        <TreeView.ItemContainerStyle>
+          <Style TargetType="TreeViewItem">
+            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Padding" Value="2" />
+            <Style.Triggers>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="#FFDCEBFA" />
+                <Setter Property="Foreground" Value="#FF0B457D" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+              </Trigger>
+            </Style.Triggers>
+          </Style>
+        </TreeView.ItemContainerStyle>
+        <TreeView.ItemTemplate>
+          <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+            <StackPanel Orientation="Horizontal" Margin="0,1,0,1">
+              <TextBlock Text="{DynamicResource Tree.RootTypeLabel}" Margin="0,0,6,0" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+              <Border Background="#FFC62828" ToolTip="{DynamicResource Tree.ProtectedBadge.ToolTip}">
+                <Border.Style>
+                  <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Setter Property="Margin" Value="6,0,0,0" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsProtected}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <TextBlock Text="P" Style="{StaticResource CompactBadgeText}" />
+              </Border>
+              <Border Background="#FF455A64" ToolTip="{DynamicResource Tree.DiffBadge.ToolTip}">
+                <Border.Style>
+                  <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Setter Property="Margin" Value="6,0,0,0" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding HasDiff}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <TextBlock Text="{Binding DiffLabel}" Style="{StaticResource CompactBadgeText}" />
+              </Border>
+              <Border Background="#FFAD1457" ToolTip="{DynamicResource Tree.DenyBadge.ToolTip}">
+                <Border.Style>
+                  <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Setter Property="Margin" Value="6,0,0,0" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding HasDenyExplicit}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <TextBlock Text="{Binding DenyExplicitLabel}" Style="{StaticResource CompactBadgeText}" />
+              </Border>
+              <Border Background="#FF455A64" ToolTip="{DynamicResource Tree.BaselineBadge.ToolTip}">
+                <Border.Style>
+                  <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Setter Property="Margin" Value="6,0,0,0" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding HasBaselineMismatch}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <TextBlock Text="{Binding BaselineMismatchLabel}" Style="{StaticResource CompactBadgeText}" />
+              </Border>
+              <Border Background="#FF00897B" ToolTip="{DynamicResource Tree.ExplicitNtfsBadge.ToolTip}">
+                <Border.Style>
+                  <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Setter Property="Margin" Value="6,0,0,0" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding HasExplicitNtfs}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <TextBlock Text="{Binding ExplicitNtfsLabel}" Style="{StaticResource CompactBadgeText}" />
+              </Border>
+            </StackPanel>
+          </HierarchicalDataTemplate>
+        </TreeView.ItemTemplate>
+      </TreeView>
+    </Grid>
+  </Border>
 </UserControl>

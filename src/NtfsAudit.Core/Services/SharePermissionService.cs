@@ -185,13 +185,13 @@ namespace NtfsAudit.App.Services
             switch (errorType)
             {
                 case "SharePermissionsAccessDenied":
-                    return string.Format("Permessi share SMB non letti per {0}: accesso negato o credenziali rifiutate.", rootPath);
+                    return string.Format("SMB share permissions were not read for {0}: access denied or credentials rejected.", rootPath);
                 case "SharePermissionsUnsupported":
-                    return string.Format("Permessi share SMB non letti per {0}: share o provider WMI/SMB non compatibile.", rootPath);
+                    return string.Format("SMB share permissions were not read for {0}: share or WMI/SMB provider is not supported.", rootPath);
                 case "SharePermissionsUnavailable":
-                    return string.Format("Permessi share SMB non letti per {0}: host/share non raggiungibile o WMI non disponibile.", rootPath);
+                    return string.Format("SMB share permissions were not read for {0}: host/share is unreachable or WMI is unavailable.", rootPath);
                 default:
-                    return string.Format("Permessi share SMB non letti per {0}: errore imprevisto.", rootPath);
+                    return string.Format("SMB share permissions were not read for {0}: unexpected error.", rootPath);
             }
         }
 

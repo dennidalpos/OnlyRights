@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Windows.Threading;
 using Newtonsoft.Json;
 using NtfsAudit.App.Models;
@@ -144,6 +145,32 @@ namespace NtfsAudit.App.ViewModels
             OnPropertyChanged("AvailableScheduleDayOptions");
             OnPropertyChanged("SelectedScheduleDayOption");
             OnPropertyChanged("ServiceSchedulingAvailabilityText");
+            OnPropertyChanged("HasSelectedAcquisitionWarnings");
+
+            if (ScanRoots.Count > 0)
+            {
+                var selectedRoot = SelectedScanRoot;
+                var roots = ScanRoots.ToList();
+                _suspendUiPreferencePersistence = true;
+                try
+                {
+                    ScanRoots.Clear();
+                    foreach (var root in roots)
+                    {
+                        ScanRoots.Add(root);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(selectedRoot))
+                    {
+                        SelectedScanRoot = ScanRoots.FirstOrDefault(root => string.Equals(root, selectedRoot, StringComparison.OrdinalIgnoreCase));
+                    }
+                }
+                finally
+                {
+                    _suspendUiPreferencePersistence = false;
+                }
+            }
+
             RefreshServiceRuntimeStatus();
             if (_scanResult != null && !string.IsNullOrWhiteSpace(SelectedFolderPath))
             {

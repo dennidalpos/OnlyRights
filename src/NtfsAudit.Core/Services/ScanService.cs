@@ -143,16 +143,16 @@ namespace NtfsAudit.App.Services
 
                             if (progress != null)
                             {
-                                progress.Report(new ScanProgress
-                                {
-                                    Processed = processedCount,
-                                    FilesProcessed = Volatile.Read(ref processedFiles),
-                                    Errors = Volatile.Read(ref errorCount),
-                                    Elapsed = stopwatch.Elapsed,
-                                    Stage = "Enumerazione cartelle",
-                                    CurrentPath = current
-                                });
-                            }
+                                    progress.Report(new ScanProgress
+                                    {
+                                        Processed = processedCount,
+                                        FilesProcessed = Volatile.Read(ref processedFiles),
+                                        Errors = Volatile.Read(ref errorCount),
+                                        Elapsed = stopwatch.Elapsed,
+                                        Stage = "Folder enumeration",
+                                        CurrentPath = current
+                                    });
+                                }
 
                             var hasChildren = false;
                             if (depth < options.MaxDepth)
@@ -187,7 +187,7 @@ namespace NtfsAudit.App.Services
                                             FilesProcessed = Volatile.Read(ref processedFiles),
                                             Errors = Volatile.Read(ref errorCount),
                                             Elapsed = stopwatch.Elapsed,
-                                            Stage = "Errore",
+                                            Stage = "Error",
                                             CurrentPath = current
                                         });
                                     }
@@ -207,7 +207,7 @@ namespace NtfsAudit.App.Services
                                     FilesProcessed = Volatile.Read(ref processedFiles),
                                     Errors = Volatile.Read(ref errorCount),
                                     Elapsed = stopwatch.Elapsed,
-                                    Stage = "Lettura ACL",
+                                    Stage = "ACL read",
                                     CurrentPath = current
                                 });
                             }
@@ -255,7 +255,7 @@ namespace NtfsAudit.App.Services
                                             FilesProcessed = Volatile.Read(ref processedFiles),
                                             Errors = Volatile.Read(ref errorCount),
                                             Elapsed = stopwatch.Elapsed,
-                                            Stage = "Lettura ACL file",
+                                            Stage = "File ACL read",
                                             CurrentPath = current
                                         });
                                     }
@@ -311,7 +311,7 @@ namespace NtfsAudit.App.Services
                                         FilesProcessed = Volatile.Read(ref processedFiles),
                                         Errors = Volatile.Read(ref errorCount),
                                         Elapsed = stopwatch.Elapsed,
-                                        Stage = "Errore",
+                                        Stage = "Error",
                                         CurrentPath = current
                                     });
                                 }

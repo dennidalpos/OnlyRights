@@ -105,6 +105,21 @@ namespace NtfsAudit.App.Tests
             Assert.Contains("Service running", viewState.StatusText);
         }
 
+        [Fact]
+        public void ScanRootPathKindConverter_UsesLocalizedResourceStrings()
+        {
+            var resources = new ResourceDictionary();
+            var converter = new ScanRootPathKindLabelConverter();
+
+            LocalizationManager.Apply(resources, "en");
+            Assert.Equal("Local", converter.Convert(@"C:\Data", typeof(string), null, null));
+            Assert.Equal("UNC / SMB", converter.Convert(@"\\server\share", typeof(string), null, null));
+
+            LocalizationManager.Apply(resources, "it");
+            Assert.Equal("Locale", converter.Convert(@"C:\Data", typeof(string), null, null));
+            Assert.Equal("UNC / SMB", converter.Convert(@"\\server\share", typeof(string), null, null));
+        }
+
         private static SortedSet<string> LoadResourceKeys(string fileName)
         {
             var root = FindRepositoryRoot();

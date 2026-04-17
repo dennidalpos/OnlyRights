@@ -9,6 +9,7 @@
         MinWidth="920"
         MinHeight="560"
         FontFamily="Segoe UI, Microsoft YaHei UI, Microsoft JhengHei UI, Yu Gothic UI"
+        PreviewKeyDown="MainWindow_OnPreviewKeyDown"
         Closing="MainWindow_OnClosing">
   <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
     <Grid x:Name="ContentGrid" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsEnabled="{Binding IsNotBusy}">
@@ -17,9 +18,13 @@
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
-      <Border Grid.Row="0" Padding="12" BorderBrush="#DDDDDD" BorderThickness="0,0,0,1">
+      <Border Grid.Row="0"
+              Style="{StaticResource PanelBorderStyle}"
+              Margin="16,14,16,0"
+              Padding="14">
         <Grid>
           <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
@@ -30,61 +35,91 @@
               <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <WrapPanel Grid.Column="0">
+            <WrapPanel Grid.Column="0" VerticalAlignment="Center">
               <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.StartAnalysis}" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" ToolTip="{DynamicResource Main.StartAnalysis.ToolTip}" />
               <Button Style="{StaticResource SecondaryActionButtonStyle}" Content="{DynamicResource Main.StopAndClean}" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" ToolTip="{DynamicResource Main.StopAndClean.ToolTip}" />
               <Button Style="{StaticResource SecondaryActionButtonStyle}" Content="{DynamicResource Main.ImportAnalysis}" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" ToolTip="{DynamicResource Main.ImportAnalysis.ToolTip}" />
               <Button Style="{StaticResource SecondaryActionButtonStyle}" Content="{DynamicResource Main.ExportExcel}" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" ToolTip="{DynamicResource Main.ExportExcel.ToolTip}" />
-              <Button Style="{StaticResource SecondaryActionButtonStyle}" Content="{DynamicResource Main.CleanupResiduals}" Command="{Binding CleanupResidualFilesCommand}" ToolTip="{DynamicResource Main.CleanupResiduals.ToolTip}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
             </WrapPanel>
 
             <Button Grid.Column="1"
                     Style="{StaticResource SecondaryActionButtonStyle}"
-                    Margin="12,0,0,6"
+                    Margin="12,0,0,0"
                     Content="{DynamicResource Main.Settings}"
                     Command="{Binding ToggleSettingsCommand}"
                     Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
           </Grid>
 
-          <Grid Grid.Row="1" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="*" />
-              <ColumnDefinition Width="12" />
-              <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+          <Border Grid.Row="1"
+                  Margin="0,14,0,10"
+                  Style="{StaticResource SupportPanelBorderStyle}"
+                  Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+              <TextBlock Text="{DynamicResource Scan.FoldersToScan}" Style="{StaticResource SubsectionHeaderText}" />
+              <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="2.6*" />
+                  <ColumnDefinition Width="12" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0">
-              <Border Style="{StaticResource SupportPanelBorderStyle}" Padding="10" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Grid>
+                <Grid Grid.Column="0">
                   <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                   </Grid.RowDefinitions>
-                  <TextBlock Text="{DynamicResource Scan.FoldersToScan}" Style="{StaticResource SubsectionHeaderText}" Margin="0,0,0,6" />
-                  <Grid Grid.Row="1" Margin="0,0,0,8">
+                  <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="Auto" />
                       <ColumnDefinition Width="*" />
                       <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,8,0" Content="{DynamicResource Common.Browse}" Command="{Binding BrowseCommand}" />
-                    <TextBox Grid.Column="1" Style="{StaticResource FieldTextBoxStyle}" Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}" />
-                    <Button Grid.Column="2" Style="{StaticResource InlineActionButtonStyle}" Margin="8,0,0,0" Content="{DynamicResource Common.Add}" Command="{Binding AddScanRootCommand}" />
+                    <Button Grid.Column="0"
+                            Style="{StaticResource InlineActionButtonStyle}"
+                            Margin="0,0,8,0"
+                            Content="{DynamicResource Common.Browse}"
+                            AutomationProperties.Name="{DynamicResource Scan.RootBrowse.AutomationName}"
+                            Command="{Binding BrowseCommand}" />
+                    <TextBox Grid.Column="1"
+                             Style="{StaticResource FieldTextBoxStyle}"
+                             AutomationProperties.Name="{DynamicResource Scan.RootPath.AutomationName}"
+                             ToolTip="{DynamicResource Scan.RootPath.ToolTip}"
+                             Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}" />
+                    <Button Grid.Column="2"
+                            Style="{StaticResource InlineActionButtonStyle}"
+                            Margin="8,0,0,0"
+                            Content="{DynamicResource Common.Add}"
+                            AutomationProperties.Name="{DynamicResource Scan.RootAdd.AutomationName}"
+                            Command="{Binding AddScanRootCommand}" />
                   </Grid>
+                  <StackPanel Grid.Row="1" Margin="0,0,0,8">
+                    <TextBlock Text="{DynamicResource Scan.FoldersHint}"
+                               Style="{StaticResource MicrocopyText}"
+                               ToolTip="{DynamicResource Scan.FoldersHint.ToolTip}"
+                               TextWrapping="Wrap" />
+                    <TextBlock Text="{DynamicResource Scan.StartHint}"
+                               Style="{StaticResource MicrocopyText}"
+                               Margin="0,4,0,0"
+                               TextWrapping="Wrap"
+                               Visibility="{Binding ShouldShowStartHint, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                  </StackPanel>
                   <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="2*" />
-                      <ColumnDefinition Width="Auto" />
                       <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <ListBox Grid.Column="0" Height="84" ItemsSource="{Binding ScanRoots}" SelectedItem="{Binding SelectedScanRoot}">
+                    <ListBox Grid.Column="0" Height="88" ItemsSource="{Binding ScanRoots}" SelectedItem="{Binding SelectedScanRoot}">
                       <ListBox.ItemTemplate>
                         <DataTemplate>
-                          <Border Padding="4" Margin="0,1" CornerRadius="3" Background="{Binding Converter={StaticResource ScanRootPathKindBrushConverter}}">
-                            <DockPanel>
-                              <Border Background="#FF37474F" CornerRadius="8" Padding="6,1" Margin="6,0,0,0" DockPanel.Dock="Right">
-                                <TextBlock Text="{Binding Converter={StaticResource ScanRootPathKindLabelConverter}}" Foreground="White" FontSize="10" />
+                          <Border Padding="6" Margin="0,1" CornerRadius="4" Background="{Binding Converter={StaticResource ScanRootPathKindBrushConverter}}">
+                            <DockPanel LastChildFill="True">
+                              <Border Background="#FF334155" CornerRadius="10" Padding="7,1" Margin="8,0,0,0" DockPanel.Dock="Right">
+                                <TextBlock Text="{Binding Converter={StaticResource ScanRootPathKindLabelConverter}}" Foreground="White" FontSize="10" FontWeight="SemiBold" />
                               </Border>
                               <TextBlock Text="{Binding}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                             </DockPanel>
@@ -92,70 +127,100 @@
                         </DataTemplate>
                       </ListBox.ItemTemplate>
                     </ListBox>
-                    <Button Grid.Column="1" Style="{StaticResource InlineActionButtonStyle}" Margin="12,0,0,0" Content="{DynamicResource Common.Remove}" VerticalAlignment="Top" Command="{Binding RemoveScanRootCommand}" />
-                    <StackPanel Grid.Column="2" Margin="12,0,0,0">
-                      <TextBlock Text="{Binding PathCompatibilitySummaryText}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
-                      <TextBlock Text="{Binding SelectedScanRootEffectiveCredentialSource}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
-                      <TextBlock Text="{Binding ServiceScheduleSummaryText}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
-                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Style="{StaticResource InlineActionButtonStyle}"
+                            Margin="10,0,0,0"
+                            Content="{DynamicResource Common.Remove}"
+                            AutomationProperties.Name="{DynamicResource Scan.RemoveRoot.AutomationName}"
+                            VerticalAlignment="Top"
+                            Command="{Binding RemoveScanRootCommand}" />
                   </Grid>
                 </Grid>
-              </Border>
 
-              <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                <Border Background="{Binding ServiceBadgeBackground}" BorderBrush="#FFCFD8DC" Style="{StaticResource StatusBadgeBorderStyle}">
-                  <TextBlock Text="{Binding ServiceBadgeText}" Foreground="White" FontWeight="SemiBold" />
-                </Border>
-                <TextBlock Text="{Binding ServiceRuntimeStatusText}" Style="{StaticResource MicrocopyText}" Margin="12,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />
-              </StackPanel>
-              <Border Style="{StaticResource NeutralInfoCardBorderStyle}" Padding="10,6" Margin="0,8,0,0">
-                <TextBlock Text="{Binding ProgressText}" Style="{StaticResource MicrocopyText}" Margin="0" TextWrapping="Wrap" />
-              </Border>
-            </StackPanel>
+                <StackPanel Grid.Column="2">
+                  <Border Style="{StaticResource NeutralInfoCardBorderStyle}" Margin="0,0,0,8">
+                    <StackPanel>
+                      <TextBlock Text="{DynamicResource Scan.Compatibility}" Style="{StaticResource InfoLabelText}" />
+                      <TextBlock Text="{Binding PathCompatibilitySummaryText}" Style="{StaticResource MicrocopyText}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource NeutralInfoCardBorderStyle}">
+                    <StackPanel>
+                      <TextBlock Text="{DynamicResource Scan.Credentials}" Style="{StaticResource InfoLabelText}" />
+                      <TextBlock Text="{Binding SelectedScanRootEffectiveCredentialSource}" Style="{StaticResource MicrocopyText}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
+              </Grid>
+            </Grid>
+          </Border>
 
-            <StackPanel Grid.Column="2" HorizontalAlignment="Right">
-              <Border Background="#FFFFF3CD" BorderBrush="#FFFFEEBA" Style="{StaticResource StatusBadgeBorderStyle}" Padding="8,3"
-                      HorizontalAlignment="Right"
-                      Visibility="{Binding IsNotElevated, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <TextBlock Text="{DynamicResource Common.NonAdmin}" Foreground="#FF856404" FontWeight="SemiBold" />
-              </Border>
-            </StackPanel>
+          <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource NeutralInfoCardBorderStyle}" Padding="10,7" Margin="0,0,12,0">
+              <TextBlock Text="{Binding ProgressText}" Style="{StaticResource MicrocopyText}" Margin="0" TextWrapping="Wrap" />
+            </Border>
+
+            <Border Grid.Column="1"
+                    Background="{Binding ServiceBadgeBackground}"
+                    BorderBrush="{StaticResource BorderSoftBrush}"
+                    Style="{StaticResource StatusBadgeBorderStyle}">
+              <TextBlock Text="{Binding ServiceBadgeText}" Foreground="White" FontWeight="SemiBold" />
+            </Border>
+
+            <Border Grid.Column="2"
+                    Style="{StaticResource WarningStatusBadgeBorderStyle}"
+                    Margin="8,0,0,0"
+                    Visibility="{Binding IsNotElevated, Converter={StaticResource BooleanToVisibilityConverter}}">
+              <TextBlock Text="{DynamicResource Common.NonAdmin}" Foreground="{StaticResource WarningTextBrush}" FontWeight="SemiBold" />
+            </Border>
           </Grid>
         </Grid>
       </Border>
 
-      <Grid Grid.Row="1" Margin="12">
+      <Grid Grid.Row="1" Margin="16,12,16,16">
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="290" MinWidth="240" />
-          <ColumnDefinition Width="8" />
+          <ColumnDefinition Width="300" MinWidth="246" />
+          <ColumnDefinition Width="10" />
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <views:FolderTreePanel Grid.Column="0" />
-        <GridSplitter Grid.Column="1" Width="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FFE0E0E0" />
+        <GridSplitter Grid.Column="1" Width="10" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent" />
         <views:ResultsPanel Grid.Column="2" />
       </Grid>
     </Grid>
 
-    <Border Background="#66000000"
+    <Border Background="#540F172A"
             Visibility="{Binding IsSettingsOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
-      <Grid HorizontalAlignment="Right" Width="420" MaxWidth="420" Background="White">
+      <Grid HorizontalAlignment="Right" Width="460" MaxWidth="460" Background="{StaticResource AppBackgroundBrush}">
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
           <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <DockPanel Grid.Row="0" Margin="12,12,12,0">
-          <TextBlock Text="{DynamicResource Main.Settings}" Style="{StaticResource SectionHeaderText}" DockPanel.Dock="Left" />
-          <Button Content="{DynamicResource Common.Close}" Width="88" HorizontalAlignment="Right" Command="{Binding CloseSettingsCommand}" />
-        </DockPanel>
+        <Border Grid.Row="0"
+                Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource BorderSoftBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="16,14">
+          <DockPanel LastChildFill="False">
+            <TextBlock Text="{DynamicResource Main.Settings}" Style="{StaticResource SectionHeaderText}" Margin="0" DockPanel.Dock="Left" />
+            <Button Content="{DynamicResource Common.Close}" Style="{StaticResource SecondaryActionButtonStyle}" MinWidth="92" Command="{Binding CloseSettingsCommand}" />
+          </DockPanel>
+        </Border>
         <views:SettingsPanel Grid.Row="1"
-                             Margin="12"
+                             Margin="14"
                              Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
       </Grid>
     </Border>
 
-    <Border Background="#80000000" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-      <Border Background="White" Padding="24" CornerRadius="6" HorizontalAlignment="Center" VerticalAlignment="Center">
+    <Border Background="#800F172A" Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+      <Border Background="{StaticResource SurfaceBrush}" Padding="24" CornerRadius="8" HorizontalAlignment="Center" VerticalAlignment="Center">
         <StackPanel>
           <TextBlock Text="{DynamicResource Common.OperationInProgress}" FontWeight="SemiBold" Margin="0,0,0,12" HorizontalAlignment="Center" />
           <ProgressBar Width="240" Height="16" IsIndeterminate="True" />

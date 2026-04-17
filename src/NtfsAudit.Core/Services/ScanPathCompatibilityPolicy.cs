@@ -58,8 +58,8 @@ namespace NtfsAudit.App.Services
         public static string BuildUnsupportedRootMessage(string rootPath)
         {
             return string.Format(
-                "Percorso o provider non supportato in ambiente Windows: {0}",
-                string.IsNullOrWhiteSpace(rootPath) ? "(vuoto)" : rootPath);
+                "Unsupported path or provider in Windows: {0}",
+                string.IsNullOrWhiteSpace(rootPath) ? "(empty)" : rootPath);
         }
 
         public static bool LooksLikeUnsupportedRoot(string rootPath)
@@ -106,30 +106,30 @@ namespace NtfsAudit.App.Services
 
             if (!isSupported)
             {
-                reasons.Add("La root selezionata non usa un percorso filesystem Windows supportato.");
+                reasons.Add("The selected root does not use a supported Windows filesystem path.");
                 disabledOptions.Add("scan");
             }
 
             if (!supportsCredential)
             {
-                reasons.Add("Le credenziali globali si applicano solo a percorsi UNC/DFS/WSL esposti da Windows.");
+                reasons.Add("Global credentials apply only to UNC/DFS/WSL paths exposed by Windows.");
                 disabledOptions.Add("credential");
             }
 
             if (!supportsSharePermissions)
             {
-                reasons.Add("I permessi share SMB sono disponibili solo per share UNC/DFS.");
+                reasons.Add("SMB share permissions are available only for UNC/DFS shares.");
                 disabledOptions.Add("share");
             }
 
             if (normalizedKinds.Contains(PathKind.WslUnc))
             {
-                reasons.Add("I percorsi \\\\wsl$ sono trattati come UNC Windows, ma senza un layer share SMB separato.");
+                reasons.Add("\\\\wsl$ paths are treated as Windows UNC paths, but without a separate SMB share layer.");
             }
 
             if (normalizedKinds.Contains(PathKind.Dfs))
             {
-                reasons.Add("Le namespace DFS restano supportate; i job vengono eseguiti sul target UNC effettivo selezionato.");
+                reasons.Add("DFS namespaces remain supported; jobs run against the selected effective UNC target.");
             }
 
             var effectivePathKind = normalizedKinds.Count == 1
@@ -138,9 +138,9 @@ namespace NtfsAudit.App.Services
                     ? PathKind.Unsupported
                     : PathKind.Unknown;
             var summary = !isSupported
-                ? "Alcune opzioni sono bloccate perché una o più root non sono compatibili con Windows."
+                ? "Some options are blocked because one or more roots are not compatible with Windows."
                 : reasons.Count == 0
-                    ? "Le opzioni selezionate sono compatibili con la root corrente."
+                    ? "The selected options are compatible with the current root."
                     : string.Join(" ", reasons);
 
             return new ScanPathCompatibilityEvaluation

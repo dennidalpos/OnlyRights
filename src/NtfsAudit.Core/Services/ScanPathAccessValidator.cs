@@ -67,7 +67,7 @@ namespace NtfsAudit.App.Services
             var attributes = attributeReader(rootPath);
             if ((attributes & FileAttributes.Directory) == 0)
             {
-                return string.Format("Il percorso selezionato è un file e non una cartella: {0}", rootPath);
+                return string.Format("The selected path is a file, not a folder: {0}", rootPath);
             }
 
             return null;

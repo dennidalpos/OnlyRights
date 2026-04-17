@@ -51,11 +51,14 @@ namespace NtfsAudit.App.Services
             detail.HasFolderEntries = detail.HasFolderEntries || allEntries.Any(entry =>
                 !string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase));
             detail.HasHighRiskEntries = detail.HasHighRiskEntries || allEntries.Any(entry =>
-                string.Equals(entry.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase));
+                string.Equals(entry.RiskLevel, "High", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entry.RiskLevel, "Alto", StringComparison.OrdinalIgnoreCase));
             detail.HasMediumRiskEntries = detail.HasMediumRiskEntries || allEntries.Any(entry =>
-                string.Equals(entry.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase));
+                string.Equals(entry.RiskLevel, "Medium", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entry.RiskLevel, "Medio", StringComparison.OrdinalIgnoreCase));
             detail.HasLowRiskEntries = detail.HasLowRiskEntries || allEntries.Any(entry =>
-                string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase));
+                string.Equals(entry.RiskLevel, "Low", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(entry.RiskLevel, "Basso", StringComparison.OrdinalIgnoreCase));
             detail.HasShareEntries = detail.HasShareEntries
                 || detail.ShareEntries.Count > 0
                 || allEntries.Any(entry => entry.PermissionLayer == PermissionLayer.Share);

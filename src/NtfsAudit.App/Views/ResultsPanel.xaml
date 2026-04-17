@@ -2,500 +2,541 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Border Style="{StaticResource PanelBorderStyle}">
-          <Grid>
-            <Grid.RowDefinitions>
-              <RowDefinition Height="Auto" />
-              <RowDefinition Height="Auto" />
-              <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <StackPanel Grid.Row="0">
-              <TextBlock Text="{DynamicResource Results.Title}" Style="{StaticResource SectionHeaderText}" />
-              <WrapPanel Margin="0,0,0,4" IsEnabled="{Binding HasScanResult}" Visibility="{Binding HasScanResult, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFE3F2FD" BorderBrush="#FFBBDEFB">
-                  <StackPanel>
-                    <TextBlock Text="{DynamicResource Results.TotalAce}" Style="{StaticResource InfoLabelText}" />
-                    <TextBlock Text="{Binding SummaryTotalEntries}" Style="{StaticResource InfoValueText}" />
-                  </StackPanel>
-                </Border>
-                <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFFFEBEE" BorderBrush="#FFFFCDD2">
-                  <StackPanel>
-                    <TextBlock Text="{DynamicResource Results.Deny}" Style="{StaticResource InfoLabelText}" />
-                    <TextBlock Text="{Binding SummaryDenyCount}" Style="{StaticResource InfoValueText}" />
-                  </StackPanel>
-                </Border>
-                <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFF3E5F5" BorderBrush="#FFE1BEE7">
-                  <StackPanel>
-                    <TextBlock Text="{DynamicResource Results.HighRisk}" Style="{StaticResource InfoLabelText}" />
-                    <TextBlock Text="{Binding SummaryHighRisk}" Style="{StaticResource InfoValueText}" />
-                  </StackPanel>
-                </Border>
-                <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFE8F5E9" BorderBrush="#FFC8E6C9">
-                  <StackPanel>
-                    <TextBlock Text="{DynamicResource Results.File}" Style="{StaticResource InfoLabelText}" />
-                    <TextBlock Text="{Binding SummaryFilesCount}" Style="{StaticResource InfoValueText}" />
-                  </StackPanel>
-                </Border>
-                <Border Style="{StaticResource InfoCardBorderStyle}" Background="#FFFFF3E0" BorderBrush="#FFFFE0B2">
-                  <StackPanel>
-                    <TextBlock Text="{DynamicResource Results.Everyone}" Style="{StaticResource InfoLabelText}" />
-                    <TextBlock Text="{Binding SummaryEveryoneCount}" Style="{StaticResource InfoValueText}" />
-                  </StackPanel>
-                </Border>
-                <Border Style="{StaticResource NeutralInfoCardBorderStyle}">
-                  <StackPanel>
-                    <TextBlock Text="{DynamicResource Results.AuthenticatedUsers}" Style="{StaticResource InfoLabelText}" />
-                    <TextBlock Text="{Binding SummaryAuthUsersCount}" Style="{StaticResource InfoValueText}" />
-                  </StackPanel>
-                </Border>
-              </WrapPanel>
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+
+      <StackPanel Grid.Row="0">
+        <TextBlock Text="{DynamicResource Results.Title}" Style="{StaticResource SectionHeaderText}" />
+        <WrapPanel Margin="0,0,0,2"
+                   IsEnabled="{Binding HasScanResult}"
+                   Visibility="{Binding HasScanResult, Converter={StaticResource BooleanToVisibilityConverter}}">
+          <Border Style="{StaticResource CompactInfoCardBorderStyle}" Background="#FFEAF4FF" BorderBrush="#FFC7DCF7">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="{DynamicResource Results.TotalAce}" Style="{StaticResource CompactInfoLabelText}" />
+              <TextBlock Text="{Binding SummaryTotalEntries}" Style="{StaticResource CompactInfoValueText}" />
             </StackPanel>
-            <StackPanel Grid.Row="1" Margin="0,8,0,8" Visibility="{Binding HasSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}">
-              <TextBlock Text="{DynamicResource Results.RightsLegend}" Style="{StaticResource SubsectionHeaderText}" />
-              <WrapPanel Margin="0,0,0,6">
-                <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.Read.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
-                  <TextBlock Text="{DynamicResource Badge.Read.Label}" Style="{StaticResource CompactBadgeText}" />
-                </Border>
-                <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.List.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
-                  <TextBlock Text="{DynamicResource Badge.List.Label}" Style="{StaticResource CompactBadgeText}" />
-                </Border>
-                <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.ReadAndExecute.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
-                  <TextBlock Text="{DynamicResource Badge.ReadAndExecute.Label}" Style="{StaticResource CompactBadgeText}" />
-                </Border>
-                <Border Background="#FF27AE60" ToolTip="{DynamicResource Badge.Write.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
-                  <TextBlock Text="{DynamicResource Badge.Write.Label}" Style="{StaticResource CompactBadgeText}" />
-                </Border>
-                <Border Background="#FFF2994A" ToolTip="{DynamicResource Badge.Modify.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
-                  <TextBlock Text="{DynamicResource Badge.Modify.Label}" Style="{StaticResource CompactBadgeText}" />
-                </Border>
-                <Border Background="#FF9B51E0" ToolTip="{DynamicResource Badge.Full.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
-                  <TextBlock Text="{DynamicResource Badge.Full.Label}" Style="{StaticResource CompactBadgeText}" />
-                </Border>
-                <Border Background="#FFEB5757" ToolTip="{DynamicResource Badge.Deny.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
-                  <TextBlock Text="{DynamicResource Badge.Deny.Label}" Style="{StaticResource CompactBadgeText}" />
-                </Border>
-              </WrapPanel>
-              <TextBlock Text="{DynamicResource Results.ProcessedFolder}" Style="{StaticResource InfoLabelText}" />
-              <TextBlock Text="{Binding SelectedFolderName}" Style="{StaticResource InfoValueText}" TextTrimming="CharacterEllipsis" />
-              <TextBlock Text="{Binding SelectedFolderPath}" Style="{StaticResource MicrocopyText}" TextTrimming="CharacterEllipsis" Margin="0,0,0,6" />
-              <WrapPanel Margin="0,0,0,8">
-                <Border Style="{StaticResource NeutralInfoCardBorderStyle}">
-                  <StackPanel>
-                    <TextBlock Text="{DynamicResource Results.PathKind}" Style="{StaticResource InfoLabelText}" />
-                    <TextBlock Text="{Binding SelectedPathKind}" Style="{StaticResource InfoValueText}" />
-                  </StackPanel>
-                </Border>
-                <Border Style="{StaticResource NeutralInfoCardBorderStyle}">
-                  <StackPanel>
-                    <TextBlock Text="{DynamicResource Results.PermissionLayers}" Style="{StaticResource InfoLabelText}" />
-                    <TextBlock Text="{Binding SelectedPermissionLayers}" Style="{StaticResource InfoValueText}" />
-                  </StackPanel>
-                </Border>
-                <Border Style="{StaticResource NeutralInfoCardBorderStyle}">
-                  <StackPanel>
-                    <TextBlock Text="{DynamicResource Results.Risk}" Style="{StaticResource InfoLabelText}" />
-                    <TextBlock Text="{Binding SelectedRiskSummary}" Style="{StaticResource InfoValueText}" />
-                  </StackPanel>
-                </Border>
-                <Border Style="{StaticResource NeutralInfoCardBorderStyle}">
-                  <StackPanel>
-                    <TextBlock Text="{DynamicResource Results.Scan}" Style="{StaticResource InfoLabelText}" />
-                    <TextBlock Text="{Binding SelectedScannedAtText}" Style="{StaticResource InfoValueText}" />
-                  </StackPanel>
-                </Border>
-              </WrapPanel>
-              <Border Style="{StaticResource NeutralInfoCardBorderStyle}">
-                <StackPanel>
-                  <TextBlock Text="{DynamicResource Results.AcquisitionWarnings}" Style="{StaticResource InfoLabelText}" />
-                  <TextBlock Text="{Binding SelectedAcquisitionWarnings}" TextWrapping="Wrap" />
+          </Border>
+          <Border Style="{StaticResource CompactInfoCardBorderStyle}" Background="#FFF6EEFC" BorderBrush="#FFE4D2F5">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="{DynamicResource Results.HighRisk}" Style="{StaticResource CompactInfoLabelText}" />
+              <TextBlock Text="{Binding SummaryHighRisk}" Style="{StaticResource CompactInfoValueText}" />
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource CompactInfoCardBorderStyle}" Background="#FFFFEEF1" BorderBrush="#FFF7C8D0">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="{DynamicResource Results.Deny}" Style="{StaticResource CompactInfoLabelText}" />
+              <TextBlock Text="{Binding SummaryDenyCount}" Style="{StaticResource CompactInfoValueText}" />
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource CompactInfoCardBorderStyle}" Background="#FFEBF8EF" BorderBrush="#FFCAE8D1">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="{DynamicResource Results.File}" Style="{StaticResource CompactInfoLabelText}" />
+              <TextBlock Text="{Binding SummaryFilesCount}" Style="{StaticResource CompactInfoValueText}" />
+            </StackPanel>
+          </Border>
+        </WrapPanel>
+      </StackPanel>
+
+      <StackPanel Grid.Row="1"
+                  Margin="0,4,0,6"
+                  Visibility="{Binding HasSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Expander IsExpanded="False"
+                  Style="{StaticResource ResultsSectionExpanderStyle}">
+          <Expander.Header>
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="{DynamicResource Results.ProcessedFolder}" Style="{StaticResource CompactInfoLabelText}" />
+              <TextBlock Text="{Binding SelectedFolderName}" Style="{StaticResource CompactInfoValueText}" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+          </Expander.Header>
+
+          <StackPanel Margin="0,6,0,0">
+            <TextBlock Text="{Binding SelectedFolderPath}" Style="{StaticResource MicrocopyText}" TextTrimming="CharacterEllipsis" Margin="0,0,0,4" />
+
+            <WrapPanel Margin="0,0,0,4">
+              <Border Style="{StaticResource CompactNeutralInfoCardBorderStyle}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="{DynamicResource Results.PathKind}" Style="{StaticResource CompactInfoLabelText}" />
+                  <TextBlock Text="{Binding SelectedPathKind}" Style="{StaticResource CompactInfoValueText}" />
                 </StackPanel>
               </Border>
-
-              <Expander Header="{DynamicResource Results.PersistentFilters}" IsExpanded="False" BorderBrush="#DDDDDD" BorderThickness="1" Padding="10"
-                        ToolTip="{DynamicResource Results.PersistentFilters.ToolTip}">
-                <StackPanel>
-                  <TextBlock Text="{DynamicResource Results.SearchAcl}" Style="{StaticResource SubsectionHeaderText}" />
-                  <Grid Margin="0,0,0,6">
-                    <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="Auto" />
-                      <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="{DynamicResource Results.AclFilter}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                    <TextBox Grid.Column="1" Height="26" MinWidth="220" AutomationProperties.Name="{DynamicResource Results.SearchAcl}" ToolTip="{DynamicResource Results.AclFilter.ToolTip}" Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
-                  </Grid>
-                  <TextBlock Text="{DynamicResource Results.Permissions}" Style="{StaticResource SubsectionHeaderText}" />
-                  <WrapPanel Margin="0,0,0,4">
-                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.ColorizeByRight}" IsChecked="{Binding ColorizeRights}" />
-                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Allow}" IsChecked="{Binding ShowAllow}" />
-                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Deny}" IsChecked="{Binding ShowDeny}" />
-                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Inherited}" IsChecked="{Binding ShowInherited}" />
-                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Explicit}" IsChecked="{Binding ShowExplicit}" />
-                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Protected}" IsChecked="{Binding ShowProtected}" />
-                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Grid.Disabled}" IsChecked="{Binding ShowDisabled}" />
-                  </WrapPanel>
-                  <TextBlock Text="{DynamicResource Scan.Identity}" Style="{StaticResource SubsectionHeaderText}" />
-                  <WrapPanel Margin="0,0,0,4">
-                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Everyone}" IsChecked="{Binding ShowEveryone}" />
-                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.AuthenticatedUsers}" IsChecked="{Binding ShowAuthenticatedUsers}" />
-                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.ServiceUsers}" IsChecked="{Binding ShowServiceAccounts}" />
-                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Admin}" IsChecked="{Binding ShowAdminAccounts}" />
-                    <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.OtherPrincipals}" IsChecked="{Binding ShowOtherPrincipals}" />
-                  </WrapPanel>
+              <Border Style="{StaticResource CompactNeutralInfoCardBorderStyle}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="{DynamicResource Results.PermissionLayers}" Style="{StaticResource CompactInfoLabelText}" />
+                  <TextBlock Text="{Binding SelectedPermissionLayers}" Style="{StaticResource CompactInfoValueText}" />
                 </StackPanel>
-              </Expander>
+              </Border>
+              <Border Style="{StaticResource CompactNeutralInfoCardBorderStyle}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="{DynamicResource Results.Risk}" Style="{StaticResource CompactInfoLabelText}" />
+                  <TextBlock Text="{Binding SelectedRiskSummary}" Style="{StaticResource CompactInfoValueText}" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource CompactNeutralInfoCardBorderStyle}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="{DynamicResource Results.Scan}" Style="{StaticResource CompactInfoLabelText}" />
+                  <TextBlock Text="{Binding SelectedScannedAtText}" Style="{StaticResource CompactInfoValueText}" />
+                </StackPanel>
+              </Border>
+            </WrapPanel>
+
+            <Border Style="{StaticResource NeutralInfoCardBorderStyle}"
+                    Visibility="{Binding HasSelectedAcquisitionWarnings, Converter={StaticResource BooleanToVisibilityConverter}}">
+              <StackPanel>
+                <TextBlock Text="{DynamicResource Results.AcquisitionWarnings}" Style="{StaticResource InfoLabelText}" />
+                <TextBlock Text="{Binding SelectedAcquisitionWarnings}" Style="{StaticResource MicrocopyText}" Margin="0,2,0,0" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </Expander>
+
+        <Expander Header="{DynamicResource Results.RightsLegend}"
+                  IsExpanded="False"
+                  Style="{StaticResource ResultsSectionExpanderStyle}">
+          <Border Background="{StaticResource SurfaceMutedBrush}"
+                  BorderBrush="{StaticResource BorderSoftBrush}"
+                  BorderThickness="1"
+                  CornerRadius="6"
+                  Padding="10"
+                  Margin="0,4,0,0">
+            <WrapPanel>
+              <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.Read.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
+                <TextBlock Text="{DynamicResource Badge.Read.Label}" Style="{StaticResource CompactBadgeText}" />
+              </Border>
+              <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.List.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
+                <TextBlock Text="{DynamicResource Badge.List.Label}" Style="{StaticResource CompactBadgeText}" />
+              </Border>
+              <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.ReadAndExecute.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
+                <TextBlock Text="{DynamicResource Badge.ReadAndExecute.Label}" Style="{StaticResource CompactBadgeText}" />
+              </Border>
+              <Border Background="#FF27AE60" ToolTip="{DynamicResource Badge.Write.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
+                <TextBlock Text="{DynamicResource Badge.Write.Label}" Style="{StaticResource CompactBadgeText}" />
+              </Border>
+              <Border Background="#FFF2994A" ToolTip="{DynamicResource Badge.Modify.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
+                <TextBlock Text="{DynamicResource Badge.Modify.Label}" Style="{StaticResource CompactBadgeText}" />
+              </Border>
+              <Border Background="#FF9B51E0" ToolTip="{DynamicResource Badge.Full.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
+                <TextBlock Text="{DynamicResource Badge.Full.Label}" Style="{StaticResource CompactBadgeText}" />
+              </Border>
+              <Border Background="#FFEB5757" ToolTip="{DynamicResource Badge.Deny.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
+                <TextBlock Text="{DynamicResource Badge.Deny.Label}" Style="{StaticResource CompactBadgeText}" />
+              </Border>
+            </WrapPanel>
+          </Border>
+        </Expander>
+
+        <Expander Header="{DynamicResource Results.PersistentFilters}"
+                  IsExpanded="False"
+                  Style="{StaticResource ResultsSectionExpanderStyle}"
+                  ToolTip="{DynamicResource Results.PersistentFilters.ToolTip}">
+          <Border Background="{StaticResource SurfaceMutedBrush}"
+                  BorderBrush="{StaticResource BorderSoftBrush}"
+                  BorderThickness="1"
+                  CornerRadius="6"
+                  Padding="10"
+                  Margin="0,4,0,0">
+            <StackPanel>
+              <TextBlock Text="{DynamicResource Results.SearchAcl}" Style="{StaticResource SubsectionHeaderText}" />
+              <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{DynamicResource Results.AclFilter}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                <TextBox Grid.Column="1" Style="{StaticResource FieldTextBoxStyle}" AutomationProperties.Name="{DynamicResource Results.SearchAcl}" ToolTip="{DynamicResource Results.AclFilter.ToolTip}" Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
+              </Grid>
+
+              <TextBlock Text="{DynamicResource Results.Permissions}" Style="{StaticResource SubsectionHeaderText}" />
+              <WrapPanel Margin="0,0,0,6">
+                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.ColorizeByRight}" IsChecked="{Binding ColorizeRights}" />
+                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Allow}" IsChecked="{Binding ShowAllow}" />
+                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Deny}" IsChecked="{Binding ShowDeny}" />
+                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Inherited}" IsChecked="{Binding ShowInherited}" />
+                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Explicit}" IsChecked="{Binding ShowExplicit}" />
+                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Protected}" IsChecked="{Binding ShowProtected}" />
+                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Grid.Disabled}" IsChecked="{Binding ShowDisabled}" />
+              </WrapPanel>
+
+              <TextBlock Text="{DynamicResource Scan.Identity}" Style="{StaticResource SubsectionHeaderText}" />
+              <WrapPanel>
+                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Everyone}" IsChecked="{Binding ShowEveryone}" />
+                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.AuthenticatedUsers}" IsChecked="{Binding ShowAuthenticatedUsers}" />
+                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.ServiceUsers}" IsChecked="{Binding ShowServiceAccounts}" />
+                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Admin}" IsChecked="{Binding ShowAdminAccounts}" />
+                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.OtherPrincipals}" IsChecked="{Binding ShowOtherPrincipals}" />
+              </WrapPanel>
             </StackPanel>
-            <TextBlock Grid.Row="1"
-                       Text="{DynamicResource Results.SelectFolderForDetails}"
-                       Style="{StaticResource MicrocopyText}"
-                       TextWrapping="Wrap"
-                       Visibility="{Binding HasNoSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}" />
-            <Grid Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <Border Style="{StaticResource EmptyStateBorderStyle}"
-                    Visibility="{Binding HasNoScanResult, Converter={StaticResource BooleanToVisibilityConverter}}">
-              <TextBlock Text="{DynamicResource Results.EmptyAfterScan}"
-                         Style="{StaticResource EmptyStateText}" />
-            </Border>
-            <Border Style="{StaticResource EmptyStateBorderStyle}"
-                    Visibility="{Binding HasNoSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}">
-              <TextBlock Text="{DynamicResource Results.SelectTreeFolder}"
-                         Style="{StaticResource EmptyStateText}" />
-            </Border>
-            <TabControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Visibility="{Binding HasSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}">
-              <TabItem Header="{DynamicResource Results.HierarchyTab}">
-                <TreeView ItemsSource="{Binding ResultHierarchy}">
-                    <TreeView.ItemContainerStyle>
-                      <Style TargetType="TreeViewItem">
-                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                      </Style>
-                    </TreeView.ItemContainerStyle>
-                    <TreeView.ItemTemplate>
-                      <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                        <StackPanel Margin="0,0,0,4">
-                          <StackPanel Orientation="Horizontal">
-                            <Border Background="{Binding KindBackground}" CornerRadius="8" Padding="6,1" Margin="0,0,6,0">
-                              <TextBlock Text="{Binding KindLabel}" Foreground="White" FontSize="10" />
-                            </Border>
-                            <Border Background="{Binding AccentBackground}" CornerRadius="8" Padding="6,1" Margin="0,0,6,0"
-                                    Visibility="{Binding HasAccent, Converter={StaticResource BooleanToVisibilityConverter}}">
-                              <TextBlock Text="{Binding AccentText}" Foreground="White" FontSize="10" />
-                            </Border>
-                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
-                          </StackPanel>
-                          <TextBlock Text="{Binding Subtitle}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" Margin="0,2,0,0" />
-                        </StackPanel>
-                      </HierarchicalDataTemplate>
-                    </TreeView.ItemTemplate>
-                  </TreeView>
-              </TabItem>
-              <TabItem Header="{DynamicResource Results.GroupPermissions}" ToolTip="{DynamicResource Results.FilteredGroupPermissions.ToolTip}">
-                <DockPanel>
-                <TextBlock DockPanel.Dock="Top"
-                           Text="{DynamicResource Results.OpenGroupMembersHint}"
-                           Style="{StaticResource InteractionHintText}" />
-                <DataGrid ToolTip="{DynamicResource Results.FilteredGroupPermissions.ToolTip}" ItemsSource="{Binding FilteredGroupEntries}"
-                          AutoGenerateColumns="False"
-                          IsReadOnly="True"
-                          EnableRowVirtualization="True"
-                          EnableColumnVirtualization="True"
-                          ScrollViewer.CanContentScroll="True"
-                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                          ScrollViewer.VerticalScrollBarVisibility="Auto"
-                          ColumnWidth="SizeToCells"
-                          MinColumnWidth="80"
-                          MouseDoubleClick="GroupEntries_OnMouseDoubleClick"
-                          KeyDown="GroupEntries_OnKeyDown"
-                          RowStyle="{StaticResource RightsRowStyle}"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch">
-                  <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="{DynamicResource Grid.Badge}" CellTemplate="{StaticResource PermissionBadgesTemplate}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Group}" Binding="{Binding PrincipalName}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Owner}" Binding="{Binding Owner}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Disabled}" Binding="{Binding IsDisabled, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Inherited}" Binding="{Binding IsInherited, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Full}" Binding="{Binding HasFullControl, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Modify}" Binding="{Binding HasModify, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.ReadAndExecute}" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.List}" Binding="{Binding HasList, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Read}" Binding="{Binding HasRead, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Write}" Binding="{Binding HasWrite, Mode=OneWay}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Sid}" Binding="{Binding PrincipalSid}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Resource}" Binding="{Binding ResourceType}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.AllowDeny}" Binding="{Binding AllowDeny}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.EffectiveAccess}" Binding="{Binding EffectiveRightsSummary}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Risk}" Binding="{Binding RiskLevel}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Audit}" Binding="{Binding AuditSummary}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Depth}" Binding="{Binding Depth}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Inheritance}" Binding="{Binding InheritanceFlags}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Propagation}" Binding="{Binding PropagationFlags}" />
-                  </DataGrid.Columns>
-                </DataGrid>
-                </DockPanel>
-              </TabItem>
-              <TabItem Header="{DynamicResource Results.UserPermissions}" ToolTip="{DynamicResource Results.FilteredUserPermissions.ToolTip}">
-                <DockPanel>
-                <TextBlock DockPanel.Dock="Top"
-                           Text="{DynamicResource Results.OpenUserGroupsHint}"
-                           Style="{StaticResource InteractionHintText}" />
-                <DataGrid ToolTip="{DynamicResource Results.FilteredUserPermissions.ToolTip}" ItemsSource="{Binding FilteredUserEntries}"
-                          AutoGenerateColumns="False"
-                          IsReadOnly="True"
-                          EnableRowVirtualization="True"
-                          EnableColumnVirtualization="True"
-                          ScrollViewer.CanContentScroll="True"
-                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                          ScrollViewer.VerticalScrollBarVisibility="Auto"
-                          ColumnWidth="SizeToCells"
-                          MinColumnWidth="80"
-                          MouseDoubleClick="UserEntries_OnMouseDoubleClick"
-                          KeyDown="UserEntries_OnKeyDown"
-                          RowStyle="{StaticResource RightsRowStyle}"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch">
-                  <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="{DynamicResource Grid.Badge}" CellTemplate="{StaticResource PermissionBadgesTemplate}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.User}" Binding="{Binding PrincipalName}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Owner}" Binding="{Binding Owner}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Disabled}" Binding="{Binding IsDisabled, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Inherited}" Binding="{Binding IsInherited, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Full}" Binding="{Binding HasFullControl, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Modify}" Binding="{Binding HasModify, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.ReadAndExecute}" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.List}" Binding="{Binding HasList, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Read}" Binding="{Binding HasRead, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Write}" Binding="{Binding HasWrite, Mode=OneWay}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Sid}" Binding="{Binding PrincipalSid}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Resource}" Binding="{Binding ResourceType}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.AllowDeny}" Binding="{Binding AllowDeny}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.EffectiveAccess}" Binding="{Binding EffectiveRightsSummary}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Risk}" Binding="{Binding RiskLevel}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Audit}" Binding="{Binding AuditSummary}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Depth}" Binding="{Binding Depth}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Inheritance}" Binding="{Binding InheritanceFlags}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Propagation}" Binding="{Binding PropagationFlags}" />
-                  </DataGrid.Columns>
-                </DataGrid>
-                </DockPanel>
-              </TabItem>
-              <TabItem Header="{DynamicResource Results.AllAclDetails}" ToolTip="{DynamicResource Results.AllAclDetails.ToolTip}">
-                <DataGrid ToolTip="{DynamicResource Results.AllAclDetails.ToolTip}" ItemsSource="{Binding FilteredAllEntries}"
-                          AutoGenerateColumns="False"
-                          IsReadOnly="True"
-                          EnableRowVirtualization="True"
-                          EnableColumnVirtualization="True"
-                          ScrollViewer.CanContentScroll="True"
-                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                          ScrollViewer.VerticalScrollBarVisibility="Auto"
-                          ColumnWidth="SizeToCells"
-                          MinColumnWidth="80"
-                          RowStyle="{StaticResource RightsRowStyle}"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch">
-                  <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="{DynamicResource Grid.Badge}" CellTemplate="{StaticResource PermissionBadgesTemplate}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Principal}" Binding="{Binding PrincipalName}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Owner}" Binding="{Binding Owner}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Disabled}" Binding="{Binding IsDisabled, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Inherited}" Binding="{Binding IsInherited, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Full}" Binding="{Binding HasFullControl, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Modify}" Binding="{Binding HasModify, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.ReadAndExecute}" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.List}" Binding="{Binding HasList, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Read}" Binding="{Binding HasRead, Mode=OneWay}" />
-                    <DataGridCheckBoxColumn Header="{DynamicResource Grid.Write}" Binding="{Binding HasWrite, Mode=OneWay}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Sid}" Binding="{Binding PrincipalSid}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Type}" Binding="{Binding PrincipalType}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Resource}" Binding="{Binding ResourceType}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.AllowDeny}" Binding="{Binding AllowDeny}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.EffectiveAccess}" Binding="{Binding EffectiveRightsSummary}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Risk}" Binding="{Binding RiskLevel}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Audit}" Binding="{Binding AuditSummary}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Depth}" Binding="{Binding Depth}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Inheritance}" Binding="{Binding InheritanceFlags}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Propagation}" Binding="{Binding PropagationFlags}" />
-                  </DataGrid.Columns>
-                </DataGrid>
-              </TabItem>
-              <TabItem Header="{DynamicResource Results.ShareEntries}" ToolTip="{DynamicResource Results.ShareEntries.ToolTip}">
-                <DataGrid ToolTip="{DynamicResource Results.ShareEntries.ToolTip}" ItemsSource="{Binding FilteredShareEntries}"
-                          AutoGenerateColumns="False"
-                          IsReadOnly="True"
-                          EnableRowVirtualization="True"
-                          EnableColumnVirtualization="True"
-                          ScrollViewer.CanContentScroll="True"
-                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                          ScrollViewer.VerticalScrollBarVisibility="Auto"
-                          ColumnWidth="SizeToCells"
-                          MinColumnWidth="80"
-                          RowStyle="{StaticResource RightsRowStyle}"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch">
-                  <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="{DynamicResource Grid.Badge}" CellTemplate="{StaticResource PermissionBadgesTemplate}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Principal}" Binding="{Binding PrincipalName}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Owner}" Binding="{Binding Owner}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Sid}" Binding="{Binding PrincipalSid}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Server}" Binding="{Binding ShareServer}" />
-                    <DataGridTextColumn Header="{DynamicResource Results.ShareEntries}" Binding="{Binding ShareName}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.AllowDeny}" Binding="{Binding AllowDeny}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Depth}" Binding="{Binding Depth}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Audit}" Binding="{Binding AuditSummary}" />
-                  </DataGrid.Columns>
-                </DataGrid>
-              </TabItem>
-              <TabItem Header="{DynamicResource Results.EffectiveAccessTab}" ToolTip="{DynamicResource Results.EffectiveEntries.ToolTip}">
-                <DataGrid ToolTip="{DynamicResource Results.EffectiveEntries.ToolTip}" ItemsSource="{Binding FilteredEffectiveEntries}"
-                          AutoGenerateColumns="False"
-                          IsReadOnly="True"
-                          EnableRowVirtualization="True"
-                          EnableColumnVirtualization="True"
-                          ScrollViewer.CanContentScroll="True"
-                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                          ScrollViewer.VerticalScrollBarVisibility="Auto"
-                          ColumnWidth="SizeToCells"
-                          MinColumnWidth="80"
-                          RowStyle="{StaticResource RightsRowStyle}"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch">
-                  <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="{DynamicResource Grid.Badge}" CellTemplate="{StaticResource PermissionBadgesTemplate}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Principal}" Binding="{Binding PrincipalName}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Owner}" Binding="{Binding Owner}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Sid}" Binding="{Binding PrincipalSid}" />
-                    <DataGridTextColumn Header="{DynamicResource Results.EffectiveEntries}" Binding="{Binding EffectiveRightsSummary}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.NtfsMask}" Binding="{Binding NtfsRightsMask}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.ShareMask}" Binding="{Binding ShareRightsMask}" />
-                    <DataGridTextColumn Header="{DynamicResource Grid.Depth}" Binding="{Binding Depth}" />
-                  </DataGrid.Columns>
-                </DataGrid>
-              </TabItem>
-              <TabItem Header="{DynamicResource Results.PermissionInfo}" ToolTip="{DynamicResource Results.PermissionInfo.ToolTip}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                  <StackPanel Margin="8">
-                    <TextBlock Text="{DynamicResource Results.Object}" Style="{StaticResource SubsectionHeaderText}" />
-                    <Border Style="{StaticResource NeutralInfoCardBorderStyle}" Margin="0,0,0,8">
-                      <TextBlock Text="{Binding SelectedFolderPath}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                    </Border>
+          </Border>
+        </Expander>
+      </StackPanel>
 
-                    <TextBlock Text="{DynamicResource Results.AdvancedSecurity}" Style="{StaticResource SubsectionHeaderText}" />
-                    <Border BorderBrush="#FFE0E0E0" Margin="0,0,0,6">
-                      <Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
-                          <Setter Property="Background" Value="#FFE8F5E9" />
-                          <Style.Triggers>
-                            <DataTrigger Binding="{Binding SelectedOwnerSummary, Mode=OneWay}" Value="-">
-                              <Setter Property="Background" Value="#FFFFEBEE" />
-                            </DataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </Border.Style>
-                      <TextBlock>
-                        <Run Text="{DynamicResource Grid.Owner}" />
-                        <Run Text=": " />
-                        <Run Text="{Binding SelectedOwnerSummary, Mode=OneWay}" />
-                      </TextBlock>
-                    </Border>
+      <TextBlock Grid.Row="1"
+                 Text="{DynamicResource Results.SelectFolderForDetails}"
+                 Style="{StaticResource MicrocopyText}"
+                 TextWrapping="Wrap"
+                 Visibility="{Binding HasNoSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
-                    <Border BorderBrush="#FFE0E0E0" Margin="0,0,0,10">
-                      <Border.Style>
-                        <Style TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
-                          <Setter Property="Background" Value="#FFE8F5E9" />
-                          <Style.Triggers>
-                    <DataTrigger Binding="{Binding SelectedInheritanceDisabled, Mode=OneWay}" Value="True">
-                              <Setter Property="Background" Value="#FFFFEBEE" />
-                            </DataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </Border.Style>
-                      <TextBlock Text="{Binding SelectedInheritanceSummary, Mode=OneWay}" />
-                    </Border>
-
-                    <TextBlock Text="{DynamicResource Results.SelectedFolder}" Style="{StaticResource SubsectionHeaderText}" />
-                    <WrapPanel>
-                      <Border Background="#FFE3F2FD" BorderBrush="#FFBBDEFB" Style="{StaticResource InfoCardBorderStyle}">
-                        <TextBlock>
-                          <Run Text="{DynamicResource Results.TotalLabel}" />
-                          <Run Text="{Binding SelectedTotalAceCount, Mode=OneWay}" />
-                        </TextBlock>
-                      </Border>
-                      <Border BorderBrush="#FFBBDEFB">
-                        <Border.Style>
-                          <Style TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
-                          <Setter Property="Background" Value="#FFE3F2FD" />
-                            <Style.Triggers>
-                              <DataTrigger Binding="{Binding SelectedExplicitAceCount}" Value="0">
-                                <Setter Property="Background" Value="#FFF5F5F5" />
-                                <Setter Property="BorderBrush" Value="#FFE0E0E0" />
-                              </DataTrigger>
-                            </Style.Triggers>
-                          </Style>
-                        </Border.Style>
-                        <TextBlock>
-                          <Run Text="{DynamicResource Results.ExplicitLabel}" />
-                          <Run Text="{Binding SelectedExplicitAceCount, Mode=OneWay}" />
-                        </TextBlock>
-                      </Border>
-                      <Border BorderBrush="#FFC8E6C9">
-                        <Border.Style>
-                          <Style TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
-                            <Setter Property="Background" Value="#FFE8F5E9" />
-                            <Style.Triggers>
-                              <DataTrigger Binding="{Binding SelectedInheritedAceCount}" Value="0">
-                                <Setter Property="Background" Value="#FFFFF8E1" />
-                                <Setter Property="BorderBrush" Value="#FFFFE082" />
-                              </DataTrigger>
-                            </Style.Triggers>
-                          </Style>
-                        </Border.Style>
-                        <TextBlock>
-                          <Run Text="{DynamicResource Results.InheritedLabel}" />
-                          <Run Text="{Binding SelectedInheritedAceCount, Mode=OneWay}" />
-                        </TextBlock>
-                      </Border>
-                      <Border BorderBrush="#FFFFCDD2">
-                        <Border.Style>
-                          <Style TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
-                            <Setter Property="Background" Value="#FFFFEBEE" />
-                            <Style.Triggers>
-                              <DataTrigger Binding="{Binding SelectedDenyAceCount}" Value="0">
-                                <Setter Property="Background" Value="#FFF5F5F5" />
-                                <Setter Property="BorderBrush" Value="#FFE0E0E0" />
-                              </DataTrigger>
-                            </Style.Triggers>
-                          </Style>
-                        </Border.Style>
-                        <TextBlock>
-                          <Run Text="{DynamicResource Results.DenyLabel}" />
-                          <Run Text="{Binding SelectedDenyAceCount, Mode=OneWay}" />
-                        </TextBlock>
-                      </Border>
-                    </WrapPanel>
-                  </StackPanel>
-                </ScrollViewer>
-              </TabItem>
-              <TabItem Header="{DynamicResource Results.ErrorsTab}" ToolTip="{DynamicResource Results.ErrorsTab.ToolTip}">
-                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                  <DataGrid ToolTip="{DynamicResource Results.ErrorsGrid.ToolTip}" ItemsSource="{Binding FilteredErrors}"
-                            AutoGenerateColumns="False"
-                            IsReadOnly="True"
-                            EnableRowVirtualization="True"
-                            EnableColumnVirtualization="True"
-                            ScrollViewer.CanContentScroll="True"
-                            ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                            ScrollViewer.VerticalScrollBarVisibility="Auto"
-                            ColumnWidth="SizeToCells"
-                            MinColumnWidth="80"
-                            HorizontalAlignment="Stretch"
-                            VerticalAlignment="Stretch">
-                    <DataGrid.Columns>
-                      <DataGridTextColumn Header="{DynamicResource Grid.Path}" Binding="{Binding Path}" />
-                      <DataGridTextColumn Header="{DynamicResource Grid.Type}" Binding="{Binding ErrorType}" />
-                      <DataGridTextColumn Header="{DynamicResource Grid.Message}" Binding="{Binding Message}" />
-                    </DataGrid.Columns>
-                  </DataGrid>
-                </Grid>
-              </TabItem>
-            </TabControl>
-            </Grid>
-          </Grid>
+      <Grid Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Style="{StaticResource EmptyStateBorderStyle}"
+                Visibility="{Binding HasNoScanResult, Converter={StaticResource BooleanToVisibilityConverter}}">
+          <TextBlock Text="{DynamicResource Results.EmptyAfterScan}" Style="{StaticResource EmptyStateText}" />
         </Border>
+
+        <Border Style="{StaticResource EmptyStateBorderStyle}"
+                Visibility="{Binding HasNoSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}">
+          <TextBlock Text="{DynamicResource Results.SelectTreeFolder}" Style="{StaticResource EmptyStateText}" />
+        </Border>
+
+        <TabControl HorizontalAlignment="Stretch"
+                    ItemContainerStyle="{StaticResource ResultsTabItemStyle}"
+                    VerticalAlignment="Stretch"
+                    Visibility="{Binding HasSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}">
+          <TabItem Header="{DynamicResource Results.HierarchyTab}">
+            <TreeView ItemsSource="{Binding ResultHierarchy}">
+              <TreeView.ItemContainerStyle>
+                <Style TargetType="TreeViewItem">
+                  <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                </Style>
+              </TreeView.ItemContainerStyle>
+              <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                  <StackPanel Margin="0,0,0,4">
+                    <StackPanel Orientation="Horizontal">
+                      <Border Background="{Binding KindBackground}" CornerRadius="8" Padding="6,1" Margin="0,0,6,0">
+                        <TextBlock Text="{Binding KindLabel}" Foreground="White" FontSize="10" FontWeight="SemiBold" />
+                      </Border>
+                      <Border Background="{Binding AccentBackground}" CornerRadius="8" Padding="6,1" Margin="0,0,6,0"
+                              Visibility="{Binding HasAccent, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="{Binding AccentText}" Foreground="White" FontSize="10" FontWeight="SemiBold" />
+                      </Border>
+                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Subtitle}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                  </StackPanel>
+                </HierarchicalDataTemplate>
+              </TreeView.ItemTemplate>
+            </TreeView>
+          </TabItem>
+
+          <TabItem Header="{DynamicResource Results.GroupPermissions}" ToolTip="{DynamicResource Results.FilteredGroupPermissions.ToolTip}">
+            <DockPanel>
+              <TextBlock DockPanel.Dock="Top"
+                         Text="{DynamicResource Results.OpenGroupMembersHint}"
+                         Style="{StaticResource InteractionHintText}" />
+              <DataGrid ToolTip="{DynamicResource Results.FilteredGroupPermissions.ToolTip}" ItemsSource="{Binding FilteredGroupEntries}"
+                        AutoGenerateColumns="False"
+                        IsReadOnly="True"
+                        EnableRowVirtualization="True"
+                        EnableColumnVirtualization="True"
+                        ScrollViewer.CanContentScroll="True"
+                        ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                        ColumnWidth="SizeToCells"
+                        MinColumnWidth="80"
+                        MouseDoubleClick="GroupEntries_OnMouseDoubleClick"
+                        KeyDown="GroupEntries_OnKeyDown"
+                        RowStyle="{StaticResource RightsRowStyle}"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch">
+                <DataGrid.Columns>
+                  <DataGridTemplateColumn Header="{DynamicResource Grid.Badge}" CellTemplate="{StaticResource PermissionBadgesTemplate}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Group}" Binding="{Binding PrincipalName}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Owner}" Binding="{Binding Owner}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.Disabled}" Binding="{Binding IsDisabled, Mode=OneWay}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.Inherited}" Binding="{Binding IsInherited, Mode=OneWay}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.Full}" Binding="{Binding HasFullControl, Mode=OneWay}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.Modify}" Binding="{Binding HasModify, Mode=OneWay}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.ReadAndExecute}" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.List}" Binding="{Binding HasList, Mode=OneWay}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.Read}" Binding="{Binding HasRead, Mode=OneWay}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.Write}" Binding="{Binding HasWrite, Mode=OneWay}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Sid}" Binding="{Binding PrincipalSid}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Resource}" Binding="{Binding ResourceType}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.AllowDeny}" Binding="{Binding AllowDeny}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.EffectiveAccess}" Binding="{Binding EffectiveRightsSummary}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Risk}" Binding="{Binding RiskLevel}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Audit}" Binding="{Binding AuditSummary}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Depth}" Binding="{Binding Depth}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Inheritance}" Binding="{Binding InheritanceFlags}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Propagation}" Binding="{Binding PropagationFlags}" />
+                </DataGrid.Columns>
+              </DataGrid>
+            </DockPanel>
+          </TabItem>
+
+          <TabItem Header="{DynamicResource Results.UserPermissions}" ToolTip="{DynamicResource Results.FilteredUserPermissions.ToolTip}">
+            <DockPanel>
+              <TextBlock DockPanel.Dock="Top"
+                         Text="{DynamicResource Results.OpenUserGroupsHint}"
+                         Style="{StaticResource InteractionHintText}" />
+              <DataGrid ToolTip="{DynamicResource Results.FilteredUserPermissions.ToolTip}" ItemsSource="{Binding FilteredUserEntries}"
+                        AutoGenerateColumns="False"
+                        IsReadOnly="True"
+                        EnableRowVirtualization="True"
+                        EnableColumnVirtualization="True"
+                        ScrollViewer.CanContentScroll="True"
+                        ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                        ColumnWidth="SizeToCells"
+                        MinColumnWidth="80"
+                        MouseDoubleClick="UserEntries_OnMouseDoubleClick"
+                        KeyDown="UserEntries_OnKeyDown"
+                        RowStyle="{StaticResource RightsRowStyle}"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch">
+                <DataGrid.Columns>
+                  <DataGridTemplateColumn Header="{DynamicResource Grid.Badge}" CellTemplate="{StaticResource PermissionBadgesTemplate}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.User}" Binding="{Binding PrincipalName}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Owner}" Binding="{Binding Owner}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.Disabled}" Binding="{Binding IsDisabled, Mode=OneWay}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.Inherited}" Binding="{Binding IsInherited, Mode=OneWay}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.Full}" Binding="{Binding HasFullControl, Mode=OneWay}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.Modify}" Binding="{Binding HasModify, Mode=OneWay}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.ReadAndExecute}" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.List}" Binding="{Binding HasList, Mode=OneWay}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.Read}" Binding="{Binding HasRead, Mode=OneWay}" />
+                  <DataGridCheckBoxColumn Header="{DynamicResource Grid.Write}" Binding="{Binding HasWrite, Mode=OneWay}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Sid}" Binding="{Binding PrincipalSid}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Resource}" Binding="{Binding ResourceType}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.AllowDeny}" Binding="{Binding AllowDeny}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.EffectiveAccess}" Binding="{Binding EffectiveRightsSummary}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Risk}" Binding="{Binding RiskLevel}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Audit}" Binding="{Binding AuditSummary}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Depth}" Binding="{Binding Depth}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Inheritance}" Binding="{Binding InheritanceFlags}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Propagation}" Binding="{Binding PropagationFlags}" />
+                </DataGrid.Columns>
+              </DataGrid>
+            </DockPanel>
+          </TabItem>
+
+          <TabItem Header="{DynamicResource Results.AllAclDetails}" ToolTip="{DynamicResource Results.AllAclDetails.ToolTip}">
+            <DataGrid ToolTip="{DynamicResource Results.AllAclDetails.ToolTip}" ItemsSource="{Binding FilteredAllEntries}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      EnableRowVirtualization="True"
+                      EnableColumnVirtualization="True"
+                      ScrollViewer.CanContentScroll="True"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      ColumnWidth="SizeToCells"
+                      MinColumnWidth="80"
+                      RowStyle="{StaticResource RightsRowStyle}"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch">
+              <DataGrid.Columns>
+                <DataGridTemplateColumn Header="{DynamicResource Grid.Badge}" CellTemplate="{StaticResource PermissionBadgesTemplate}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Principal}" Binding="{Binding PrincipalName}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Owner}" Binding="{Binding Owner}" />
+                <DataGridCheckBoxColumn Header="{DynamicResource Grid.Disabled}" Binding="{Binding IsDisabled, Mode=OneWay}" />
+                <DataGridCheckBoxColumn Header="{DynamicResource Grid.Inherited}" Binding="{Binding IsInherited, Mode=OneWay}" />
+                <DataGridCheckBoxColumn Header="{DynamicResource Grid.Full}" Binding="{Binding HasFullControl, Mode=OneWay}" />
+                <DataGridCheckBoxColumn Header="{DynamicResource Grid.Modify}" Binding="{Binding HasModify, Mode=OneWay}" />
+                <DataGridCheckBoxColumn Header="{DynamicResource Grid.ReadAndExecute}" Binding="{Binding HasReadAndExecute, Mode=OneWay}" />
+                <DataGridCheckBoxColumn Header="{DynamicResource Grid.List}" Binding="{Binding HasList, Mode=OneWay}" />
+                <DataGridCheckBoxColumn Header="{DynamicResource Grid.Read}" Binding="{Binding HasRead, Mode=OneWay}" />
+                <DataGridCheckBoxColumn Header="{DynamicResource Grid.Write}" Binding="{Binding HasWrite, Mode=OneWay}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Sid}" Binding="{Binding PrincipalSid}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Type}" Binding="{Binding PrincipalType}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Resource}" Binding="{Binding ResourceType}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.AllowDeny}" Binding="{Binding AllowDeny}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.EffectiveAccess}" Binding="{Binding EffectiveRightsSummary}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Risk}" Binding="{Binding RiskLevel}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Audit}" Binding="{Binding AuditSummary}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Depth}" Binding="{Binding Depth}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Inheritance}" Binding="{Binding InheritanceFlags}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Propagation}" Binding="{Binding PropagationFlags}" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </TabItem>
+
+          <TabItem Header="{DynamicResource Results.ShareEntries}" ToolTip="{DynamicResource Results.ShareEntries.ToolTip}">
+            <DataGrid ToolTip="{DynamicResource Results.ShareEntries.ToolTip}" ItemsSource="{Binding FilteredShareEntries}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      EnableRowVirtualization="True"
+                      EnableColumnVirtualization="True"
+                      ScrollViewer.CanContentScroll="True"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      ColumnWidth="SizeToCells"
+                      MinColumnWidth="80"
+                      RowStyle="{StaticResource RightsRowStyle}"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch">
+              <DataGrid.Columns>
+                <DataGridTemplateColumn Header="{DynamicResource Grid.Badge}" CellTemplate="{StaticResource PermissionBadgesTemplate}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Principal}" Binding="{Binding PrincipalName}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Owner}" Binding="{Binding Owner}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Sid}" Binding="{Binding PrincipalSid}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Server}" Binding="{Binding ShareServer}" />
+                <DataGridTextColumn Header="{DynamicResource Results.ShareEntries}" Binding="{Binding ShareName}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.AllowDeny}" Binding="{Binding AllowDeny}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Depth}" Binding="{Binding Depth}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Audit}" Binding="{Binding AuditSummary}" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </TabItem>
+
+          <TabItem Header="{DynamicResource Results.EffectiveAccessTab}" ToolTip="{DynamicResource Results.EffectiveEntries.ToolTip}">
+            <DataGrid ToolTip="{DynamicResource Results.EffectiveEntries.ToolTip}" ItemsSource="{Binding FilteredEffectiveEntries}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      EnableRowVirtualization="True"
+                      EnableColumnVirtualization="True"
+                      ScrollViewer.CanContentScroll="True"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      ColumnWidth="SizeToCells"
+                      MinColumnWidth="80"
+                      RowStyle="{StaticResource RightsRowStyle}"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch">
+              <DataGrid.Columns>
+                <DataGridTemplateColumn Header="{DynamicResource Grid.Badge}" CellTemplate="{StaticResource PermissionBadgesTemplate}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Principal}" Binding="{Binding PrincipalName}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Owner}" Binding="{Binding Owner}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Sid}" Binding="{Binding PrincipalSid}" />
+                <DataGridTextColumn Header="{DynamicResource Results.EffectiveEntries}" Binding="{Binding EffectiveRightsSummary}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.NtfsMask}" Binding="{Binding NtfsRightsMask}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.ShareMask}" Binding="{Binding ShareRightsMask}" />
+                <DataGridTextColumn Header="{DynamicResource Grid.Depth}" Binding="{Binding Depth}" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </TabItem>
+
+          <TabItem Header="{DynamicResource Results.PermissionInfo}" ToolTip="{DynamicResource Results.PermissionInfo.ToolTip}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+              <StackPanel Margin="8">
+                <TextBlock Text="{DynamicResource Results.Object}" Style="{StaticResource SubsectionHeaderText}" />
+                <Border Style="{StaticResource NeutralInfoCardBorderStyle}" Margin="0,0,0,8">
+                  <TextBlock Text="{Binding SelectedFolderPath}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                </Border>
+
+                <TextBlock Text="{DynamicResource Results.AdvancedSecurity}" Style="{StaticResource SubsectionHeaderText}" />
+                <Border BorderBrush="#FFE0E0E0" Margin="0,0,0,6">
+                  <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
+                      <Setter Property="Background" Value="#FFEBF8EF" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding SelectedOwnerSummary, Mode=OneWay}" Value="-">
+                          <Setter Property="Background" Value="#FFFFEEF1" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Border.Style>
+                  <TextBlock>
+                    <Run Text="{DynamicResource Grid.Owner}" />
+                    <Run Text=": " />
+                    <Run Text="{Binding SelectedOwnerSummary, Mode=OneWay}" />
+                  </TextBlock>
+                </Border>
+
+                <Border BorderBrush="#FFE0E0E0" Margin="0,0,0,10">
+                  <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
+                      <Setter Property="Background" Value="#FFEBF8EF" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding SelectedInheritanceDisabled, Mode=OneWay}" Value="True">
+                          <Setter Property="Background" Value="#FFFFEEF1" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Border.Style>
+                  <TextBlock Text="{Binding SelectedInheritanceSummary, Mode=OneWay}" />
+                </Border>
+
+                <TextBlock Text="{DynamicResource Results.SelectedFolder}" Style="{StaticResource SubsectionHeaderText}" />
+                <WrapPanel>
+                  <Border Background="#FFEAF4FF" BorderBrush="#FFC7DCF7" Style="{StaticResource InfoCardBorderStyle}">
+                    <TextBlock>
+                      <Run Text="{DynamicResource Results.TotalLabel}" />
+                      <Run Text="{Binding SelectedTotalAceCount, Mode=OneWay}" />
+                    </TextBlock>
+                  </Border>
+                  <Border BorderBrush="#FFC7DCF7">
+                    <Border.Style>
+                      <Style TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
+                        <Setter Property="Background" Value="#FFEAF4FF" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding SelectedExplicitAceCount}" Value="0">
+                            <Setter Property="Background" Value="{StaticResource SurfaceMutedBrush}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource BorderSoftBrush}" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Border.Style>
+                    <TextBlock>
+                      <Run Text="{DynamicResource Results.ExplicitLabel}" />
+                      <Run Text="{Binding SelectedExplicitAceCount, Mode=OneWay}" />
+                    </TextBlock>
+                  </Border>
+                  <Border BorderBrush="#FFCAE8D1">
+                    <Border.Style>
+                      <Style TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
+                        <Setter Property="Background" Value="#FFEBF8EF" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding SelectedInheritedAceCount}" Value="0">
+                            <Setter Property="Background" Value="#FFFFF8E1" />
+                            <Setter Property="BorderBrush" Value="#FFFFE082" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Border.Style>
+                    <TextBlock>
+                      <Run Text="{DynamicResource Results.InheritedLabel}" />
+                      <Run Text="{Binding SelectedInheritedAceCount, Mode=OneWay}" />
+                    </TextBlock>
+                  </Border>
+                  <Border BorderBrush="#FFF7C8D0">
+                    <Border.Style>
+                      <Style TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
+                        <Setter Property="Background" Value="#FFFFEEF1" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding SelectedDenyAceCount}" Value="0">
+                            <Setter Property="Background" Value="{StaticResource SurfaceMutedBrush}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource BorderSoftBrush}" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Border.Style>
+                    <TextBlock>
+                      <Run Text="{DynamicResource Results.DenyLabel}" />
+                      <Run Text="{Binding SelectedDenyAceCount, Mode=OneWay}" />
+                    </TextBlock>
+                  </Border>
+                </WrapPanel>
+              </StackPanel>
+            </ScrollViewer>
+          </TabItem>
+
+          <TabItem Header="{DynamicResource Results.ErrorsTab}" ToolTip="{DynamicResource Results.ErrorsTab.ToolTip}">
+            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+              <DataGrid ToolTip="{DynamicResource Results.ErrorsGrid.ToolTip}" ItemsSource="{Binding FilteredErrors}"
+                        AutoGenerateColumns="False"
+                        IsReadOnly="True"
+                        EnableRowVirtualization="True"
+                        EnableColumnVirtualization="True"
+                        ScrollViewer.CanContentScroll="True"
+                        ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                        ColumnWidth="SizeToCells"
+                        MinColumnWidth="80"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="{DynamicResource Grid.Path}" Binding="{Binding Path}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Type}" Binding="{Binding ErrorType}" />
+                  <DataGridTextColumn Header="{DynamicResource Grid.Message}" Binding="{Binding Message}" />
+                </DataGrid.Columns>
+              </DataGrid>
+            </Grid>
+          </TabItem>
+        </TabControl>
+      </Grid>
+    </Grid>
+  </Border>
 </UserControl>

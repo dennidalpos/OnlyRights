@@ -70,7 +70,7 @@ namespace NtfsAudit.App.Services
                 return token;
             }
 
-            throw new Win32Exception(firstError, "Impossibile eseguire l'impersonation con le credenziali configurate.");
+            throw new Win32Exception(firstError, "Unable to impersonate with the configured credentials.");
         }
 
         private static NetworkCredential BuildNetworkCredential(ScanCredential credential)

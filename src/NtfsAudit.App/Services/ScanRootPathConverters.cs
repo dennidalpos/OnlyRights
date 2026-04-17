@@ -27,17 +27,17 @@ namespace NtfsAudit.App.Services
             switch (kind)
             {
                 case PathKind.Dfs:
-                    return "DFS";
+                    return LocalizationManager.Text("PathKind.Dfs");
                 case PathKind.WslUnc:
-                    return "WSL Share";
+                    return LocalizationManager.Text("PathKind.WslUnc");
                 case PathKind.UncSmb:
-                    return "SMB Share";
+                    return LocalizationManager.Text("PathKind.UncSmb");
                 case PathKind.Local:
-                    return LocalizationManager.CurrentLocale == "it" ? "Locale" : "Local";
+                    return LocalizationManager.Text("PathKind.Local");
                 case PathKind.Unsupported:
-                    return LocalizationManager.CurrentLocale == "it" ? "Non supportato" : "Unsupported";
+                    return LocalizationManager.Text("PathKind.Unsupported");
                 default:
-                    return LocalizationManager.CurrentLocale == "it" ? "Sconosciuto" : "Unknown";
+                    return LocalizationManager.Text("PathKind.Unknown");
             }
         }
 

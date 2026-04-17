@@ -37,12 +37,54 @@ namespace NtfsAudit.App.Tests
             Assert.Contains("{Binding ImportAnalysisCommand}", buttonCommands);
             Assert.Contains("{Binding ExportCommand}", buttonCommands);
             Assert.Contains("{Binding ToggleSettingsCommand}", buttonCommands);
+            Assert.DoesNotContain("{Binding CleanupResidualFilesCommand}", buttonCommands);
 
             Assert.DoesNotContain(root.Descendants(), element => element.Name.LocalName == "ScanSidebar");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "SettingsPanel");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "FolderTreePanel");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "ResultsPanel");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "TextBlock" && (string)element.Attribute("Text") == "{Binding ProgressText}");
+        }
+
+        [Fact]
+        public void MainWindow_PrimaryToolbar_KeepsOnlyPrimaryActions()
+        {
+            var root = LoadMainWindow();
+            var buttonContents = root.Descendants()
+                .Where(element => element.Name.LocalName == "Button")
+                .Select(element => (string)element.Attribute("Content"))
+                .Where(content => !string.IsNullOrWhiteSpace(content))
+                .ToList();
+
+            Assert.Contains("{DynamicResource Main.StartAnalysis}", buttonContents);
+            Assert.Contains("{DynamicResource Main.StopAndClean}", buttonContents);
+            Assert.Contains("{DynamicResource Main.ImportAnalysis}", buttonContents);
+            Assert.Contains("{DynamicResource Main.ExportExcel}", buttonContents);
+            Assert.Contains("{DynamicResource Main.Settings}", buttonContents);
+            Assert.DoesNotContain("{DynamicResource Main.CleanupResiduals}", buttonContents);
+        }
+
+        [Fact]
+        public void MainWindow_RootInput_PreservesHintsAndAutomationNames()
+        {
+            var root = LoadMainWindow();
+
+            Assert.Equal("MainWindow_OnPreviewKeyDown", (string)root.Attribute("PreviewKeyDown"));
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute(XamlNamespace + "Name") == null && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Scan.RootBrowse.AutomationName}");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "TextBox" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Scan.RootPath.AutomationName}");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Scan.RootAdd.AutomationName}");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Scan.RemoveRoot.AutomationName}");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "TextBlock" && (string)element.Attribute("Text") == "{DynamicResource Scan.FoldersHint}");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "TextBlock" && (string)element.Attribute("Text") == "{DynamicResource Scan.StartHint}");
+        }
+
+        [Fact]
+        public void MainWindow_UsesSharedChromeForPrimarySurfaceAndWarningBadge()
+        {
+            var root = LoadMainWindow();
+
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Border" && (string)element.Attribute("Style") == "{StaticResource PanelBorderStyle}");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Border" && (string)element.Attribute("Style") == "{StaticResource WarningStatusBadgeBorderStyle}");
         }
 
         private static XElement LoadMainWindow()

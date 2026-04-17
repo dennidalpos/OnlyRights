@@ -34,13 +34,13 @@ namespace NtfsAudit.Service
             }
             catch (Exception ex)
             {
-                failureReason = string.Format("job corrotto: {0}", ex.Message);
+                failureReason = string.Format("corrupted job: {0}", ex.Message);
                 return false;
             }
 
             if (job == null)
             {
-                failureReason = "job vuoto o non deserializzabile";
+                failureReason = "empty or non-deserializable job";
                 return false;
             }
 
@@ -50,7 +50,7 @@ namespace NtfsAudit.Service
 
             if (runnableOptions.Count == 0)
             {
-                failureReason = "job senza root valide";
+                failureReason = "job without valid roots";
                 return false;
             }
 
@@ -74,7 +74,7 @@ namespace NtfsAudit.Service
             File.Move(filePath, destinationFile);
 
             var reasonFile = destinationFile + ".txt";
-            File.WriteAllText(reasonFile, failureReason ?? "job non valido");
+            File.WriteAllText(reasonFile, failureReason ?? "invalid job");
             return destinationFile;
         }
     }

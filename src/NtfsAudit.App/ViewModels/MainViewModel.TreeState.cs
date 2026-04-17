@@ -349,7 +349,8 @@ namespace NtfsAudit.App.ViewModels
         private void UpdateSelectedFolderInfo(string path, FolderDetail detail)
         {
             var entries = detail == null ? new List<AceEntry>() : detail.AllEntries;
-            SelectedPathKind = FormatPathKind(PathResolver.DetectPathKind(path));
+            var detectedPathKind = PathResolver.DetectPathKind(path);
+            SelectedPathKind = FormatPathKind(detectedPathKind);
             SelectedOwnerSummary = entries.Select(e => e.Owner).FirstOrDefault(v => !string.IsNullOrWhiteSpace(v)) ?? "-";
             SelectedInheritanceDisabled = detail != null && detail.IsInheritanceDisabled;
             SelectedInheritanceSummary = LocalizationManager.Text(SelectedInheritanceDisabled
@@ -363,15 +364,17 @@ namespace NtfsAudit.App.ViewModels
             if (entries.Count > 0) layers.Add(LocalizationManager.Text("Results.PermissionLayer.Ntfs"));
             if (detail != null && detail.HasShareEntries) layers.Add(LocalizationManager.Text("Results.PermissionLayer.Share"));
             if (detail != null && detail.HasEffectiveEntries) layers.Add(LocalizationManager.Text("Results.PermissionLayer.Effective"));
-            if (PathResolver.DetectPathKind(path) == PathKind.Unsupported) layers.Add(LocalizationManager.Text("Results.PermissionLayer.Unsupported"));
+            if (detectedPathKind == PathKind.Unsupported) layers.Add(LocalizationManager.Text("Results.PermissionLayer.Unsupported"));
             SelectedPermissionLayers = layers.Count == 0 ? "-" : string.Join(", ", layers);
             SelectedRiskSummary = LocalizationManager.Format(
                 "Results.RiskSummaryFormat",
                 entries.Count(e => string.Equals(NormalizeRiskLevel(e.RiskLevel), "high", StringComparison.Ordinal)),
                 entries.Count(e => string.Equals(NormalizeRiskLevel(e.RiskLevel), "medium", StringComparison.Ordinal)),
                 entries.Count(e => string.Equals(NormalizeRiskLevel(e.RiskLevel), "low", StringComparison.Ordinal)));
-            var warning = entries.Select(e => e.AuditSummary).FirstOrDefault(v => !string.IsNullOrWhiteSpace(v) && v.IndexOf("non", StringComparison.OrdinalIgnoreCase) >= 0);
-            if (string.IsNullOrWhiteSpace(warning) && string.Equals(SelectedPathKind, "Unsupported", StringComparison.OrdinalIgnoreCase))
+            var warning = entries
+                .Select(e => e.AuditSummary)
+                .FirstOrDefault(IsAcquisitionWarningSummary);
+            if (string.IsNullOrWhiteSpace(warning) && detectedPathKind == PathKind.Unsupported)
             {
                 warning = LocalizationManager.Text("Results.NfsWarning");
             }
@@ -439,6 +442,29 @@ namespace NtfsAudit.App.ViewModels
                 default:
                     return LocalizationManager.Text("PathKind.Unknown");
             }
+        }
+
+        private static bool IsAcquisitionWarningSummary(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            if (string.Equals(value, "No SACL entries", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "Nessuna voce SACL", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return value.IndexOf("unavailable", StringComparison.OrdinalIgnoreCase) >= 0
+                || value.IndexOf("denied", StringComparison.OrdinalIgnoreCase) >= 0
+                || value.IndexOf("missing", StringComparison.OrdinalIgnoreCase) >= 0
+                || value.IndexOf("not read", StringComparison.OrdinalIgnoreCase) >= 0
+                || value.IndexOf("non disponibile", StringComparison.OrdinalIgnoreCase) >= 0
+                || value.IndexOf("accesso negato", StringComparison.OrdinalIgnoreCase) >= 0
+                || value.IndexOf("mancante", StringComparison.OrdinalIgnoreCase) >= 0
+                || value.IndexOf("non letti", StringComparison.OrdinalIgnoreCase) >= 0;
         }
     }
 }

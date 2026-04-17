@@ -496,7 +496,16 @@ namespace NtfsAudit.App.ViewModels
         public int SelectedDenyAceCount { get { return _selectedDenyAceCount; } private set { _selectedDenyAceCount = value; OnPropertyChanged("SelectedDenyAceCount"); } }
         public string SelectedPermissionLayers { get { return _selectedPermissionLayers; } private set { _selectedPermissionLayers = value; OnPropertyChanged("SelectedPermissionLayers"); } }
         public string SelectedRiskSummary { get { return _selectedRiskSummary; } private set { _selectedRiskSummary = value; OnPropertyChanged("SelectedRiskSummary"); } }
-        public string SelectedAcquisitionWarnings { get { return _selectedAcquisitionWarnings; } private set { _selectedAcquisitionWarnings = value; OnPropertyChanged("SelectedAcquisitionWarnings"); } }
+        public string SelectedAcquisitionWarnings
+        {
+            get { return _selectedAcquisitionWarnings; }
+            private set
+            {
+                _selectedAcquisitionWarnings = value;
+                OnPropertyChanged("SelectedAcquisitionWarnings");
+                OnPropertyChanged("HasSelectedAcquisitionWarnings");
+            }
+        }
         public string SelectedScannedAtText { get { return _selectedScannedAtText; } private set { _selectedScannedAtText = value; OnPropertyChanged("SelectedScannedAtText"); } }
 
         public bool HasScanResult { get { return _scanResult != null; } }
@@ -504,6 +513,7 @@ namespace NtfsAudit.App.ViewModels
         public bool HasResultHierarchy { get { return _resultHierarchy != null && _resultHierarchy.Count > 0; } }
         public bool HasSelectedFolder { get { return _scanResult != null && !string.IsNullOrWhiteSpace(SelectedFolderPath); } }
         public bool HasNoSelectedFolder { get { return _scanResult != null && string.IsNullOrWhiteSpace(SelectedFolderPath); } }
+        public bool HasSelectedAcquisitionWarnings { get { return !string.IsNullOrWhiteSpace(_selectedAcquisitionWarnings) && _selectedAcquisitionWarnings != "-"; } }
         public bool ShouldShowStartHint { get { return !_isViewerMode && !_isScanning && !IsBusy && ScanRoots.Count == 0 && string.IsNullOrWhiteSpace(RootPath); } }
         public bool IsBusy { get { return _isBusy; } }
         public bool IsNotBusy { get { return !_isBusy; } }

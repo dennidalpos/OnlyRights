@@ -29,7 +29,7 @@ namespace NtfsAudit.App.Services
             {
                 return new ScanExceptionDiagnostic(
                     "PathCredentialRejected",
-                    string.Format("Credenziali non valide o rifiutate per il percorso: {0}", path),
+                    string.Format("Invalid or rejected credentials for path: {0}", path),
                     technicalDetails,
                     false);
             }
@@ -38,7 +38,7 @@ namespace NtfsAudit.App.Services
             {
                 return new ScanExceptionDiagnostic(
                     "SecurityPrivilegeUnavailable",
-                    string.Format("Privilegi insufficienti per leggere owner o audit del percorso: {0}. La scansione prosegue con i dati disponibili.", path),
+                    string.Format("Insufficient privileges to read owner or audit data for path: {0}. The scan continues with the available data.", path),
                     technicalDetails,
                     false);
             }
@@ -47,7 +47,7 @@ namespace NtfsAudit.App.Services
             {
                 return new ScanExceptionDiagnostic(
                     "PathAccessDenied",
-                    string.Format("Accesso negato al percorso: {0}", path),
+                    string.Format("Access denied for path: {0}", path),
                     technicalDetails,
                     false);
             }
@@ -56,7 +56,7 @@ namespace NtfsAudit.App.Services
             {
                 return new ScanExceptionDiagnostic(
                     "PathUnsupported",
-                    string.Format("Filesystem o provider non supportato per il percorso: {0}", path),
+                    string.Format("Unsupported filesystem or provider for path: {0}", path),
                     technicalDetails,
                     false);
             }
@@ -68,14 +68,14 @@ namespace NtfsAudit.App.Services
             {
                 return new ScanExceptionDiagnostic(
                     "PathUnavailable",
-                    string.Format("Percorso non valido o non raggiungibile: {0}", path),
+                    string.Format("Path is invalid or unreachable: {0}", path),
                     technicalDetails,
                     false);
             }
 
             return new ScanExceptionDiagnostic(
                 ex == null ? "Error" : ex.GetType().Name,
-                string.Format("Impossibile accedere al percorso: {0}", path),
+                string.Format("Unable to access path: {0}", path),
                 technicalDetails,
                 false);
         }
@@ -109,7 +109,7 @@ namespace NtfsAudit.App.Services
                 return message;
             }
 
-            return string.Format("{0} Dettagli: {1}", message, technicalDetails);
+            return string.Format("{0} Details: {1}", message, technicalDetails);
         }
 
         private static bool IsSecurityPrivilegeFailure(Exception ex)

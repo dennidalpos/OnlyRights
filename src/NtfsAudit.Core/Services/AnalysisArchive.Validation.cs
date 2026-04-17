@@ -52,23 +52,23 @@ namespace NtfsAudit.App.Services
 
                 if (dataEntry == null || dataEntry.Length == 0)
                 {
-                    throw new InvalidDataException("Export incompleto: data.jsonl mancante o vuoto.");
+                    throw new InvalidDataException("Incomplete export: data.jsonl is missing or empty.");
                 }
                 if (errorsEntry == null)
                 {
-                    throw new InvalidDataException("Export incompleto: errors.jsonl mancante.");
+                    throw new InvalidDataException("Incomplete export: errors.jsonl is missing.");
                 }
                 if (treeEntry == null)
                 {
-                    throw new InvalidDataException("Export incompleto: tree.json mancante.");
+                    throw new InvalidDataException("Incomplete export: tree.json is missing.");
                 }
                 if (flagsEntry == null)
                 {
-                    throw new InvalidDataException("Export incompleto: folderflags.json mancante.");
+                    throw new InvalidDataException("Incomplete export: folderflags.json is missing.");
                 }
                 if (metaEntry == null || metaEntry.Length == 0)
                 {
-                    throw new InvalidDataException("Export incompleto: meta.json mancante o vuoto.");
+                    throw new InvalidDataException("Incomplete export: meta.json is missing or empty.");
                 }
             }
         }
@@ -77,7 +77,7 @@ namespace NtfsAudit.App.Services
         {
             if (meta == null)
             {
-                throw new InvalidDataException("Metadati archivio non validi.");
+                throw new InvalidDataException("Archive metadata is invalid.");
             }
 
             if (meta.Version <= 0)
@@ -87,7 +87,7 @@ namespace NtfsAudit.App.Services
 
             if (!File.Exists(dataPath))
             {
-                throw new InvalidDataException("Archivio analisi non valido: data.jsonl mancante.");
+                throw new InvalidDataException("Analysis archive is invalid: data.jsonl is missing.");
             }
 
             var parsedRecords = 0;
@@ -117,12 +117,12 @@ namespace NtfsAudit.App.Services
 
             if (parsedRecords == 0)
             {
-                throw new InvalidDataException("Archivio analisi non valido o scansione legacy non compatibile: nessun record dati importabile.");
+                throw new InvalidDataException("Analysis archive is invalid or the legacy scan is incompatible: no importable data records were found.");
             }
 
             if (meta.Version >= 5 && meta.DataRecordCount > 0 && meta.DataRecordCount != parsedRecords)
             {
-                throw new InvalidDataException("Archivio analisi incompleto: il numero di record esportati non corrisponde ai dati nel file.");
+                throw new InvalidDataException("Analysis archive is incomplete: the exported record count does not match the data file.");
             }
 
             if (!File.Exists(errorPath))
@@ -134,7 +134,7 @@ namespace NtfsAudit.App.Services
                 var parsedErrors = CountNonEmptyLines(errorPath);
                 if (parsedErrors != meta.ErrorRecordCount)
                 {
-                    throw new InvalidDataException("Archivio analisi incompleto: il numero di errori esportati non corrisponde al file.");
+                    throw new InvalidDataException("Analysis archive is incomplete: the exported error count does not match the file.");
                 }
             }
         }
