@@ -48,7 +48,7 @@ namespace NtfsAudit.App.Services
             var queuedRoots = Math.Max(0, status.RemainingRootsInCurrentJob);
             var queueText = LocalizationManager.Format("Service.QueueText", queuedJobs + queuedRoots);
             var scheduleText = status.EnabledScheduleCount > 0
-                ? string.Format(" | schedules: {0}, next: {1}", status.EnabledScheduleCount, status.NextScheduledRunLocal.HasValue ? status.NextScheduledRunLocal.Value.ToString("g") : "-")
+                ? LocalizationManager.Format("Service.SchedulesText", status.EnabledScheduleCount, status.NextScheduledRunLocal.HasValue ? status.NextScheduledRunLocal.Value.ToString("g") : LocalizationManager.Text("Settings.NoNextRun"))
                 : string.Empty;
 
             if (status.IsRunning)

@@ -32,14 +32,14 @@
 
             <WrapPanel Grid.Column="0">
               <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.StartAnalysis}" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" ToolTip="{DynamicResource Main.StartAnalysis.ToolTip}" />
-              <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.StopAndClean}" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" ToolTip="{DynamicResource Main.StopAndClean.ToolTip}" />
-              <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.ImportAnalysis}" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" ToolTip="{DynamicResource Main.ImportAnalysis.ToolTip}" />
-              <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.ExportExcel}" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" ToolTip="{DynamicResource Main.ExportExcel.ToolTip}" />
-              <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.CleanupResiduals}" Command="{Binding CleanupResidualFilesCommand}" ToolTip="{DynamicResource Main.CleanupResiduals.ToolTip}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+              <Button Style="{StaticResource SecondaryActionButtonStyle}" Content="{DynamicResource Main.StopAndClean}" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" ToolTip="{DynamicResource Main.StopAndClean.ToolTip}" />
+              <Button Style="{StaticResource SecondaryActionButtonStyle}" Content="{DynamicResource Main.ImportAnalysis}" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" ToolTip="{DynamicResource Main.ImportAnalysis.ToolTip}" />
+              <Button Style="{StaticResource SecondaryActionButtonStyle}" Content="{DynamicResource Main.ExportExcel}" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" ToolTip="{DynamicResource Main.ExportExcel.ToolTip}" />
+              <Button Style="{StaticResource SecondaryActionButtonStyle}" Content="{DynamicResource Main.CleanupResiduals}" Command="{Binding CleanupResidualFilesCommand}" ToolTip="{DynamicResource Main.CleanupResiduals.ToolTip}" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
             </WrapPanel>
 
             <Button Grid.Column="1"
-                    Style="{StaticResource ActionButtonStyle}"
+                    Style="{StaticResource SecondaryActionButtonStyle}"
                     Margin="12,0,0,6"
                     Content="{DynamicResource Main.Settings}"
                     Command="{Binding ToggleSettingsCommand}"
@@ -54,7 +54,7 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0">
-              <Border Background="#FFF7F9FB" BorderBrush="#FFD7DEE5" BorderThickness="1" Padding="10" CornerRadius="4" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+              <Border Style="{StaticResource SupportPanelBorderStyle}" Padding="10" Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid>
                   <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -76,7 +76,7 @@
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="2*" />
                       <ColumnDefinition Width="Auto" />
-                      <ColumnDefinition Width="2*" />
+                      <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <ListBox Grid.Column="0" Height="84" ItemsSource="{Binding ScanRoots}" SelectedItem="{Binding SelectedScanRoot}">
                       <ListBox.ItemTemplate>
@@ -92,8 +92,8 @@
                         </DataTemplate>
                       </ListBox.ItemTemplate>
                     </ListBox>
-                    <Button Grid.Column="1" Style="{StaticResource InlineActionButtonStyle}" Margin="8,0" Content="{DynamicResource Common.Remove}" VerticalAlignment="Top" Command="{Binding RemoveScanRootCommand}" />
-                    <StackPanel Grid.Column="2">
+                    <Button Grid.Column="1" Style="{StaticResource InlineActionButtonStyle}" Margin="12,0,0,0" Content="{DynamicResource Common.Remove}" VerticalAlignment="Top" Command="{Binding RemoveScanRootCommand}" />
+                    <StackPanel Grid.Column="2" Margin="12,0,0,0">
                       <TextBlock Text="{Binding PathCompatibilitySummaryText}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
                       <TextBlock Text="{Binding SelectedScanRootEffectiveCredentialSource}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
                       <TextBlock Text="{Binding ServiceScheduleSummaryText}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
@@ -106,8 +106,11 @@
                 <Border Background="{Binding ServiceBadgeBackground}" BorderBrush="#FFCFD8DC" Style="{StaticResource StatusBadgeBorderStyle}">
                   <TextBlock Text="{Binding ServiceBadgeText}" Foreground="White" FontWeight="SemiBold" />
                 </Border>
-                <TextBlock Text="{Binding ServiceRuntimeStatusText}" Style="{StaticResource MicrocopyText}" Margin="12,4,0,0" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding ServiceRuntimeStatusText}" Style="{StaticResource MicrocopyText}" Margin="12,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />
               </StackPanel>
+              <Border Style="{StaticResource NeutralInfoCardBorderStyle}" Padding="10,6" Margin="0,8,0,0">
+                <TextBlock Text="{Binding ProgressText}" Style="{StaticResource MicrocopyText}" Margin="0" TextWrapping="Wrap" />
+              </Border>
             </StackPanel>
 
             <StackPanel Grid.Column="2" HorizontalAlignment="Right">

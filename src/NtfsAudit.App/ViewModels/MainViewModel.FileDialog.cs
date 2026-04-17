@@ -42,7 +42,7 @@ namespace NtfsAudit.App.ViewModels
             try
             {
                 var dialog = (IFileDialog)new FileOpenDialog();
-                dialog.SetTitle("Seleziona cartella");
+                dialog.SetTitle(LocalizationManager.Text("FileDialog.SelectFolderTitle"));
                 dialog.GetOptions(out var options);
                 options |= (uint)(FileDialogOptions.PickFolders
                     | FileDialogOptions.ForceFileSystem

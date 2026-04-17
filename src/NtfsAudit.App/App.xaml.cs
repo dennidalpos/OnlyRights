@@ -62,14 +62,13 @@ namespace NtfsAudit.App
 
             if (acquireResult.IsAlreadyRunning)
             {
-                MessageBox.Show("NTFS Audit is already running.", LocalizationManager.Text("App.Title"), MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(LocalizationManager.Text("App.AlreadyRunning"), LocalizationManager.Text("App.Title"), MessageBoxButton.OK, MessageBoxImage.Information);
                 return false;
             }
 
-            var message = string.Format(
-                "Impossibile inizializzare il controllo istanza unica.{0}{0}Dettagli: {1}",
-                Environment.NewLine,
-                string.IsNullOrWhiteSpace(acquireResult.ErrorMessage) ? "errore non disponibile" : acquireResult.ErrorMessage);
+            var message = LocalizationManager.Format(
+                "App.SingleInstanceInitializationError",
+                string.IsNullOrWhiteSpace(acquireResult.ErrorMessage) ? LocalizationManager.Text("App.ErrorUnavailable") : acquireResult.ErrorMessage);
             MessageBox.Show(message, LocalizationManager.Text("App.Title"), MessageBoxButton.OK, MessageBoxImage.Error);
             return false;
         }
@@ -90,7 +89,7 @@ namespace NtfsAudit.App
         private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             LogUnhandled("DispatcherUnhandledException", e.Exception);
-            MessageBox.Show("Unexpected error. Check the log file for details.", LocalizationManager.Text("App.Title"), MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(LocalizationManager.Text("App.UnexpectedError"), LocalizationManager.Text("App.Title"), MessageBoxButton.OK, MessageBoxImage.Error);
             e.Handled = true;
         }
 

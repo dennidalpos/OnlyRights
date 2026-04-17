@@ -40,6 +40,13 @@ namespace NtfsAudit.App.Tests
         }
 
         [Fact]
+        public void CultureSpecificLocale_ResolvesToSupportedNeutralLocale()
+        {
+            Assert.Equal("it", LocalizationManager.ResolveLocale("it-IT").Code);
+            Assert.Equal("en", LocalizationManager.ResolveLocale("en-US").Code);
+        }
+
+        [Fact]
         public void MissingKey_ReturnsVisibleKeyMarker()
         {
             LocalizationManager.Apply(new ResourceDictionary(), "en");
@@ -65,6 +72,10 @@ namespace NtfsAudit.App.Tests
             Assert.Contains("Results.RiskSummaryFormat", englishKeys);
             Assert.Contains("Dialog.GroupDetails", englishKeys);
             Assert.Contains("Progress.ErrorsPartiallyLoaded", englishKeys);
+            Assert.Contains("Settings.ServiceSchedulingAvailable", englishKeys);
+            Assert.Contains("Schedule.Day.Monday", englishKeys);
+            Assert.Contains("Grid.ReadAndExecute", englishKeys);
+            Assert.Contains("App.SingleInstanceInitializationError", englishKeys);
         }
 
         [Fact]

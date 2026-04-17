@@ -57,7 +57,8 @@ Build, test, packaging, MSI, service, and CI-facing commands are kept in the tec
 
 ## Current Status
 
-- The latest repository maintenance verification pass executed `scripts/doctor.ps1`, targeted service scheduling tests, service install smoke, MSI install smoke, and MSI upgrade smoke successfully.
+- The current workspace verification pass executed `pwsh -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -SkipBuild`, `pwsh -File .\scripts\build.ps1 -Configuration Release -SkipRestore`, `pwsh -File .\scripts\test.ps1 -Configuration Release -SkipRestore`, `pwsh -File .\scripts\pack.ps1 -Configuration Release -SkipRestore -SkipBuild`, and `pwsh -File .\scripts\publish.ps1 -Configuration Release` successfully on April 17, 2026.
+- `pwsh -File .\scripts\test.ps1 -Configuration Release -SkipRestore` passed 139 tests in this workspace.
 - Repository-aligned residual work is tracked in [PROJECT_STATUS.json](PROJECT_STATUS.json) when real open tasks remain.
 
 ## Technical Documentation

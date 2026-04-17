@@ -53,8 +53,25 @@ namespace NtfsAudit.App.Services
                 return _supportedLocales[0];
             }
 
-            return _supportedLocales.FirstOrDefault(item => string.Equals(item.Code, locale.Trim(), StringComparison.OrdinalIgnoreCase))
-                ?? _supportedLocales[0];
+            var normalizedLocale = locale.Trim();
+            var exactMatch = _supportedLocales.FirstOrDefault(item => string.Equals(item.Code, normalizedLocale, StringComparison.OrdinalIgnoreCase));
+            if (exactMatch != null)
+            {
+                return exactMatch;
+            }
+
+            var separatorIndex = normalizedLocale.IndexOfAny(new[] { '-', '_' });
+            if (separatorIndex > 0)
+            {
+                var neutralLocale = normalizedLocale.Substring(0, separatorIndex);
+                var neutralMatch = _supportedLocales.FirstOrDefault(item => string.Equals(item.Code, neutralLocale, StringComparison.OrdinalIgnoreCase));
+                if (neutralMatch != null)
+                {
+                    return neutralMatch;
+                }
+            }
+
+            return _supportedLocales[0];
         }
 
         public static void ApplyDefault()
@@ -73,7 +90,11 @@ namespace NtfsAudit.App.Services
 
             var changed = !string.Equals(_currentLocale, resolved.Code, StringComparison.OrdinalIgnoreCase);
             _currentLocale = resolved.Code;
-            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(resolved.Code);
+            var culture = CultureInfo.GetCultureInfo(resolved.Code);
+            CultureInfo.CurrentCulture = culture;
+            CultureInfo.CurrentUICulture = culture;
+            CultureInfo.DefaultThreadCurrentCulture = culture;
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
             if (changed && LocaleChanged != null)
             {
                 LocaleChanged(null, EventArgs.Empty);

@@ -156,10 +156,12 @@ namespace NtfsAudit.App.ViewModels
         private ObservableCollection<ResultHierarchyNodeViewModel> _resultHierarchy = new ObservableCollection<ResultHierarchyNodeViewModel>();
         private ObservableCollection<ServiceScheduleItemViewModel> _serviceSchedules = new ObservableCollection<ServiceScheduleItemViewModel>();
         private ServiceScheduleItemViewModel _selectedServiceSchedule;
-        private string _scheduleName = "Daily audit";
+        private string _scheduleName = string.Empty;
         private ServiceScheduleFrequencyKind _scheduleFrequencyKind = ServiceScheduleFrequencyKind.Daily;
         private DateTime _scheduleOneShotDate = DateTime.Today;
         private DateTime _scheduleTimeOfDay = DateTime.Today.AddHours(9);
+        private string _scheduleTimeText = DateTime.Today.AddHours(9).ToString("HH:mm");
+        private string _scheduleEditorFeedbackText = string.Empty;
         private DayOfWeek _scheduleDayOfWeek = DayOfWeek.Monday;
         private int _scheduleDayOfMonth = 1;
         private bool _scheduleEnabled = true;

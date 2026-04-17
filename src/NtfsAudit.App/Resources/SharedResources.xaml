@@ -33,6 +33,12 @@
     <Setter Property="BorderThickness" Value="1" />
   </Style>
 
+  <Style x:Key="SecondaryActionButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
+    <Setter Property="Background" Value="#FFF7F9FB" />
+    <Setter Property="Foreground" Value="#FF1F1F1F" />
+    <Setter Property="BorderBrush" Value="#FFD0D7DE" />
+  </Style>
+
   <Style x:Key="InlineActionButtonStyle" TargetType="Button">
     <Setter Property="Height" Value="28" />
     <Setter Property="Padding" Value="10,4" />
@@ -85,6 +91,19 @@
     <Setter Property="CornerRadius" Value="4" />
     <Setter Property="Padding" Value="8,6" />
     <Setter Property="Margin" Value="0,0,8,8" />
+  </Style>
+
+  <Style x:Key="NeutralInfoCardBorderStyle" TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
+    <Setter Property="Background" Value="#FFF5F5F5" />
+    <Setter Property="BorderBrush" Value="#FFE0E0E0" />
+  </Style>
+
+  <Style x:Key="SupportPanelBorderStyle" TargetType="Border">
+    <Setter Property="Background" Value="#FFF7F9FB" />
+    <Setter Property="BorderBrush" Value="#FFD7DEE5" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="10,8" />
   </Style>
 
   <Style x:Key="MetricPillBorderStyle" TargetType="Border">

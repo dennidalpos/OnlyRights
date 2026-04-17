@@ -119,7 +119,7 @@ namespace NtfsAudit.App.ViewModels
             IsServiceRuntimeRunning = viewState.IsServiceRuntimeRunning;
             ServiceNextRunText = status != null && status.NextScheduledRunLocal.HasValue
                 ? status.NextScheduledRunLocal.Value.ToString("g")
-                : "Nessuna";
+                : LocalizationManager.Text("Settings.NoNextRun");
             if (viewState.IsServiceRuntimeRunning && !_isScanning)
             {
                 ProgressText = ServiceRuntimeStatusText;
@@ -139,6 +139,11 @@ namespace NtfsAudit.App.ViewModels
             OnPropertyChanged("GlobalCredentialStatusText");
             OnPropertyChanged("SelectedScanRootCredentialStatusText");
             OnPropertyChanged("SelectedScanRootEffectiveCredentialSource");
+            OnPropertyChanged("AvailableScheduleFrequencyOptions");
+            OnPropertyChanged("SelectedScheduleFrequencyOption");
+            OnPropertyChanged("AvailableScheduleDayOptions");
+            OnPropertyChanged("SelectedScheduleDayOption");
+            OnPropertyChanged("ServiceSchedulingAvailabilityText");
             RefreshServiceRuntimeStatus();
             if (_scanResult != null && !string.IsNullOrWhiteSpace(SelectedFolderPath))
             {
@@ -306,38 +311,38 @@ namespace NtfsAudit.App.ViewModels
         {
             if (result == null)
             {
-                message = "Analisi importata non valida: dati mancanti.";
+                message = LocalizationManager.Text("Validation.ImportInvalidMissingData");
                 return false;
             }
             if (string.IsNullOrWhiteSpace(result.TempDataPath))
             {
-                message = "Analisi importata non valida: file dati non presente.";
+                message = LocalizationManager.Text("Validation.ImportInvalidMissingDataFile");
                 return false;
             }
             var dataPath = PathResolver.ToExtendedPath(result.TempDataPath);
             if (!File.Exists(dataPath))
             {
-                message = "Analisi importata non valida: file dati non trovato.";
+                message = LocalizationManager.Text("Validation.ImportInvalidDataFileNotFound");
                 return false;
             }
             if (new FileInfo(dataPath).Length == 0)
             {
-                message = "Analisi importata non valida: file dati vuoto.";
+                message = LocalizationManager.Text("Validation.ImportInvalidDataFileEmpty");
                 return false;
             }
             if (result.Details == null || result.TreeMap == null)
             {
-                message = "Analisi importata non valida: struttura dati incompleta (TreeMap/Details mancanti).";
+                message = LocalizationManager.Text("Validation.ImportInvalidStructure");
                 return false;
             }
             if (result.TreeMap.Count == 0)
             {
-                message = "Analisi importata con albero cartelle vuoto.";
+                message = LocalizationManager.Text("Validation.ImportEmptyTree");
                 return false;
             }
             if (result.Details.Count == 0)
             {
-                message = "Analisi importata senza dettagli ACL.";
+                message = LocalizationManager.Text("Validation.ImportMissingAclDetails");
                 return false;
             }
             message = null;

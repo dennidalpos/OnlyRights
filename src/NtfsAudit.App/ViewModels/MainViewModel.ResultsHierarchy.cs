@@ -15,6 +15,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using NtfsAudit.App.Models;
+using NtfsAudit.App.Services;
 
 namespace NtfsAudit.App.ViewModels
 {
@@ -36,14 +37,14 @@ namespace NtfsAudit.App.ViewModels
 
             foreach (var group in detail.AllEntries
                 .GroupBy(entry => string.Format("{0}|{1}|{2}", entry.PrincipalType, entry.PrincipalSid, entry.PrincipalName), StringComparer.OrdinalIgnoreCase)
-                .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase))
+                    .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase))
             {
                 var sample = group.First();
                 var isGroup = string.Equals(sample.PrincipalType, "Group", StringComparison.OrdinalIgnoreCase);
                 var node = new ResultHierarchyNodeViewModel(
-                    sample.PrincipalName ?? "(unknown principal)",
+                    sample.PrincipalName ?? LocalizationManager.Text("Hierarchy.UnknownPrincipal"),
                     sample.PrincipalSid ?? string.Empty,
-                    isGroup ? "GROUP" : "USER",
+                    isGroup ? LocalizationManager.Text("Hierarchy.Group") : LocalizationManager.Text("Hierarchy.User"),
                     isGroup ? "#FF3949AB" : "#FF00897B",
                     sample.RiskLevel ?? string.Empty,
                     ResolveRiskBadge(sample.RiskLevel),
@@ -64,14 +65,16 @@ namespace NtfsAudit.App.ViewModels
 
         private ResultHierarchyNodeViewModel BuildPermissionNode(AceEntry entry)
         {
-            var resourceLabel = string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase) ? "FILE" : "FOLDER";
+            var resourceLabel = string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase)
+                ? LocalizationManager.Text("Hierarchy.File")
+                : LocalizationManager.Text("Hierarchy.Folder");
             var accessLabel = string.IsNullOrWhiteSpace(entry.AllowDeny) ? "NTFS" : entry.AllowDeny.ToUpperInvariant();
             var subtitle = string.Format("{0} | {1}", entry.TargetPath ?? entry.FolderPath ?? string.Empty, entry.RightsSummary ?? "-");
             return new ResultHierarchyNodeViewModel(
-                entry.RightsSummary ?? "(rights)",
+                entry.RightsSummary ?? LocalizationManager.Text("Hierarchy.RightsFallback"),
                 subtitle,
                 resourceLabel,
-                string.Equals(resourceLabel, "FILE", StringComparison.OrdinalIgnoreCase) ? "#FF6D4C41" : "#FF546E7A",
+                string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase) ? "#FF6D4C41" : "#FF546E7A",
                 accessLabel,
                 string.Equals(entry.AllowDeny, "Deny", StringComparison.OrdinalIgnoreCase) ? "#FFC62828" : "#FF1E88E5");
         }
@@ -93,7 +96,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 return new[]
                 {
-                    new ResultHierarchyNodeViewModel("No nested groups", string.Empty, "INFO", "#FF90A4AE")
+                    new ResultHierarchyNodeViewModel(LocalizationManager.Text("Hierarchy.NoNestedGroups"), string.Empty, LocalizationManager.Text("Hierarchy.Info"), "#FF90A4AE")
                 };
             }
 
@@ -107,11 +110,11 @@ namespace NtfsAudit.App.ViewModels
         {
             var isGroup = principal != null && principal.IsGroup;
             return new ResultHierarchyNodeViewModel(
-                principal == null ? "(unknown)" : principal.Name ?? "(unknown)",
+                principal == null ? LocalizationManager.Text("Hierarchy.UnknownEntry") : principal.Name ?? LocalizationManager.Text("Hierarchy.UnknownEntry"),
                 principal == null ? string.Empty : principal.Sid ?? string.Empty,
-                isGroup ? "GROUP" : "USER",
+                isGroup ? LocalizationManager.Text("Hierarchy.Group") : LocalizationManager.Text("Hierarchy.User"),
                 isGroup ? "#FF3949AB" : "#FF00897B",
-                principal != null && principal.IsDisabled ? "DISABLED" : string.Empty,
+                principal != null && principal.IsDisabled ? LocalizationManager.Text("Hierarchy.Disabled") : string.Empty,
                 principal != null && principal.IsDisabled ? "#FFC62828" : "#FFCFD8DC",
                 isGroup && principal != null ? (() => LoadGroupMembersNodesAsync(principal.Sid)) : null);
         }

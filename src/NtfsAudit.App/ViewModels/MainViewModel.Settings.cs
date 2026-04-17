@@ -113,34 +113,58 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        public IReadOnlyList<ServiceScheduleFrequencyKind> AvailableScheduleFrequencies
+        public IReadOnlyList<SelectionOption<ServiceScheduleFrequencyKind>> AvailableScheduleFrequencyOptions
         {
             get
             {
                 return new[]
                 {
-                    ServiceScheduleFrequencyKind.OneShot,
-                    ServiceScheduleFrequencyKind.Daily,
-                    ServiceScheduleFrequencyKind.Weekly,
-                    ServiceScheduleFrequencyKind.Monthly
+                    new SelectionOption<ServiceScheduleFrequencyKind>(ServiceScheduleFrequencyKind.OneShot, LocalizationManager.Text("Schedule.Frequency.OneShot")),
+                    new SelectionOption<ServiceScheduleFrequencyKind>(ServiceScheduleFrequencyKind.Daily, LocalizationManager.Text("Schedule.Frequency.Daily")),
+                    new SelectionOption<ServiceScheduleFrequencyKind>(ServiceScheduleFrequencyKind.Weekly, LocalizationManager.Text("Schedule.Frequency.Weekly")),
+                    new SelectionOption<ServiceScheduleFrequencyKind>(ServiceScheduleFrequencyKind.Monthly, LocalizationManager.Text("Schedule.Frequency.Monthly"))
                 };
             }
         }
 
-        public IReadOnlyList<DayOfWeek> AvailableScheduleDays
+        public SelectionOption<ServiceScheduleFrequencyKind> SelectedScheduleFrequencyOption
+        {
+            get { return AvailableScheduleFrequencyOptions.FirstOrDefault(option => option.Value == ScheduleFrequencyKind) ?? AvailableScheduleFrequencyOptions[0]; }
+            set
+            {
+                if (value != null)
+                {
+                    ScheduleFrequencyKind = value.Value;
+                }
+            }
+        }
+
+        public IReadOnlyList<SelectionOption<DayOfWeek>> AvailableScheduleDayOptions
         {
             get
             {
                 return new[]
                 {
-                    DayOfWeek.Monday,
-                    DayOfWeek.Tuesday,
-                    DayOfWeek.Wednesday,
-                    DayOfWeek.Thursday,
-                    DayOfWeek.Friday,
-                    DayOfWeek.Saturday,
-                    DayOfWeek.Sunday
+                    new SelectionOption<DayOfWeek>(DayOfWeek.Monday, LocalizationManager.Text("Schedule.Day.Monday")),
+                    new SelectionOption<DayOfWeek>(DayOfWeek.Tuesday, LocalizationManager.Text("Schedule.Day.Tuesday")),
+                    new SelectionOption<DayOfWeek>(DayOfWeek.Wednesday, LocalizationManager.Text("Schedule.Day.Wednesday")),
+                    new SelectionOption<DayOfWeek>(DayOfWeek.Thursday, LocalizationManager.Text("Schedule.Day.Thursday")),
+                    new SelectionOption<DayOfWeek>(DayOfWeek.Friday, LocalizationManager.Text("Schedule.Day.Friday")),
+                    new SelectionOption<DayOfWeek>(DayOfWeek.Saturday, LocalizationManager.Text("Schedule.Day.Saturday")),
+                    new SelectionOption<DayOfWeek>(DayOfWeek.Sunday, LocalizationManager.Text("Schedule.Day.Sunday"))
                 };
+            }
+        }
+
+        public SelectionOption<DayOfWeek> SelectedScheduleDayOption
+        {
+            get { return AvailableScheduleDayOptions.FirstOrDefault(option => option.Value == ScheduleDayOfWeek) ?? AvailableScheduleDayOptions[0]; }
+            set
+            {
+                if (value != null)
+                {
+                    ScheduleDayOfWeek = value.Value;
+                }
             }
         }
 
@@ -201,6 +225,7 @@ namespace NtfsAudit.App.ViewModels
             set
             {
                 _scheduleTimeOfDay = value;
+                _scheduleTimeText = value.ToString("HH:mm");
                 OnPropertyChanged("ScheduleTimeOfDay");
                 OnPropertyChanged("ScheduleTimeText");
                 RaiseScheduleEditorChanged();
@@ -209,18 +234,24 @@ namespace NtfsAudit.App.ViewModels
 
         public string ScheduleTimeText
         {
-            get { return ScheduleTimeOfDay.ToString("HH:mm"); }
+            get { return _scheduleTimeText; }
             set
             {
+                _scheduleTimeText = value;
+                OnPropertyChanged("ScheduleTimeText");
                 if (string.IsNullOrWhiteSpace(value))
                 {
+                    RaiseScheduleEditorChanged();
                     return;
                 }
 
                 if (TimeSpan.TryParse(value, out var parsed))
                 {
                     ScheduleTimeOfDay = DateTime.Today.Add(parsed);
+                    return;
                 }
+
+                RaiseScheduleEditorChanged();
             }
         }
 
@@ -268,6 +299,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 return CanManageServiceSchedules
                     && !string.IsNullOrWhiteSpace(ScheduleName)
+                    && string.IsNullOrWhiteSpace(GetScheduleTimeValidationMessage())
                     && GetCurrentScheduleRoots().Count > 0;
             }
         }
@@ -282,8 +314,18 @@ namespace NtfsAudit.App.ViewModels
             get
             {
                 return IsServiceInstalled
-                    ? "Il servizio Windows è disponibile: puoi salvare definizioni schedule in %ProgramData%."
-                    : "Installa il servizio Windows per abilitare scheduling e job persistiti.";
+                    ? LocalizationManager.Text("Settings.ServiceSchedulingAvailable")
+                    : LocalizationManager.Text("Settings.ServiceSchedulingUnavailable");
+            }
+        }
+
+        public string ScheduleEditorFeedbackText
+        {
+            get { return _scheduleEditorFeedbackText; }
+            private set
+            {
+                _scheduleEditorFeedbackText = value;
+                OnPropertyChanged("ScheduleEditorFeedbackText");
             }
         }
 
@@ -336,24 +378,24 @@ namespace NtfsAudit.App.ViewModels
                     Definition = definition,
                     Runtime = status,
                     FrequencyLabel = FormatScheduleFrequency(definition),
-                    NextRunText = nextRun.HasValue ? nextRun.Value.ToString("g") : "Nessuna prossima esecuzione",
+                    NextRunText = nextRun.HasValue ? nextRun.Value.ToString("g") : LocalizationManager.Text("Settings.NoNextExecution"),
                     RootsSummary = string.Join("; ", (definition.Template == null ? new List<string>() : definition.Template.Roots).Where(root => !string.IsNullOrWhiteSpace(root))),
-                    LastMessage = status == null || string.IsNullOrWhiteSpace(status.LastMessage) ? "In attesa" : status.LastMessage,
-                    StatusBadgeText = definition.IsEnabled ? "ACTIVE" : "PAUSED",
+                    LastMessage = status == null || string.IsNullOrWhiteSpace(status.LastMessage) ? LocalizationManager.Text("Settings.StatusWaiting") : status.LastMessage,
+                    StatusBadgeText = definition.IsEnabled ? LocalizationManager.Text("Settings.StatusActive") : LocalizationManager.Text("Settings.StatusPaused"),
                     StatusBadgeBackground = definition.IsEnabled ? "#FF2E7D32" : "#FF607D8B"
                 });
             }
 
             ServiceScheduleSummaryText = ServiceSchedules.Count == 0
-                ? "Nessuna schedule definita."
-                : string.Format("{0} schedule caricate, {1} abilitate.", ServiceSchedules.Count, ServiceSchedules.Count(item => item.Definition.IsEnabled));
+                ? LocalizationManager.Text("Settings.NoSchedules")
+                : LocalizationManager.Format("Settings.ScheduleSummaryFormat", ServiceSchedules.Count, ServiceSchedules.Count(item => item.Definition.IsEnabled));
 
             var nextScheduledRun = ServiceSchedules
                 .Select(item => item.Runtime != null && item.Runtime.NextRunLocal.HasValue ? item.Runtime.NextRunLocal : _serviceSchedulePlanner.GetNextOccurrence(item.Definition, nowLocal))
                 .Where(value => value.HasValue)
                 .OrderBy(value => value.Value)
                 .FirstOrDefault();
-            ServiceNextRunText = nextScheduledRun.HasValue ? nextScheduledRun.Value.ToString("g") : "Nessuna";
+            ServiceNextRunText = nextScheduledRun.HasValue ? nextScheduledRun.Value.ToString("g") : LocalizationManager.Text("Settings.NoNextRun");
 
             SelectedServiceSchedule = string.IsNullOrWhiteSpace(selectedId)
                 ? ServiceSchedules.FirstOrDefault()
@@ -396,7 +438,7 @@ namespace NtfsAudit.App.ViewModels
             _serviceScheduleStore.SaveDefinition(definition);
             RefreshServiceSchedules();
             SelectedServiceSchedule = ServiceSchedules.FirstOrDefault(item => string.Equals(item.Definition.ScheduleId, definition.ScheduleId, StringComparison.OrdinalIgnoreCase));
-            ProgressText = string.Format("Schedule salvata: {0}", definition.Name);
+            ProgressText = LocalizationManager.Format("Settings.ScheduleSaved", definition.Name);
         }
 
         private void DeleteScheduleDefinition()
@@ -409,14 +451,14 @@ namespace NtfsAudit.App.ViewModels
             var removedName = SelectedServiceSchedule.Definition.Name;
             _serviceScheduleStore.DeleteDefinition(SelectedServiceSchedule.Definition.ScheduleId);
             RefreshServiceSchedules();
-            ProgressText = string.Format("Schedule rimossa: {0}", removedName);
+            ProgressText = LocalizationManager.Format("Settings.ScheduleRemoved", removedName);
         }
 
         private void LoadScheduleIntoEditor(ServiceScheduleDefinition definition)
         {
             if (definition == null)
             {
-                ScheduleName = "Daily audit";
+                ScheduleName = LocalizationManager.Text("Settings.DefaultScheduleName");
                 ScheduleFrequencyKind = ServiceScheduleFrequencyKind.Daily;
                 ScheduleOneShotDate = DateTime.Today;
                 ScheduleTimeOfDay = DateTime.Today.AddHours(9);
@@ -470,29 +512,97 @@ namespace NtfsAudit.App.ViewModels
                 .ToList();
         }
 
-        private static string FormatScheduleFrequency(ServiceScheduleDefinition definition)
+        private string FormatScheduleFrequency(ServiceScheduleDefinition definition)
         {
             switch (definition.FrequencyKind)
             {
                 case ServiceScheduleFrequencyKind.OneShot:
-                    return definition.OneShotLocalDateTime.HasValue ? string.Format("One-shot {0}", definition.OneShotLocalDateTime.Value.ToString("g")) : "One-shot";
+                    return definition.OneShotLocalDateTime.HasValue
+                        ? LocalizationManager.Format("Settings.Frequency.OneShotAt", definition.OneShotLocalDateTime.Value.ToString("g"))
+                        : LocalizationManager.Text("Schedule.Frequency.OneShot");
                 case ServiceScheduleFrequencyKind.Daily:
-                    return string.Format("Daily {0}", DateTime.Today.Add(definition.TimeOfDay).ToString("HH:mm"));
+                    return LocalizationManager.Format("Settings.Frequency.DailyAt", DateTime.Today.Add(definition.TimeOfDay).ToString("HH:mm"));
                 case ServiceScheduleFrequencyKind.Weekly:
-                    return string.Format("Weekly {0} {1}", definition.DayOfWeek, DateTime.Today.Add(definition.TimeOfDay).ToString("HH:mm"));
+                    return LocalizationManager.Format(
+                        "Settings.Frequency.WeeklyAt",
+                        FormatDayOfWeek(definition.DayOfWeek ?? DayOfWeek.Monday),
+                        DateTime.Today.Add(definition.TimeOfDay).ToString("HH:mm"));
                 case ServiceScheduleFrequencyKind.Monthly:
-                    return string.Format("Monthly day {0} {1}", definition.DayOfMonth, DateTime.Today.Add(definition.TimeOfDay).ToString("HH:mm"));
+                    return LocalizationManager.Format("Settings.Frequency.MonthlyAt", definition.DayOfMonth ?? 1, DateTime.Today.Add(definition.TimeOfDay).ToString("HH:mm"));
                 default:
                     return definition.FrequencyKind.ToString();
             }
         }
 
+        private static string FormatDayOfWeek(DayOfWeek dayOfWeek)
+        {
+            switch (dayOfWeek)
+            {
+                case DayOfWeek.Monday:
+                    return LocalizationManager.Text("Schedule.Day.Monday");
+                case DayOfWeek.Tuesday:
+                    return LocalizationManager.Text("Schedule.Day.Tuesday");
+                case DayOfWeek.Wednesday:
+                    return LocalizationManager.Text("Schedule.Day.Wednesday");
+                case DayOfWeek.Thursday:
+                    return LocalizationManager.Text("Schedule.Day.Thursday");
+                case DayOfWeek.Friday:
+                    return LocalizationManager.Text("Schedule.Day.Friday");
+                case DayOfWeek.Saturday:
+                    return LocalizationManager.Text("Schedule.Day.Saturday");
+                case DayOfWeek.Sunday:
+                    return LocalizationManager.Text("Schedule.Day.Sunday");
+                default:
+                    return dayOfWeek.ToString();
+            }
+        }
+
         private void RaiseScheduleEditorChanged()
         {
+            ScheduleEditorFeedbackText = BuildScheduleEditorFeedback();
+            OnPropertyChanged("CanSaveSchedule");
             if (SaveScheduleCommand != null)
             {
                 SaveScheduleCommand.RaiseCanExecuteChanged();
             }
+        }
+
+        private string BuildScheduleEditorFeedback()
+        {
+            if (!CanManageServiceSchedules)
+            {
+                return LocalizationManager.Text("Settings.ServiceSchedulingUnavailable");
+            }
+
+            if (string.IsNullOrWhiteSpace(ScheduleName))
+            {
+                return LocalizationManager.Text("Settings.ScheduleNameRequired");
+            }
+
+            var scheduleTimeValidationMessage = GetScheduleTimeValidationMessage();
+            if (!string.IsNullOrWhiteSpace(scheduleTimeValidationMessage))
+            {
+                return scheduleTimeValidationMessage;
+            }
+
+            if (GetCurrentScheduleRoots().Count == 0)
+            {
+                return LocalizationManager.Text("Settings.ScheduleRootRequired");
+            }
+
+            return LocalizationManager.Text("Settings.ScheduleReadyHint");
+        }
+
+        private string GetScheduleTimeValidationMessage()
+        {
+            if (string.IsNullOrWhiteSpace(_scheduleTimeText))
+            {
+                return LocalizationManager.Text("Settings.ScheduleTimeRequired");
+            }
+
+            return TimeSpan.TryParse(_scheduleTimeText, out _)
+                ? string.Empty
+                : LocalizationManager.Text("Settings.ScheduleTimeInvalid");
         }
     }
 }

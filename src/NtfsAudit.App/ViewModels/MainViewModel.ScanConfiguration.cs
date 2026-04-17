@@ -54,6 +54,11 @@ namespace NtfsAudit.App.ViewModels
             get { return _isServiceInstalled; }
             private set
             {
+                if (_isServiceInstalled == value)
+                {
+                    return;
+                }
+
                 _isServiceInstalled = value;
                 OnPropertyChanged("IsServiceInstalled");
                 if (InstallServiceCommand != null)
@@ -64,6 +69,31 @@ namespace NtfsAudit.App.ViewModels
                 {
                     UninstallServiceCommand.RaiseCanExecuteChanged();
                 }
+                if (StartServiceRuntimeCommand != null)
+                {
+                    StartServiceRuntimeCommand.RaiseCanExecuteChanged();
+                }
+                if (StopServiceRuntimeCommand != null)
+                {
+                    StopServiceRuntimeCommand.RaiseCanExecuteChanged();
+                }
+                if (NewScheduleCommand != null)
+                {
+                    NewScheduleCommand.RaiseCanExecuteChanged();
+                }
+                if (SaveScheduleCommand != null)
+                {
+                    SaveScheduleCommand.RaiseCanExecuteChanged();
+                }
+                if (DeleteScheduleCommand != null)
+                {
+                    DeleteScheduleCommand.RaiseCanExecuteChanged();
+                }
+                OnPropertyChanged("CanManageServiceSchedules");
+                OnPropertyChanged("CanSaveSchedule");
+                OnPropertyChanged("CanDeleteSchedule");
+                OnPropertyChanged("ServiceSchedulingAvailabilityText");
+                RaiseScheduleEditorChanged();
             }
         }
 
@@ -222,7 +252,7 @@ namespace NtfsAudit.App.ViewModels
                                 .Any(path => string.Equals(GetScanRootKey(path), newKey, StringComparison.OrdinalIgnoreCase));
                             if (duplicate)
                             {
-                                WpfMessageBox.Show("Il target DFS selezionato è già presente in elenco.", "Target DFS", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                                WpfMessageBox.Show(LocalizationManager.Text("Validation.DfsTargetAlreadyPresent"), LocalizationManager.Text("Dialog.DfsTarget"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                                 return;
                             }
 

@@ -28,7 +28,8 @@ namespace NtfsAudit.App.ViewModels
             ProcessedFilesCount = progress.FilesProcessed;
             ElapsedText = FormatElapsed(progress.Elapsed);
             ErrorCount = progress.Errors;
-            if (string.Equals(progress.Stage, "Errore", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(progress.Stage, "Errore", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(progress.Stage, "Error", StringComparison.OrdinalIgnoreCase))
             {
                 CurrentPathBackground = "#FFFFCDD2";
             }
@@ -348,7 +349,7 @@ namespace NtfsAudit.App.ViewModels
         private void UpdateSelectedFolderInfo(string path, FolderDetail detail)
         {
             var entries = detail == null ? new List<AceEntry>() : detail.AllEntries;
-            SelectedPathKind = PathResolver.DetectPathKind(path).ToString();
+            SelectedPathKind = FormatPathKind(PathResolver.DetectPathKind(path));
             SelectedOwnerSummary = entries.Select(e => e.Owner).FirstOrDefault(v => !string.IsNullOrWhiteSpace(v)) ?? "-";
             SelectedInheritanceDisabled = detail != null && detail.IsInheritanceDisabled;
             SelectedInheritanceSummary = LocalizationManager.Text(SelectedInheritanceDisabled
@@ -359,10 +360,10 @@ namespace NtfsAudit.App.ViewModels
             SelectedInheritedAceCount = entries.Count(e => e.IsInherited);
             SelectedDenyAceCount = entries.Count(e => string.Equals(e.AllowDeny, "Deny", StringComparison.OrdinalIgnoreCase));
             var layers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            if (entries.Count > 0) layers.Add("NTFS");
-            if (detail != null && detail.HasShareEntries) layers.Add("Share");
-            if (detail != null && detail.HasEffectiveEntries) layers.Add("Effective");
-            if (string.Equals(SelectedPathKind, "Unsupported", StringComparison.OrdinalIgnoreCase)) layers.Add("Unsupported");
+            if (entries.Count > 0) layers.Add(LocalizationManager.Text("Results.PermissionLayer.Ntfs"));
+            if (detail != null && detail.HasShareEntries) layers.Add(LocalizationManager.Text("Results.PermissionLayer.Share"));
+            if (detail != null && detail.HasEffectiveEntries) layers.Add(LocalizationManager.Text("Results.PermissionLayer.Effective"));
+            if (PathResolver.DetectPathKind(path) == PathKind.Unsupported) layers.Add(LocalizationManager.Text("Results.PermissionLayer.Unsupported"));
             SelectedPermissionLayers = layers.Count == 0 ? "-" : string.Join(", ", layers);
             SelectedRiskSummary = LocalizationManager.Format(
                 "Results.RiskSummaryFormat",
@@ -419,6 +420,25 @@ namespace NtfsAudit.App.ViewModels
             }
 
             return treeMap.Keys.First();
+        }
+
+        private static string FormatPathKind(PathKind pathKind)
+        {
+            switch (pathKind)
+            {
+                case PathKind.Local:
+                    return LocalizationManager.Text("PathKind.Local");
+                case PathKind.UncSmb:
+                    return LocalizationManager.Text("PathKind.UncSmb");
+                case PathKind.Dfs:
+                    return LocalizationManager.Text("PathKind.Dfs");
+                case PathKind.WslUnc:
+                    return LocalizationManager.Text("PathKind.WslUnc");
+                case PathKind.Unsupported:
+                    return LocalizationManager.Text("PathKind.Unsupported");
+                default:
+                    return LocalizationManager.Text("PathKind.Unknown");
+            }
         }
     }
 }

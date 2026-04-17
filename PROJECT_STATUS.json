@@ -51,7 +51,7 @@
         "tests\\NtfsAudit.App.Tests\\RuntimeLifecycleTests.cs"
       ],
       "evidence": [
-        "Il 2026-04-17 pwsh -File .\\scripts\\test.ps1 -Configuration Release ha superato 134 test, inclusi ServiceSchedulingTests e RuntimeLifecycleTests.",
+        "Il 2026-04-17 pwsh -File .\\scripts\\test.ps1 -Configuration Release -SkipRestore ha superato 139 test, inclusi ServiceSchedulingTests e RuntimeLifecycleTests.",
         "ServiceSchedulingTests copre planner, persistenza schedule e quarantena file invalidi; RuntimeLifecycleTests copre materializzazione job_*.json e stato runtime del worker.",
         "Il repository non contiene uno script versionato o un test automatico che eserciti il flusso completo NtfsAudit.App -> servizio Windows installato -> trigger schedule -> scansione completata."
       ],

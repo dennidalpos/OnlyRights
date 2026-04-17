@@ -520,6 +520,7 @@ namespace NtfsAudit.App.ViewModels
             OnPropertyChanged("CanSaveSchedule");
             OnPropertyChanged("CanDeleteSchedule");
             OnPropertyChanged("ServiceSchedulingAvailabilityText");
+            RaiseScheduleEditorChanged();
         }
     }
 }

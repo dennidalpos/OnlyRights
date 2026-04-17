@@ -66,7 +66,7 @@ namespace NtfsAudit.App.ViewModels
                     ThrowScOperationFailed("create", createResult);
                 }
 
-                ExecuteScCommand(string.Format("description {0} \"Servizio scansione NTFS Audit\"", ServiceName), "description");
+                ExecuteScCommand(string.Format("description {0} \"{1}\"", ServiceName, LocalizationManager.Text("Service.Description")), "description");
                 ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
                 ProgressText = LocalizationManager.Text("Service.InstalledBadge");
                 RefreshServiceRuntimeStatus();
@@ -188,7 +188,7 @@ namespace NtfsAudit.App.ViewModels
             }
 
             var op = string.IsNullOrWhiteSpace(operation) ? "sc" : operation;
-            throw new InvalidOperationException(string.Format("Operazione servizio '{0}' non riuscita (exit code {1}): {2}", op, result.ExitCode, errorText));
+            throw new InvalidOperationException(LocalizationManager.Format("Service.OperationFailed", op, result.ExitCode, errorText));
         }
 
         private static string BuildScFallbackError(int exitCode)
@@ -196,15 +196,15 @@ namespace NtfsAudit.App.ViewModels
             switch (exitCode)
             {
                 case 5:
-                    return "Accesso negato. Esegui NtfsAudit.App come amministratore e conferma il prompt UAC.";
+                    return LocalizationManager.Text("Service.Error.AccessDenied");
                 case 1060:
-                    return "Il servizio specificato non esiste come servizio installato.";
+                    return LocalizationManager.Text("Service.Error.NotInstalled");
                 case 1073:
-                    return "Il servizio esiste già.";
+                    return LocalizationManager.Text("Service.Error.AlreadyExists");
                 case -1:
-                    return "Impossibile avviare sc.exe o richiesta UAC annullata.";
+                    return LocalizationManager.Text("Service.Error.ScOrUac");
                 default:
-                    return "Errore sconosciuto durante esecuzione di sc.exe";
+                    return LocalizationManager.Text("Service.Error.UnknownSc");
             }
         }
 
@@ -238,7 +238,7 @@ namespace NtfsAudit.App.ViewModels
                 {
                     if (process == null)
                     {
-                        return new ScCommandResult { ExitCode = -1, Error = "Impossibile avviare sc.exe" };
+                        return new ScCommandResult { ExitCode = -1, Error = LocalizationManager.Text("Service.ScExecutableStartError") };
                     }
 
                     process.WaitForExit();
@@ -287,7 +287,7 @@ namespace NtfsAudit.App.ViewModels
                 {
                     if (process == null)
                     {
-                        return new ScCommandResult { ExitCode = -1, Error = "Impossibile avviare PowerShell per elevare sc.exe" };
+                        return new ScCommandResult { ExitCode = -1, Error = LocalizationManager.Text("Service.PowerShellElevationError") };
                     }
 
                     process.WaitForExit();
@@ -322,7 +322,7 @@ namespace NtfsAudit.App.ViewModels
                 {
                     if (process == null)
                     {
-                        return new ScCommandResult { ExitCode = -1, Error = "Impossibile avviare sc.exe in elevazione" };
+                        return new ScCommandResult { ExitCode = -1, Error = LocalizationManager.Text("Service.ElevatedScStartError") };
                     }
 
                     process.WaitForExit();
@@ -425,7 +425,7 @@ namespace NtfsAudit.App.ViewModels
             }
             catch (Exception ex)
             {
-                ProgressText = string.Format("Errore avvio servizio: {0}", ex.Message);
+                ProgressText = LocalizationManager.Format("Progress.ServiceStartError", ex.Message);
             }
         }
 
@@ -444,7 +444,7 @@ namespace NtfsAudit.App.ViewModels
             }
             catch (Exception ex)
             {
-                ProgressText = string.Format("Errore arresto servizio: {0}", ex.Message);
+                ProgressText = LocalizationManager.Format("Progress.ServiceStopRuntimeError", ex.Message);
             }
         }
 

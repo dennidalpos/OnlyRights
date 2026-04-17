@@ -20,63 +20,63 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Clean (initial)
-        run: powershell -File .\scripts\clean.ps1
+        run: pwsh -File .\scripts\clean.ps1
 
       - name: Bootstrap
-        run: powershell -File .\scripts\bootstrap.ps1
+        run: pwsh -File .\scripts\bootstrap.ps1
 
       - name: Doctor
-        run: powershell -File .\scripts\doctor.ps1
+        run: pwsh -File .\scripts\doctor.ps1
 
       - name: Build
-        run: powershell -File .\scripts\build.ps1 -Configuration Release -SkipRestore
+        run: pwsh -File .\scripts\build.ps1 -Configuration Release -SkipRestore
 
       - name: Test
-        run: powershell -File .\scripts\test.ps1 -Configuration Release -SkipRestore -SkipBuild
+        run: pwsh -File .\scripts\test.ps1 -Configuration Release -SkipRestore -SkipBuild
 
       - name: Pack
-        run: powershell -File .\scripts\pack.ps1 -Configuration Release -SkipRestore -SkipBuild
+        run: pwsh -File .\scripts\pack.ps1 -Configuration Release -SkipRestore -SkipBuild
 
       - name: Pack x64
-        run: powershell -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x64
+        run: pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x64
 
       - name: Pack x86
-        run: powershell -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86
+        run: pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86
 
       - name: Publish
-        run: powershell -File .\scripts\publish.ps1 -Configuration Release
+        run: pwsh -File .\scripts\publish.ps1 -Configuration Release
 
       - name: Build net6 App and Viewer
-        run: powershell -File .\scripts\build.ps1 -Configuration Release -Framework net6.0-windows -SkipRestore
+        run: pwsh -File .\scripts\build.ps1 -Configuration Release -Framework net6.0-windows -SkipRestore
 
       - name: Pack net6 App and Viewer
-        run: powershell -File .\scripts\pack.ps1 -Configuration Release -Framework net6.0-windows -SkipRestore -SkipService
+        run: pwsh -File .\scripts\pack.ps1 -Configuration Release -Framework net6.0-windows -SkipRestore -SkipService
 
       - name: Publish net6 App and Viewer
-        run: powershell -File .\scripts\publish.ps1 -Configuration Release -Framework net6.0-windows
+        run: pwsh -File .\scripts\publish.ps1 -Configuration Release -Framework net6.0-windows
 
       - name: MSI Build
-        run: powershell -File .\scripts\packaging\msi-build.ps1 -Configuration Release -SkipPack
+        run: pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -SkipPack
 
       - name: MSI Build x86
-        run: powershell -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x86 -SkipPack
+        run: pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x86 -SkipPack
 
       - name: Service Install Smoke
-        run: powershell -File .\scripts\windows\service-install.ps1 -Configuration Release
+        run: pwsh -File .\scripts\windows\service-install.ps1 -Configuration Release
 
       - name: Service Uninstall Smoke
         if: always()
-        run: powershell -File .\scripts\windows\service-uninstall.ps1
+        run: pwsh -File .\scripts\windows\service-uninstall.ps1
 
       - name: MSI Install Smoke
-        run: powershell -File .\scripts\packaging\msi-install-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic -SkipBuild
+        run: pwsh -File .\scripts\packaging\msi-install-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic -SkipBuild
 
       - name: MSI Uninstall Smoke
-        run: powershell -File .\scripts\packaging\msi-uninstall-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic
+        run: pwsh -File .\scripts\packaging\msi-uninstall-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic
 
       - name: MSI Upgrade Smoke
-        run: powershell -File .\scripts\packaging\msi-upgrade-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\upgrade
+        run: pwsh -File .\scripts\packaging\msi-upgrade-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\upgrade
 
       - name: Clean (final)
         if: always()
-        run: powershell -File .\scripts\clean.ps1
+        run: pwsh -File .\scripts\clean.ps1

@@ -97,7 +97,7 @@
           <ListBox Grid.Row="1" ItemsSource="{Binding ServiceSchedules}" SelectedItem="{Binding SelectedServiceSchedule}">
             <ListBox.ItemTemplate>
               <DataTemplate>
-                <Border Padding="8" Margin="0,0,0,6" BorderBrush="#FFE0E0E0" BorderThickness="1" CornerRadius="4">
+                <Border Style="{StaticResource NeutralInfoCardBorderStyle}" Padding="8" Margin="0,0,0,6">
                   <StackPanel>
                     <StackPanel Orientation="Horizontal">
                       <TextBlock Text="{Binding Definition.Name}" FontWeight="SemiBold" />
@@ -117,16 +117,19 @@
             <TextBlock Text="{DynamicResource Main.ScheduleName}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,2" />
             <TextBox Style="{StaticResource FieldTextBoxStyle}" Text="{Binding ScheduleName, UpdateSourceTrigger=PropertyChanged}" />
             <TextBlock Text="{DynamicResource Main.ScheduleFrequency}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" />
-            <ComboBox Style="{StaticResource FieldComboBoxStyle}" ItemsSource="{Binding AvailableScheduleFrequencies}" SelectedItem="{Binding ScheduleFrequencyKind}" />
+            <ComboBox Style="{StaticResource FieldComboBoxStyle}" ItemsSource="{Binding AvailableScheduleFrequencyOptions}" SelectedItem="{Binding SelectedScheduleFrequencyOption}" DisplayMemberPath="DisplayName" />
             <TextBlock Text="{DynamicResource Main.ScheduleDate}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" Visibility="{Binding IsOneShotSchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
             <DatePicker SelectedDate="{Binding ScheduleOneShotDate}" Visibility="{Binding IsOneShotSchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
             <TextBlock Text="{DynamicResource Main.ScheduleTime}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" />
             <TextBox Style="{StaticResource FieldTextBoxStyle}" Text="{Binding ScheduleTimeText, UpdateSourceTrigger=PropertyChanged}" />
             <TextBlock Text="{DynamicResource Main.ScheduleDayOfWeek}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" Visibility="{Binding IsWeeklySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
-            <ComboBox Style="{StaticResource FieldComboBoxStyle}" ItemsSource="{Binding AvailableScheduleDays}" SelectedItem="{Binding ScheduleDayOfWeek}" Visibility="{Binding IsWeeklySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <ComboBox Style="{StaticResource FieldComboBoxStyle}" ItemsSource="{Binding AvailableScheduleDayOptions}" SelectedItem="{Binding SelectedScheduleDayOption}" DisplayMemberPath="DisplayName" Visibility="{Binding IsWeeklySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
             <TextBlock Text="{DynamicResource Main.ScheduleDayOfMonth}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" Visibility="{Binding IsMonthlySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
             <TextBox Style="{StaticResource FieldTextBoxStyle}" Text="{Binding ScheduleDayOfMonth}" Visibility="{Binding IsMonthlySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
             <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Main.ScheduleEnabled}" IsChecked="{Binding ScheduleEnabled}" Margin="0,8,0,0" />
+            <Border Style="{StaticResource SupportPanelBorderStyle}" Padding="8,6" Margin="0,8,0,0">
+              <TextBlock Text="{Binding ScheduleEditorFeedbackText}" Style="{StaticResource MicrocopyText}" Margin="0" TextWrapping="Wrap" />
+            </Border>
           </StackPanel>
         </Grid>
       </GroupBox>

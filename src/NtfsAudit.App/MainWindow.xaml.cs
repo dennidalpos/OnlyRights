@@ -155,7 +155,7 @@ namespace NtfsAudit.App
 
         private static string TruncateForNotifyIcon(string input)
         {
-            if (string.IsNullOrWhiteSpace(input)) return "NTFS Audit";
+            if (string.IsNullOrWhiteSpace(input)) return LocalizationManager.Text("App.Title");
             return input.Length <= 63 ? input : input.Substring(0, 63);
         }
 

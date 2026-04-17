@@ -140,7 +140,7 @@ namespace NtfsAudit.App.ViewModels
             }
             catch (Exception ex)
             {
-                ProgressText = string.Format("Errore invio job al servizio: {0}", ex.Message);
+                ProgressText = LocalizationManager.Format("Progress.ServiceJobSendError", ex.Message);
                 WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.WindowsService"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -217,7 +217,7 @@ namespace NtfsAudit.App.ViewModels
 
             if (hasRunningLocalScan)
             {
-                ProgressText = "Richiesta di stop inviata. Pulizia cache/residui completata; puoi aggiungere nuove cartelle al job.";
+                ProgressText = LocalizationManager.Text("Progress.StopRequested");
             }
         }
 
@@ -242,11 +242,11 @@ namespace NtfsAudit.App.ViewModels
                     }
                 }
 
-                ProgressText = "Scansione servizio fermata. Puoi aggiornare l'elenco cartelle e rilanciare il job.";
+                ProgressText = LocalizationManager.Text("Progress.ServiceStoppedAndQueueCleared");
             }
             catch (Exception ex)
             {
-                ProgressText = string.Format("Errore stop servizio: {0}", ex.Message);
+                ProgressText = LocalizationManager.Format("Progress.ServiceStopError", ex.Message);
             }
             finally
             {
@@ -276,16 +276,16 @@ namespace NtfsAudit.App.ViewModels
             if (triggeredByServiceUninstall)
             {
                 ProgressText = removedEntries > 0
-                    ? string.Format("Disinstallazione servizio: rimossi {0} elementi residui (cache/job/temp).{1}", removedEntries, diagnosticsSuffix)
-                    : "Disinstallazione servizio: nessun residuo da pulire." + diagnosticsSuffix;
+                    ? LocalizationManager.Format("Progress.ServiceUninstallResidualsRemoved", removedEntries, diagnosticsSuffix)
+                    : LocalizationManager.Text("Progress.ServiceUninstallNoResiduals") + diagnosticsSuffix;
                 return;
             }
 
             if (triggeredByStop)
             {
                 ProgressText = removedEntries > 0
-                    ? string.Format("Analisi fermata: rimossi {0} elementi residui (cache/job/temp).{1}", removedEntries, diagnosticsSuffix)
-                    : "Analisi fermata: nessun residuo da pulire." + diagnosticsSuffix;
+                    ? LocalizationManager.Format("Progress.StopResidualsRemoved", removedEntries, diagnosticsSuffix)
+                    : LocalizationManager.Text("Progress.StopNoResiduals") + diagnosticsSuffix;
                 return;
             }
 
@@ -298,8 +298,8 @@ namespace NtfsAudit.App.ViewModels
             }
 
             ProgressText = removedEntries > 0
-                ? string.Format("Pulizia completata: rimossi {0} elementi residui. Cartella temp aperta.{1}", removedEntries, diagnosticsSuffix)
-                : "Pulizia completata: nessun file residuo trovato. Cartella temp aperta." + diagnosticsSuffix;
+                ? LocalizationManager.Format("Progress.CleanupRemoved", removedEntries, diagnosticsSuffix)
+                : LocalizationManager.Text("Progress.CleanupNone") + diagnosticsSuffix;
         }
 
         private static void OpenFolder(string path)
@@ -325,10 +325,10 @@ namespace NtfsAudit.App.ViewModels
         {
             if (_isViewerMode) return;
             if (_scanResult == null) return;
-            if (!TryEnsureScanDataAvailableForExport("Export non disponibile")) return;
+            if (!TryEnsureScanDataAvailableForExport(LocalizationManager.Text("Dialog.ExportUnavailable"))) return;
             var dialog = new Win32.SaveFileDialog
             {
-                Filter = "Excel (*.xlsx)|*.xlsx",
+                Filter = LocalizationManager.Text("FileDialog.ExcelSaveFilter"),
                 FileName = BuildExportFileName(RootPath, "xlsx"),
                 InitialDirectory = ResolveInitialDirectory(_lastExportDirectory, RootPath)
             };
@@ -346,7 +346,7 @@ namespace NtfsAudit.App.ViewModels
                 if (!string.IsNullOrWhiteSpace(warningMessage))
                 {
                     WpfMessageBox.Show(
-                        string.Format("ATTENZIONE: {0}", warningMessage),
+                        LocalizationManager.Format("Dialog.ExportWarningPrefix", warningMessage),
                         LocalizationManager.Text("Dialog.ExportWarnings"),
                         System.Windows.MessageBoxButton.OK,
                         System.Windows.MessageBoxImage.Warning);
@@ -367,7 +367,7 @@ namespace NtfsAudit.App.ViewModels
             if (IsBusy) return;
             var dialog = new Win32.OpenFileDialog
             {
-                Filter = "Analisi NtfsAudit (*.ntaudit)|*.ntaudit",
+                Filter = LocalizationManager.Text("FileDialog.ImportArchiveFilter"),
                 InitialDirectory = ResolveInitialDirectory(_lastImportDirectory, RootPath)
             };
             if (dialog.ShowDialog() != true) return;
@@ -502,7 +502,7 @@ namespace NtfsAudit.App.ViewModels
             if (result.WasSplit)
             {
                 return string.Format(
-                    "Il dataset supera il limite di 1.048.576 righe per foglio. Creati {0} fogli Users e {1} fogli Groups.",
+                    LocalizationManager.Text("Dialog.ExcelWarningDatasetSplit"),
                     result.UserSheetCount,
                     result.GroupSheetCount);
             }
@@ -516,12 +516,12 @@ namespace NtfsAudit.App.ViewModels
             var ioPath = PathResolver.ToExtendedPath(outputPath);
             if (!File.Exists(ioPath))
             {
-                throw new IOException("Il file export non è stato creato.");
+                throw new IOException(LocalizationManager.Text("Dialog.ExportOutputMissing"));
             }
             var info = new FileInfo(ioPath);
             if (info.Length == 0)
             {
-                throw new IOException("Il file export risulta vuoto.");
+                throw new IOException(LocalizationManager.Text("Dialog.ExportOutputEmpty"));
             }
         }
 

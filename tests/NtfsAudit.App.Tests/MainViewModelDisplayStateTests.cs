@@ -143,6 +143,72 @@ namespace NtfsAudit.App.Tests
         }
 
         [Fact]
+        public void ScheduleEditor_DisablesSaveAndShowsValidation_WhenTimeIsInvalid()
+        {
+            var viewModel = new MainViewModel();
+            viewModel.ScanRoots.Add(@"C:\Data");
+
+            typeof(MainViewModel)
+                .GetField("_isServiceInstalled", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(viewModel, true);
+
+            viewModel.ScheduleName = "Nightly";
+            viewModel.ScheduleTimeText = "25:99";
+
+            Assert.False(viewModel.CanSaveSchedule);
+            Assert.Equal("25:99", viewModel.ScheduleTimeText);
+            Assert.Contains("HH:mm", viewModel.ScheduleEditorFeedbackText, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void ScheduleEditor_ShowsReadyHint_WhenNameRootsAndTimeAreValid()
+        {
+            var viewModel = new MainViewModel();
+            viewModel.ScanRoots.Add(@"C:\Data");
+
+            typeof(MainViewModel)
+                .GetField("_isServiceInstalled", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(viewModel, true);
+
+            viewModel.ScheduleName = "Nightly";
+            viewModel.ScheduleTimeText = "09:30";
+
+            Assert.True(viewModel.CanSaveSchedule);
+            Assert.Equal("09:30", viewModel.ScheduleTimeText);
+            Assert.Contains("ready", viewModel.ScheduleEditorFeedbackText, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void ServiceInstallationState_RefreshesServiceAndScheduleButtons()
+        {
+            var viewModel = new MainViewModel();
+            viewModel.ScanRoots.Add(@"C:\Data");
+            viewModel.ScheduleName = "Nightly";
+            viewModel.ScheduleTimeText = "09:30";
+
+            Assert.True(viewModel.InstallServiceCommand.CanExecute(null));
+            Assert.False(viewModel.UninstallServiceCommand.CanExecute(null));
+            Assert.False(viewModel.StartServiceRuntimeCommand.CanExecute(null));
+            Assert.False(viewModel.StopServiceRuntimeCommand.CanExecute(null));
+            Assert.False(viewModel.NewScheduleCommand.CanExecute(null));
+            Assert.False(viewModel.SaveScheduleCommand.CanExecute(null));
+            Assert.False(viewModel.DeleteScheduleCommand.CanExecute(null));
+
+            typeof(MainViewModel)
+                .GetProperty("IsServiceInstalled", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                .SetValue(viewModel, true);
+
+            Assert.False(viewModel.InstallServiceCommand.CanExecute(null));
+            Assert.True(viewModel.UninstallServiceCommand.CanExecute(null));
+            Assert.True(viewModel.StartServiceRuntimeCommand.CanExecute(null));
+            Assert.True(viewModel.StopServiceRuntimeCommand.CanExecute(null));
+            Assert.True(viewModel.NewScheduleCommand.CanExecute(null));
+            Assert.True(viewModel.SaveScheduleCommand.CanExecute(null));
+            Assert.False(viewModel.DeleteScheduleCommand.CanExecute(null));
+            Assert.Contains("ready", viewModel.ScheduleEditorFeedbackText, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
         public void AclFilter_MatchesEnglishRiskAliases_WhenEntriesUseStoredItalianRiskLabels()
         {
             var viewModel = new MainViewModel();

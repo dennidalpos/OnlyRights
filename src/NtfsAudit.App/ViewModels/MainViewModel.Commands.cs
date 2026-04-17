@@ -84,7 +84,7 @@ namespace NtfsAudit.App.ViewModels
             {
                 WpfMessageBox.Show(
                     LocalizationManager.Text("Validation.SelectDfsTarget"),
-                    "DFS",
+                    LocalizationManager.Text("Dialog.DfsTarget"),
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Warning);
                 return;
@@ -158,7 +158,7 @@ namespace NtfsAudit.App.ViewModels
             }
             catch (Exception ex)
             {
-                ProgressText = string.Format("Errore salvataggio credenziali globali: {0}", ex.Message);
+                ProgressText = LocalizationManager.Format("Progress.CredentialsGlobalSaveError", ex.Message);
                 WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.ScanCredentials"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -176,7 +176,7 @@ namespace NtfsAudit.App.ViewModels
             }
             catch (Exception ex)
             {
-                ProgressText = string.Format("Errore rimozione credenziali globali: {0}", ex.Message);
+                ProgressText = LocalizationManager.Format("Progress.CredentialsGlobalRemoveError", ex.Message);
                 WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.ScanCredentials"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -205,7 +205,7 @@ namespace NtfsAudit.App.ViewModels
         {
             var dialog = new Win32.SaveFileDialog
             {
-                Filter = "Set cartelle scansione (*.scanroots)|*.scanroots|JSON (*.json)|*.json",
+                Filter = LocalizationManager.Text("FileDialog.ScanRootSetSaveFilter"),
                 DefaultExt = ".scanroots",
                 AddExtension = true,
                 FileName = string.Format("scanroots_{0}", DateTime.Now.ToString("yyyy_MM_dd_HH_mm"))
@@ -231,11 +231,11 @@ namespace NtfsAudit.App.ViewModels
                     }).ToList()
                 };
                 File.WriteAllText(dialog.FileName, JsonConvert.SerializeObject(payload, Formatting.Indented));
-                ProgressText = string.Format("Set cartelle salvato: {0}", dialog.FileName);
+                ProgressText = LocalizationManager.Format("Progress.ScanRootSetSaved", dialog.FileName);
             }
             catch (Exception ex)
             {
-                ProgressText = string.Format("Errore salvataggio set cartelle: {0}", ex.Message);
+                ProgressText = LocalizationManager.Format("Progress.ScanRootSetSaveError", ex.Message);
                 WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.FolderSet"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -244,7 +244,7 @@ namespace NtfsAudit.App.ViewModels
         {
             var dialog = new Win32.OpenFileDialog
             {
-                Filter = "Set cartelle scansione (*.scanroots;*.json)|*.scanroots;*.json|Tutti i file (*.*)|*.*"
+                Filter = LocalizationManager.Text("FileDialog.ScanRootSetOpenFilter")
             };
             if (dialog.ShowDialog() != true)
             {
@@ -257,7 +257,7 @@ namespace NtfsAudit.App.ViewModels
                 var payload = JsonConvert.DeserializeObject<ScanRootSet>(json);
                 if (payload == null)
                 {
-                    throw new InvalidDataException("Il file set cartelle non è valido.");
+                    throw new InvalidDataException(LocalizationManager.Text("FileDialog.ScanRootSetInvalid"));
                 }
 
                 ScanRoots.Clear();
@@ -301,11 +301,11 @@ namespace NtfsAudit.App.ViewModels
                 StartCommand.RaiseCanExecuteChanged();
                 SaveScanRootSetCommand.RaiseCanExecuteChanged();
                 SaveUiPreferences();
-                ProgressText = string.Format("Set cartelle caricato: {0} cartelle.", ScanRoots.Count);
+                ProgressText = LocalizationManager.Format("Progress.ScanRootSetLoaded", ScanRoots.Count);
             }
             catch (Exception ex)
             {
-                ProgressText = string.Format("Errore caricamento set cartelle: {0}", ex.Message);
+                ProgressText = LocalizationManager.Format("Progress.ScanRootSetLoadError", ex.Message);
                 WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.FolderSet"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }

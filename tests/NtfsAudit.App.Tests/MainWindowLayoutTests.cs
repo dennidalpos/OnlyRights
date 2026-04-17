@@ -42,6 +42,7 @@ namespace NtfsAudit.App.Tests
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "SettingsPanel");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "FolderTreePanel");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "ResultsPanel");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "TextBlock" && (string)element.Attribute("Text") == "{Binding ProgressText}");
         }
 
         private static XElement LoadMainWindow()
