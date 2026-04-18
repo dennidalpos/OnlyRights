@@ -46,7 +46,17 @@ namespace NtfsAudit.App.Services
                 .ToList();
             if (paths.Count == 0)
             {
-                return BuildForKinds(new[] { PathKind.Unknown });
+                return new ScanPathCompatibilityEvaluation
+                {
+                    EffectivePathKind = PathKind.Unknown,
+                    IsSupported = true,
+                    SupportsConfiguredCredential = true,
+                    SupportsSharePermissions = true,
+                    SummaryText = string.Empty,
+                    DisabledOptionsText = string.Empty,
+                    DisabledOptions = Array.Empty<string>(),
+                    ReasonTexts = Array.Empty<string>()
+                };
             }
 
             var kinds = paths

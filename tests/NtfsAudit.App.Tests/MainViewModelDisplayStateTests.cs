@@ -70,6 +70,18 @@ namespace NtfsAudit.App.Tests
         }
 
         [Fact]
+        public void InitialCompatibilityState_WaitsForRootInsteadOfShowingAWarning()
+        {
+            var viewModel = new MainViewModel();
+            ClearScanInputs(viewModel);
+
+            Assert.Equal(LocalizationManager.Text("Scan.CompatibilityPending"), viewModel.PathCompatibilitySummaryText);
+            Assert.False(viewModel.HasPathCompatibilityWarnings);
+            Assert.True(viewModel.SupportsConfiguredCredentialForSelection);
+            Assert.True(viewModel.SupportsSharePermissionsForSelection);
+        }
+
+        [Fact]
         public void SaveGlobalCredential_WithEmptyFields_ClearsStoredCredentialAndUsesCurrentUser()
         {
             var tempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit.Tests", Guid.NewGuid().ToString("N"));

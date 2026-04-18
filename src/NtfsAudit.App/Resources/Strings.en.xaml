@@ -68,8 +68,8 @@
   <sys:String x:Key="Scan.Section">Scan</sys:String>
   <sys:String x:Key="Scan.PathsAndOutput">Paths and output</sys:String>
   <sys:String x:Key="Scan.FoldersToScan">Folders to scan</sys:String>
-  <sys:String x:Key="Scan.FoldersHint">Update the list and rerun when needed.</sys:String>
-  <sys:String x:Key="Scan.FoldersHint.ToolTip">You can stop the scan or queued job, clean residuals, update this list, and rerun with different folders.</sys:String>
+  <sys:String x:Key="Scan.FoldersHint">Build the folder list before you start the analysis.</sys:String>
+  <sys:String x:Key="Scan.FoldersHint.ToolTip">Add or remove folders here before each run, then start the analysis when the list is ready.</sys:String>
   <sys:String x:Key="Scan.StartHint">Add at least one folder or load a set before starting the analysis.</sys:String>
   <sys:String x:Key="Scan.RootBrowse.AutomationName">Browse folder to scan</sys:String>
   <sys:String x:Key="Scan.RootPath.AutomationName">Folder path to scan</sys:String>
@@ -100,6 +100,7 @@
   <sys:String x:Key="Credential.LocalPathCurrentUser.ToolTip">For local or non-UNC paths, saved credentials are not applied: the current user remains in use.</sys:String>
   <sys:String x:Key="Scan.MainOptions">Main options</sys:String>
   <sys:String x:Key="Scan.Compatibility">Compatibility</sys:String>
+  <sys:String x:Key="Scan.CompatibilityPending">Add a folder to review compatibility for the current scan options.</sys:String>
   <sys:String x:Key="Scan.ApplyCompatibleOptions">Set maximum compatibility</sys:String>
   <sys:String x:Key="Scan.CompatibleOptionsHint">Use the current Windows user and disable features that require AD, PowerShell, WMI/RPC, SACL, or SMB share permissions.</sys:String>
   <sys:String x:Key="Scan.DepthOptions">Depth</sys:String>

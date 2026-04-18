@@ -27,11 +27,7 @@
                   Style="{StaticResource TreeSectionExpanderStyle}"
                   IsExpanded="False"
                   IsEnabled="{Binding HasScanResult}">
-          <Border Background="{StaticResource SurfaceMutedBrush}"
-                  BorderBrush="{StaticResource BorderSoftBrush}"
-                  BorderThickness="1"
-                  CornerRadius="6"
-                  Padding="10"
+          <Border Style="{StaticResource SupportPanelBorderStyle}"
                   Margin="0,4,0,0">
             <StackPanel>
               <WrapPanel Margin="0,0,0,6">

@@ -178,7 +178,11 @@
                   <StackPanel>
                     <StackPanel Orientation="Horizontal">
                       <TextBlock Text="{Binding Definition.Name}" FontWeight="SemiBold" />
-                      <Border Background="{Binding StatusBadgeBackground}" CornerRadius="8" Padding="6,1" Margin="8,0,0,0">
+                      <Border Background="{Binding StatusBadgeBackground}"
+                              BorderBrush="{StaticResource BorderSoftBrush}"
+                              Style="{StaticResource StatusBadgeBorderStyle}"
+                              Padding="8,2"
+                              Margin="8,0,0,0">
                         <TextBlock Text="{Binding StatusBadgeText}" Foreground="White" FontSize="10" FontWeight="SemiBold" />
                       </Border>
                     </StackPanel>

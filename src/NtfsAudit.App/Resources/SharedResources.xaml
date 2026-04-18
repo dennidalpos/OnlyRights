@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib"
                     xmlns:services="clr-namespace:NtfsAudit.App.Services">
   <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
   <services:ScanRootPathKindLabelConverter x:Key="ScanRootPathKindLabelConverter" />
@@ -83,11 +84,30 @@
                   Padding="{TemplateBinding Padding}">
             <Border TextElement.Foreground="{TemplateBinding Foreground}">
               <Border.Resources>
+                <DataTemplate DataType="{x:Type sys:String}">
+                  <TextBlock Text="{Binding}"
+                             Foreground="White"
+                             TextWrapping="Wrap" />
+                </DataTemplate>
+                <Style TargetType="Control">
+                  <Setter Property="Foreground" Value="White" />
+                </Style>
+                <Style TargetType="Label">
+                  <Setter Property="Foreground" Value="White" />
+                </Style>
                 <Style TargetType="TextBlock">
-                  <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToolTip}}" />
+                  <Setter Property="Foreground" Value="White" />
+                </Style>
+                <Style TargetType="AccessText">
+                  <Setter Property="Foreground" Value="White" />
+                </Style>
+                <Style TargetType="Run">
+                  <Setter Property="Foreground" Value="White" />
                 </Style>
               </Border.Resources>
-              <ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}" />
+              <ContentPresenter x:Name="ContentSite"
+                                RecognizesAccessKey="True"
+                                TextElement.Foreground="{TemplateBinding Foreground}" />
             </Border>
           </Border>
         </ControlTemplate>

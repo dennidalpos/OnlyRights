@@ -13,6 +13,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Media3D;
 using System.Xml.Linq;
 using Xunit;
 
@@ -66,8 +71,10 @@ namespace NtfsAudit.App.Tests
 
             Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "Expander" && (string)element.Attribute("Header") == "{DynamicResource Tree.LegendFilters}");
             Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "Expander" && (string)element.Attribute("Style") == "{StaticResource TreeSectionExpanderStyle}");
+            Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "Border" && (string)element.Attribute("Style") == "{StaticResource SupportPanelBorderStyle}");
             Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "Expander" && (string)element.Attribute("Header") == "{DynamicResource Results.RightsLegend}");
             Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "Expander" && (string)element.Attribute("Header") == "{DynamicResource Results.PersistentFilters}");
+            Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "Border" && (string)element.Attribute("Style") == "{StaticResource SupportPanelBorderStyle}");
         }
 
         [Fact]
@@ -82,13 +89,94 @@ namespace NtfsAudit.App.Tests
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "ControlTemplate" && (string)element.Attribute("TargetType") == "ToolTip");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Border"
                 && (string)element.Attribute("TextElement.Foreground") == "{TemplateBinding Foreground}");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "DataTemplate"
+                && (string)element.Attribute("DataType") == "{x:Type sys:String}");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style"
+                && (string)element.Attribute("TargetType") == "Control"
+                && element.Ancestors().Any(ancestor => ancestor.Name.LocalName.EndsWith(".Resources", StringComparison.Ordinal)));
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style"
+                && (string)element.Attribute("TargetType") == "Label"
+                && element.Ancestors().Any(ancestor => ancestor.Name.LocalName.EndsWith(".Resources", StringComparison.Ordinal)));
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style"
                 && (string)element.Attribute("TargetType") == "TextBlock"
                 && element.Ancestors().Any(ancestor => ancestor.Name.LocalName.EndsWith(".Resources", StringComparison.Ordinal)));
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style"
+                && (string)element.Attribute("TargetType") == "AccessText"
+                && element.Ancestors().Any(ancestor => ancestor.Name.LocalName.EndsWith(".Resources", StringComparison.Ordinal)));
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style"
+                && (string)element.Attribute("TargetType") == "Run"
+                && element.Ancestors().Any(ancestor => ancestor.Name.LocalName.EndsWith(".Resources", StringComparison.Ordinal)));
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "ContentPresenter"
-                && (string)element.Attribute("TextElement.Foreground") == "{TemplateBinding Foreground}");
+                && (string)element.Attribute("TextElement.Foreground") == "{TemplateBinding Foreground}"
+                && (string)element.Attribute("RecognizesAccessKey") == "True");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "ToggleButton"
                 && (string)element.Attribute("Content") == "{TemplateBinding Header}");
+        }
+
+        [Fact]
+        public void SharedResources_ToolTipTemplate_OpensWithoutRuntimeParseErrors()
+        {
+            RunInSta(() =>
+            {
+                var application = EnsureApplication();
+                application.Resources.MergedDictionaries.Clear();
+                application.Resources.MergedDictionaries.Add(new ResourceDictionary
+                {
+                    Source = new Uri("/NtfsAudit.App;component/Resources/SharedResources.xaml", UriKind.Relative)
+                });
+
+                var host = new Window
+                {
+                    Width = 240,
+                    Height = 120,
+                    ShowActivated = false,
+                    ShowInTaskbar = false,
+                    WindowStyle = WindowStyle.None,
+                    Content = new TextBlock
+                    {
+                        Text = "Host surface",
+                        ToolTip = new ToolTip
+                        {
+                            Content = "Tooltip smoke"
+                        }
+                    }
+                };
+
+                try
+                {
+                    host.Show();
+                    var target = (FrameworkElement)host.Content;
+                    var toolTip = (ToolTip)target.ToolTip;
+                    toolTip.PlacementTarget = target;
+                    toolTip.IsOpen = true;
+                    DoEvents();
+
+                    Assert.True(toolTip.IsOpen);
+                    Assert.NotNull(toolTip.Template);
+                    Assert.Equal(Colors.White, ((SolidColorBrush)toolTip.Foreground).Color);
+                    Assert.NotNull(toolTip.Template.FindName("ContentSite", toolTip));
+                    var accessText = FindDescendant<AccessText>(toolTip);
+                    if (accessText != null)
+                    {
+                        Assert.Equal(Colors.White, ((SolidColorBrush)accessText.Foreground).Color);
+                    }
+
+                    var textBlock = FindDescendant<TextBlock>(toolTip);
+                    if (textBlock != null)
+                    {
+                        Assert.Equal(Colors.White, ((SolidColorBrush)textBlock.Foreground).Color);
+                    }
+                }
+                finally
+                {
+                    if (host.IsVisible)
+                    {
+                        host.Close();
+                    }
+
+                    DoEvents();
+                }
+            });
         }
 
         [Fact]
@@ -112,6 +200,16 @@ namespace NtfsAudit.App.Tests
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "PasswordBox" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Scan.GlobalPassword.AutomationName}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBlock" && (string)element.Attribute("Text") == "{DynamicResource Scan.ServiceModeHint}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBlock" && (string)element.Attribute("Text") == "{DynamicResource Scan.IdentityHint}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Border" && (string)element.Attribute("Style") == "{StaticResource StatusBadgeBorderStyle}");
+        }
+
+        [Fact]
+        public void PrincipalDetailsWindow_UsesSharedPanelChrome()
+        {
+            var principalDetailsRoot = LoadXaml("src", "NtfsAudit.App", "PrincipalDetailsWindow.xaml");
+
+            Assert.Contains(principalDetailsRoot.Descendants(), element => element.Name.LocalName == "Border" && (string)element.Attribute("Style") == "{StaticResource PanelBorderStyle}");
+            Assert.Contains(principalDetailsRoot.Descendants(), element => element.Name.LocalName == "Grid" && (string)element.Attribute("Margin") == "0,10,0,0");
         }
 
         [Fact]
@@ -148,6 +246,10 @@ namespace NtfsAudit.App.Tests
             Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
                 && (string)element.Attribute("Text") == "{Binding SelectedFolderPath}"
                 && (string)element.Attribute("ToolTip") == "{Binding SelectedFolderPath}");
+            Assert.DoesNotContain(resultsRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
+                && (string)element.Attribute("Text") == "{DynamicResource Results.SelectFolderForDetails}");
+            Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
+                && (string)element.Attribute("Text") == "{DynamicResource Results.SelectTreeFolder}");
         }
 
         [Fact]
@@ -176,6 +278,95 @@ namespace NtfsAudit.App.Tests
             var root = FindRepositoryRoot();
             var path = Path.Combine(new[] { root }.Concat(parts).ToArray());
             return XDocument.Load(path).Root;
+        }
+
+        private static Application EnsureApplication()
+        {
+            return Application.Current ?? new Application
+            {
+                ShutdownMode = ShutdownMode.OnExplicitShutdown
+            };
+        }
+
+        private static void RunInSta(Action action)
+        {
+            Exception failure = null;
+            var thread = new Thread(() =>
+            {
+                try
+                {
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    failure = ex;
+                }
+            });
+
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+
+            if (failure != null)
+            {
+                throw failure;
+            }
+        }
+
+        private static void DoEvents()
+        {
+            var frame = new System.Windows.Threading.DispatcherFrame();
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
+                System.Windows.Threading.DispatcherPriority.Background,
+                new Action(() => frame.Continue = false));
+            System.Windows.Threading.Dispatcher.PushFrame(frame);
+        }
+
+        private static T FindDescendant<T>(DependencyObject root)
+            where T : DependencyObject
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            var count = VisualTreeHelper.GetChildrenCount(root);
+            for (var index = 0; index < count; index++)
+            {
+                var child = VisualTreeHelper.GetChild(root, index);
+                if (child is T typedChild)
+                {
+                    return typedChild;
+                }
+
+                var descendant = FindDescendant<T>(child);
+                if (descendant != null)
+                {
+                    return descendant;
+                }
+            }
+
+            if (root is FrameworkElement frameworkElement)
+            {
+                foreach (var logicalChild in LogicalTreeHelper.GetChildren(frameworkElement))
+                {
+                    if (logicalChild is DependencyObject logicalDependencyObject)
+                    {
+                        if (logicalDependencyObject is T typedLogicalChild)
+                        {
+                            return typedLogicalChild;
+                        }
+
+                        var logicalDescendant = FindDescendant<T>(logicalDependencyObject);
+                        if (logicalDescendant != null)
+                        {
+                            return logicalDescendant;
+                        }
+                    }
+                }
+            }
+
+            return null;
         }
 
         private static string FindRepositoryRoot()

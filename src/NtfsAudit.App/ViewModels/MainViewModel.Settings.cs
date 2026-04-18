@@ -50,7 +50,15 @@ namespace NtfsAudit.App.ViewModels
 
         public string PathCompatibilitySummaryText
         {
-            get { return _pathCompatibility == null ? string.Empty : _pathCompatibility.SummaryText; }
+            get
+            {
+                if (GetCurrentScheduleRoots().Count == 0)
+                {
+                    return LocalizationManager.Text("Scan.CompatibilityPending");
+                }
+
+                return _pathCompatibility == null ? string.Empty : _pathCompatibility.SummaryText;
+            }
         }
 
         public string PathCompatibilityDisabledText

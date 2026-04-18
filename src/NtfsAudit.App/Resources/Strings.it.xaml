@@ -67,8 +67,8 @@
   <sys:String x:Key="Scan.Section">Scansione</sys:String>
   <sys:String x:Key="Scan.PathsAndOutput">Percorsi e output</sys:String>
   <sys:String x:Key="Scan.FoldersToScan">Cartelle da scansionare</sys:String>
-  <sys:String x:Key="Scan.FoldersHint">Aggiorna l'elenco e rilancia quando serve.</sys:String>
-  <sys:String x:Key="Scan.FoldersHint.ToolTip">Puoi fermare la scansione o il job in coda, pulire i residui, modificare questo elenco e rilanciare con cartelle diverse.</sys:String>
+  <sys:String x:Key="Scan.FoldersHint">Prepara l'elenco delle cartelle prima di avviare l'analisi.</sys:String>
+  <sys:String x:Key="Scan.FoldersHint.ToolTip">Aggiungi o rimuovi qui le cartelle da analizzare, poi avvia l'analisi quando l'elenco e pronto.</sys:String>
   <sys:String x:Key="Scan.StartHint">Aggiungi almeno una cartella o carica un set prima di avviare l'analisi.</sys:String>
   <sys:String x:Key="Scan.RootBrowse.AutomationName">Sfoglia cartella da scansionare</sys:String>
   <sys:String x:Key="Scan.RootPath.AutomationName">Percorso cartella da scansionare</sys:String>
@@ -99,6 +99,7 @@
   <sys:String x:Key="Credential.LocalPathCurrentUser.ToolTip">Per percorsi locali o non UNC l'app non applica credenziali salvate: resta l'utente corrente.</sys:String>
   <sys:String x:Key="Scan.MainOptions">Opzioni principali</sys:String>
   <sys:String x:Key="Scan.Compatibility">Compatibilita</sys:String>
+  <sys:String x:Key="Scan.CompatibilityPending">Aggiungi una cartella per verificare la compatibilita delle opzioni di scansione correnti.</sys:String>
   <sys:String x:Key="Scan.ApplyCompatibleOptions">Imposta compatibilita massima</sys:String>
   <sys:String x:Key="Scan.CompatibleOptionsHint">Usa l'utente Windows corrente e disattiva funzioni che richiedono AD, PowerShell, WMI/RPC, SACL o permessi share SMB.</sys:String>
   <sys:String x:Key="Scan.DepthOptions">Profondita</sys:String>

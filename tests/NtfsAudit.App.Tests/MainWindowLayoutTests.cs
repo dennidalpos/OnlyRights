@@ -83,6 +83,7 @@ namespace NtfsAudit.App.Tests
         {
             var root = LoadMainWindow();
 
+            Assert.Equal("pack://application:,,,/NtfsAudit.App;component/Assets/OnlyRights.ico", (string)root.Attribute("Icon"));
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Border" && (string)element.Attribute("Style") == "{StaticResource PanelBorderStyle}");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Border" && (string)element.Attribute("Style") == "{StaticResource WarningStatusBadgeBorderStyle}");
         }

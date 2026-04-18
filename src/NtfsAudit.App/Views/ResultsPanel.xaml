@@ -96,11 +96,7 @@
         <Expander Header="{DynamicResource Results.RightsLegend}"
                   IsExpanded="False"
                   Style="{StaticResource ResultsSectionExpanderStyle}">
-          <Border Background="{StaticResource SurfaceMutedBrush}"
-                  BorderBrush="{StaticResource BorderSoftBrush}"
-                  BorderThickness="1"
-                  CornerRadius="6"
-                  Padding="10"
+          <Border Style="{StaticResource SupportPanelBorderStyle}"
                   Margin="0,4,0,0">
             <WrapPanel>
               <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.Read.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
@@ -132,11 +128,7 @@
                   IsExpanded="False"
                   Style="{StaticResource ResultsSectionExpanderStyle}"
                   ToolTip="{DynamicResource Results.PersistentFilters.ToolTip}">
-          <Border Background="{StaticResource SurfaceMutedBrush}"
-                  BorderBrush="{StaticResource BorderSoftBrush}"
-                  BorderThickness="1"
-                  CornerRadius="6"
-                  Padding="10"
+          <Border Style="{StaticResource SupportPanelBorderStyle}"
                   Margin="0,4,0,0">
             <StackPanel>
               <TextBlock Text="{DynamicResource Results.SearchAcl}" Style="{StaticResource SubsectionHeaderText}" />
@@ -172,12 +164,6 @@
           </Border>
         </Expander>
       </StackPanel>
-
-      <TextBlock Grid.Row="1"
-                 Text="{DynamicResource Results.SelectFolderForDetails}"
-                 Style="{StaticResource MicrocopyText}"
-                 TextWrapping="Wrap"
-                 Visibility="{Binding HasNoSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
       <Grid Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Border Style="{StaticResource EmptyStateBorderStyle}"
