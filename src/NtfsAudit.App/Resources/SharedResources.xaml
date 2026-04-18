@@ -72,6 +72,27 @@
     <Setter Property="Foreground" Value="White" />
     <Setter Property="BorderBrush" Value="#FF334155" />
     <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="TextElement.Foreground" Value="White" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ToolTip">
+          <Border Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="4"
+                  Padding="{TemplateBinding Padding}">
+            <Border TextElement.Foreground="{TemplateBinding Foreground}">
+              <Border.Resources>
+                <Style TargetType="TextBlock">
+                  <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToolTip}}" />
+                </Style>
+              </Border.Resources>
+              <ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}" />
+            </Border>
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
   </Style>
 
   <Style TargetType="TextBlock">
@@ -326,6 +347,18 @@
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
+  <Style x:Key="ExpanderHeaderText" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+  </Style>
+
+  <Style x:Key="ExpanderHeaderHintText" TargetType="TextBlock" BasedOn="{StaticResource ExpanderHeaderText}">
+    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+    <Setter Property="Margin" Value="0,0,6,0" />
+  </Style>
+
   <Style x:Key="SectionHeaderText" TargetType="TextBlock">
     <Setter Property="FontSize" Value="16" />
     <Setter Property="FontWeight" Value="SemiBold" />
@@ -405,6 +438,8 @@
                           BorderBrush="{StaticResource BorderSoftBrush}"
                           BorderThickness="1"
                           Padding="10,7"
+                          HorizontalContentAlignment="Stretch"
+                          Content="{TemplateBinding Header}"
                           IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
               <ToggleButton.Template>
                 <ControlTemplate TargetType="ToggleButton">
@@ -429,6 +464,7 @@
                             Data="M 1 1 L 4 4 L 7 1" />
                       <ContentPresenter Grid.Column="1"
                                         VerticalAlignment="Center"
+                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                         ContentSource="Content" />
                     </Grid>
                   </Border>
@@ -463,6 +499,10 @@
       </Setter.Value>
     </Setter>
   </Style>
+
+  <Style x:Key="TreeSectionExpanderStyle"
+         TargetType="Expander"
+         BasedOn="{StaticResource ResultsSectionExpanderStyle}" />
 
   <Style TargetType="TabControl">
     <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
@@ -703,6 +743,33 @@
     <Setter Property="Foreground" Value="White" />
     <Setter Property="FontSize" Value="10" />
     <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style x:Key="SemanticChipBorderStyle" TargetType="Border">
+    <Setter Property="Padding" Value="8,3" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Margin" Value="0,0,6,0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style x:Key="LegendChipBorderStyle" TargetType="Border" BasedOn="{StaticResource SemanticChipBorderStyle}">
+    <Setter Property="Margin" Value="0,0,8,8" />
+  </Style>
+
+  <Style x:Key="TreeInlineChipBorderStyle" TargetType="Border" BasedOn="{StaticResource SemanticChipBorderStyle}">
+    <Setter Property="Padding" Value="7,2" />
+    <Setter Property="Margin" Value="6,0,0,0" />
+  </Style>
+
+  <Style x:Key="FilterChipBorderStyle" TargetType="Border" BasedOn="{StaticResource SemanticChipBorderStyle}">
+    <Setter Property="Margin" Value="0,0,0,0" />
+  </Style>
+
+  <Style x:Key="SemanticChipTextStyle" TargetType="TextBlock">
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
   <DataTemplate x:Key="PermissionBadgesTemplate">

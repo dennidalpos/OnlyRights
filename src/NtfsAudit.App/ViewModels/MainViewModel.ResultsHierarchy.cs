@@ -46,8 +46,8 @@ namespace NtfsAudit.App.ViewModels
                     sample.PrincipalSid ?? string.Empty,
                     isGroup ? LocalizationManager.Text("Hierarchy.Group") : LocalizationManager.Text("Hierarchy.User"),
                     isGroup ? "#FF3949AB" : "#FF00897B",
-                    sample.RiskLevel ?? string.Empty,
-                    ResolveRiskBadge(sample.RiskLevel),
+                    ResolveRiskBadgeText(sample.RiskLevel),
+                    ResolveRiskBadgeBackground(sample.RiskLevel),
                     isGroup
                         ? (() => LoadGroupMembersNodesAsync(sample.PrincipalSid))
                         : (() => LoadUserMembershipNodesAsync(sample.PrincipalSid)));
@@ -68,7 +68,7 @@ namespace NtfsAudit.App.ViewModels
             var resourceLabel = string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase)
                 ? LocalizationManager.Text("Hierarchy.File")
                 : LocalizationManager.Text("Hierarchy.Folder");
-            var accessLabel = string.IsNullOrWhiteSpace(entry.AllowDeny) ? "NTFS" : entry.AllowDeny.ToUpperInvariant();
+            var accessLabel = ResolveAccessBadgeText(entry.AllowDeny);
             var subtitle = string.Format("{0} | {1}", entry.TargetPath ?? entry.FolderPath ?? string.Empty, entry.RightsSummary ?? "-");
             return new ResultHierarchyNodeViewModel(
                 entry.RightsSummary ?? LocalizationManager.Text("Hierarchy.RightsFallback"),
@@ -76,7 +76,7 @@ namespace NtfsAudit.App.ViewModels
                 resourceLabel,
                 string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase) ? "#FF6D4C41" : "#FF546E7A",
                 accessLabel,
-                string.Equals(entry.AllowDeny, "Deny", StringComparison.OrdinalIgnoreCase) ? "#FFC62828" : "#FF1E88E5");
+                ResolveAccessBadgeBackground(entry.AllowDeny));
         }
 
         private async Task<ResultHierarchyNodeViewModel[]> LoadGroupMembersNodesAsync(string groupSid)
@@ -119,19 +119,56 @@ namespace NtfsAudit.App.ViewModels
                 isGroup && principal != null ? (() => LoadGroupMembersNodesAsync(principal.Sid)) : null);
         }
 
-        private static string ResolveRiskBadge(string riskLevel)
+        private static string ResolveRiskBadgeText(string riskLevel)
+        {
+            switch (NormalizeRiskLevel(riskLevel))
+            {
+                case "high":
+                    return LocalizationManager.Text("Hierarchy.RiskHigh");
+                case "medium":
+                    return LocalizationManager.Text("Hierarchy.RiskMedium");
+                case "low":
+                    return LocalizationManager.Text("Hierarchy.RiskLow");
+                default:
+                    return string.Empty;
+            }
+        }
+
+        private static string ResolveRiskBadgeBackground(string riskLevel)
         {
             switch (NormalizeRiskLevel(riskLevel))
             {
                 case "high":
                     return "#FFC62828";
                 case "medium":
-                    return "#FFF9A825";
+                    return "#FFB7791F";
                 case "low":
                     return "#FF2E7D32";
                 default:
                     return "#FFCFD8DC";
             }
+        }
+
+        private static string ResolveAccessBadgeText(string allowDeny)
+        {
+            if (string.Equals(allowDeny, "Deny", StringComparison.OrdinalIgnoreCase))
+            {
+                return LocalizationManager.Text("Hierarchy.AccessDeny");
+            }
+
+            if (string.Equals(allowDeny, "Allow", StringComparison.OrdinalIgnoreCase))
+            {
+                return LocalizationManager.Text("Hierarchy.AccessAllow");
+            }
+
+            return LocalizationManager.Text("Hierarchy.AccessNtfs");
+        }
+
+        private static string ResolveAccessBadgeBackground(string allowDeny)
+        {
+            return string.Equals(allowDeny, "Deny", StringComparison.OrdinalIgnoreCase)
+                ? "#FFC62828"
+                : "#FF1E88E5";
         }
     }
 }

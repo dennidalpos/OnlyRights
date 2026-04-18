@@ -48,13 +48,13 @@
                   Style="{StaticResource ResultsSectionExpanderStyle}">
           <Expander.Header>
             <StackPanel Orientation="Horizontal">
-              <TextBlock Text="{DynamicResource Results.ProcessedFolder}" Style="{StaticResource CompactInfoLabelText}" />
-              <TextBlock Text="{Binding SelectedFolderName}" Style="{StaticResource CompactInfoValueText}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Text="{DynamicResource Results.ProcessedFolder}" Style="{StaticResource ExpanderHeaderHintText}" />
+              <TextBlock Text="{Binding SelectedFolderName}" Style="{StaticResource ExpanderHeaderText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding SelectedFolderName}" />
             </StackPanel>
           </Expander.Header>
 
           <StackPanel Margin="0,6,0,0">
-            <TextBlock Text="{Binding SelectedFolderPath}" Style="{StaticResource MicrocopyText}" TextTrimming="CharacterEllipsis" Margin="0,0,0,4" />
+            <TextBlock Text="{Binding SelectedFolderPath}" Style="{StaticResource MicrocopyText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding SelectedFolderPath}" Margin="0,0,0,4" />
 
             <WrapPanel Margin="0,0,0,4">
               <Border Style="{StaticResource CompactNeutralInfoCardBorderStyle}">
@@ -103,26 +103,26 @@
                   Padding="10"
                   Margin="0,4,0,0">
             <WrapPanel>
-              <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.Read.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
-                <TextBlock Text="{DynamicResource Badge.Read.Label}" Style="{StaticResource CompactBadgeText}" />
+              <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.Read.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                <TextBlock Text="{DynamicResource Badge.Read.Label}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.List.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
-                <TextBlock Text="{DynamicResource Badge.List.Label}" Style="{StaticResource CompactBadgeText}" />
+              <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.List.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                <TextBlock Text="{DynamicResource Badge.List.Label}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.ReadAndExecute.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
-                <TextBlock Text="{DynamicResource Badge.ReadAndExecute.Label}" Style="{StaticResource CompactBadgeText}" />
+              <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.ReadAndExecute.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                <TextBlock Text="{DynamicResource Badge.ReadAndExecute.Label}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FF27AE60" ToolTip="{DynamicResource Badge.Write.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
-                <TextBlock Text="{DynamicResource Badge.Write.Label}" Style="{StaticResource CompactBadgeText}" />
+              <Border Background="#FF27AE60" ToolTip="{DynamicResource Badge.Write.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                <TextBlock Text="{DynamicResource Badge.Write.Label}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FFF2994A" ToolTip="{DynamicResource Badge.Modify.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
-                <TextBlock Text="{DynamicResource Badge.Modify.Label}" Style="{StaticResource CompactBadgeText}" />
+              <Border Background="#FFB7791F" ToolTip="{DynamicResource Badge.Modify.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                <TextBlock Text="{DynamicResource Badge.Modify.Label}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FF9B51E0" ToolTip="{DynamicResource Badge.Full.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
-                <TextBlock Text="{DynamicResource Badge.Full.Label}" Style="{StaticResource CompactBadgeText}" />
+              <Border Background="#FF9B51E0" ToolTip="{DynamicResource Badge.Full.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                <TextBlock Text="{DynamicResource Badge.Full.Label}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FFEB5757" ToolTip="{DynamicResource Badge.Deny.ToolTip}" Style="{StaticResource CompactBadgeBorderStyle}">
-                <TextBlock Text="{DynamicResource Badge.Deny.Label}" Style="{StaticResource CompactBadgeText}" />
+              <Border Background="#FFC62828" ToolTip="{DynamicResource Badge.Deny.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                <TextBlock Text="{DynamicResource Badge.Deny.Label}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
             </WrapPanel>
           </Border>
@@ -205,12 +205,12 @@
                 <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                   <StackPanel Margin="0,0,0,4">
                     <StackPanel Orientation="Horizontal">
-                      <Border Background="{Binding KindBackground}" CornerRadius="8" Padding="6,1" Margin="0,0,6,0">
-                        <TextBlock Text="{Binding KindLabel}" Foreground="White" FontSize="10" FontWeight="SemiBold" />
+                      <Border Background="{Binding KindBackground}" Style="{StaticResource SemanticChipBorderStyle}">
+                        <TextBlock Text="{Binding KindLabel}" Style="{StaticResource SemanticChipTextStyle}" />
                       </Border>
-                      <Border Background="{Binding AccentBackground}" CornerRadius="8" Padding="6,1" Margin="0,0,6,0"
+                      <Border Background="{Binding AccentBackground}" Style="{StaticResource SemanticChipBorderStyle}"
                               Visibility="{Binding HasAccent, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock Text="{Binding AccentText}" Foreground="White" FontSize="10" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding AccentText}" Style="{StaticResource SemanticChipTextStyle}" />
                       </Border>
                       <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
                     </StackPanel>

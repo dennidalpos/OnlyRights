@@ -37,7 +37,14 @@ namespace NtfsAudit.App.Tests
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "WarningStatusBadgeBorderStyle");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "CompactInfoCardBorderStyle");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "CompactInfoValueText");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "ExpanderHeaderText");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "ExpanderHeaderHintText");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "SemanticChipBorderStyle");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "LegendChipBorderStyle");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "TreeInlineChipBorderStyle");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "SemanticChipTextStyle");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "ResultsSectionExpanderStyle");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "TreeSectionExpanderStyle");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "ResultsTabItemStyle");
         }
 
@@ -58,8 +65,30 @@ namespace NtfsAudit.App.Tests
             var resultsRoot = LoadXaml("src", "NtfsAudit.App", "Views", "ResultsPanel.xaml");
 
             Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "Expander" && (string)element.Attribute("Header") == "{DynamicResource Tree.LegendFilters}");
+            Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "Expander" && (string)element.Attribute("Style") == "{StaticResource TreeSectionExpanderStyle}");
             Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "Expander" && (string)element.Attribute("Header") == "{DynamicResource Results.RightsLegend}");
             Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "Expander" && (string)element.Attribute("Header") == "{DynamicResource Results.PersistentFilters}");
+        }
+
+        [Fact]
+        public void SharedResources_UseCustomTooltipChromeAndForwardExpanderHeader()
+        {
+            var root = LoadXaml("src", "NtfsAudit.App", "Resources", "SharedResources.xaml");
+
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute("TargetType") == "ToolTip");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Setter"
+                && (string)element.Attribute("Property") == "TextElement.Foreground"
+                && (string)element.Attribute("Value") == "White");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "ControlTemplate" && (string)element.Attribute("TargetType") == "ToolTip");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Border"
+                && (string)element.Attribute("TextElement.Foreground") == "{TemplateBinding Foreground}");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style"
+                && (string)element.Attribute("TargetType") == "TextBlock"
+                && element.Ancestors().Any(ancestor => ancestor.Name.LocalName.EndsWith(".Resources", StringComparison.Ordinal)));
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "ContentPresenter"
+                && (string)element.Attribute("TextElement.Foreground") == "{TemplateBinding Foreground}");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "ToggleButton"
+                && (string)element.Attribute("Content") == "{TemplateBinding Header}");
         }
 
         [Fact]
@@ -107,6 +136,39 @@ namespace NtfsAudit.App.Tests
             Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "Expander" && (string)element.Attribute("IsExpanded") == "False");
             Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "Expander" && (string)element.Attribute("Style") == "{StaticResource ResultsSectionExpanderStyle}");
             Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "TabControl" && (string)element.Attribute("ItemContainerStyle") == "{StaticResource ResultsTabItemStyle}");
+            Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "Border"
+                && (string)element.Attribute("Style") == "{StaticResource LegendChipBorderStyle}");
+            Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
+                && (string)element.Attribute("Text") == "{Binding SelectedFolderName}"
+                && (string)element.Attribute("ToolTip") == "{Binding SelectedFolderName}"
+                && (string)element.Attribute("Style") == "{StaticResource ExpanderHeaderText}");
+            Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
+                && (string)element.Attribute("Text") == "{DynamicResource Results.ProcessedFolder}"
+                && (string)element.Attribute("Style") == "{StaticResource ExpanderHeaderHintText}");
+            Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
+                && (string)element.Attribute("Text") == "{Binding SelectedFolderPath}"
+                && (string)element.Attribute("ToolTip") == "{Binding SelectedFolderPath}");
+        }
+
+        [Fact]
+        public void FolderTreeNodes_ExposeFullNameTooltipForTrimmedLabels()
+        {
+            var folderTreeRoot = LoadXaml("src", "NtfsAudit.App", "Views", "FolderTreePanel.xaml");
+
+            Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
+                && (string)element.Attribute("Text") == "{Binding DisplayName}"
+                && (string)element.Attribute("TextTrimming") == "CharacterEllipsis"
+                && (string)element.Attribute("ToolTip") == "{Binding DisplayName}");
+            Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
+                && (string)element.Attribute("Text") == "{DynamicResource Tree.DiffParent.Badge}");
+            Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
+                && (string)element.Attribute("Text") == "{DynamicResource Tree.BaselineMismatch.Badge}");
+            Assert.DoesNotContain(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
+                && (string)element.Attribute("Text") == "{Binding DiffLabel}");
+            Assert.DoesNotContain(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
+                && (string)element.Attribute("Text") == "{Binding BaselineMismatchLabel}");
+            Assert.DoesNotContain(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
+                && (string)element.Attribute("Text") == "{Binding ExplicitNtfsLabel}");
         }
 
         private static XElement LoadXaml(params string[] parts)

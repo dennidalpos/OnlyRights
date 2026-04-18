@@ -24,6 +24,7 @@
 
         <Expander Grid.Row="1"
                   Header="{DynamicResource Tree.LegendFilters}"
+                  Style="{StaticResource TreeSectionExpanderStyle}"
                   IsExpanded="False"
                   IsEnabled="{Binding HasScanResult}">
           <Border Background="{StaticResource SurfaceMutedBrush}"
@@ -34,48 +35,41 @@
                   Margin="0,4,0,0">
             <StackPanel>
               <WrapPanel Margin="0,0,0,6">
-                <StackPanel Orientation="Horizontal" Margin="0,0,10,6" ToolTip="{DynamicResource Tree.ExplicitNtfs.ToolTip}">
-                  <Border Background="#FF00897B" Style="{StaticResource InlineCompactBadgeBorderStyle}">
-                    <TextBlock Text="N" Style="{StaticResource CompactBadgeText}" />
+                <CheckBox Margin="0,0,12,6" IsChecked="{Binding TreeFilterExplicitOnly}" ToolTip="{DynamicResource Tree.ExplicitNtfs.ToolTip}">
+                  <Border Background="#FF00897B" Style="{StaticResource FilterChipBorderStyle}">
+                    <TextBlock Text="{DynamicResource Tree.ExplicitNtfs.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
                   </Border>
-                  <CheckBox Content="{DynamicResource Tree.ExplicitNtfs}" IsChecked="{Binding TreeFilterExplicitOnly}" />
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,10,6" ToolTip="{DynamicResource Tree.Protected.ToolTip}">
-                  <Border Background="#FFC62828" Style="{StaticResource InlineCompactBadgeBorderStyle}">
-                    <TextBlock Text="P" Style="{StaticResource CompactBadgeText}" />
+                </CheckBox>
+                <CheckBox Margin="0,0,12,6" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" ToolTip="{DynamicResource Tree.Protected.ToolTip}">
+                  <Border Background="#FFC62828" Style="{StaticResource FilterChipBorderStyle}">
+                    <TextBlock Text="{DynamicResource Tree.Protected.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
                   </Border>
-                  <CheckBox Content="{DynamicResource Tree.Protected}" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" />
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,10,6" ToolTip="{DynamicResource Tree.DiffParent.ToolTip}">
-                  <Border Background="#FF455A64" Style="{StaticResource InlineCompactBadgeBorderStyle}">
-                    <TextBlock Text="DP" Style="{StaticResource CompactBadgeText}" />
+                </CheckBox>
+                <CheckBox Margin="0,0,12,6" IsChecked="{Binding TreeFilterDiffOnly}" ToolTip="{DynamicResource Tree.DiffParent.ToolTip}">
+                  <Border Background="#FF455A64" Style="{StaticResource FilterChipBorderStyle}">
+                    <TextBlock Text="{DynamicResource Tree.DiffParent.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
                   </Border>
-                  <CheckBox Content="{DynamicResource Tree.DiffParent}" IsChecked="{Binding TreeFilterDiffOnly}" />
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,10,6" ToolTip="{DynamicResource Tree.ExplicitDeny.ToolTip}">
-                  <Border Background="#FFAD1457" Style="{StaticResource InlineCompactBadgeBorderStyle}">
-                    <TextBlock Text="D" Style="{StaticResource CompactBadgeText}" />
+                </CheckBox>
+                <CheckBox Margin="0,0,12,6" IsChecked="{Binding TreeFilterExplicitDenyOnly}" ToolTip="{DynamicResource Tree.ExplicitDeny.ToolTip}">
+                  <Border Background="#FFAD1457" Style="{StaticResource FilterChipBorderStyle}">
+                    <TextBlock Text="{DynamicResource Tree.ExplicitDeny.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
                   </Border>
-                  <CheckBox Content="{DynamicResource Tree.ExplicitDeny}" IsChecked="{Binding TreeFilterExplicitDenyOnly}" />
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,10,6" ToolTip="{DynamicResource Tree.BaselineMismatch.ToolTip}">
-                  <Border Background="#FF455A64" Style="{StaticResource InlineCompactBadgeBorderStyle}">
-                    <TextBlock Text="B" Style="{StaticResource CompactBadgeText}" />
+                </CheckBox>
+                <CheckBox Margin="0,0,12,6" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" ToolTip="{DynamicResource Tree.BaselineMismatch.ToolTip}">
+                  <Border Background="#FF455A64" Style="{StaticResource FilterChipBorderStyle}">
+                    <TextBlock Text="{DynamicResource Tree.BaselineMismatch.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
                   </Border>
-                  <CheckBox Content="{DynamicResource Tree.BaselineMismatch}" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" />
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,10,6" ToolTip="{DynamicResource Tree.WithFiles.ToolTip}">
-                  <Border Background="#FF616161" Style="{StaticResource InlineCompactBadgeBorderStyle}">
-                    <TextBlock Text="F" Style="{StaticResource CompactBadgeText}" />
+                </CheckBox>
+                <CheckBox Margin="0,0,12,6" IsChecked="{Binding TreeFilterFilesOnly}" ToolTip="{DynamicResource Tree.WithFiles.ToolTip}">
+                  <Border Background="#FF616161" Style="{StaticResource FilterChipBorderStyle}">
+                    <TextBlock Text="{DynamicResource Tree.WithFiles.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
                   </Border>
-                  <CheckBox Content="{DynamicResource Tree.WithFiles}" IsChecked="{Binding TreeFilterFilesOnly}" />
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,10,6" ToolTip="{DynamicResource Tree.FoldersOnly.ToolTip}">
-                  <Border Background="#FF455A64" Style="{StaticResource InlineCompactBadgeBorderStyle}">
-                    <TextBlock Text="C" Style="{StaticResource CompactBadgeText}" />
+                </CheckBox>
+                <CheckBox Margin="0,0,12,6" IsChecked="{Binding TreeFilterFoldersOnly}" ToolTip="{DynamicResource Tree.FoldersOnly.ToolTip}">
+                  <Border Background="#FF455A64" Style="{StaticResource FilterChipBorderStyle}">
+                    <TextBlock Text="{DynamicResource Tree.FoldersOnly.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
                   </Border>
-                  <CheckBox Content="{DynamicResource Tree.FoldersOnly}" IsChecked="{Binding TreeFilterFoldersOnly}" />
-                </StackPanel>
+                </CheckBox>
               </WrapPanel>
               <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Tree.ResetFilters}" Width="138" Margin="0" Command="{Binding ResetTreeFiltersCommand}" />
             </StackPanel>
@@ -118,40 +112,11 @@
           <HierarchicalDataTemplate ItemsSource="{Binding Children}">
             <StackPanel Orientation="Horizontal" Margin="0,1,0,1">
               <TextBlock Text="{DynamicResource Tree.RootTypeLabel}" Margin="0,0,6,0" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" />
-              <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
-              <Border Background="#FFC62828" ToolTip="{DynamicResource Tree.ProtectedBadge.ToolTip}">
-                <Border.Style>
-                  <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                    <Setter Property="Margin" Value="6,0,0,0" />
-                    <Style.Triggers>
-                      <DataTrigger Binding="{Binding IsProtected}" Value="True">
-                        <Setter Property="Visibility" Value="Visible" />
-                      </DataTrigger>
-                    </Style.Triggers>
-                  </Style>
-                </Border.Style>
-                <TextBlock Text="P" Style="{StaticResource CompactBadgeText}" />
-              </Border>
-              <Border Background="#FF455A64" ToolTip="{DynamicResource Tree.DiffBadge.ToolTip}">
-                <Border.Style>
-                  <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                    <Setter Property="Margin" Value="6,0,0,0" />
-                    <Style.Triggers>
-                      <DataTrigger Binding="{Binding HasDiff}" Value="True">
-                        <Setter Property="Visibility" Value="Visible" />
-                      </DataTrigger>
-                    </Style.Triggers>
-                  </Style>
-                </Border.Style>
-                <TextBlock Text="{Binding DiffLabel}" Style="{StaticResource CompactBadgeText}" />
-              </Border>
+              <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}" />
               <Border Background="#FFAD1457" ToolTip="{DynamicResource Tree.DenyBadge.ToolTip}">
                 <Border.Style>
-                  <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
+                  <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
                     <Setter Property="Visibility" Value="Collapsed" />
-                    <Setter Property="Margin" Value="6,0,0,0" />
                     <Style.Triggers>
                       <DataTrigger Binding="{Binding HasDenyExplicit}" Value="True">
                         <Setter Property="Visibility" Value="Visible" />
@@ -159,13 +124,38 @@
                     </Style.Triggers>
                   </Style>
                 </Border.Style>
-                <TextBlock Text="{Binding DenyExplicitLabel}" Style="{StaticResource CompactBadgeText}" />
+                <TextBlock Text="{DynamicResource Tree.ExplicitDeny.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
+              </Border>
+              <Border Background="#FFC62828" ToolTip="{DynamicResource Tree.ProtectedBadge.ToolTip}">
+                <Border.Style>
+                  <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsProtected}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <TextBlock Text="{DynamicResource Tree.Protected.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
+              </Border>
+              <Border Background="#FF455A64" ToolTip="{DynamicResource Tree.DiffBadge.ToolTip}">
+                <Border.Style>
+                  <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding HasDiff}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <TextBlock Text="{DynamicResource Tree.DiffParent.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
               <Border Background="#FF455A64" ToolTip="{DynamicResource Tree.BaselineBadge.ToolTip}">
                 <Border.Style>
-                  <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
+                  <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
                     <Setter Property="Visibility" Value="Collapsed" />
-                    <Setter Property="Margin" Value="6,0,0,0" />
                     <Style.Triggers>
                       <DataTrigger Binding="{Binding HasBaselineMismatch}" Value="True">
                         <Setter Property="Visibility" Value="Visible" />
@@ -173,21 +163,7 @@
                     </Style.Triggers>
                   </Style>
                 </Border.Style>
-                <TextBlock Text="{Binding BaselineMismatchLabel}" Style="{StaticResource CompactBadgeText}" />
-              </Border>
-              <Border Background="#FF00897B" ToolTip="{DynamicResource Tree.ExplicitNtfsBadge.ToolTip}">
-                <Border.Style>
-                  <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                    <Setter Property="Margin" Value="6,0,0,0" />
-                    <Style.Triggers>
-                      <DataTrigger Binding="{Binding HasExplicitNtfs}" Value="True">
-                        <Setter Property="Visibility" Value="Visible" />
-                      </DataTrigger>
-                    </Style.Triggers>
-                  </Style>
-                </Border.Style>
-                <TextBlock Text="{Binding ExplicitNtfsLabel}" Style="{StaticResource CompactBadgeText}" />
+                <TextBlock Text="{DynamicResource Tree.BaselineMismatch.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
             </StackPanel>
           </HierarchicalDataTemplate>
