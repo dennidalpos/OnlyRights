@@ -48,6 +48,9 @@ namespace NtfsAudit.App.Tests
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "LegendChipBorderStyle");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "TreeInlineChipBorderStyle");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "SemanticChipTextStyle");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "FieldRowGridStyle");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "InlineActionsPanelStyle");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "FieldLabelText");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "SolidColorBrush" && (string)element.Attribute(XamlNamespace + "Key") == "PermissionReadBrush");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "SolidColorBrush" && (string)element.Attribute(XamlNamespace + "Key") == "PermissionModifyBrush");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "SolidColorBrush" && (string)element.Attribute(XamlNamespace + "Key") == "PermissionProtectedBrush");
@@ -227,6 +230,9 @@ namespace NtfsAudit.App.Tests
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Border" && (string)element.Attribute("Style") == "{StaticResource StatusBadgeBorderStyle}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Main.RefreshService.AutomationName}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute("ToolTip") == "{DynamicResource Main.RefreshService.ToolTip}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Grid" && (string)element.Attribute("Style") == "{StaticResource FieldRowGridStyle}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "WrapPanel" && (string)element.Attribute("Style") == "{StaticResource InlineActionsPanelStyle}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBlock" && (string)element.Attribute("Style") == "{StaticResource FieldLabelText}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Main.NewSchedule.AutomationName}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Main.SaveSchedule.AutomationName}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Main.DeleteSchedule.AutomationName}");

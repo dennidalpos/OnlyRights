@@ -11,8 +11,8 @@
   <Color x:Key="SurfaceColor">#FFFFFFFF</Color>
   <Color x:Key="SurfaceMutedColor">#FFF7F9FC</Color>
   <Color x:Key="SurfaceAccentColor">#FFF1F6FB</Color>
-  <Color x:Key="BorderSoftColor">#FFD9E2EC</Color>
-  <Color x:Key="BorderStrongColor">#FFBFCBDA</Color>
+  <Color x:Key="BorderSoftColor">#FFC9D5E2</Color>
+  <Color x:Key="BorderStrongColor">#FFAEBECE</Color>
   <Color x:Key="TextPrimaryColor">#FF16202A</Color>
   <Color x:Key="TextSecondaryColor">#FF5D6B79</Color>
   <Color x:Key="TextMutedColor">#FF7A8896</Color>
@@ -59,8 +59,11 @@
 
   <CornerRadius x:Key="ControlCornerRadius">6</CornerRadius>
   <CornerRadius x:Key="BadgeCornerRadius">12</CornerRadius>
-  <Thickness x:Key="PanelPadding">14</Thickness>
-  <Thickness x:Key="CardPadding">10,8</Thickness>
+  <Thickness x:Key="PanelPadding">16</Thickness>
+  <Thickness x:Key="CardPadding">12,10</Thickness>
+  <Thickness x:Key="SectionSpacing">0,0,0,14</Thickness>
+  <Thickness x:Key="ControlRowSpacing">0,0,0,12</Thickness>
+  <Thickness x:Key="InlineElementSpacing">0,0,10,0</Thickness>
 
   <Style TargetType="Window">
     <Setter Property="Background" Value="{StaticResource AppBackgroundBrush}" />
@@ -212,10 +215,10 @@
   </Style>
 
   <Style x:Key="InlineActionButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryActionButtonStyle}">
-    <Setter Property="Height" Value="30" />
-    <Setter Property="MinWidth" Value="96" />
-    <Setter Property="Margin" Value="0,0,8,8" />
-    <Setter Property="Padding" Value="12,0" />
+    <Setter Property="Height" Value="34" />
+    <Setter Property="MinWidth" Value="108" />
+    <Setter Property="Margin" Value="0,0,10,0" />
+    <Setter Property="Padding" Value="14,0" />
     <Setter Property="FontSize" Value="12.5" />
     <Setter Property="FontWeight" Value="Normal" />
   </Style>
@@ -230,8 +233,8 @@
   </Style>
 
   <Style x:Key="FieldTextBoxStyle" TargetType="TextBox">
-    <Setter Property="Height" Value="32" />
-    <Setter Property="MinWidth" Value="160" />
+    <Setter Property="Height" Value="34" />
+    <Setter Property="MinWidth" Value="180" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
@@ -245,8 +248,8 @@
   </Style>
 
   <Style x:Key="FieldComboBoxStyle" TargetType="ComboBox">
-    <Setter Property="Height" Value="32" />
-    <Setter Property="MinWidth" Value="120" />
+    <Setter Property="Height" Value="34" />
+    <Setter Property="MinWidth" Value="140" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
@@ -255,9 +258,21 @@
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
+  <Style x:Key="FieldRowGridStyle" TargetType="Grid">
+    <Setter Property="Margin" Value="{StaticResource ControlRowSpacing}" />
+  </Style>
+
+  <Style x:Key="InlineActionsPanelStyle" TargetType="WrapPanel">
+    <Setter Property="Margin" Value="{StaticResource ControlRowSpacing}" />
+  </Style>
+
+  <Style x:Key="SectionStackPanelStyle" TargetType="StackPanel">
+    <Setter Property="Margin" Value="{StaticResource SectionSpacing}" />
+  </Style>
+
   <Style x:Key="AppGroupBoxStyle" TargetType="GroupBox">
     <Setter Property="Padding" Value="12" />
-    <Setter Property="Margin" Value="0,0,0,12" />
+    <Setter Property="Margin" Value="0,0,0,14" />
     <Setter Property="TextElement.Foreground" Value="{StaticResource TextPrimaryBrush}" />
     <Setter Property="Template">
       <Setter.Value>
@@ -269,7 +284,7 @@
                               TextElement.FontWeight="SemiBold"
                               TextElement.Foreground="{StaticResource TextPrimaryBrush}" />
             <Border Background="{StaticResource SurfaceBrush}"
-                    BorderBrush="{StaticResource BorderSoftBrush}"
+                    BorderBrush="{StaticResource BorderStrongBrush}"
                     BorderThickness="1"
                     CornerRadius="{StaticResource ControlCornerRadius}"
                     Padding="{TemplateBinding Padding}">
@@ -283,7 +298,7 @@
 
   <Style x:Key="PanelBorderStyle" TargetType="Border">
     <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource BorderSoftBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
     <Setter Property="Padding" Value="{StaticResource PanelPadding}" />
@@ -292,11 +307,11 @@
   </Style>
 
   <Style x:Key="EmptyStateBorderStyle" TargetType="Border">
-    <Setter Property="Background" Value="{StaticResource SurfaceMutedBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource BorderSoftBrush}" />
+    <Setter Property="Background" Value="{StaticResource SurfaceAccentBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
-    <Setter Property="Padding" Value="16" />
+    <Setter Property="Padding" Value="18" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="VerticalAlignment" Value="Stretch" />
   </Style>
@@ -305,29 +320,30 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
     <Setter Property="Padding" Value="{StaticResource CardPadding}" />
-    <Setter Property="Margin" Value="0,0,8,8" />
+    <Setter Property="Margin" Value="0,0,10,10" />
     <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource BorderSoftBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
   </Style>
 
   <Style x:Key="NeutralInfoCardBorderStyle" TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
     <Setter Property="Background" Value="{StaticResource SurfaceMutedBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource BorderSoftBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
   </Style>
 
   <Style x:Key="CompactInfoCardBorderStyle" TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
-    <Setter Property="Padding" Value="8,6" />
-    <Setter Property="Margin" Value="0,0,6,6" />
+    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="Margin" Value="0,0,8,8" />
     <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
   </Style>
 
   <Style x:Key="CompactNeutralInfoCardBorderStyle" TargetType="Border" BasedOn="{StaticResource CompactInfoCardBorderStyle}">
     <Setter Property="Background" Value="{StaticResource SurfaceMutedBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource BorderSoftBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
   </Style>
 
   <Style x:Key="SupportPanelBorderStyle" TargetType="Border" BasedOn="{StaticResource PanelBorderStyle}">
-    <Setter Property="Padding" Value="12" />
+    <Setter Property="Background" Value="{StaticResource SurfaceMutedBrush}" />
+    <Setter Property="Padding" Value="14" />
   </Style>
 
   <Style x:Key="MetricPillBorderStyle" TargetType="Border">
@@ -395,13 +411,17 @@
     <Setter Property="FontSize" Value="12.5" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
-    <Setter Property="Margin" Value="0,0,0,6" />
+    <Setter Property="Margin" Value="0,0,0,8" />
   </Style>
 
   <Style x:Key="MicrocopyText" TargetType="TextBlock">
     <Setter Property="FontSize" Value="11.5" />
     <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
-    <Setter Property="Margin" Value="0,0,0,6" />
+    <Setter Property="Margin" Value="0,0,0,8" />
+  </Style>
+
+  <Style x:Key="FieldLabelText" TargetType="TextBlock" BasedOn="{StaticResource MicrocopyText}">
+    <Setter Property="Margin" Value="0,0,0,4" />
   </Style>
 
   <Style x:Key="ToolbarLabelText" TargetType="TextBlock">

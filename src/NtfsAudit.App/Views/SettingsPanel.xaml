@@ -4,19 +4,22 @@
   <ScrollViewer x:Name="SettingsScrollViewer"
                 VerticalScrollBarVisibility="Auto">
     <StackPanel>
-      <Border Style="{StaticResource PanelBorderStyle}" Margin="0,0,0,12" Padding="12">
+      <Border Style="{StaticResource PanelBorderStyle}" Margin="0,0,0,14">
         <StackPanel>
-          <TextBlock Text="{Binding ServiceSchedulingAvailabilityText}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding ServiceSchedulingAvailabilityText}"
+                     Style="{StaticResource MicrocopyText}"
+                     Margin="0,0,0,14"
+                     TextWrapping="Wrap" />
 
           <TextBlock Text="{DynamicResource Scan.OutputReport}" Style="{StaticResource SubsectionHeaderText}" />
-          <Grid Margin="0,0,0,8">
+          <Grid Style="{StaticResource FieldRowGridStyle}">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" />
               <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0"
                     Style="{StaticResource InlineActionButtonStyle}"
-                    Margin="0,0,8,0"
+                    Margin="{StaticResource InlineElementSpacing}"
                     Content="{DynamicResource Common.Browse}"
                     AutomationProperties.Name="{DynamicResource Scan.OutputBrowse.AutomationName}"
                     Command="{Binding BrowseOutputDirectoryCommand}" />
@@ -31,13 +34,13 @@
           <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ServiceMode}" IsChecked="{Binding UseWindowsServiceMode}" />
           <TextBlock Text="{DynamicResource Scan.ServiceModeHint}"
                      Style="{StaticResource MicrocopyText}"
-                     Margin="0,0,0,8"
+                     Margin="0,0,0,12"
                      TextWrapping="Wrap"
                      ToolTip="{DynamicResource Scan.ServiceModeHint.ToolTip}" />
 
-          <WrapPanel Margin="0,0,0,8">
+          <WrapPanel Style="{StaticResource InlineActionsPanelStyle}">
             <Button Style="{StaticResource InlineActionButtonStyle}"
-                    Margin="0,0,8,0"
+                    Margin="{StaticResource InlineElementSpacing}"
                     Content="{DynamicResource Scan.SaveFolderSet}"
                     AutomationProperties.Name="{DynamicResource Scan.SaveFolderSet.AutomationName}"
                     Command="{Binding SaveScanRootSetCommand}" />
@@ -48,10 +51,14 @@
           </WrapPanel>
 
           <TextBlock Text="{DynamicResource Common.Language}" Style="{StaticResource SubsectionHeaderText}" />
-          <ComboBox Style="{StaticResource FieldComboBoxStyle}" ItemsSource="{Binding AvailableLocales}" SelectedItem="{Binding SelectedLocale, Mode=TwoWay}" DisplayMemberPath="DisplayName" />
+          <ComboBox Style="{StaticResource FieldComboBoxStyle}"
+                    Margin="0,0,0,14"
+                    ItemsSource="{Binding AvailableLocales}"
+                    SelectedItem="{Binding SelectedLocale, Mode=TwoWay}"
+                    DisplayMemberPath="DisplayName" />
 
-          <TextBlock Text="{DynamicResource Main.CleanupResiduals}" Style="{StaticResource SubsectionHeaderText}" Margin="0,10,0,6" />
-          <Border Style="{StaticResource NeutralInfoCardBorderStyle}" Margin="0,0,0,8">
+          <TextBlock Text="{DynamicResource Main.CleanupResiduals}" Style="{StaticResource SubsectionHeaderText}" />
+          <Border Style="{StaticResource NeutralInfoCardBorderStyle}" Margin="0,0,0,12">
             <TextBlock Text="{DynamicResource Main.CleanupResiduals.ToolTip}" Style="{StaticResource MicrocopyText}" Margin="0" TextWrapping="Wrap" />
           </Border>
           <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.CleanupResiduals}" Command="{Binding CleanupResidualFilesCommand}" Margin="0" />
@@ -60,73 +67,93 @@
 
       <GroupBox Header="{DynamicResource Scan.Section}" Style="{StaticResource AppGroupBoxStyle}">
         <StackPanel>
-          <TextBlock Text="{DynamicResource Scan.Compatibility}" Style="{StaticResource SubsectionHeaderText}" />
-          <WrapPanel Margin="0,0,0,8">
-            <Button Style="{StaticResource InlineActionButtonStyle}"
-                    Margin="0,0,8,0"
-                    Content="{DynamicResource Scan.ApplyCompatibleOptions}"
-                    AutomationProperties.Name="{DynamicResource Scan.ApplyCompatibleOptions}"
-                    Command="{Binding ApplyCompatibleScanOptionsCommand}" />
-          </WrapPanel>
-          <Border Style="{StaticResource NeutralInfoCardBorderStyle}" Margin="0,0,0,8">
-            <TextBlock Text="{Binding PathCompatibilitySummaryText}" Style="{StaticResource MicrocopyText}" Margin="0" TextWrapping="Wrap" />
-          </Border>
+          <StackPanel Style="{StaticResource SectionStackPanelStyle}">
+            <TextBlock Text="{DynamicResource Scan.Compatibility}" Style="{StaticResource SubsectionHeaderText}" />
+            <WrapPanel Style="{StaticResource InlineActionsPanelStyle}">
+              <Button Style="{StaticResource InlineActionButtonStyle}"
+                      Margin="0"
+                      Content="{DynamicResource Scan.ApplyCompatibleOptions}"
+                      AutomationProperties.Name="{DynamicResource Scan.ApplyCompatibleOptions}"
+                      Command="{Binding ApplyCompatibleScanOptionsCommand}" />
+            </WrapPanel>
+            <Border Style="{StaticResource NeutralInfoCardBorderStyle}" Margin="0">
+              <TextBlock Text="{Binding PathCompatibilitySummaryText}" Style="{StaticResource MicrocopyText}" Margin="0" TextWrapping="Wrap" />
+            </Border>
+          </StackPanel>
 
-          <TextBlock Text="{DynamicResource Scan.DepthOptions}" Style="{StaticResource SubsectionHeaderText}" />
-          <Grid Margin="0,0,0,8">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="{DynamicResource Scan.Depth}" VerticalAlignment="Center" Margin="0,0,6,0" />
-            <TextBox Grid.Column="1" Width="60" Height="32" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0,0,12,0" />
-            <CheckBox Grid.Column="2" Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.AllSubfolders}" IsChecked="{Binding ScanAllDepths}" Margin="0" />
-          </Grid>
-          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.IncludeInherited}" IsChecked="{Binding IncludeInherited}" Margin="0" />
+          <StackPanel Style="{StaticResource SectionStackPanelStyle}">
+            <TextBlock Text="{DynamicResource Scan.DepthOptions}" Style="{StaticResource SubsectionHeaderText}" />
+            <Grid Style="{StaticResource FieldRowGridStyle}" Margin="0">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+              <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{DynamicResource Scan.Depth}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBox Grid.Column="1" Width="64" Height="34" Text="{Binding MaxDepth}" IsEnabled="{Binding IsMaxDepthEnabled}" Margin="0" />
+              </Grid>
+              <CheckBox Grid.Row="1"
+                        Style="{StaticResource OptionCheckBoxStyle}"
+                        Content="{DynamicResource Scan.AllSubfolders}"
+                        IsChecked="{Binding ScanAllDepths}"
+                        Margin="0,10,0,0" />
+            </Grid>
+            <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.IncludeInherited}" IsChecked="{Binding IncludeInherited}" Margin="0" />
+          </StackPanel>
 
-          <TextBlock Text="{DynamicResource Scan.Identity}" Style="{StaticResource SubsectionHeaderText}" Margin="0,8,0,6" />
-          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ResolveIdentities}" IsChecked="{Binding ResolveIdentities}" />
-          <TextBlock Text="{DynamicResource Scan.IdentityHint}"
-                     Style="{StaticResource MicrocopyText}"
-                     Margin="0,0,0,6"
-                     TextWrapping="Wrap"
-                     ToolTip="{DynamicResource Scan.IdentityHint.ToolTip}" />
-          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ExpandGroups}" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
-          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.UsePowerShell}" IsChecked="{Binding UsePowerShell}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
-          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ExcludeServiceAccounts}" IsChecked="{Binding ExcludeServiceAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
-          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ExcludeAdminAccounts}" IsChecked="{Binding ExcludeAdminAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
+          <StackPanel Style="{StaticResource SectionStackPanelStyle}">
+            <TextBlock Text="{DynamicResource Scan.Identity}" Style="{StaticResource SubsectionHeaderText}" />
+            <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ResolveIdentities}" IsChecked="{Binding ResolveIdentities}" />
+            <TextBlock Text="{DynamicResource Scan.IdentityHint}"
+                       Style="{StaticResource MicrocopyText}"
+                       Margin="0,0,0,10"
+                       TextWrapping="Wrap"
+                       ToolTip="{DynamicResource Scan.IdentityHint.ToolTip}" />
+            <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ExpandGroups}" IsChecked="{Binding ExpandGroups}" IsEnabled="{Binding IsExpandGroupsEnabled}" />
+            <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.UsePowerShell}" IsChecked="{Binding UsePowerShell}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
+            <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ExcludeServiceAccounts}" IsChecked="{Binding ExcludeServiceAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" />
+            <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ExcludeAdminAccounts}" IsChecked="{Binding ExcludeAdminAccounts}" IsEnabled="{Binding IsIdentityOptionsEnabled}" Margin="0" />
+          </StackPanel>
 
-          <TextBlock Text="{DynamicResource Scan.AdvancedAudit}" Style="{StaticResource SubsectionHeaderText}" Margin="0,8,0,6" />
-          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.EnableAdvancedAudit}" IsChecked="{Binding EnableAdvancedAudit}" />
-          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ComputeEffectiveAccess}" IsChecked="{Binding ComputeEffectiveAccess}" IsEnabled="{Binding IsAdvancedAuditEnabled}" />
-          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.IncludeSharePermissions}" IsChecked="{Binding IncludeSharePermissions}" IsEnabled="{Binding SupportsSharePermissionsForSelection}" />
-          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.IncludeFiles}" IsChecked="{Binding IncludeFiles}" IsEnabled="{Binding IsAdvancedAuditEnabled}" />
-          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ReadOwnerAndSacl}" IsChecked="{Binding ReadOwnerAndSacl}" IsEnabled="{Binding IsAdvancedAuditEnabled}" />
-          <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.CompareBaseline}" IsChecked="{Binding CompareBaseline}" IsEnabled="{Binding IsAdvancedAuditEnabled}" />
+          <StackPanel>
+            <TextBlock Text="{DynamicResource Scan.AdvancedAudit}" Style="{StaticResource SubsectionHeaderText}" />
+            <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.EnableAdvancedAudit}" IsChecked="{Binding EnableAdvancedAudit}" />
+            <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ComputeEffectiveAccess}" IsChecked="{Binding ComputeEffectiveAccess}" IsEnabled="{Binding IsAdvancedAuditEnabled}" />
+            <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.IncludeSharePermissions}" IsChecked="{Binding IncludeSharePermissions}" IsEnabled="{Binding SupportsSharePermissionsForSelection}" />
+            <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.IncludeFiles}" IsChecked="{Binding IncludeFiles}" IsEnabled="{Binding IsAdvancedAuditEnabled}" />
+            <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ReadOwnerAndSacl}" IsChecked="{Binding ReadOwnerAndSacl}" IsEnabled="{Binding IsAdvancedAuditEnabled}" />
+            <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.CompareBaseline}" IsChecked="{Binding CompareBaseline}" IsEnabled="{Binding IsAdvancedAuditEnabled}" Margin="0" />
+          </StackPanel>
         </StackPanel>
       </GroupBox>
 
       <GroupBox Header="{DynamicResource Scan.Credentials}" Style="{StaticResource AppGroupBoxStyle}">
         <StackPanel>
           <TextBlock Text="{Binding GlobalCredentialStatusText}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
-          <TextBlock Text="{Binding SelectedScanRootEffectiveCredentialSource}" Style="{StaticResource MicrocopyText}" TextWrapping="Wrap" />
-          <TextBlock Text="{DynamicResource Scan.GlobalUser}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,2" />
+          <TextBlock Text="{Binding SelectedScanRootEffectiveCredentialSource}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,12" TextWrapping="Wrap" />
+          <TextBlock Text="{DynamicResource Scan.GlobalUser}" Style="{StaticResource FieldLabelText}" />
           <TextBox Style="{StaticResource FieldTextBoxStyle}"
+                   Margin="0,0,0,12"
                    AutomationProperties.Name="{DynamicResource Scan.GlobalUser.AutomationName}"
                    ToolTip="{DynamicResource Scan.GlobalUser.ToolTip}"
                    Text="{Binding GlobalCredentialUserName, UpdateSourceTrigger=PropertyChanged}"
                    IsEnabled="{Binding SupportsConfiguredCredentialForSelection}" />
-          <TextBlock Text="{DynamicResource Scan.GlobalPassword}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" />
+          <TextBlock Text="{DynamicResource Scan.GlobalPassword}" Style="{StaticResource FieldLabelText}" />
           <PasswordBox x:Name="GlobalCredentialPasswordBox"
-                       Height="32"
+                       Height="34"
+                       Margin="0,0,0,12"
                        AutomationProperties.Name="{DynamicResource Scan.GlobalPassword.AutomationName}"
                        ToolTip="{DynamicResource Scan.GlobalPassword.ToolTip}"
                        PasswordChanged="GlobalCredentialPasswordBox_OnPasswordChanged"
                        IsEnabled="{Binding SupportsConfiguredCredentialForSelection}" />
-          <WrapPanel Margin="0,8,0,0">
+          <WrapPanel Margin="0">
             <Button Style="{StaticResource InlineActionButtonStyle}"
-                    Margin="0,0,8,0"
+                    Margin="{StaticResource InlineElementSpacing}"
                     Content="{DynamicResource Common.Save}"
                     AutomationProperties.Name="{DynamicResource Scan.SaveGlobalCredential.AutomationName}"
                     Command="{Binding SaveGlobalCredentialCommand}"
@@ -149,7 +176,7 @@
               <TextBlock Text="{Binding ServiceNextRunText}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,0" TextWrapping="Wrap" />
             </StackPanel>
           </Border>
-          <WrapPanel Margin="0,10,0,8">
+          <WrapPanel Style="{StaticResource InlineActionsPanelStyle}" Margin="0,12,0,12">
             <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.InstallService}" Command="{Binding InstallServiceCommand}" />
             <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.ServiceStart}" Command="{Binding StartServiceRuntimeCommand}" />
             <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.ServiceStop}" Command="{Binding StopServiceRuntimeCommand}" />
@@ -173,7 +200,7 @@
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
 
-          <WrapPanel Grid.Row="0" Margin="0,0,0,8">
+          <WrapPanel Grid.Row="0" Style="{StaticResource InlineActionsPanelStyle}">
             <Button Style="{StaticResource InlineActionButtonStyle}"
                     Content="{DynamicResource Main.NewSchedule}"
                     AutomationProperties.Name="{DynamicResource Main.NewSchedule.AutomationName}"
@@ -212,34 +239,40 @@
             </ListBox.ItemTemplate>
           </ListBox>
 
-          <StackPanel Grid.Row="2" Margin="0,10,0,0">
-            <TextBlock Text="{DynamicResource Main.ScheduleName}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,2" />
+          <StackPanel Grid.Row="2" Margin="0,12,0,0">
+            <TextBlock Text="{DynamicResource Main.ScheduleName}" Style="{StaticResource FieldLabelText}" />
             <TextBox Style="{StaticResource FieldTextBoxStyle}"
+                     Margin="0,0,0,12"
                      AutomationProperties.Name="{DynamicResource Main.ScheduleName.AutomationName}"
                      Text="{Binding ScheduleName, UpdateSourceTrigger=PropertyChanged}" />
-            <TextBlock Text="{DynamicResource Main.ScheduleFrequency}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" />
+            <TextBlock Text="{DynamicResource Main.ScheduleFrequency}" Style="{StaticResource FieldLabelText}" />
             <ComboBox Style="{StaticResource FieldComboBoxStyle}"
+                      Margin="0,0,0,12"
                       AutomationProperties.Name="{DynamicResource Main.ScheduleFrequency.AutomationName}"
                       ItemsSource="{Binding AvailableScheduleFrequencyOptions}"
                       SelectedItem="{Binding SelectedScheduleFrequencyOption}"
                       DisplayMemberPath="DisplayName" />
-            <TextBlock Text="{DynamicResource Main.ScheduleDate}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" Visibility="{Binding IsOneShotSchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <TextBlock Text="{DynamicResource Main.ScheduleDate}" Style="{StaticResource FieldLabelText}" Visibility="{Binding IsOneShotSchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
             <DatePicker AutomationProperties.Name="{DynamicResource Main.ScheduleDate.AutomationName}"
+                        Margin="0,0,0,12"
                         SelectedDate="{Binding ScheduleOneShotDate}"
                         Visibility="{Binding IsOneShotSchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
-            <TextBlock Text="{DynamicResource Main.ScheduleTime}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" />
+            <TextBlock Text="{DynamicResource Main.ScheduleTime}" Style="{StaticResource FieldLabelText}" />
             <TextBox Style="{StaticResource FieldTextBoxStyle}"
+                     Margin="0,0,0,12"
                      AutomationProperties.Name="{DynamicResource Main.ScheduleTime.AutomationName}"
                      Text="{Binding ScheduleTimeText, UpdateSourceTrigger=PropertyChanged}" />
-            <TextBlock Text="{DynamicResource Main.ScheduleDayOfWeek}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" Visibility="{Binding IsWeeklySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <TextBlock Text="{DynamicResource Main.ScheduleDayOfWeek}" Style="{StaticResource FieldLabelText}" Visibility="{Binding IsWeeklySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
             <ComboBox Style="{StaticResource FieldComboBoxStyle}"
+                      Margin="0,0,0,12"
                       AutomationProperties.Name="{DynamicResource Main.ScheduleDayOfWeek.AutomationName}"
                       ItemsSource="{Binding AvailableScheduleDayOptions}"
                       SelectedItem="{Binding SelectedScheduleDayOption}"
                       DisplayMemberPath="DisplayName"
                       Visibility="{Binding IsWeeklySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
-            <TextBlock Text="{DynamicResource Main.ScheduleDayOfMonth}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" Visibility="{Binding IsMonthlySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <TextBlock Text="{DynamicResource Main.ScheduleDayOfMonth}" Style="{StaticResource FieldLabelText}" Visibility="{Binding IsMonthlySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
             <TextBox Style="{StaticResource FieldTextBoxStyle}"
+                     Margin="0,0,0,12"
                      AutomationProperties.Name="{DynamicResource Main.ScheduleDayOfMonth.AutomationName}"
                      Text="{Binding ScheduleDayOfMonth}"
                      Visibility="{Binding IsMonthlySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />

@@ -11,14 +11,14 @@
 
       <TextBlock Grid.Row="0" Text="{DynamicResource Tree.Title}" Style="{StaticResource SectionHeaderText}" />
 
-      <Grid Grid.Row="1" Margin="0,0,0,10">
+      <Grid Grid.Row="1" Margin="0,0,0,12">
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <WrapPanel Grid.Row="0" Margin="0,0,0,8">
-          <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,8,0" Content="{DynamicResource Tree.ExpandAll}" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
+        <WrapPanel Grid.Row="0" Style="{StaticResource InlineActionsPanelStyle}" Margin="0,0,0,10">
+          <Button Style="{StaticResource InlineActionButtonStyle}" Margin="{StaticResource InlineElementSpacing}" Content="{DynamicResource Tree.ExpandAll}" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
           <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,0,0" Content="{DynamicResource Tree.CollapseAll}" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
         </WrapPanel>
 
