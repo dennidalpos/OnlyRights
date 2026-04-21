@@ -70,12 +70,14 @@ namespace NtfsAudit.App.Tests
             var root = LoadMainWindow();
 
             Assert.Equal("MainWindow_OnPreviewKeyDown", (string)root.Attribute("PreviewKeyDown"));
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute(XamlNamespace + "Name") == "SettingsToggleButton");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute(XamlNamespace + "Name") == null && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Scan.RootBrowse.AutomationName}");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "TextBox" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Scan.RootPath.AutomationName}");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Scan.RootAdd.AutomationName}");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Scan.RemoveRoot.AutomationName}");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "TextBlock" && (string)element.Attribute("Text") == "{DynamicResource Scan.FoldersHint}");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "TextBlock" && (string)element.Attribute("Text") == "{DynamicResource Scan.StartHint}");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute("Command") == "{Binding CloseSettingsCommand}" && (string)element.Attribute("IsCancel") == "True");
         }
 
         [Fact]

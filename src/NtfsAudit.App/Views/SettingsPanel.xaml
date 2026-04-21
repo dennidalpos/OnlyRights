@@ -1,7 +1,8 @@
 <UserControl x:Class="NtfsAudit.App.Views.SettingsPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <ScrollViewer VerticalScrollBarVisibility="Auto">
+  <ScrollViewer x:Name="SettingsScrollViewer"
+                VerticalScrollBarVisibility="Auto">
     <StackPanel>
       <Border Style="{StaticResource PanelBorderStyle}" Margin="0,0,0,12" Padding="12">
         <StackPanel>
@@ -19,7 +20,8 @@
                     Content="{DynamicResource Common.Browse}"
                     AutomationProperties.Name="{DynamicResource Scan.OutputBrowse.AutomationName}"
                     Command="{Binding BrowseOutputDirectoryCommand}" />
-            <TextBox Grid.Column="1"
+            <TextBox x:Name="OutputDirectoryTextBox"
+                     Grid.Column="1"
                      Style="{StaticResource FieldTextBoxStyle}"
                      AutomationProperties.Name="{DynamicResource Scan.OutputDirectory.AutomationName}"
                      ToolTip="{DynamicResource Scan.OutputDirectory.ToolTip}"
@@ -153,7 +155,13 @@
             <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.ServiceStop}" Command="{Binding StopServiceRuntimeCommand}" />
             <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.UninstallService}" Command="{Binding UninstallServiceCommand}" />
           </WrapPanel>
-          <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.RefreshService}" Command="{Binding RefreshSchedulesCommand}" Width="168" Margin="0" />
+          <Button Style="{StaticResource InlineActionButtonStyle}"
+                  Content="{DynamicResource Main.RefreshService}"
+                  AutomationProperties.Name="{DynamicResource Main.RefreshService.AutomationName}"
+                  ToolTip="{DynamicResource Main.RefreshService.ToolTip}"
+                  Command="{Binding RefreshSchedulesCommand}"
+                  Width="168"
+                  Margin="0" />
         </StackPanel>
       </GroupBox>
 
@@ -166,9 +174,18 @@
           </Grid.RowDefinitions>
 
           <WrapPanel Grid.Row="0" Margin="0,0,0,8">
-            <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.NewSchedule}" Command="{Binding NewScheduleCommand}" />
-            <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Common.Save}" Command="{Binding SaveScheduleCommand}" />
-            <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Common.Remove}" Command="{Binding DeleteScheduleCommand}" />
+            <Button Style="{StaticResource InlineActionButtonStyle}"
+                    Content="{DynamicResource Main.NewSchedule}"
+                    AutomationProperties.Name="{DynamicResource Main.NewSchedule.AutomationName}"
+                    Command="{Binding NewScheduleCommand}" />
+            <Button Style="{StaticResource InlineActionButtonStyle}"
+                    Content="{DynamicResource Common.Save}"
+                    AutomationProperties.Name="{DynamicResource Main.SaveSchedule.AutomationName}"
+                    Command="{Binding SaveScheduleCommand}" />
+            <Button Style="{StaticResource InlineActionButtonStyle}"
+                    Content="{DynamicResource Common.Remove}"
+                    AutomationProperties.Name="{DynamicResource Main.DeleteSchedule.AutomationName}"
+                    Command="{Binding DeleteScheduleCommand}" />
           </WrapPanel>
 
           <ListBox Grid.Row="1" ItemsSource="{Binding ServiceSchedules}" SelectedItem="{Binding SelectedServiceSchedule}">
@@ -197,18 +214,40 @@
 
           <StackPanel Grid.Row="2" Margin="0,10,0,0">
             <TextBlock Text="{DynamicResource Main.ScheduleName}" Style="{StaticResource MicrocopyText}" Margin="0,0,0,2" />
-            <TextBox Style="{StaticResource FieldTextBoxStyle}" Text="{Binding ScheduleName, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox Style="{StaticResource FieldTextBoxStyle}"
+                     AutomationProperties.Name="{DynamicResource Main.ScheduleName.AutomationName}"
+                     Text="{Binding ScheduleName, UpdateSourceTrigger=PropertyChanged}" />
             <TextBlock Text="{DynamicResource Main.ScheduleFrequency}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" />
-            <ComboBox Style="{StaticResource FieldComboBoxStyle}" ItemsSource="{Binding AvailableScheduleFrequencyOptions}" SelectedItem="{Binding SelectedScheduleFrequencyOption}" DisplayMemberPath="DisplayName" />
+            <ComboBox Style="{StaticResource FieldComboBoxStyle}"
+                      AutomationProperties.Name="{DynamicResource Main.ScheduleFrequency.AutomationName}"
+                      ItemsSource="{Binding AvailableScheduleFrequencyOptions}"
+                      SelectedItem="{Binding SelectedScheduleFrequencyOption}"
+                      DisplayMemberPath="DisplayName" />
             <TextBlock Text="{DynamicResource Main.ScheduleDate}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" Visibility="{Binding IsOneShotSchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
-            <DatePicker SelectedDate="{Binding ScheduleOneShotDate}" Visibility="{Binding IsOneShotSchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <DatePicker AutomationProperties.Name="{DynamicResource Main.ScheduleDate.AutomationName}"
+                        SelectedDate="{Binding ScheduleOneShotDate}"
+                        Visibility="{Binding IsOneShotSchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
             <TextBlock Text="{DynamicResource Main.ScheduleTime}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" />
-            <TextBox Style="{StaticResource FieldTextBoxStyle}" Text="{Binding ScheduleTimeText, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox Style="{StaticResource FieldTextBoxStyle}"
+                     AutomationProperties.Name="{DynamicResource Main.ScheduleTime.AutomationName}"
+                     Text="{Binding ScheduleTimeText, UpdateSourceTrigger=PropertyChanged}" />
             <TextBlock Text="{DynamicResource Main.ScheduleDayOfWeek}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" Visibility="{Binding IsWeeklySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
-            <ComboBox Style="{StaticResource FieldComboBoxStyle}" ItemsSource="{Binding AvailableScheduleDayOptions}" SelectedItem="{Binding SelectedScheduleDayOption}" DisplayMemberPath="DisplayName" Visibility="{Binding IsWeeklySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <ComboBox Style="{StaticResource FieldComboBoxStyle}"
+                      AutomationProperties.Name="{DynamicResource Main.ScheduleDayOfWeek.AutomationName}"
+                      ItemsSource="{Binding AvailableScheduleDayOptions}"
+                      SelectedItem="{Binding SelectedScheduleDayOption}"
+                      DisplayMemberPath="DisplayName"
+                      Visibility="{Binding IsWeeklySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
             <TextBlock Text="{DynamicResource Main.ScheduleDayOfMonth}" Style="{StaticResource MicrocopyText}" Margin="0,6,0,2" Visibility="{Binding IsMonthlySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
-            <TextBox Style="{StaticResource FieldTextBoxStyle}" Text="{Binding ScheduleDayOfMonth}" Visibility="{Binding IsMonthlySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
-            <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Main.ScheduleEnabled}" IsChecked="{Binding ScheduleEnabled}" Margin="0,8,0,0" />
+            <TextBox Style="{StaticResource FieldTextBoxStyle}"
+                     AutomationProperties.Name="{DynamicResource Main.ScheduleDayOfMonth.AutomationName}"
+                     Text="{Binding ScheduleDayOfMonth}"
+                     Visibility="{Binding IsMonthlySchedule, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <CheckBox Style="{StaticResource OptionCheckBoxStyle}"
+                      Content="{DynamicResource Main.ScheduleEnabled}"
+                      AutomationProperties.Name="{DynamicResource Main.ScheduleEnabled.AutomationName}"
+                      IsChecked="{Binding ScheduleEnabled}"
+                      Margin="0,8,0,0" />
             <Border Style="{StaticResource SupportPanelBorderStyle}" Padding="8,6" Margin="0,8,0,0">
               <TextBlock Text="{Binding ScheduleEditorFeedbackText}" Style="{StaticResource MicrocopyText}" Margin="0" TextWrapping="Wrap" />
             </Border>

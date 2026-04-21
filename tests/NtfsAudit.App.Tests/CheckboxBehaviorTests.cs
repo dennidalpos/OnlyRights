@@ -10,6 +10,8 @@
  * written permission from Danny Perondi.
  */
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using NtfsAudit.App.Models;
 using NtfsAudit.App.Services;
 using NtfsAudit.App.ViewModels;
@@ -115,6 +117,76 @@ namespace NtfsAudit.App.Tests
             var child = Assert.Single(provider.GetChildren(@"C:\AuditRoot"));
 
             Assert.True(child.HasFileEntries);
+        }
+
+        [Fact]
+        public void FolderTreeProvider_ExposesAnalyzedFilesAsLeafNodes()
+        {
+            var treeMap = new Dictionary<string, List<string>>
+            {
+                [@"C:\AuditRoot"] = new List<string> { @"C:\AuditRoot\Child" },
+                [@"C:\AuditRoot\Child"] = new List<string> { @"C:\AuditRoot\Child\report.xlsx" },
+                [@"C:\AuditRoot\Child\report.xlsx"] = new List<string>()
+            };
+            var details = new Dictionary<string, FolderDetail>
+            {
+                [@"C:\AuditRoot\Child"] = new FolderDetail
+                {
+                    HasFileEntries = true,
+                    HasFolderEntries = true
+                }
+            };
+            details[@"C:\AuditRoot\Child"].AllEntries.Add(new AceEntry
+            {
+                FolderPath = @"C:\AuditRoot\Child",
+                TargetPath = @"C:\AuditRoot\Child\report.xlsx",
+                ResourceType = "File",
+                PermissionLayer = PermissionLayer.Ntfs,
+                AllowDeny = "Allow",
+                RightsSummary = "Read"
+            });
+
+            var provider = new FolderTreeProvider(treeMap, details);
+
+            var fileNode = Assert.Single(provider.GetChildren(@"C:\AuditRoot\Child").Where(node => node.IsFileNode));
+
+            Assert.Equal("FILE", fileNode.TypeLabel);
+            Assert.Equal(@"C:\AuditRoot\Child", fileNode.SelectionPath);
+            Assert.Equal("report.xlsx", fileNode.DisplayName);
+        }
+
+        [Fact]
+        public void TreeFilters_AddFileLeafNodesWhenFolderContainsAnalyzedFiles()
+        {
+            var viewModel = new MainViewModel();
+            var treeMap = new Dictionary<string, List<string>>
+            {
+                [@"C:\AuditRoot"] = new List<string> { @"C:\AuditRoot\Child" },
+                [@"C:\AuditRoot\Child"] = new List<string>()
+            };
+            var details = new Dictionary<string, FolderDetail>
+            {
+                [@"C:\AuditRoot\Child"] = new FolderDetail
+                {
+                    HasFileEntries = true,
+                    HasFolderEntries = true
+                }
+            };
+            details[@"C:\AuditRoot\Child"].AllEntries.Add(new AceEntry
+            {
+                FolderPath = @"C:\AuditRoot\Child",
+                TargetPath = @"C:\AuditRoot\Child\report.xlsx",
+                ResourceType = "File",
+                PermissionLayer = PermissionLayer.Ntfs,
+                AllowDeny = "Allow",
+                RightsSummary = "Read"
+            });
+
+            var method = typeof(MainViewModel).GetMethod("ApplyTreeFilters", BindingFlags.Instance | BindingFlags.NonPublic);
+            var filteredTree = Assert.IsType<Dictionary<string, List<string>>>(method.Invoke(viewModel, new object[] { treeMap, details, @"C:\AuditRoot" }));
+
+            Assert.Contains(@"C:\AuditRoot\Child\report.xlsx", filteredTree[@"C:\AuditRoot\Child"]);
+            Assert.True(filteredTree.ContainsKey(@"C:\AuditRoot\Child\report.xlsx"));
         }
     }
 }

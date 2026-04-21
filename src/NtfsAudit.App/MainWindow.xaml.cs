@@ -26,6 +26,7 @@ namespace NtfsAudit.App
         private readonly WinForms.NotifyIcon _notifyIcon;
         private readonly Icon _applicationIcon;
         private readonly DispatcherTimer _trayTimer;
+        private MainViewModel _boundViewModel;
         private string _lastTrayStatus;
         private bool _forceClose;
 
@@ -38,6 +39,8 @@ namespace NtfsAudit.App
         {
             InitializeComponent();
             DataContext = viewModel ?? new MainViewModel();
+            AttachViewModel(DataContext as MainViewModel);
+            DataContextChanged += MainWindow_OnDataContextChanged;
             _applicationIcon = LoadApplicationIcon();
 
             _notifyIcon = new WinForms.NotifyIcon
@@ -82,6 +85,7 @@ namespace NtfsAudit.App
             Closing += OnMainWindowClosing;
             Closed += (_, __) =>
             {
+                DetachViewModel();
                 _trayTimer.Stop();
                 _notifyIcon.Visible = false;
                 _notifyIcon.Dispose();
@@ -89,6 +93,52 @@ namespace NtfsAudit.App
             };
 
             UpdateTrayStatus();
+        }
+
+        private void MainWindow_OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            DetachViewModel();
+            AttachViewModel(e.NewValue as MainViewModel);
+        }
+
+        private void AttachViewModel(MainViewModel viewModel)
+        {
+            _boundViewModel = viewModel;
+            if (_boundViewModel != null)
+            {
+                _boundViewModel.PropertyChanged += ViewModel_OnPropertyChanged;
+            }
+        }
+
+        private void DetachViewModel()
+        {
+            if (_boundViewModel != null)
+            {
+                _boundViewModel.PropertyChanged -= ViewModel_OnPropertyChanged;
+                _boundViewModel = null;
+            }
+        }
+
+        private void ViewModel_OnPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e == null || !string.Equals(e.PropertyName, "IsSettingsOpen", StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            var viewModel = sender as MainViewModel;
+            if (viewModel == null || viewModel.IsSettingsOpen)
+            {
+                return;
+            }
+
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (SettingsToggleButton.Visibility == Visibility.Visible && SettingsToggleButton.IsEnabled)
+                {
+                    Keyboard.Focus(SettingsToggleButton);
+                }
+            }), DispatcherPriority.Input);
         }
 
         private void UpdateTrayStatus()

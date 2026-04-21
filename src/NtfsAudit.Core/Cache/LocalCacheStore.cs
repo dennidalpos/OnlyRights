@@ -11,6 +11,7 @@
  */
 using System;
 using System.IO;
+using NtfsAudit.App.Services;
 
 namespace NtfsAudit.App.Cache
 {
@@ -25,9 +26,9 @@ namespace NtfsAudit.App.Cache
                 return localPath;
             }
 
-            var appData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NtfsAudit", "Cache");
-            Directory.CreateDirectory(appData);
-            return Path.Combine(appData, fileName);
+            var cacheRoot = RuntimePaths.GetLocalCacheRoot();
+            Directory.CreateDirectory(cacheRoot);
+            return Path.Combine(cacheRoot, fileName);
         }
 
         private bool IsWritableDirectory(string directory)

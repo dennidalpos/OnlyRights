@@ -46,6 +46,16 @@
   <SolidColorBrush x:Key="WarningSurfaceBrush" Color="{StaticResource WarningSurfaceColor}" />
   <SolidColorBrush x:Key="WarningBorderBrush" Color="{StaticResource WarningBorderColor}" />
   <SolidColorBrush x:Key="WarningTextBrush" Color="{StaticResource WarningTextColor}" />
+  <SolidColorBrush x:Key="PermissionReadBrush" Color="#FF2F80ED" />
+  <SolidColorBrush x:Key="PermissionWriteBrush" Color="#FF27AE60" />
+  <SolidColorBrush x:Key="PermissionModifyBrush" Color="{StaticResource WarningColor}" />
+  <SolidColorBrush x:Key="PermissionFullBrush" Color="#FF9B51E0" />
+  <SolidColorBrush x:Key="PermissionDenyBrush" Color="#FFEB5757" />
+  <SolidColorBrush x:Key="PermissionProtectedBrush" Color="{StaticResource DangerColor}" />
+  <SolidColorBrush x:Key="PermissionDifferenceBrush" Color="#FF455A64" />
+  <SolidColorBrush x:Key="PermissionFileEntriesBrush" Color="#FF616161" />
+  <SolidColorBrush x:Key="PermissionExplicitNtfsBrush" Color="#FF00897B" />
+  <SolidColorBrush x:Key="PermissionExplicitDenyBrush" Color="#FFAD1457" />
 
   <CornerRadius x:Key="ControlCornerRadius">6</CornerRadius>
   <CornerRadius x:Key="BadgeCornerRadius">12</CornerRadius>
@@ -308,7 +318,7 @@
   <Style x:Key="CompactInfoCardBorderStyle" TargetType="Border" BasedOn="{StaticResource InfoCardBorderStyle}">
     <Setter Property="Padding" Value="8,6" />
     <Setter Property="Margin" Value="0,0,6,6" />
-    <Setter Property="CornerRadius" Value="5" />
+    <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
   </Style>
 
   <Style x:Key="CompactNeutralInfoCardBorderStyle" TargetType="Border" BasedOn="{StaticResource CompactInfoCardBorderStyle}">
@@ -316,11 +326,7 @@
     <Setter Property="BorderBrush" Value="{StaticResource BorderSoftBrush}" />
   </Style>
 
-  <Style x:Key="SupportPanelBorderStyle" TargetType="Border">
-    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-    <Setter Property="BorderBrush" Value="{StaticResource BorderSoftBrush}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}" />
+  <Style x:Key="SupportPanelBorderStyle" TargetType="Border" BasedOn="{StaticResource PanelBorderStyle}">
     <Setter Property="Padding" Value="12" />
   </Style>
 
@@ -340,7 +346,6 @@
   <Style x:Key="WarningStatusBadgeBorderStyle" TargetType="Border" BasedOn="{StaticResource StatusBadgeBorderStyle}">
     <Setter Property="Background" Value="{StaticResource WarningSurfaceBrush}" />
     <Setter Property="BorderBrush" Value="{StaticResource WarningBorderBrush}" />
-    <Setter Property="Padding" Value="8,3" />
   </Style>
 
   <Style x:Key="InfoLabelText" TargetType="TextBlock">
@@ -798,37 +803,37 @@
         <Border.Style>
           <Style TargetType="Border" BasedOn="{StaticResource InlineCompactBadgeBorderStyle}">
             <Setter Property="Visibility" Value="Collapsed" />
-            <Setter Property="Background" Value="#FF2F80ED" />
+            <Setter Property="Background" Value="{StaticResource PermissionReadBrush}" />
             <Setter Property="ToolTip" Value="{DynamicResource Badge.Read.ToolTip}" />
             <Style.Triggers>
               <DataTrigger Binding="{Binding HighestRightKey}" Value="Full">
                 <Setter Property="Visibility" Value="Visible" />
-                <Setter Property="Background" Value="#FF9B51E0" />
+                <Setter Property="Background" Value="{StaticResource PermissionFullBrush}" />
                 <Setter Property="ToolTip" Value="{DynamicResource Badge.Full.ToolTip}" />
               </DataTrigger>
               <DataTrigger Binding="{Binding HighestRightKey}" Value="Modify">
                 <Setter Property="Visibility" Value="Visible" />
-                <Setter Property="Background" Value="#FFF2994A" />
+                <Setter Property="Background" Value="{StaticResource PermissionModifyBrush}" />
                 <Setter Property="ToolTip" Value="{DynamicResource Badge.Modify.ToolTip}" />
               </DataTrigger>
               <DataTrigger Binding="{Binding HighestRightKey}" Value="ReadAndExecute">
                 <Setter Property="Visibility" Value="Visible" />
-                <Setter Property="Background" Value="#FF2F80ED" />
+                <Setter Property="Background" Value="{StaticResource PermissionReadBrush}" />
                 <Setter Property="ToolTip" Value="{DynamicResource Badge.ReadAndExecute.ToolTip}" />
               </DataTrigger>
               <DataTrigger Binding="{Binding HighestRightKey}" Value="Write">
                 <Setter Property="Visibility" Value="Visible" />
-                <Setter Property="Background" Value="#FF27AE60" />
+                <Setter Property="Background" Value="{StaticResource PermissionWriteBrush}" />
                 <Setter Property="ToolTip" Value="{DynamicResource Badge.Write.ToolTip}" />
               </DataTrigger>
               <DataTrigger Binding="{Binding HighestRightKey}" Value="List">
                 <Setter Property="Visibility" Value="Visible" />
-                <Setter Property="Background" Value="#FF2F80ED" />
+                <Setter Property="Background" Value="{StaticResource PermissionReadBrush}" />
                 <Setter Property="ToolTip" Value="{DynamicResource Badge.List.ToolTip}" />
               </DataTrigger>
               <DataTrigger Binding="{Binding HighestRightKey}" Value="Read">
                 <Setter Property="Visibility" Value="Visible" />
-                <Setter Property="Background" Value="#FF2F80ED" />
+                <Setter Property="Background" Value="{StaticResource PermissionReadBrush}" />
                 <Setter Property="ToolTip" Value="{DynamicResource Badge.Read.ToolTip}" />
               </DataTrigger>
             </Style.Triggers>
@@ -836,13 +841,13 @@
         </Border.Style>
         <TextBlock Text="{Binding HighestRightLabel}" Style="{StaticResource CompactBadgeText}" />
       </Border>
-      <Border Background="#FF1976D2" Visibility="{Binding IsInherited, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="{DynamicResource Badge.Inherited.ToolTip}" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+      <Border Background="{StaticResource AccentBrush}" Visibility="{Binding IsInherited, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="{DynamicResource Badge.Inherited.ToolTip}" Style="{StaticResource InlineCompactBadgeBorderStyle}">
         <TextBlock Text="I" Style="{StaticResource CompactBadgeText}" />
       </Border>
-      <Border Background="#FFC62828" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="{DynamicResource Badge.Protected.ToolTip}" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+      <Border Background="{StaticResource PermissionProtectedBrush}" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="{DynamicResource Badge.Protected.ToolTip}" Style="{StaticResource InlineCompactBadgeBorderStyle}">
         <TextBlock Text="P" Style="{StaticResource CompactBadgeText}" />
       </Border>
-      <Border Background="#FFEB5757" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="{DynamicResource Badge.ExplicitDeny.ToolTip}" Style="{StaticResource InlineCompactBadgeBorderStyle}">
+      <Border Background="{StaticResource PermissionDenyBrush}" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="{DynamicResource Badge.ExplicitDeny.ToolTip}" Style="{StaticResource InlineCompactBadgeBorderStyle}">
         <TextBlock Text="D" Style="{StaticResource CompactBadgeText}" />
       </Border>
     </StackPanel>

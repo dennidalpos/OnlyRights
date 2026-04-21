@@ -43,6 +43,7 @@
             </WrapPanel>
 
             <Button Grid.Column="1"
+                    x:Name="SettingsToggleButton"
                     Style="{StaticResource SecondaryActionButtonStyle}"
                     Margin="12,0,0,0"
                     Content="{DynamicResource Main.Settings}"
@@ -210,7 +211,11 @@
                 Padding="16,14">
           <DockPanel LastChildFill="False">
             <TextBlock Text="{DynamicResource Main.Settings}" Style="{StaticResource SectionHeaderText}" Margin="0" DockPanel.Dock="Left" />
-            <Button Content="{DynamicResource Common.Close}" Style="{StaticResource SecondaryActionButtonStyle}" MinWidth="92" Command="{Binding CloseSettingsCommand}" />
+            <Button Content="{DynamicResource Common.Close}"
+                    Style="{StaticResource SecondaryActionButtonStyle}"
+                    MinWidth="92"
+                    IsCancel="True"
+                    Command="{Binding CloseSettingsCommand}" />
           </DockPanel>
         </Border>
         <views:SettingsPanel Grid.Row="1"

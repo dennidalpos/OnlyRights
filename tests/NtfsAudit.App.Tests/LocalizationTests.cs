@@ -11,6 +11,7 @@
  */
 using System.Collections.Generic;
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -55,6 +56,15 @@ namespace NtfsAudit.App.Tests
         }
 
         [Fact]
+        public void Apply_ToResourceDictionary_AlsoUpdatesCurrentCulture()
+        {
+            LocalizationManager.Apply(new ResourceDictionary(), "it");
+
+            Assert.Equal("it", LocalizationManager.CurrentLocale);
+            Assert.Equal("it", CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+        }
+
+        [Fact]
         public void ItalianDictionary_UsesSameKeysAsEnglish()
         {
             var englishKeys = LoadResourceKeys("Strings.en.xaml");
@@ -73,6 +83,8 @@ namespace NtfsAudit.App.Tests
             Assert.Contains("Dialog.GroupDetails", englishKeys);
             Assert.Contains("Progress.ErrorsPartiallyLoaded", englishKeys);
             Assert.Contains("Settings.ServiceSchedulingAvailable", englishKeys);
+            Assert.Contains("Main.RefreshService.ToolTip", englishKeys);
+            Assert.Contains("Main.ScheduleTime.AutomationName", englishKeys);
             Assert.Contains("Schedule.Day.Monday", englishKeys);
             Assert.Contains("Grid.ReadAndExecute", englishKeys);
             Assert.Contains("App.SingleInstanceInitializationError", englishKeys);

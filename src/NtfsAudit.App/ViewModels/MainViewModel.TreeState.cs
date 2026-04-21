@@ -79,7 +79,9 @@ namespace NtfsAudit.App.ViewModels
                 var rootNode = new FolderNodeViewModel(
                     rootPath,
                     rootName,
+                    rootPath,
                     provider,
+                    false,
                     rootDetail != null && rootDetail.HasFileEntries,
                     rootDetail != null && rootDetail.HasExplicitPermissions,
                     rootDetail != null && rootDetail.IsInheritanceDisabled,
@@ -170,7 +172,58 @@ namespace NtfsAudit.App.ViewModels
                 IncludeNode(root, root);
             }
 
+            AddVisibleFileLeaves(filtered, details);
             return filtered;
+        }
+
+        private void AddVisibleFileLeaves(Dictionary<string, List<string>> treeMap, Dictionary<string, FolderDetail> details)
+        {
+            if (!TreeFilterFilesOnly || treeMap == null || treeMap.Count == 0 || details == null || details.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var folderPath in treeMap.Keys.ToList())
+            {
+                FolderDetail detail;
+                if (!details.TryGetValue(folderPath, out detail) || detail == null || detail.AllEntries == null)
+                {
+                    continue;
+                }
+
+                var filePaths = detail.AllEntries
+                    .Where(entry => IsFileResourceType(entry.ResourceType) && !string.IsNullOrWhiteSpace(entry.TargetPath))
+                    .Select(entry => NormalizeTreePath(entry.TargetPath))
+                    .Where(path => !string.IsNullOrWhiteSpace(path))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (filePaths.Count == 0)
+                {
+                    continue;
+                }
+
+                List<string> children;
+                if (!treeMap.TryGetValue(folderPath, out children) || children == null)
+                {
+                    children = new List<string>();
+                    treeMap[folderPath] = children;
+                }
+
+                foreach (var filePath in filePaths)
+                {
+                    if (!children.Contains(filePath, StringComparer.OrdinalIgnoreCase))
+                    {
+                        children.Add(filePath);
+                    }
+
+                    if (!treeMap.ContainsKey(filePath))
+                    {
+                        treeMap[filePath] = new List<string>();
+                    }
+                }
+            }
         }
 
         private List<string> ResolveTreeRoots(Dictionary<string, List<string>> treeMap, string preferredRoot)

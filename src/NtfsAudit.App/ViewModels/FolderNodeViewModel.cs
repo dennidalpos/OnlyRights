@@ -27,7 +27,9 @@ namespace NtfsAudit.App.ViewModels
         public FolderNodeViewModel(
             string path,
             string displayName,
+            string selectionPath,
             FolderTreeProvider treeProvider,
+            bool isFileNode,
             bool hasFileEntries,
             bool hasExplicitPermissions,
             bool isInheritanceDisabled,
@@ -45,7 +47,9 @@ namespace NtfsAudit.App.ViewModels
         {
             Path = path;
             DisplayName = displayName;
+            SelectionPath = selectionPath;
             _treeProvider = treeProvider;
+            IsFileNode = isFileNode;
             HasFileEntries = hasFileEntries;
             HasExplicitPermissions = hasExplicitPermissions;
             IsInheritanceDisabled = isInheritanceDisabled;
@@ -71,13 +75,17 @@ namespace NtfsAudit.App.ViewModels
         {
             Path = string.Empty;
             DisplayName = string.Empty;
+            SelectionPath = string.Empty;
             _isPlaceholder = true;
             Children = new ObservableCollection<FolderNodeViewModel>();
         }
 
         public string Path { get; private set; }
         public string DisplayName { get; private set; }
+        public string SelectionPath { get; private set; }
         public ObservableCollection<FolderNodeViewModel> Children { get; private set; }
+        public bool IsFileNode { get; private set; }
+        public string TypeLabel { get { return IsFileNode ? "FILE" : "DIR"; } }
         public bool HasFileEntries { get; private set; }
         public bool HasExplicitPermissions { get; private set; }
         public bool IsInheritanceDisabled { get; private set; }

@@ -107,7 +107,7 @@
         <TreeView.ItemTemplate>
           <HierarchicalDataTemplate ItemsSource="{Binding Children}">
             <StackPanel Orientation="Horizontal" Margin="0,1,0,1">
-              <TextBlock Text="{DynamicResource Tree.RootTypeLabel}" Margin="0,0,6,0" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding TypeLabel}" Margin="0,0,6,0" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" />
               <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}" />
               <Border Background="#FFAD1457" ToolTip="{DynamicResource Tree.DenyBadge.ToolTip}">
                 <Border.Style>

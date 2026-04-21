@@ -13,6 +13,8 @@ using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Threading;
 using NtfsAudit.App.ViewModels;
 
 namespace NtfsAudit.App.Views
@@ -27,6 +29,7 @@ namespace NtfsAudit.App.Views
             InitializeComponent();
             DataContextChanged += OnDataContextChanged;
             Loaded += (_, __) => SyncCredentialPasswordBoxes();
+            IsVisibleChanged += SettingsPanel_OnIsVisibleChanged;
             Unloaded += (_, __) => DetachViewModelHandlers();
         }
 
@@ -99,6 +102,23 @@ namespace NtfsAudit.App.Views
             {
                 viewModel.GlobalCredentialPassword = GlobalCredentialPasswordBox.Password;
             }
+        }
+
+        private void SettingsPanel_OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (!(e.NewValue is bool isVisible) || !isVisible || !IsLoaded)
+            {
+                return;
+            }
+
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (OutputDirectoryTextBox.IsVisible && OutputDirectoryTextBox.IsEnabled)
+                {
+                    Keyboard.Focus(OutputDirectoryTextBox);
+                    OutputDirectoryTextBox.SelectAll();
+                }
+            }), DispatcherPriority.Input);
         }
     }
 }

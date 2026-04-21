@@ -118,6 +118,11 @@ namespace NtfsAudit.App.Services
 
             _currentLocale = resolved.Code;
             _activeResources = resources;
+            var culture = CultureInfo.GetCultureInfo(resolved.Code);
+            CultureInfo.CurrentCulture = culture;
+            CultureInfo.CurrentUICulture = culture;
+            CultureInfo.DefaultThreadCurrentCulture = culture;
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
         }
 
         public static string Text(string key)
@@ -127,7 +132,7 @@ namespace NtfsAudit.App.Services
                 return string.Empty;
             }
 
-            var resources = Application.Current == null ? _activeResources : Application.Current.Resources;
+            var resources = _activeResources ?? (Application.Current == null ? null : Application.Current.Resources);
             var value = TryFindString(resources, key);
             if (value != null)
             {

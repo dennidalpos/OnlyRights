@@ -196,11 +196,24 @@ namespace NtfsAudit.App.Tests
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Border" && (string)element.Attribute("Style") == "{StaticResource PanelBorderStyle}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBlock" && (string)element.Attribute("Text") == "{DynamicResource Main.CleanupResiduals.ToolTip}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBox" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Scan.OutputDirectory.AutomationName}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBox" && (string)element.Attribute(XamlNamespace + "Name") == "OutputDirectoryTextBox");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBox" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Scan.GlobalUser.AutomationName}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "PasswordBox" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Scan.GlobalPassword.AutomationName}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBlock" && (string)element.Attribute("Text") == "{DynamicResource Scan.ServiceModeHint}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBlock" && (string)element.Attribute("Text") == "{DynamicResource Scan.IdentityHint}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Border" && (string)element.Attribute("Style") == "{StaticResource StatusBadgeBorderStyle}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Main.RefreshService.AutomationName}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute("ToolTip") == "{DynamicResource Main.RefreshService.ToolTip}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Main.NewSchedule.AutomationName}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Main.SaveSchedule.AutomationName}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Button" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Main.DeleteSchedule.AutomationName}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBox" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Main.ScheduleName.AutomationName}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "ComboBox" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Main.ScheduleFrequency.AutomationName}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "DatePicker" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Main.ScheduleDate.AutomationName}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBox" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Main.ScheduleTime.AutomationName}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "ComboBox" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Main.ScheduleDayOfWeek.AutomationName}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBox" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Main.ScheduleDayOfMonth.AutomationName}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "CheckBox" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Main.ScheduleEnabled.AutomationName}");
         }
 
         [Fact]
@@ -258,6 +271,8 @@ namespace NtfsAudit.App.Tests
             var folderTreeRoot = LoadXaml("src", "NtfsAudit.App", "Views", "FolderTreePanel.xaml");
 
             Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
+                && (string)element.Attribute("Text") == "{Binding TypeLabel}");
+            Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
                 && (string)element.Attribute("Text") == "{Binding DisplayName}"
                 && (string)element.Attribute("TextTrimming") == "CharacterEllipsis"
                 && (string)element.Attribute("ToolTip") == "{Binding DisplayName}");
@@ -273,6 +288,8 @@ namespace NtfsAudit.App.Tests
                 && (string)element.Attribute("Text") == "{Binding BaselineMismatchLabel}");
             Assert.DoesNotContain(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
                 && (string)element.Attribute("Text") == "{Binding ExplicitNtfsLabel}");
+            Assert.DoesNotContain(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
+                && (string)element.Attribute("Text") == "{DynamicResource Tree.RootTypeLabel}");
         }
 
         private static XElement LoadXaml(params string[] parts)

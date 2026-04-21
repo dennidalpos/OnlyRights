@@ -28,7 +28,7 @@ namespace NtfsAudit.App.Views
             var node = e.NewValue as FolderNodeViewModel;
             if (viewModel != null && node != null)
             {
-                viewModel.SelectFolder(node.Path);
+                viewModel.SelectFolder(node.SelectionPath);
             }
         }
 
