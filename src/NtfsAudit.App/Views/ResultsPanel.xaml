@@ -99,25 +99,25 @@
           <Border Style="{StaticResource SupportPanelBorderStyle}"
                   Margin="0,4,0,0">
             <WrapPanel>
-              <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.Read.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+              <Border Background="{StaticResource PermissionReadBrush}" ToolTip="{DynamicResource Badge.Read.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
                 <TextBlock Text="{DynamicResource Badge.Read.Label}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.List.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+              <Border Background="{StaticResource PermissionReadBrush}" ToolTip="{DynamicResource Badge.List.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
                 <TextBlock Text="{DynamicResource Badge.List.Label}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FF2F80ED" ToolTip="{DynamicResource Badge.ReadAndExecute.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+              <Border Background="{StaticResource PermissionReadBrush}" ToolTip="{DynamicResource Badge.ReadAndExecute.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
                 <TextBlock Text="{DynamicResource Badge.ReadAndExecute.Label}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FF27AE60" ToolTip="{DynamicResource Badge.Write.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+              <Border Background="{StaticResource PermissionWriteBrush}" ToolTip="{DynamicResource Badge.Write.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
                 <TextBlock Text="{DynamicResource Badge.Write.Label}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FFB7791F" ToolTip="{DynamicResource Badge.Modify.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+              <Border Background="{StaticResource PermissionModifyBrush}" ToolTip="{DynamicResource Badge.Modify.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
                 <TextBlock Text="{DynamicResource Badge.Modify.Label}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FF9B51E0" ToolTip="{DynamicResource Badge.Full.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+              <Border Background="{StaticResource PermissionFullBrush}" ToolTip="{DynamicResource Badge.Full.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
                 <TextBlock Text="{DynamicResource Badge.Full.Label}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FFC62828" ToolTip="{DynamicResource Badge.Deny.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+              <Border Background="{StaticResource PermissionProtectedBrush}" ToolTip="{DynamicResource Badge.Deny.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
                 <TextBlock Text="{DynamicResource Badge.Deny.Label}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
             </WrapPanel>

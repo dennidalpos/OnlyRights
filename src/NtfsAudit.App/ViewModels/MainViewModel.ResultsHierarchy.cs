@@ -141,7 +141,7 @@ namespace NtfsAudit.App.ViewModels
                 case "high":
                     return "#FFC62828";
                 case "medium":
-                    return "#FFB7791F";
+                    return "#FFF2994A";
                 case "low":
                     return "#FF2E7D32";
                 default:

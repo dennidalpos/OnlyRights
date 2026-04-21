@@ -48,6 +48,9 @@ namespace NtfsAudit.App.Tests
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "LegendChipBorderStyle");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "TreeInlineChipBorderStyle");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "SemanticChipTextStyle");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "SolidColorBrush" && (string)element.Attribute(XamlNamespace + "Key") == "PermissionReadBrush");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "SolidColorBrush" && (string)element.Attribute(XamlNamespace + "Key") == "PermissionModifyBrush");
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "SolidColorBrush" && (string)element.Attribute(XamlNamespace + "Key") == "PermissionProtectedBrush");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "ResultsSectionExpanderStyle");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "TreeSectionExpanderStyle");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "ResultsTabItemStyle");
@@ -61,6 +64,26 @@ namespace NtfsAudit.App.Tests
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style" && (string)element.Attribute(XamlNamespace + "Key") == "AppGroupBoxStyle");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "ContentPresenter" && (string)element.Attribute("ContentSource") == "Header");
             Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Border" && (string)element.Attribute("CornerRadius") == "{StaticResource ControlCornerRadius}");
+        }
+
+        [Fact]
+        public void SharedResources_KeepBorderPrimitivesOnSingleCornerRadiusScale()
+        {
+            var root = LoadXaml("src", "NtfsAudit.App", "Resources", "SharedResources.xaml");
+
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style"
+                && (string)element.Attribute(XamlNamespace + "Key") == "CompactInfoCardBorderStyle"
+                && element.Descendants().Any(descendant => descendant.Name.LocalName == "Setter"
+                    && (string)descendant.Attribute("Property") == "CornerRadius"
+                    && (string)descendant.Attribute("Value") == "{StaticResource ControlCornerRadius}"));
+            Assert.Contains(root.Descendants(), element => element.Name.LocalName == "Style"
+                && (string)element.Attribute(XamlNamespace + "Key") == "SupportPanelBorderStyle"
+                && (string)element.Attribute("BasedOn") == "{StaticResource PanelBorderStyle}");
+            Assert.DoesNotContain(root.Descendants(), element => element.Name.LocalName == "Setter"
+                && (string)element.Attribute("Property") == "Padding"
+                && (string)element.Attribute("Value") == "8,3"
+                && element.Ancestors().Any(ancestor => ancestor.Name.LocalName == "Style"
+                    && (string)ancestor.Attribute(XamlNamespace + "Key") == "WarningStatusBadgeBorderStyle"));
         }
 
         [Fact]
@@ -249,6 +272,9 @@ namespace NtfsAudit.App.Tests
             Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "TabControl" && (string)element.Attribute("ItemContainerStyle") == "{StaticResource ResultsTabItemStyle}");
             Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "Border"
                 && (string)element.Attribute("Style") == "{StaticResource LegendChipBorderStyle}");
+            Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "Border"
+                && (string)element.Attribute("Background") == "{StaticResource PermissionModifyBrush}"
+                && (string)element.Attribute("ToolTip") == "{DynamicResource Badge.Modify.ToolTip}");
             Assert.Contains(resultsRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
                 && (string)element.Attribute("Text") == "{Binding SelectedFolderName}"
                 && (string)element.Attribute("ToolTip") == "{Binding SelectedFolderName}"
@@ -282,6 +308,10 @@ namespace NtfsAudit.App.Tests
                 && (string)element.Attribute("Text") == "{DynamicResource Tree.WithFiles.Badge}");
             Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
                 && (string)element.Attribute("Text") == "{DynamicResource Tree.BaselineMismatch.Badge}");
+            Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "Border"
+                && (string)element.Attribute("Background") == "{StaticResource PermissionDifferenceBrush}");
+            Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "Border"
+                && (string)element.Attribute("Background") == "{StaticResource PermissionProtectedBrush}");
             Assert.DoesNotContain(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
                 && (string)element.Attribute("Text") == "{Binding DiffLabel}");
             Assert.DoesNotContain(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
