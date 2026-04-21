@@ -80,6 +80,7 @@ namespace NtfsAudit.App.ViewModels
                     rootPath,
                     rootName,
                     provider,
+                    rootDetail != null && rootDetail.HasFileEntries,
                     rootDetail != null && rootDetail.HasExplicitPermissions,
                     rootDetail != null && rootDetail.IsInheritanceDisabled,
                     rootSummary == null ? 0 : rootSummary.Added.Count(key => !key.IsInherited),
@@ -239,13 +240,6 @@ namespace NtfsAudit.App.ViewModels
             if ((treeMap == null || treeMap.Count == 0) && detailsTreeMap != null && detailsTreeMap.Count > 0)
             {
                 Debug.WriteLine("[TreeMap] using detailsTreeMap (treeMap missing or empty)");
-                return detailsTreeMap;
-            }
-
-            // Compatibilita con analisi legacy: alcune esportazioni storiche contengono TreeMap parziali.
-            if (treeMap != null && treeMap.Count > 0 && detailsTreeMap != null && detailsTreeMap.Count > treeMap.Count)
-            {
-                Debug.WriteLine("[TreeMap] using detailsTreeMap (legacy partial treeMap detected)");
                 return detailsTreeMap;
             }
 

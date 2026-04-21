@@ -217,6 +217,11 @@ namespace NtfsAudit.App.ViewModels
             FilteredShareEntries.Filter = FilterAclEntries;
             FilteredEffectiveEntries = CollectionViewSource.GetDefaultView(EffectiveEntries);
             FilteredEffectiveEntries.Filter = FilterAclEntries;
+            GroupEntries.CollectionChanged += (_, __) => RefreshAclEntryViews();
+            UserEntries.CollectionChanged += (_, __) => RefreshAclEntryViews();
+            AllEntries.CollectionChanged += (_, __) => RefreshAclEntryViews();
+            ShareEntries.CollectionChanged += (_, __) => RefreshAclEntryViews();
+            EffectiveEntries.CollectionChanged += (_, __) => RefreshAclEntryViews();
 
             _isElevated = IsProcessElevated();
 

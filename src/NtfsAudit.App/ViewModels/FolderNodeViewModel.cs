@@ -28,6 +28,7 @@ namespace NtfsAudit.App.ViewModels
             string path,
             string displayName,
             FolderTreeProvider treeProvider,
+            bool hasFileEntries,
             bool hasExplicitPermissions,
             bool isInheritanceDisabled,
             int explicitAddedCount,
@@ -45,6 +46,7 @@ namespace NtfsAudit.App.ViewModels
             Path = path;
             DisplayName = displayName;
             _treeProvider = treeProvider;
+            HasFileEntries = hasFileEntries;
             HasExplicitPermissions = hasExplicitPermissions;
             IsInheritanceDisabled = isInheritanceDisabled;
             ExplicitAddedCount = explicitAddedCount;
@@ -76,6 +78,7 @@ namespace NtfsAudit.App.ViewModels
         public string Path { get; private set; }
         public string DisplayName { get; private set; }
         public ObservableCollection<FolderNodeViewModel> Children { get; private set; }
+        public bool HasFileEntries { get; private set; }
         public bool HasExplicitPermissions { get; private set; }
         public bool IsInheritanceDisabled { get; private set; }
         public int ExplicitAddedCount { get; private set; }

@@ -122,6 +122,19 @@
                 </Border.Style>
                 <TextBlock Text="{DynamicResource Tree.ExplicitDeny.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
+              <Border Background="#FF616161" ToolTip="{DynamicResource Tree.WithFiles.ToolTip}">
+                <Border.Style>
+                  <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding HasFileEntries}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <TextBlock Text="{DynamicResource Tree.WithFiles.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
+              </Border>
               <Border Background="#FFC62828" ToolTip="{DynamicResource Tree.ProtectedBadge.ToolTip}">
                 <Border.Style>
                   <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">

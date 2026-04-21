@@ -172,6 +172,8 @@ namespace NtfsAudit.App.Services
                     ApplyFolderFlags(details, folderFlags);
                 }
 
+                treeMap = NormalizeImportedTreeMap(treeMap, details, resolvedRootPath);
+
                 var result = new ScanResult
                 {
                     TempDataPath = dataPath,

@@ -107,6 +107,18 @@ function Assert-SupportedPlatformTarget {
     }
 }
 
+function Assert-SupportedFramework {
+    param([string]$Framework)
+
+    if ([string]::IsNullOrWhiteSpace($Framework)) {
+        return
+    }
+
+    if ($Framework -ne "net8.0-windows") {
+        throw ("Unsupported target framework '{0}'. Supported framework: net8.0-windows." -f $Framework)
+    }
+}
+
 function Resolve-PlatformTarget {
     param(
         [string]$Runtime,

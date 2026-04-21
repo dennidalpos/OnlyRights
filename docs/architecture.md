@@ -37,13 +37,11 @@ Not implemented:
 
 ## Frameworks
 
-- `NtfsAudit.App`: `net6.0-windows`; `net8.0-windows`.
-- `NtfsAudit.Core`: `net6.0-windows`; `net8.0-windows`.
-- `NtfsAudit.Viewer`: `net6.0-windows`; `net8.0-windows`.
+- `NtfsAudit.App`: `net8.0-windows`.
+- `NtfsAudit.Core`: `net8.0-windows`.
+- `NtfsAudit.Viewer`: `net8.0-windows`.
 - `NtfsAudit.Service`: `net8.0-windows`.
 - `NtfsAudit.App.Tests`: `net8.0-windows`.
-
-`scripts/compile.ps1 -Framework <target>` builds only projects that declare the requested target framework.
 
 ## Runtime Flow
 

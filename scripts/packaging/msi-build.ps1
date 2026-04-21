@@ -14,6 +14,7 @@ Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot "..\helpers\msi.ps1")
 
 $context = Get-MsiScriptContext -ScriptRoot (Join-Path $PSScriptRoot "..")
+Assert-SupportedFramework -Framework $Framework
 $resolvedPackageRoot = Resolve-PackageRootForMsi -Context $context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -PackageRoot $PackageRoot
 if (-not $SkipPack -and -not (Test-Path $resolvedPackageRoot)) {
     & (Join-Path $PSScriptRoot "..\pack.ps1") -Configuration $Configuration -Framework $Framework -Runtime $Runtime

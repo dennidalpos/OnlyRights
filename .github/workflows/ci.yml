@@ -46,15 +46,6 @@ jobs:
       - name: Publish
         run: pwsh -File .\scripts\publish.ps1 -Configuration Release
 
-      - name: Build net6 App and Viewer
-        run: pwsh -File .\scripts\build.ps1 -Configuration Release -Framework net6.0-windows -SkipRestore
-
-      - name: Pack net6 App and Viewer
-        run: pwsh -File .\scripts\pack.ps1 -Configuration Release -Framework net6.0-windows -SkipRestore -SkipService
-
-      - name: Publish net6 App and Viewer
-        run: pwsh -File .\scripts\publish.ps1 -Configuration Release -Framework net6.0-windows
-
       - name: MSI Build
         run: pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -SkipPack
 

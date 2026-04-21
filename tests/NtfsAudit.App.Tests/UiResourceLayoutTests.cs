@@ -264,6 +264,8 @@ namespace NtfsAudit.App.Tests
             Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
                 && (string)element.Attribute("Text") == "{DynamicResource Tree.DiffParent.Badge}");
             Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
+                && (string)element.Attribute("Text") == "{DynamicResource Tree.WithFiles.Badge}");
+            Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
                 && (string)element.Attribute("Text") == "{DynamicResource Tree.BaselineMismatch.Badge}");
             Assert.DoesNotContain(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
                 && (string)element.Attribute("Text") == "{Binding DiffLabel}");

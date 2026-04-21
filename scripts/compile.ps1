@@ -13,6 +13,7 @@ Set-StrictMode -Version Latest
 
 $context = Get-RepositoryContext -ScriptRoot $PSScriptRoot
 Assert-RepositoryPrerequisites -Context $context
+Assert-SupportedFramework -Framework $Framework
 $resolvedPlatformTarget = Resolve-PlatformTarget -Runtime $Runtime -PlatformTarget $PlatformTarget
 $platformBuildArgs = Get-PlatformTargetBuildArgument -PlatformTarget $resolvedPlatformTarget
 

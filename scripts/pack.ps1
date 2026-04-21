@@ -20,15 +20,12 @@ Set-StrictMode -Version Latest
 
 $context = Get-RepositoryContext -ScriptRoot $PSScriptRoot
 Assert-RepositoryPrerequisites -Context $context
+Assert-SupportedFramework -Framework $Framework
 $resolvedPlatformTarget = Resolve-PlatformTarget -Runtime $Runtime -PlatformTarget $PlatformTarget
 $platformBuildArgs = Get-PlatformTargetBuildArgument -PlatformTarget $resolvedPlatformTarget
 
 if (($SelfContained -or $PublishSingleFile -or $PublishReadyToRun) -and -not $Runtime) {
     throw "Runtime required for self-contained, single-file, or ReadyToRun packaging. Use -Runtime win-x64 or -Runtime win-x86."
-}
-
-if ($Framework -eq "net6.0-windows" -and -not $SkipService) {
-    throw "Service packaging is not available for net6.0-windows because NtfsAudit.Service targets net8.0-windows only. Re-run with -SkipService."
 }
 
 if (-not $SkipRestore) {
@@ -130,9 +127,8 @@ if (-not $SkipViewer) {
 }
 
 if (-not $SkipService) {
-    $serviceFramework = "net8.0-windows"
     $serviceTargetPath = Join-Path $packageRoot "Service"
-    Invoke-PublishProject -ProjectPath $context.ServiceProject -TargetPath $serviceTargetPath -TargetFramework $serviceFramework
+    Invoke-PublishProject -ProjectPath $context.ServiceProject -TargetPath $serviceTargetPath -TargetFramework $Framework
     if (-not $Runtime) {
         Remove-NonWindowsRuntimeAssets -TargetPath $serviceTargetPath
     }

@@ -102,11 +102,10 @@ CI runs:
 6. default package;
 7. `win-x64` and `win-x86` packages;
 8. local publish;
-9. `net6.0-windows` App/Viewer build, package, and publish;
-10. default and x86 MSI builds;
-11. service install/uninstall smoke;
-12. MSI install, uninstall, and upgrade smoke;
-13. final cleanup.
+9. default and x86 MSI builds;
+10. service install/uninstall smoke;
+11. MSI install, uninstall, and upgrade smoke;
+12. final cleanup.
 
 For exact commands, inspect `.github/workflows/ci.yml`; it is the source of truth for CI sequencing.
 
@@ -133,8 +132,6 @@ pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86
 ```
 
 `win-x64` and `win-x86` outputs are staged under `artifacts/packages/<Configuration>/<Runtime>/<Framework>`. Matching build outputs use separated `x64` or `x86` platform targets under `artifacts/build`.
-
-`net6.0-windows` package commands must use `-SkipService` because `NtfsAudit.Service` targets `net8.0-windows` only. `scripts/pack.ps1` enforces this and fails with a clear message when `-Framework net6.0-windows` is used without `-SkipService`.
 
 Self-contained package:
 

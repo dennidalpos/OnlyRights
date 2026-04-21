@@ -66,6 +66,11 @@ namespace NtfsAudit.App.ViewModels
             {
                 SaveUiPreferences();
             }
+            RefreshAclEntryViews();
+        }
+
+        private void RefreshAclEntryViews()
+        {
             FilteredGroupEntries.Refresh();
             FilteredUserEntries.Refresh();
             FilteredAllEntries.Refresh();

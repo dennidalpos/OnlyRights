@@ -57,8 +57,8 @@ Build, test, packaging, MSI, service, and CI-facing commands are kept in the tec
 
 ## Current Status
 
-- The current workspace verification pass executed `pwsh -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -SkipBuild`, `pwsh -File .\scripts\build.ps1 -Configuration Release -SkipRestore`, `pwsh -File .\scripts\test.ps1 -Configuration Release -SkipRestore`, `pwsh -File .\scripts\pack.ps1 -Configuration Release -SkipRestore -SkipBuild`, and `pwsh -File .\scripts\publish.ps1 -Configuration Release` successfully on April 18, 2026.
-- `pwsh -File .\scripts\test.ps1 -Configuration Release -SkipRestore` passed 154 tests in this workspace.
+- The current workspace verification pass executed `pwsh -File .\scripts\doctor.ps1`, `pwsh -File .\scripts\build.ps1 -Configuration Release`, `pwsh -File .\scripts\test.ps1 -Configuration Release -SkipRestore`, `pwsh -File .\scripts\pack.ps1 -Configuration Release -SkipRestore -SkipBuild`, `pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x64`, `pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86`, `pwsh -File .\scripts\publish.ps1 -Configuration Release`, `pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -SkipPack`, `pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x86 -SkipPack`, `pwsh -File .\scripts\windows\service-install.ps1 -Configuration Release`, `pwsh -File .\scripts\windows\service-uninstall.ps1`, `pwsh -File .\scripts\packaging\msi-install-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic -SkipBuild`, `pwsh -File .\scripts\packaging\msi-uninstall-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic`, and `pwsh -File .\scripts\packaging\msi-upgrade-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\upgrade` successfully on April 21, 2026.
+- `pwsh -File .\scripts\test.ps1 -Configuration Release -SkipRestore` passed 160 tests in this workspace on April 21, 2026.
 - Repository-aligned residual work is tracked in [PROJECT_STATUS.json](PROJECT_STATUS.json) when real open tasks remain.
 
 ## Technical Documentation

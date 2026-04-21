@@ -184,6 +184,27 @@ namespace NtfsAudit.App.Services
             return BuildTreeFromExport(dataPath, rootPath);
         }
 
+        private static Dictionary<string, List<string>> NormalizeImportedTreeMap(
+            Dictionary<string, List<string>> treeMap,
+            Dictionary<string, FolderDetail> details,
+            string rootPath)
+        {
+            var normalizedTreeMap = ScanResultTreeMapBuilder.BuildFromDetails(details, rootPath);
+            if (normalizedTreeMap == null || normalizedTreeMap.Count == 0)
+            {
+                return treeMap ?? new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            if (treeMap == null || treeMap.Count == 0)
+            {
+                return normalizedTreeMap;
+            }
+
+            return normalizedTreeMap.Count > treeMap.Count
+                ? normalizedTreeMap
+                : treeMap;
+        }
+
         private ArchiveMeta LoadMeta(string metaPath)
         {
             if (!File.Exists(metaPath))

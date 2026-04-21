@@ -33,10 +33,9 @@ namespace NtfsAudit.App.Cache
         public void Load(string path)
         {
             if (!File.Exists(path)) return;
-            var json = File.ReadAllText(path);
             try
             {
-                var data = JsonConvert.DeserializeObject<Dictionary<string, SidCacheEntry>>(json);
+                var data = JsonConvert.DeserializeObject<Dictionary<string, SidCacheEntry>>(File.ReadAllText(path));
                 if (data != null)
                 {
                     foreach (var pair in data)
@@ -44,21 +43,6 @@ namespace NtfsAudit.App.Cache
                         if (pair.Value == null || string.IsNullOrWhiteSpace(pair.Value.Name)) continue;
                         _cache[pair.Key] = pair.Value;
                     }
-                    return;
-                }
-            }
-            catch
-            {
-            }
-
-            try
-            {
-                var legacyData = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-                if (legacyData == null) return;
-                foreach (var pair in legacyData)
-                {
-                    if (string.IsNullOrWhiteSpace(pair.Value)) continue;
-                    _cache[pair.Key] = new SidCacheEntry { Name = pair.Value, IsGroup = false, IsDisabled = false };
                 }
             }
             catch

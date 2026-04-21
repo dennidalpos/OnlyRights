@@ -227,6 +227,17 @@ namespace NtfsAudit.App.Tests
         public void AclFilter_MatchesEnglishRiskAliases_WhenEntriesUseStoredItalianRiskLabels()
         {
             var viewModel = new MainViewModel();
+            viewModel.ShowAllow = true;
+            viewModel.ShowDeny = true;
+            viewModel.ShowInherited = true;
+            viewModel.ShowExplicit = true;
+            viewModel.ShowProtected = true;
+            viewModel.ShowDisabled = true;
+            viewModel.ShowEveryone = true;
+            viewModel.ShowAuthenticatedUsers = true;
+            viewModel.ShowServiceAccounts = true;
+            viewModel.ShowAdminAccounts = true;
+            viewModel.ShowOtherPrincipals = true;
             viewModel.AllEntries.Add(new AceEntry
             {
                 PrincipalName = "CONTOSO\\ops-team",

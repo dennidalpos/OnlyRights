@@ -12,6 +12,7 @@ Set-StrictMode -Version Latest
 
 $context = Get-RepositoryContext -ScriptRoot $PSScriptRoot
 Assert-RepositoryPrerequisites -Context $context
+Assert-SupportedFramework -Framework $Framework
 Ensure-Directory -Path $context.TestResultsRoot
 
 if (-not $SkipRestore) {

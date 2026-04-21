@@ -45,6 +45,7 @@ namespace NtfsAudit.App.Services
                     child,
                     name,
                     this,
+                    flags.hasFileEntries,
                     flags.hasExplicitPermissions,
                     flags.isInheritanceDisabled,
                     flags.explicitAddedCount,
@@ -67,17 +68,17 @@ namespace NtfsAudit.App.Services
             return _childrenMap.TryGetValue(parentPath, out children) && children.Count > 0;
         }
 
-        private (bool hasExplicitPermissions, bool isInheritanceDisabled, int explicitAddedCount, int explicitRemovedCount, int denyExplicitCount, bool isProtected, int baselineAddedCount, int baselineRemovedCount, bool hasExplicitNtfs, bool hasExplicitShare, bool hasHighRisk, bool hasMediumRisk, bool hasLowRisk) GetFlags(string path)
+        private (bool hasFileEntries, bool hasExplicitPermissions, bool isInheritanceDisabled, int explicitAddedCount, int explicitRemovedCount, int denyExplicitCount, bool isProtected, int baselineAddedCount, int baselineRemovedCount, bool hasExplicitNtfs, bool hasExplicitShare, bool hasHighRisk, bool hasMediumRisk, bool hasLowRisk) GetFlags(string path)
         {
             if (_details == null || string.IsNullOrWhiteSpace(path))
             {
-                return (false, false, 0, 0, 0, false, 0, 0, false, false, false, false, false);
+                return (false, false, false, 0, 0, 0, false, 0, 0, false, false, false, false, false);
             }
 
             FolderDetail detail;
             if (!_details.TryGetValue(path, out detail) || detail == null)
             {
-                return (false, false, 0, 0, 0, false, 0, 0, false, false, false, false, false);
+                return (false, false, false, 0, 0, 0, false, 0, 0, false, false, false, false, false);
             }
 
             var summary = detail.DiffSummary;
@@ -87,7 +88,7 @@ namespace NtfsAudit.App.Services
             var isProtected = summary != null ? summary.IsProtected : detail.IsInheritanceDisabled;
             var baselineAdded = detail.BaselineSummary == null ? 0 : detail.BaselineSummary.Added.Count;
             var baselineRemoved = detail.BaselineSummary == null ? 0 : detail.BaselineSummary.Removed.Count;
-            return (detail.HasExplicitPermissions, detail.IsInheritanceDisabled, added, removed, deny, isProtected, baselineAdded, baselineRemoved, detail.HasExplicitNtfs, detail.HasExplicitShare, detail.HasHighRiskEntries, detail.HasMediumRiskEntries, detail.HasLowRiskEntries);
+            return (detail.HasFileEntries, detail.HasExplicitPermissions, detail.IsInheritanceDisabled, added, removed, deny, isProtected, baselineAdded, baselineRemoved, detail.HasExplicitNtfs, detail.HasExplicitShare, detail.HasHighRiskEntries, detail.HasMediumRiskEntries, detail.HasLowRiskEntries);
         }
     }
 }
