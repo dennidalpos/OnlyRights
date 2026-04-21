@@ -32,37 +32,37 @@
             <StackPanel>
               <WrapPanel Margin="0,0,0,6">
                 <CheckBox Margin="0,0,12,6" IsChecked="{Binding TreeFilterExplicitOnly}" ToolTip="{DynamicResource Tree.ExplicitNtfs.ToolTip}">
-                  <Border Background="#FF00897B" Style="{StaticResource FilterChipBorderStyle}">
+                  <Border Background="{StaticResource PermissionExplicitNtfsBrush}" Style="{StaticResource FilterChipBorderStyle}">
                     <TextBlock Text="{DynamicResource Tree.ExplicitNtfs.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
                   </Border>
                 </CheckBox>
                 <CheckBox Margin="0,0,12,6" IsChecked="{Binding TreeFilterInheritanceDisabledOnly}" ToolTip="{DynamicResource Tree.Protected.ToolTip}">
-                  <Border Background="#FFC62828" Style="{StaticResource FilterChipBorderStyle}">
+                  <Border Background="{StaticResource PermissionProtectedBrush}" Style="{StaticResource FilterChipBorderStyle}">
                     <TextBlock Text="{DynamicResource Tree.Protected.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
                   </Border>
                 </CheckBox>
                 <CheckBox Margin="0,0,12,6" IsChecked="{Binding TreeFilterDiffOnly}" ToolTip="{DynamicResource Tree.DiffParent.ToolTip}">
-                  <Border Background="#FF455A64" Style="{StaticResource FilterChipBorderStyle}">
+                  <Border Background="{StaticResource PermissionDifferenceBrush}" Style="{StaticResource FilterChipBorderStyle}">
                     <TextBlock Text="{DynamicResource Tree.DiffParent.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
                   </Border>
                 </CheckBox>
                 <CheckBox Margin="0,0,12,6" IsChecked="{Binding TreeFilterExplicitDenyOnly}" ToolTip="{DynamicResource Tree.ExplicitDeny.ToolTip}">
-                  <Border Background="#FFAD1457" Style="{StaticResource FilterChipBorderStyle}">
+                  <Border Background="{StaticResource PermissionExplicitDenyBrush}" Style="{StaticResource FilterChipBorderStyle}">
                     <TextBlock Text="{DynamicResource Tree.ExplicitDeny.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
                   </Border>
                 </CheckBox>
                 <CheckBox Margin="0,0,12,6" IsChecked="{Binding TreeFilterBaselineMismatchOnly}" ToolTip="{DynamicResource Tree.BaselineMismatch.ToolTip}">
-                  <Border Background="#FF455A64" Style="{StaticResource FilterChipBorderStyle}">
+                  <Border Background="{StaticResource PermissionDifferenceBrush}" Style="{StaticResource FilterChipBorderStyle}">
                     <TextBlock Text="{DynamicResource Tree.BaselineMismatch.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
                   </Border>
                 </CheckBox>
                 <CheckBox Margin="0,0,12,6" IsChecked="{Binding TreeFilterFilesOnly}" ToolTip="{DynamicResource Tree.WithFiles.ToolTip}">
-                  <Border Background="#FF616161" Style="{StaticResource FilterChipBorderStyle}">
+                  <Border Background="{StaticResource PermissionFileEntriesBrush}" Style="{StaticResource FilterChipBorderStyle}">
                     <TextBlock Text="{DynamicResource Tree.WithFiles.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
                   </Border>
                 </CheckBox>
                 <CheckBox Margin="0,0,12,6" IsChecked="{Binding TreeFilterFoldersOnly}" ToolTip="{DynamicResource Tree.FoldersOnly.ToolTip}">
-                  <Border Background="#FF455A64" Style="{StaticResource FilterChipBorderStyle}">
+                  <Border Background="{StaticResource PermissionDifferenceBrush}" Style="{StaticResource FilterChipBorderStyle}">
                     <TextBlock Text="{DynamicResource Tree.FoldersOnly.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
                   </Border>
                 </CheckBox>
@@ -109,7 +109,7 @@
             <StackPanel Orientation="Horizontal" Margin="0,1,0,1">
               <TextBlock Text="{Binding TypeLabel}" Margin="0,0,6,0" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" />
               <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}" />
-              <Border Background="#FFAD1457" ToolTip="{DynamicResource Tree.DenyBadge.ToolTip}">
+              <Border Background="{StaticResource PermissionExplicitDenyBrush}" ToolTip="{DynamicResource Tree.DenyBadge.ToolTip}">
                 <Border.Style>
                   <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
                     <Setter Property="Visibility" Value="Collapsed" />
@@ -122,7 +122,7 @@
                 </Border.Style>
                 <TextBlock Text="{DynamicResource Tree.ExplicitDeny.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FF616161" ToolTip="{DynamicResource Tree.WithFiles.ToolTip}">
+              <Border Background="{StaticResource PermissionFileEntriesBrush}" ToolTip="{DynamicResource Tree.WithFiles.ToolTip}">
                 <Border.Style>
                   <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
                     <Setter Property="Visibility" Value="Collapsed" />
@@ -135,7 +135,7 @@
                 </Border.Style>
                 <TextBlock Text="{DynamicResource Tree.WithFiles.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FFC62828" ToolTip="{DynamicResource Tree.ProtectedBadge.ToolTip}">
+              <Border Background="{StaticResource PermissionProtectedBrush}" ToolTip="{DynamicResource Tree.ProtectedBadge.ToolTip}">
                 <Border.Style>
                   <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
                     <Setter Property="Visibility" Value="Collapsed" />
@@ -148,7 +148,7 @@
                 </Border.Style>
                 <TextBlock Text="{DynamicResource Tree.Protected.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FF455A64" ToolTip="{DynamicResource Tree.DiffBadge.ToolTip}">
+              <Border Background="{StaticResource PermissionDifferenceBrush}" ToolTip="{DynamicResource Tree.DiffBadge.ToolTip}">
                 <Border.Style>
                   <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
                     <Setter Property="Visibility" Value="Collapsed" />
@@ -161,7 +161,7 @@
                 </Border.Style>
                 <TextBlock Text="{DynamicResource Tree.DiffParent.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
-              <Border Background="#FF455A64" ToolTip="{DynamicResource Tree.BaselineBadge.ToolTip}">
+              <Border Background="{StaticResource PermissionDifferenceBrush}" ToolTip="{DynamicResource Tree.BaselineBadge.ToolTip}">
                 <Border.Style>
                   <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
                     <Setter Property="Visibility" Value="Collapsed" />
