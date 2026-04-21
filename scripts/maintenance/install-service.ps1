@@ -9,12 +9,12 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
-. (Join-Path $PSScriptRoot "..\helpers\windows-service.ps1")
+. (Join-Path $PSScriptRoot "..\internal\windows-service.ps1")
 
-$context = Get-ServiceScriptContext -ScriptRoot (Join-Path $PSScriptRoot "..")
+$context = Get-ServiceScriptContext -ScriptRoot $PSScriptRoot
 $serviceCommand = Resolve-ServiceCommandPath -Context $context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -ServiceCommandPath $ServiceCommandPath
 if (-not $serviceCommand) {
-    throw "NtfsAudit.Service executable not found. Run scripts/pack.ps1 or scripts/build.ps1 first, or pass -ServiceCommandPath."
+    throw "NtfsAudit.Service executable not found. Run scripts\\build\\stage-package-layout.ps1 or scripts\\build.ps1 first, or pass -ServiceCommandPath."
 }
 
 Install-WindowsService -Context $context -ServiceCommand $serviceCommand

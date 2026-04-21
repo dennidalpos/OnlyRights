@@ -5,7 +5,7 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
-. (Join-Path $PSScriptRoot "helpers\common.ps1")
+. (Join-Path $PSScriptRoot "..\internal\common.ps1")
 
 function Get-InstalledSdkVersions {
     $installedSdks = @()
@@ -88,7 +88,7 @@ $checks = @(
 $requiredChecks = @($checks | Where-Object { $_.Required })
 $optionalChecks = @($checks | Where-Object { -not $_.Required })
 
-Write-Host "[NtfsAudit] Doctor summary" -ForegroundColor Cyan
+Write-Host "[NtfsAudit] Prerequisite summary" -ForegroundColor Cyan
 Write-Host ("  Profile: {0}" -f $(if ($RequireOptionalTools) { "extended" } else { "initial-setup" }))
 Write-Host ("  OS: Windows")
 Write-Host ("  dotnet --version: {0}" -f $currentDotnetVersion)

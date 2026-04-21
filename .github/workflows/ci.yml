@@ -20,54 +20,54 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Clean (initial)
-        run: pwsh -File .\scripts\clean.ps1
+        run: pwsh -File .\scripts\clean-repo.ps1
 
-      - name: Bootstrap
-        run: pwsh -File .\scripts\bootstrap.ps1
+      - name: Install dependencies
+        run: pwsh -File .\scripts\install-dependencies.ps1
 
-      - name: Doctor
-        run: pwsh -File .\scripts\doctor.ps1
+      - name: Check prerequisites
+        run: pwsh -File .\scripts\maintenance\check-prerequisites.ps1
 
       - name: Build
-        run: pwsh -File .\scripts\build.ps1 -Configuration Release -SkipRestore
+        run: pwsh -File .\scripts\build.ps1
 
       - name: Test
-        run: pwsh -File .\scripts\test.ps1 -Configuration Release -SkipRestore -SkipBuild
+        run: pwsh -File .\scripts\maintenance\run-tests.ps1 -Configuration Release -SkipRestore -SkipBuild
 
-      - name: Pack
-        run: pwsh -File .\scripts\pack.ps1 -Configuration Release -SkipRestore -SkipBuild
+      - name: Stage package
+        run: pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -SkipRestore -SkipBuild
 
-      - name: Pack x64
-        run: pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x64
+      - name: Stage package x64
+        run: pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -Runtime win-x64
 
-      - name: Pack x86
-        run: pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86
+      - name: Stage package x86
+        run: pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -Runtime win-x86
 
-      - name: Publish
-        run: pwsh -File .\scripts\publish.ps1 -Configuration Release
+      - name: Prepare network share app
+        run: pwsh -File .\scripts\prepare-network-share-app.ps1
 
       - name: MSI Build
-        run: pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -SkipPack
+        run: pwsh -File .\scripts\build\build-installer.ps1 -Configuration Release -SkipPack
 
       - name: MSI Build x86
-        run: pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x86 -SkipPack
+        run: pwsh -File .\scripts\build\build-installer.ps1 -Configuration Release -Runtime win-x86 -SkipPack
 
       - name: Service Install Smoke
-        run: pwsh -File .\scripts\windows\service-install.ps1 -Configuration Release
+        run: pwsh -File .\scripts\maintenance\install-service.ps1 -Configuration Release
 
       - name: Service Uninstall Smoke
         if: always()
-        run: pwsh -File .\scripts\windows\service-uninstall.ps1
+        run: pwsh -File .\scripts\maintenance\uninstall-service.ps1
 
       - name: MSI Install Smoke
-        run: pwsh -File .\scripts\packaging\msi-install-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic -SkipBuild
+        run: pwsh -File .\scripts\maintenance\test-installer-install.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic -SkipBuild
 
       - name: MSI Uninstall Smoke
-        run: pwsh -File .\scripts\packaging\msi-uninstall-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic
+        run: pwsh -File .\scripts\maintenance\test-installer-uninstall.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic
 
       - name: MSI Upgrade Smoke
-        run: pwsh -File .\scripts\packaging\msi-upgrade-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\upgrade
+        run: pwsh -File .\scripts\maintenance\test-installer-upgrade.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\upgrade
 
       - name: Clean (final)
         if: always()
-        run: pwsh -File .\scripts\clean.ps1
+        run: pwsh -File .\scripts\clean-repo.ps1

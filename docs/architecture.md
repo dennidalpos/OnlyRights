@@ -76,7 +76,7 @@ Generated repository outputs are centralized under `artifacts/`:
 
 - `artifacts/build`: build outputs and MSBuild intermediates.
 - `artifacts/test-results`: test output.
-- `artifacts/packages`: package staging created by `scripts/pack.ps1`.
+- `artifacts/packages`: package staging created by `scripts/build/stage-package-layout.ps1`.
 - `artifacts/publish`: local publish output copied from package staging.
 - `artifacts/logs`: MSI smoke-test logs.
 

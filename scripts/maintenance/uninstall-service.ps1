@@ -5,9 +5,9 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
-. (Join-Path $PSScriptRoot "..\helpers\windows-service.ps1")
+. (Join-Path $PSScriptRoot "..\internal\windows-service.ps1")
 
-$context = Get-ServiceScriptContext -ScriptRoot (Join-Path $PSScriptRoot "..")
+$context = Get-ServiceScriptContext -ScriptRoot $PSScriptRoot
 Uninstall-WindowsService -Context $context
 if (-not $SkipResidualCleanup) {
     Remove-ServiceResiduals

@@ -21,7 +21,7 @@ namespace NtfsAudit.App.Tests
         [Fact]
         public void MsiHelper_GeneratesPerMachineServiceRegistration()
         {
-            var script = LoadScript("scripts", "helpers", "msi.ps1");
+            var script = LoadScript("scripts", "internal", "installer.ps1");
 
             Assert.Contains("InstallScope=\"perMachine\"", script, StringComparison.Ordinal);
             Assert.Contains("InstallPrivileges=\"elevated\"", script, StringComparison.Ordinal);
@@ -35,9 +35,9 @@ namespace NtfsAudit.App.Tests
         [Fact]
         public void MsiSmokeScripts_UsePerMachineInstallRootResolver()
         {
-            var installScript = LoadScript("scripts", "packaging", "msi-install-test.ps1");
-            var uninstallScript = LoadScript("scripts", "packaging", "msi-uninstall-test.ps1");
-            var upgradeScript = LoadScript("scripts", "packaging", "msi-upgrade-test.ps1");
+            var installScript = LoadScript("scripts", "maintenance", "test-installer-install.ps1");
+            var uninstallScript = LoadScript("scripts", "maintenance", "test-installer-uninstall.ps1");
+            var upgradeScript = LoadScript("scripts", "maintenance", "test-installer-upgrade.ps1");
 
             Assert.Contains("Resolve-MsiInstallRoot", installScript, StringComparison.Ordinal);
             Assert.Contains("Resolve-MsiInstallRoot", uninstallScript, StringComparison.Ordinal);
@@ -52,8 +52,8 @@ namespace NtfsAudit.App.Tests
         [Fact]
         public void MsiInstallAndUpgradeScripts_FormatInstallFolderProperty()
         {
-            var installScript = LoadScript("scripts", "packaging", "msi-install-test.ps1");
-            var upgradeScript = LoadScript("scripts", "packaging", "msi-upgrade-test.ps1");
+            var installScript = LoadScript("scripts", "maintenance", "test-installer-install.ps1");
+            var upgradeScript = LoadScript("scripts", "maintenance", "test-installer-upgrade.ps1");
 
             Assert.Contains("$installFolderArgument = Format-MsiPropertyArgument -Name \"INSTALLFOLDER\" -Value $resolvedInstallRoot", installScript, StringComparison.Ordinal);
             Assert.Contains("$installFolderArgument = Format-MsiPropertyArgument -Name \"INSTALLFOLDER\" -Value $resolvedInstallRoot", upgradeScript, StringComparison.Ordinal);
@@ -64,7 +64,7 @@ namespace NtfsAudit.App.Tests
         [Fact]
         public void MsiUninstallScript_VerifiesServiceAndInstallRootWithoutCleanupHelper()
         {
-            var uninstallScript = LoadScript("scripts", "packaging", "msi-uninstall-test.ps1");
+            var uninstallScript = LoadScript("scripts", "maintenance", "test-installer-uninstall.ps1");
 
             Assert.Contains("Get-ServiceScriptContext", uninstallScript, StringComparison.Ordinal);
             Assert.Contains("Get-ServiceState", uninstallScript, StringComparison.Ordinal);

@@ -1,6 +1,6 @@
 # Operations
 
-This repository is Windows-first. All versioned operational scripts are PowerShell scripts under `scripts/`. The repository does not define Bash, WSL, npm, lint, format, external deploy, signing, or release-publishing workflows.
+This repository is Windows-first. All versioned operational scripts are PowerShell scripts under `scripts/`. The root `scripts\` directory now exposes only the main operator entrypoints; technical scripts are grouped under `scripts\build`, `scripts\maintenance`, `scripts\run`, `scripts\internal`, and `scripts\legacy`.
 
 ## Prerequisites
 
@@ -10,199 +10,150 @@ Required:
 - .NET SDK 8 compatible with `global.json`.
 - `Microsoft.NET.Sdk.WindowsDesktop` support in the selected .NET SDK.
 
-Optional capabilities checked by `scripts/doctor.ps1`:
+Optional capabilities checked by `scripts\maintenance\check-prerequisites.ps1`:
 
 - `sc.exe` for Windows Service management.
 - `msiexec.exe` for MSI smoke tests.
 - WiX `candle.exe` and `light.exe` under `tools/wix314-binaries`.
 
-## Setup
+## Recommended Operator Flow
 
-Recommended first-run setup:
-
-```powershell
-pwsh -ExecutionPolicy Bypass -File .\scripts\setup.ps1
-```
-
-Setup runs bootstrap, doctor, and a Release build. Use `-SkipBuild` to run only bootstrap and doctor:
+From the repository root:
 
 ```powershell
-pwsh -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -SkipBuild
+pwsh -ExecutionPolicy Bypass -File .\scripts\install-dependencies.ps1
+pwsh -File .\scripts\maintenance\check-prerequisites.ps1
+pwsh -File .\scripts\build.ps1
+pwsh -File .\scripts\start-app.ps1
 ```
 
-Use `-RequireOptionalTools` when service and MSI tooling must be present:
+For architecture-specific build and installer flows:
 
 ```powershell
-pwsh -ExecutionPolicy Bypass -File .\scripts\setup.ps1 -RequireOptionalTools
+pwsh -File .\scripts\build-x64.ps1
+pwsh -File .\scripts\generate-installer-x64.ps1
+
+pwsh -File .\scripts\build-x86.ps1
+pwsh -File .\scripts\generate-installer-x86.ps1
 ```
 
-## Canonical Commands
-
-Restore:
+To prepare the shared `app` folder:
 
 ```powershell
-pwsh -File .\scripts\bootstrap.ps1
+pwsh -File .\scripts\prepare-network-share-app.ps1
 ```
 
-Prerequisite check:
+The legacy bootstrap orchestrator is retained only as `scripts\legacy\setup.ps1` for compatibility and should not be used for new workflows.
+
+## Main Script Layout
+
+- `scripts\install-dependencies.ps1`: restore dependencies.
+- `scripts\build.ps1`: canonical Release build.
+- `scripts\build-x64.ps1`: Release build for `win-x64`.
+- `scripts\build-x86.ps1`: Release build for `win-x86`.
+- `scripts\start-app.ps1`: start the main WPF app.
+- `scripts\prepare-network-share-app.ps1`: stage the shared app folder under `artifacts\publish`.
+- `scripts\generate-installer-x64.ps1`: build the x64 MSI.
+- `scripts\generate-installer-x86.ps1`: build the x86 MSI.
+- `scripts\clean-repo.ps1`: clean build/package/publish/temp repository outputs.
+
+## Build and Package Technical Scripts
+
+Canonical Release build remains:
 
 ```powershell
-pwsh -File .\scripts\doctor.ps1
+pwsh -File .\scripts\build.ps1
 ```
 
-Build:
+Technical package staging commands are:
 
 ```powershell
-pwsh -File .\scripts\build.ps1 -Configuration Release
+pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release
+pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -Runtime win-x64
+pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -Runtime win-x86
 ```
 
-`scripts/build.ps1` is the canonical build entrypoint used by CI. It delegates to `scripts/compile.ps1`, which handles restore/build orchestration and project/framework filtering.
+Current package behavior:
 
-Test:
+- Package staging is written under `artifacts\packages`.
+- Builds without `-Runtime` prune non-Windows `runtimes\` subdirectories.
+- The Viewer package removes duplicate `NtfsAudit.App` entrypoint files and keeps only the viewer executable entrypoint.
+
+Self-contained package staging remains available as a technical command:
 
 ```powershell
-pwsh -File .\scripts\test.ps1 -Configuration Release
+pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -Runtime win-x64 -SelfContained -PublishSingleFile
+pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -Runtime win-x86 -SelfContained -PublishSingleFile
 ```
 
-Package:
+## Installer Build
+
+The repository produces MSI installers through WiX. Generated MSIs are built with:
+
+- installation scope `perMachine`;
+- elevated install privileges;
+- Start Menu shortcut;
+- Desktop shortcut.
+
+Technical MSI build commands:
 
 ```powershell
-pwsh -File .\scripts\pack.ps1 -Configuration Release
+pwsh -File .\scripts\build\build-installer.ps1 -Configuration Release
+pwsh -File .\scripts\build\build-installer.ps1 -Configuration Release -Runtime win-x64
+pwsh -File .\scripts\build\build-installer.ps1 -Configuration Release -Runtime win-x86
 ```
 
-Publish local package output:
+The main operator entrypoints are:
 
 ```powershell
-pwsh -File .\scripts\publish.ps1 -Configuration Release
+pwsh -File .\scripts\generate-installer-x64.ps1
+pwsh -File .\scripts\generate-installer-x86.ps1
 ```
 
-Run the main app:
-
-```powershell
-dotnet run --project .\src\NtfsAudit.App\NtfsAudit.App.csproj -f net8.0-windows
-```
-
-Run the read-only viewer:
-
-```powershell
-dotnet run --project .\src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj -f net8.0-windows
-```
-
-## CI
-
-The GitHub Actions workflow is `.github/workflows/ci.yml`. It runs on `windows-latest` for pushes to `main`, `master`, `codex/**`, and for pull requests.
-
-CI runs:
-
-1. clean;
-2. bootstrap;
-3. doctor;
-4. Release build;
-5. Release tests;
-6. default package;
-7. `win-x64` and `win-x86` packages;
-8. local publish;
-9. default and x86 MSI builds;
-10. service install/uninstall smoke;
-11. MSI install, uninstall, and upgrade smoke;
-12. final cleanup.
-
-For exact commands, inspect `.github/workflows/ci.yml`; it is the source of truth for CI sequencing.
-
-## Packaging
-
-`scripts/pack.ps1` creates publish-style package directories under `artifacts/packages`. App, Viewer, and Service outputs include `NtfsAudit.Core` through project references.
-
-Current default framework-dependent package behavior:
-
-- Packages created without `-Runtime` prune non-Windows `runtimes\` subdirectories and keep only Windows runtime assets.
-- The Viewer package keeps the shared `NtfsAudit.App.dll` dependency but removes duplicate `NtfsAudit.App` entrypoint files so the distribution exposes only `NtfsAudit.Viewer.exe`.
-
-Default framework-dependent package:
-
-```powershell
-pwsh -File .\scripts\pack.ps1 -Configuration Release
-```
-
-RID-specific packages:
-
-```powershell
-pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x64
-pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86
-```
-
-`win-x64` and `win-x86` outputs are staged under `artifacts/packages/<Configuration>/<Runtime>/<Framework>`. Matching build outputs use separated `x64` or `x86` platform targets under `artifacts/build`.
-
-Self-contained package:
-
-```powershell
-pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x64 -SelfContained -PublishSingleFile
-pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86 -SelfContained -PublishSingleFile
-```
-
-MSI build:
-
-```powershell
-pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release
-pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x64
-pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x86
-```
-
-The MSI build uses local WiX binaries from `tools/wix314-binaries`. When `-Version` is omitted, `scripts\packaging\msi-build.ps1` resolves the version from the repository-owned version declared in `Directory.Build.props`, which is also consumed by the application projects. Runtime-specific MSIs are staged under `artifacts/packages/<Configuration>/<Runtime>/<Framework>/installer` and include an architecture suffix, such as `OnlyRights-NtfsAudit-1.0.0-x64.msi` or `OnlyRights-NtfsAudit-1.0.0-x86.msi`.
+The MSI build uses local WiX binaries from `tools\wix314-binaries`. When `-Version` is omitted, `scripts\build\build-installer.ps1` resolves the version from `Directory.Build.props`. Runtime-specific MSIs are staged under `artifacts\packages\<Configuration>\<Runtime>\<Framework>\installer`.
 
 ## Service Scripts
 
-Install and start the service from the canonical package/build locations:
+Windows Service scripts are grouped under `scripts\maintenance`:
 
 ```powershell
-pwsh -File .\scripts\windows\service-install.ps1 -Configuration Release
+pwsh -File .\scripts\maintenance\install-service.ps1 -Configuration Release
+pwsh -File .\scripts\maintenance\start-service.ps1
+pwsh -File .\scripts\maintenance\stop-service.ps1
+pwsh -File .\scripts\maintenance\uninstall-service.ps1
+pwsh -File .\scripts\maintenance\cleanup-service.ps1
 ```
 
-Stop and uninstall the service:
+These scripts can require elevation during execution.
+
+## Tests and Smoke Tests
+
+Run automated tests:
 
 ```powershell
-pwsh -File .\scripts\windows\service-uninstall.ps1
+pwsh -File .\scripts\maintenance\run-tests.ps1 -Configuration Release
 ```
 
-Start/stop helpers:
+MSI smoke tests:
 
 ```powershell
-pwsh -File .\scripts\windows\service-start.ps1
-pwsh -File .\scripts\windows\service-stop.ps1
-```
-
-## Smoke Tests
-
-MSI install:
-
-```powershell
-pwsh -File .\scripts\packaging\msi-install-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic -SkipBuild
-```
-
-MSI uninstall:
-
-```powershell
-pwsh -File .\scripts\packaging\msi-uninstall-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic
-```
-
-The uninstall smoke now fails if `msiexec /x` leaves either the `NtfsAuditWorker` service registration or the requested install root on disk.
-
-MSI upgrade:
-
-```powershell
-pwsh -File .\scripts\packaging\msi-upgrade-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\upgrade
+pwsh -File .\scripts\maintenance\test-installer-install.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic -SkipBuild
+pwsh -File .\scripts\maintenance\test-installer-uninstall.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic
+pwsh -File .\scripts\maintenance\test-installer-upgrade.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\upgrade
 ```
 
 Manual app smoke path:
 
-1. Run `scripts/setup.ps1`.
-2. Start `NtfsAudit.App`.
-3. Add a small test folder.
-4. Set an output folder for `.ntaudit`.
-5. Keep service mode disabled unless testing service execution.
-6. Run the scan.
-7. Confirm the `.ntaudit` output exists.
-8. Export Excel if that path is under test.
+1. Run `scripts\install-dependencies.ps1`.
+2. Run `scripts\maintenance\check-prerequisites.ps1`.
+3. Run `scripts\build.ps1`.
+4. Start `NtfsAudit.App`.
+5. Add a small test folder.
+6. Set an output folder for `.ntaudit`.
+7. Keep service mode disabled unless testing service execution.
+8. Run the scan.
+9. Confirm the `.ntaudit` output exists.
+10. Export Excel if that path is under test.
 
 Locale smoke path:
 
@@ -214,35 +165,55 @@ Locale smoke path:
 
 ## Cleanup
 
-Remove build, package, publish outputs, and legacy build folders:
+Clean repository outputs:
 
 ```powershell
-pwsh -File .\scripts\clean.ps1
+pwsh -File .\scripts\clean-repo.ps1
 ```
 
-Clean runtime cache, logs, scan temp data, and service jobs while preserving analysis import/export workspaces:
+Clean runtime cache, logs, scan temp data, and service jobs while preserving analysis workspaces:
 
 ```powershell
-pwsh -File .\scripts\clean.ps1 -CleanOperationalData
+pwsh -File .\scripts\maintenance\clean-operational-data.ps1
 ```
 
 Clean analysis import/export data explicitly:
 
 ```powershell
-pwsh -File .\scripts\clean.ps1 -CleanImportExportData
+pwsh -File .\scripts\maintenance\clean-import-export-data.ps1
 ```
 
 Return to a source-only local state without reverting Git changes:
 
 ```powershell
-pwsh -File .\scripts\reset-repo-state.ps1
+pwsh -File .\scripts\maintenance\reset-repository-state.ps1
 ```
+
+## CI
+
+The GitHub Actions workflow is `.github\workflows\ci.yml`. It runs on `windows-latest` and uses the reorganized paths under `scripts\`.
+
+CI runs:
+
+1. repository clean;
+2. dependency restore;
+3. prerequisite checks;
+4. Release build;
+5. Release tests;
+6. default and runtime-specific package staging;
+7. shared app folder preparation;
+8. MSI build;
+9. Windows Service install/uninstall smoke;
+10. MSI install, uninstall, and upgrade smoke;
+11. final cleanup.
+
+For exact commands, inspect `.github\workflows\ci.yml`; it remains the source of truth for CI sequencing.
 
 ## Release Boundaries
 
-Build, tests, packaging, local publish, service smoke, MSI smoke, deploy, signing, and release are separate phases.
+Build, tests, package staging, shared app folder preparation, MSI generation, service smoke, MSI smoke, deploy, signing, and release are separate phases.
 
-The repository currently provides build, test, package, local publish, service smoke, and MSI smoke scripts. It does not provide an evidenced external deploy, signing, or release-publishing command. A build or package result must not be treated as a signed release.
+The repository currently provides build, test, package staging, shared app-folder preparation, service smoke, and MSI smoke scripts. It does not provide an evidenced external deploy, signing, or release-publishing command. A build or MSI output must not be treated as a signed release.
 
 ## Maintenance
 

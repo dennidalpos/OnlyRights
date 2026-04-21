@@ -3,9 +3,9 @@ param()
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
-. (Join-Path $PSScriptRoot "..\helpers\windows-service.ps1")
+. (Join-Path $PSScriptRoot "..\internal\windows-service.ps1")
 
-$context = Get-ServiceScriptContext -ScriptRoot (Join-Path $PSScriptRoot "..")
+$context = Get-ServiceScriptContext -ScriptRoot $PSScriptRoot
 Start-WindowsService -ServiceName $context.ServiceName
 
 Write-Host "[NtfsAudit] Service start completed." -ForegroundColor Cyan

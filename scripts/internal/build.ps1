@@ -9,7 +9,7 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
-. (Join-Path $PSScriptRoot "helpers\common.ps1")
+. (Join-Path $PSScriptRoot "common.ps1")
 
 $context = Get-RepositoryContext -ScriptRoot $PSScriptRoot
 Assert-RepositoryPrerequisites -Context $context
@@ -81,7 +81,7 @@ else {
     Invoke-DotNetCommand -Arguments $buildArgs -ErrorMessage "Compile failed."
 }
 
-Write-Host "[NtfsAudit] Compile completed." -ForegroundColor Cyan
+Write-Host "[NtfsAudit] Build completed." -ForegroundColor Cyan
 Write-Host ("  Configuration: {0}" -f $Configuration)
 if ($Runtime) {
     Write-Host ("  Runtime: {0}" -f $Runtime)

@@ -39,7 +39,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
-$root = Resolve-Path (Join-Path $PSScriptRoot "..")
+
+. (Join-Path $PSScriptRoot "common.ps1")
+
+$context = Get-RepositoryContext -ScriptRoot $PSScriptRoot
+$root = $context.RepoRoot
 
 function Get-TempRoot {
     param([string]$PreferredRoot)

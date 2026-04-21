@@ -38,27 +38,30 @@ Requirements:
 Initial setup from the repository root:
 
 ```powershell
-pwsh -ExecutionPolicy Bypass -File .\scripts\setup.ps1
+pwsh -ExecutionPolicy Bypass -File .\scripts\install-dependencies.ps1
+pwsh -File .\scripts\maintenance\check-prerequisites.ps1
+pwsh -File .\scripts\build.ps1
 ```
 
 Run the main application:
 
 ```powershell
-dotnet run --project .\src\NtfsAudit.App\NtfsAudit.App.csproj -f net8.0-windows
+pwsh -File .\scripts\start-app.ps1
 ```
 
 Run the read-only viewer:
 
 ```powershell
-dotnet run --project .\src\NtfsAudit.Viewer\NtfsAudit.Viewer.csproj -f net8.0-windows
+pwsh -File .\scripts\run\start-viewer.ps1
 ```
 
-Build, test, packaging, MSI, service, and CI-facing commands are kept in the technical operations documentation.
+Build, test, packaging, MSI, service, and CI-facing commands are documented in [scripts/README.md](scripts/README.md) and in the technical operations documentation.
 
 ## Current Status
 
-- The current workspace verification pass executed `pwsh -File .\scripts\doctor.ps1`, `pwsh -File .\scripts\build.ps1 -Configuration Release`, `pwsh -File .\scripts\test.ps1 -Configuration Release -SkipRestore`, `pwsh -File .\scripts\pack.ps1 -Configuration Release -SkipRestore -SkipBuild`, `pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x64`, `pwsh -File .\scripts\pack.ps1 -Configuration Release -Runtime win-x86`, `pwsh -File .\scripts\publish.ps1 -Configuration Release`, `pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -SkipPack`, `pwsh -File .\scripts\packaging\msi-build.ps1 -Configuration Release -Runtime win-x86 -SkipPack`, `pwsh -File .\scripts\windows\service-install.ps1 -Configuration Release`, `pwsh -File .\scripts\windows\service-uninstall.ps1`, `pwsh -File .\scripts\packaging\msi-install-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic -SkipBuild`, `pwsh -File .\scripts\packaging\msi-uninstall-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic`, and `pwsh -File .\scripts\packaging\msi-upgrade-test.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\upgrade` successfully on April 21, 2026.
-- `pwsh -File .\scripts\test.ps1 -Configuration Release -SkipRestore` passed 160 tests in this workspace on April 21, 2026.
+- The current workspace verification pass executed `pwsh -File .\scripts\clean-repo.ps1`, `pwsh -File .\scripts\install-dependencies.ps1`, `pwsh -File .\scripts\maintenance\check-prerequisites.ps1`, `pwsh -File .\scripts\build.ps1`, `pwsh -File .\scripts\build-x64.ps1`, `pwsh -File .\scripts\build-x86.ps1`, `pwsh -File .\scripts\prepare-network-share-app.ps1`, `pwsh -File .\scripts\generate-installer-x64.ps1`, and `pwsh -File .\scripts\generate-installer-x86.ps1` successfully on April 21, 2026.
+- `pwsh -File .\scripts\maintenance\run-tests.ps1 -Configuration Release -SkipRestore` completed successfully in this workspace on April 21, 2026.
+- `dotnet test .\tests\NtfsAudit.App.Tests\NtfsAudit.App.Tests.csproj -c Release --no-restore --filter MsiPackagingScriptTests` passed 4 script-layout tests in this workspace on April 21, 2026.
 - Repository-aligned residual work is tracked in [PROJECT_STATUS.json](PROJECT_STATUS.json) when real open tasks remain.
 
 ## Technical Documentation

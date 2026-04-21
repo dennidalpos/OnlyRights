@@ -1,5 +1,29 @@
 Set-StrictMode -Version Latest
 
+function Resolve-RepositoryRootFromScriptRoot {
+    param([string]$ScriptRoot)
+
+    if ([string]::IsNullOrWhiteSpace($ScriptRoot)) {
+        throw "Script root is required."
+    }
+
+    $currentPath = (Resolve-Path $ScriptRoot).Path
+    while (-not [string]::IsNullOrWhiteSpace($currentPath)) {
+        if ((Split-Path $currentPath -Leaf).Equals("scripts", [System.StringComparison]::OrdinalIgnoreCase)) {
+            return (Split-Path $currentPath -Parent)
+        }
+
+        $parentPath = Split-Path $currentPath -Parent
+        if ([string]::IsNullOrWhiteSpace($parentPath) -or $parentPath -eq $currentPath) {
+            break
+        }
+
+        $currentPath = $parentPath
+    }
+
+    throw ("Unable to resolve repository root from script path: {0}" -f $ScriptRoot)
+}
+
 function Test-WindowsHost {
     return [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
         [System.Runtime.InteropServices.OSPlatform]::Windows)
@@ -8,7 +32,7 @@ function Test-WindowsHost {
 function Get-RepositoryContext {
     param([string]$ScriptRoot)
 
-    $repoRoot = Resolve-Path (Join-Path $ScriptRoot "..")
+    $repoRoot = Resolve-RepositoryRootFromScriptRoot -ScriptRoot $ScriptRoot
     $artifactsRoot = Join-Path $repoRoot "artifacts"
 
     [pscustomobject]@{
