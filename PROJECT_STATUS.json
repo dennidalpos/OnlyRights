@@ -1,4 +1,59 @@
 {
-  "updated_at": "2026-04-21",
-  "tasks": []
+  "project_name": "OnlyRights",
+  "status": "active",
+  "current_phase": "ready",
+  "last_updated": "2026-05-15T12:30:25+02:00",
+  "production_target": true,
+  "summary": "Windows-first NtfsAudit suite for NTFS and SMB permission auditing.",
+  "active_objective": "No active implementation task is currently recorded in PROJECT_STATUS.json.",
+  "assumptions": [
+    "The prior PROJECT_STATUS.json intentionally represented no open tasks with an empty tasks array.",
+    "No code behavior should be changed without an explicit open task or user requirement."
+  ],
+  "decisions": [
+    "Normalize PROJECT_STATUS.json to the repository operational schema and keep it limited to current state."
+  ],
+  "current_tasks": [],
+  "next_tasks": [
+    "Add a concrete current_tasks item before the next product or code change."
+  ],
+  "blockers": [],
+  "risks": [],
+  "dependencies": {
+    "runtime": [
+      ".NET SDK 8 compatible with global.json",
+      "Windows Desktop SDK support"
+    ],
+    "development": [
+      "xUnit test packages from tests/NtfsAudit.App.Tests/NtfsAudit.App.Tests.csproj",
+      "WiX 3.14 binaries under tools/wix314-binaries"
+    ],
+    "external_services": []
+  },
+  "quality_gates": {
+    "format": "passed",
+    "lint": "not_available",
+    "typecheck": "passed",
+    "tests": "passed",
+    "build": "passed",
+    "security_review": "passed"
+  },
+  "commands": {
+    "install": "pwsh -ExecutionPolicy Bypass -File .\\scripts\\install-dependencies.ps1",
+    "dev": "pwsh -File .\\scripts\\start-app.ps1",
+    "test": "pwsh -File .\\scripts\\maintenance\\run-tests.ps1 -Configuration Release",
+    "lint": "",
+    "typecheck": "dotnet build .\\NtfsAudit.sln -c Release",
+    "build": "pwsh -File .\\scripts\\build.ps1",
+    "start": "pwsh -File .\\scripts\\start-app.ps1"
+  },
+  "environment": {
+    "os_target": "Windows",
+    "shell": "PowerShell",
+    "required_env_vars": [],
+    "env_files": []
+  },
+  "last_completed_work": "Normalized PROJECT_STATUS.json to the operational schema and verified JSON, prerequisites, Release build, and Release tests.",
+  "open_questions": [],
+  "handoff_notes": "No open implementation task is currently recorded. Add a concrete current_tasks or next_tasks item before the next product/code change."
 }
