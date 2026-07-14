@@ -80,9 +80,9 @@ namespace NtfsAudit.App.Services
                 throw new InvalidDataException("Archive metadata is invalid.");
             }
 
-            if (meta.Version <= 0)
+            if (meta.Version != CurrentArchiveVersion)
             {
-                meta.Version = 1;
+                throw new InvalidDataException(string.Format("Analysis archive version {0} is not supported. Only version {1} is supported.", meta.Version, CurrentArchiveVersion));
             }
 
             if (!File.Exists(dataPath))
@@ -98,29 +98,19 @@ namespace NtfsAudit.App.Services
                     continue;
                 }
 
-                try
+                var record = JsonConvert.DeserializeObject<ExportRecord>(line);
+                if (record != null)
                 {
-                    var record = JsonConvert.DeserializeObject<ExportRecord>(line);
-                    if (record != null)
-                    {
-                        parsedRecords++;
-                    }
-                }
-                catch
-                {
-                    if (meta.Version <= 2)
-                    {
-                        continue;
-                    }
+                    parsedRecords++;
                 }
             }
 
             if (parsedRecords == 0)
             {
-                throw new InvalidDataException("Analysis archive is invalid or the legacy scan is incompatible: no importable data records were found.");
+                throw new InvalidDataException("Analysis archive is invalid: no importable data records were found.");
             }
 
-            if (meta.Version >= 5 && meta.DataRecordCount > 0 && meta.DataRecordCount != parsedRecords)
+            if (meta.DataRecordCount > 0 && meta.DataRecordCount != parsedRecords)
             {
                 throw new InvalidDataException("Analysis archive is incomplete: the exported record count does not match the data file.");
             }
@@ -129,7 +119,7 @@ namespace NtfsAudit.App.Services
             {
                 File.WriteAllText(errorPath, string.Empty);
             }
-            else if (meta.Version >= 5 && meta.ErrorRecordCount > 0)
+            else if (meta.ErrorRecordCount > 0)
             {
                 var parsedErrors = CountNonEmptyLines(errorPath);
                 if (parsedErrors != meta.ErrorRecordCount)
@@ -209,32 +199,26 @@ namespace NtfsAudit.App.Services
         {
             if (!File.Exists(metaPath))
             {
-                return new ArchiveMeta { Version = 1, RootPathKind = PathKind.Unknown.ToString() };
+                throw new InvalidDataException("Archive metadata file is missing.");
             }
 
             try
             {
-                var meta = JsonConvert.DeserializeObject<ArchiveMeta>(File.ReadAllText(metaPath)) ?? new ArchiveMeta();
-                if (meta.Version <= 0)
+                var meta = JsonConvert.DeserializeObject<ArchiveMeta>(File.ReadAllText(metaPath));
+                if (meta == null)
                 {
-                    meta.Version = 1;
+                    throw new InvalidDataException("Archive metadata file is empty or invalid.");
                 }
                 return meta;
             }
-            catch
+            catch (Exception ex)
             {
-                return new ArchiveMeta { Version = 1, RootPathKind = PathKind.Unknown.ToString() };
+                throw new InvalidDataException("Failed to parse archive metadata.", ex);
             }
         }
 
         private static PathKind NormalizeImportedRootPathKind(string value, string rootPath)
         {
-            if (string.Equals(value, "Nfs", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(value, "4", StringComparison.OrdinalIgnoreCase))
-            {
-                return PathKind.UncSmb;
-            }
-
             if (string.Equals(value, "Unc", StringComparison.OrdinalIgnoreCase))
             {
                 return PathKind.UncSmb;

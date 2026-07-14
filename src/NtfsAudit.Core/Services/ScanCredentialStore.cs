@@ -20,19 +20,15 @@ namespace NtfsAudit.App.Services
     public sealed class ScanCredentialStore
     {
         private readonly string _storePath;
-        private readonly string _legacyStorePath;
 
         public ScanCredentialStore()
-            : this(
-                Path.Combine(RuntimePaths.GetCommonDataRoot(), "scan-credentials.json"),
-                new LocalCacheStore().GetCacheFilePath("scan-credentials.json"))
+            : this(Path.Combine(RuntimePaths.GetCommonDataRoot(), "scan-credentials.json"))
         {
         }
 
-        internal ScanCredentialStore(string storePath, string legacyStorePath = null)
+        internal ScanCredentialStore(string storePath)
         {
             _storePath = storePath;
-            _legacyStorePath = legacyStorePath;
         }
 
         public ScanCredentialSettings Load()
@@ -40,11 +36,6 @@ namespace NtfsAudit.App.Services
             try
             {
                 var payload = LoadPayloadFromPath(_storePath);
-                if (payload == null)
-                {
-                    payload = TryMigrateLegacyPayload();
-                }
-
                 if (payload == null)
                 {
                     return new ScanCredentialSettings();
@@ -72,7 +63,7 @@ namespace NtfsAudit.App.Services
 
         private CredentialStorePayload LoadPayload()
         {
-            return LoadPayloadFromPath(_storePath) ?? TryMigrateLegacyPayload() ?? new CredentialStorePayload();
+            return LoadPayloadFromPath(_storePath) ?? new CredentialStorePayload();
         }
 
         private void SavePayload(CredentialStorePayload payload)
@@ -97,36 +88,6 @@ namespace NtfsAudit.App.Services
                 }
 
                 return JsonConvert.DeserializeObject<CredentialStorePayload>(File.ReadAllText(path));
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private CredentialStorePayload TryMigrateLegacyPayload()
-        {
-            if (string.IsNullOrWhiteSpace(_legacyStorePath)
-                || string.Equals(_legacyStorePath, _storePath, StringComparison.OrdinalIgnoreCase))
-            {
-                return null;
-            }
-
-            var legacyPayload = LoadPayloadFromPath(_legacyStorePath);
-            if (legacyPayload == null || legacyPayload.GlobalCredential == null)
-            {
-                return null;
-            }
-
-            try
-            {
-                var runtimeCredential = ScanCredentialProtector.ResolveForRuntime(legacyPayload.GlobalCredential);
-                var migratedPayload = new CredentialStorePayload
-                {
-                    GlobalCredential = ScanCredentialProtector.ProtectForLocalMachine(runtimeCredential)
-                };
-                SavePayload(migratedPayload);
-                return migratedPayload;
             }
             catch
             {

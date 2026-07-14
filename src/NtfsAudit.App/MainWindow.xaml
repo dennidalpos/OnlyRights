@@ -8,7 +8,6 @@
         Height="720"
         MinWidth="920"
         MinHeight="560"
-        FontFamily="Segoe UI, Microsoft YaHei UI, Microsoft JhengHei UI, Yu Gothic UI"
         PreviewKeyDown="MainWindow_OnPreviewKeyDown"
         Closing="MainWindow_OnClosing">
   <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
@@ -35,19 +34,43 @@
             </Grid.ColumnDefinitions>
 
             <WrapPanel Grid.Column="0" VerticalAlignment="Center">
-              <Button Style="{StaticResource ActionButtonStyle}" Content="{DynamicResource Main.StartAnalysis}" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" ToolTip="{DynamicResource Main.StartAnalysis.ToolTip}" />
-              <Button Style="{StaticResource SecondaryActionButtonStyle}" Content="{DynamicResource Main.StopAndClean}" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" ToolTip="{DynamicResource Main.StopAndClean.ToolTip}" />
-              <Button Style="{StaticResource SecondaryActionButtonStyle}" Content="{DynamicResource Main.ImportAnalysis}" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" ToolTip="{DynamicResource Main.ImportAnalysis.ToolTip}" />
-              <Button Style="{StaticResource SecondaryActionButtonStyle}" Content="{DynamicResource Main.ExportExcel}" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" ToolTip="{DynamicResource Main.ExportExcel.ToolTip}" />
+              <Button Style="{StaticResource ActionButtonStyle}" Command="{Binding StartCommand}" IsEnabled="{Binding CanStart}" ToolTip="{DynamicResource Main.StartAnalysis.ToolTip}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE768;" Margin="0,0,8,0" VerticalAlignment="Center" />
+                  <TextBlock Text="{DynamicResource Main.StartAnalysis}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" ToolTip="{DynamicResource Main.StopAndClean.ToolTip}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE71A;" Margin="0,0,8,0" VerticalAlignment="Center" />
+                  <TextBlock Text="{DynamicResource Main.StopAndClean}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" ToolTip="{DynamicResource Main.ImportAnalysis.ToolTip}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8B5;" Margin="0,0,8,0" VerticalAlignment="Center" />
+                  <TextBlock Text="{DynamicResource Main.ImportAnalysis}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding ExportCommand}" IsEnabled="{Binding CanExport}" ToolTip="{DynamicResource Main.ExportExcel.ToolTip}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE15E;" Margin="0,0,8,0" VerticalAlignment="Center" />
+                  <TextBlock Text="{DynamicResource Main.ExportExcel}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
             </WrapPanel>
 
             <Button Grid.Column="1"
                     x:Name="SettingsToggleButton"
                     Style="{StaticResource SecondaryActionButtonStyle}"
                     Margin="12,0,0,0"
-                    Content="{DynamicResource Main.Settings}"
                     Command="{Binding ToggleSettingsCommand}"
-                    Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    Visibility="{Binding IsNotViewerMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE713;" Margin="0,0,8,0" VerticalAlignment="Center" />
+                <TextBlock Text="{DynamicResource Main.Settings}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
           </Grid>
 
           <Border Grid.Row="1"
@@ -75,21 +98,21 @@
                   </Grid.RowDefinitions>
                   <Grid Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="Auto" />
                       <ColumnDefinition Width="*" />
                       <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0"
-                            Style="{StaticResource InlineActionButtonStyle}"
-                            Margin="{StaticResource InlineElementSpacing}"
-                            Content="{DynamicResource Common.Browse}"
-                            AutomationProperties.Name="{DynamicResource Scan.RootBrowse.AutomationName}"
-                            Command="{Binding BrowseCommand}" />
-                    <TextBox Grid.Column="1"
+                    <TextBox Grid.Column="0"
                              Style="{StaticResource FieldTextBoxStyle}"
                              AutomationProperties.Name="{DynamicResource Scan.RootPath.AutomationName}"
                              ToolTip="{DynamicResource Scan.RootPath.ToolTip}"
                              Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}" />
+                    <Button Grid.Column="1"
+                            Style="{StaticResource InlineActionButtonStyle}"
+                            Margin="10,0,0,0"
+                            Content="{DynamicResource Common.Browse}"
+                            AutomationProperties.Name="{DynamicResource Scan.RootBrowse.AutomationName}"
+                            Command="{Binding BrowseCommand}" />
                     <Button Grid.Column="2"
                             Style="{StaticResource InlineActionButtonStyle}"
                             Margin="10,0,0,0"
@@ -196,9 +219,86 @@
       </Grid>
     </Grid>
 
-    <Border Background="#540F172A"
-            Visibility="{Binding IsSettingsOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
-      <Grid HorizontalAlignment="Right" Width="460" MaxWidth="460" Background="{StaticResource AppBackgroundBrush}">
+    <!-- Backdrop overlay with animation -->
+    <Border Panel.ZIndex="100">
+      <Border.InputBindings>
+        <MouseBinding MouseAction="LeftClick" Command="{Binding CloseSettingsCommand}" />
+      </Border.InputBindings>
+      <Border.Style>
+        <Style TargetType="Border">
+          <Setter Property="Visibility" Value="Collapsed" />
+          <Setter Property="Background" Value="#000F172A" />
+          <Style.Triggers>
+            <DataTrigger Binding="{Binding IsSettingsOpen}" Value="True">
+              <Setter Property="Visibility" Value="Visible" />
+              <DataTrigger.EnterActions>
+                <BeginStoryboard>
+                  <Storyboard>
+                    <ColorAnimation Storyboard.TargetProperty="Background.Color"
+                                    To="#540F172A" Duration="0:0:0.22">
+                      <ColorAnimation.EasingFunction>
+                        <QuadraticEase EasingMode="EaseOut" />
+                      </ColorAnimation.EasingFunction>
+                    </ColorAnimation>
+                  </Storyboard>
+                </BeginStoryboard>
+              </DataTrigger.EnterActions>
+              <DataTrigger.ExitActions>
+                <BeginStoryboard>
+                  <Storyboard>
+                    <ColorAnimation Storyboard.TargetProperty="Background.Color"
+                                    To="#000F172A" Duration="0:0:0.18">
+                      <ColorAnimation.EasingFunction>
+                        <QuadraticEase EasingMode="EaseIn" />
+                      </ColorAnimation.EasingFunction>
+                    </ColorAnimation>
+                    <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility" Duration="0:0:0.18">
+                      <DiscreteObjectKeyFrame KeyTime="0:0:0.18" Value="{x:Static Visibility.Collapsed}" />
+                    </ObjectAnimationUsingKeyFrames>
+                  </Storyboard>
+                </BeginStoryboard>
+              </DataTrigger.ExitActions>
+            </DataTrigger>
+          </Style.Triggers>
+        </Style>
+      </Border.Style>
+
+      <Grid x:Name="SettingsDrawer" HorizontalAlignment="Right" Width="460" MaxWidth="460" Background="{StaticResource AppBackgroundBrush}">
+        <Grid.RenderTransform>
+          <TranslateTransform X="460" />
+        </Grid.RenderTransform>
+        <Grid.Style>
+          <Style TargetType="Grid">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsSettingsOpen}" Value="True">
+                <DataTrigger.EnterActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                       From="460" To="0" Duration="0:0:0.22">
+                        <DoubleAnimation.EasingFunction>
+                          <QuadraticEase EasingMode="EaseOut" />
+                        </DoubleAnimation.EasingFunction>
+                      </DoubleAnimation>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </DataTrigger.EnterActions>
+                <DataTrigger.ExitActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                       To="460" Duration="0:0:0.18">
+                        <DoubleAnimation.EasingFunction>
+                          <QuadraticEase EasingMode="EaseIn" />
+                        </DoubleAnimation.EasingFunction>
+                      </DoubleAnimation>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </DataTrigger.ExitActions>
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Grid.Style>
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
           <RowDefinition Height="*" />
@@ -210,11 +310,15 @@
                 Padding="16,14">
           <DockPanel LastChildFill="False">
             <TextBlock Text="{DynamicResource Main.Settings}" Style="{StaticResource SectionHeaderText}" Margin="0" DockPanel.Dock="Left" />
-            <Button Content="{DynamicResource Common.Close}"
-                    Style="{StaticResource SecondaryActionButtonStyle}"
+            <Button Style="{StaticResource SecondaryActionButtonStyle}"
                     MinWidth="92"
                     IsCancel="True"
-                    Command="{Binding CloseSettingsCommand}" />
+                    Command="{Binding CloseSettingsCommand}">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE711;" Margin="0,0,6,0" VerticalAlignment="Center" />
+                <TextBlock Text="{DynamicResource Common.Close}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
           </DockPanel>
         </Border>
         <views:SettingsPanel Grid.Row="1"

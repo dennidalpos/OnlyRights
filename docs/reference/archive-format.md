@@ -17,12 +17,9 @@ Modern archives contain:
 
 ## Versions
 
-- v1-v2: legacy imports tolerate malformed rows that cannot be parsed.
-- v3-v4: structured metadata and tree data are expected when present.
-- v5-v6: data and error record counts are validated when metadata provides them.
-- v7: current format. `analysis.sqlite`, `folderflags.json`, strict metadata, and archive-safe scan options are written.
+- v7: Only supported format version. The importer strictly requires version 7. All older archive versions (v1-v6) are not supported.
 
-The current exporter writes version 7. Import accepts legacy `RootPathKind` values of `Nfs` or numeric `4` and maps them to UNC because native NFS scanning is not supported.
+The current exporter writes version 7. Importing older versions or legacy RootPathKind values such as "Nfs" or "4" is not supported.
 
 ## SQLite Loading
 

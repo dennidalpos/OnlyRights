@@ -35,43 +35,33 @@ namespace NtfsAudit.App.Tests
         [Fact]
         public void MsiSmokeScripts_UsePerMachineInstallRootResolver()
         {
-            var installScript = LoadScript("scripts", "maintenance", "test-installer-install.ps1");
-            var uninstallScript = LoadScript("scripts", "maintenance", "test-installer-uninstall.ps1");
-            var upgradeScript = LoadScript("scripts", "maintenance", "test-installer-upgrade.ps1");
+            var testScript = LoadScript("scripts", "maintenance", "test-installer.ps1");
 
-            Assert.Contains("Resolve-MsiInstallRoot", installScript, StringComparison.Ordinal);
-            Assert.Contains("Resolve-MsiInstallRoot", uninstallScript, StringComparison.Ordinal);
-            Assert.Contains("Resolve-MsiInstallRoot", upgradeScript, StringComparison.Ordinal);
-            Assert.Contains("Format-MsiPropertyArgument", installScript, StringComparison.Ordinal);
-            Assert.Contains("Format-MsiPropertyArgument", upgradeScript, StringComparison.Ordinal);
-            Assert.DoesNotContain("LOCALAPPDATA", installScript, StringComparison.Ordinal);
-            Assert.DoesNotContain("LOCALAPPDATA", uninstallScript, StringComparison.Ordinal);
-            Assert.DoesNotContain("LOCALAPPDATA", upgradeScript, StringComparison.Ordinal);
+            Assert.Contains("Resolve-MsiInstallRoot", testScript, StringComparison.Ordinal);
+            Assert.Contains("Format-MsiPropertyArgument", testScript, StringComparison.Ordinal);
+            Assert.DoesNotContain("LOCALAPPDATA", testScript, StringComparison.Ordinal);
         }
 
         [Fact]
         public void MsiInstallAndUpgradeScripts_FormatInstallFolderProperty()
         {
-            var installScript = LoadScript("scripts", "maintenance", "test-installer-install.ps1");
-            var upgradeScript = LoadScript("scripts", "maintenance", "test-installer-upgrade.ps1");
+            var testScript = LoadScript("scripts", "maintenance", "test-installer.ps1");
 
-            Assert.Contains("$installFolderArgument = Format-MsiPropertyArgument -Name \"INSTALLFOLDER\" -Value $resolvedInstallRoot", installScript, StringComparison.Ordinal);
-            Assert.Contains("$installFolderArgument = Format-MsiPropertyArgument -Name \"INSTALLFOLDER\" -Value $resolvedInstallRoot", upgradeScript, StringComparison.Ordinal);
-            Assert.DoesNotContain("INSTALLFOLDER=$resolvedInstallRoot", installScript, StringComparison.Ordinal);
-            Assert.DoesNotContain("INSTALLFOLDER=$resolvedInstallRoot", upgradeScript, StringComparison.Ordinal);
+            Assert.Contains("$installFolderArgument = Format-MsiPropertyArgument -Name \"INSTALLFOLDER\" -Value $resolvedInstallRoot", testScript, StringComparison.Ordinal);
+            Assert.DoesNotContain("INSTALLFOLDER=$resolvedInstallRoot", testScript, StringComparison.Ordinal);
         }
 
         [Fact]
         public void MsiUninstallScript_VerifiesServiceAndInstallRootWithoutCleanupHelper()
         {
-            var uninstallScript = LoadScript("scripts", "maintenance", "test-installer-uninstall.ps1");
+            var testScript = LoadScript("scripts", "maintenance", "test-installer.ps1");
 
-            Assert.Contains("Get-ServiceScriptContext", uninstallScript, StringComparison.Ordinal);
-            Assert.Contains("Get-ServiceState", uninstallScript, StringComparison.Ordinal);
-            Assert.Contains("MSI uninstall left service", uninstallScript, StringComparison.Ordinal);
-            Assert.Contains("MSI uninstall left install root on disk", uninstallScript, StringComparison.Ordinal);
-            Assert.DoesNotContain("services-cleanup.ps1", uninstallScript, StringComparison.Ordinal);
-            Assert.DoesNotContain("Remove-Item -Path $resolvedInstallRoot", uninstallScript, StringComparison.Ordinal);
+            Assert.Contains("Get-ServiceScriptContext", testScript, StringComparison.Ordinal);
+            Assert.Contains("Get-ServiceState", testScript, StringComparison.Ordinal);
+            Assert.Contains("MSI uninstall left service", testScript, StringComparison.Ordinal);
+            Assert.Contains("MSI uninstall left install root on disk", testScript, StringComparison.Ordinal);
+            Assert.DoesNotContain("services-cleanup.ps1", testScript, StringComparison.Ordinal);
+            Assert.DoesNotContain("Remove-Item -Path $resolvedInstallRoot", testScript, StringComparison.Ordinal);
         }
 
         private static string LoadScript(params string[] pathSegments)

@@ -302,8 +302,9 @@ namespace NtfsAudit.App.Tests
         {
             var folderTreeRoot = LoadXaml("src", "NtfsAudit.App", "Views", "FolderTreePanel.xaml");
 
+            // Tree nodes now use Segoe MDL2 Assets icon instead of TypeLabel text.
             Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
-                && (string)element.Attribute("Text") == "{Binding TypeLabel}");
+                && (string)element.Attribute("FontFamily") == "Segoe MDL2 Assets");
             Assert.Contains(folderTreeRoot.Descendants(), element => element.Name.LocalName == "TextBlock"
                 && (string)element.Attribute("Text") == "{Binding DisplayName}"
                 && (string)element.Attribute("TextTrimming") == "CharacterEllipsis"

@@ -50,18 +50,22 @@ namespace NtfsAudit.App.Tests
         public void MainWindow_PrimaryToolbar_KeepsOnlyPrimaryActions()
         {
             var root = LoadMainWindow();
-            var buttonContents = root.Descendants()
+            // Toolbar buttons now use StackPanel > TextBlock children instead of Content attribute.
+            // Collect all TextBlock Text values nested inside Button elements.
+            var buttonTexts = root.Descendants()
                 .Where(element => element.Name.LocalName == "Button")
-                .Select(element => (string)element.Attribute("Content"))
-                .Where(content => !string.IsNullOrWhiteSpace(content))
+                .SelectMany(button => button.Descendants())
+                .Where(element => element.Name.LocalName == "TextBlock")
+                .Select(element => (string)element.Attribute("Text"))
+                .Where(text => !string.IsNullOrWhiteSpace(text))
                 .ToList();
 
-            Assert.Contains("{DynamicResource Main.StartAnalysis}", buttonContents);
-            Assert.Contains("{DynamicResource Main.StopAndClean}", buttonContents);
-            Assert.Contains("{DynamicResource Main.ImportAnalysis}", buttonContents);
-            Assert.Contains("{DynamicResource Main.ExportExcel}", buttonContents);
-            Assert.Contains("{DynamicResource Main.Settings}", buttonContents);
-            Assert.DoesNotContain("{DynamicResource Main.CleanupResiduals}", buttonContents);
+            Assert.Contains("{DynamicResource Main.StartAnalysis}", buttonTexts);
+            Assert.Contains("{DynamicResource Main.StopAndClean}", buttonTexts);
+            Assert.Contains("{DynamicResource Main.ImportAnalysis}", buttonTexts);
+            Assert.Contains("{DynamicResource Main.ExportExcel}", buttonTexts);
+            Assert.Contains("{DynamicResource Main.Settings}", buttonTexts);
+            Assert.DoesNotContain("{DynamicResource Main.CleanupResiduals}", buttonTexts);
         }
 
         [Fact]

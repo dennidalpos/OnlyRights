@@ -14,26 +14,30 @@
         <WrapPanel Margin="0,0,0,2"
                    IsEnabled="{Binding HasScanResult}"
                    Visibility="{Binding HasScanResult, Converter={StaticResource BooleanToVisibilityConverter}}">
-          <Border Style="{StaticResource CompactInfoCardBorderStyle}" Background="#FFEAF4FF" BorderBrush="#FFC7DCF7">
+          <Border Style="{StaticResource CompactInfoCardBorderStyle}" Background="#FFEEF2FF" BorderBrush="#FFC7D2FE">
             <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8D4;" Foreground="#FF6366F1" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" />
               <TextBlock Text="{DynamicResource Results.TotalAce}" Style="{StaticResource CompactInfoLabelText}" />
               <TextBlock Text="{Binding SummaryTotalEntries}" Style="{StaticResource CompactInfoValueText}" />
             </StackPanel>
           </Border>
-          <Border Style="{StaticResource CompactInfoCardBorderStyle}" Background="#FFF6EEFC" BorderBrush="#FFE4D2F5">
+          <Border Style="{StaticResource CompactInfoCardBorderStyle}" Background="#FFF5F3FF" BorderBrush="#FFE4D2F5">
             <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7BA;" Foreground="#FF8B5CF6" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" />
               <TextBlock Text="{DynamicResource Results.HighRisk}" Style="{StaticResource CompactInfoLabelText}" />
               <TextBlock Text="{Binding SummaryHighRisk}" Style="{StaticResource CompactInfoValueText}" />
             </StackPanel>
           </Border>
-          <Border Style="{StaticResource CompactInfoCardBorderStyle}" Background="#FFFFEEF1" BorderBrush="#FFF7C8D0">
+          <Border Style="{StaticResource CompactInfoCardBorderStyle}" Background="#FFFFF1F2" BorderBrush="#FFFECDD3">
             <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE783;" Foreground="#FFEF4444" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" />
               <TextBlock Text="{DynamicResource Results.Deny}" Style="{StaticResource CompactInfoLabelText}" />
               <TextBlock Text="{Binding SummaryDenyCount}" Style="{StaticResource CompactInfoValueText}" />
             </StackPanel>
           </Border>
-          <Border Style="{StaticResource CompactInfoCardBorderStyle}" Background="#FFEBF8EF" BorderBrush="#FFCAE8D1">
+          <Border Style="{StaticResource CompactInfoCardBorderStyle}" Background="#FFECFDF5" BorderBrush="#FFA7F3D0">
             <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7C3;" Foreground="#FF10B981" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" />
               <TextBlock Text="{DynamicResource Results.File}" Style="{StaticResource CompactInfoLabelText}" />
               <TextBlock Text="{Binding SummaryFilesCount}" Style="{StaticResource CompactInfoValueText}" />
             </StackPanel>

@@ -14,21 +14,25 @@
           <TextBlock Text="{DynamicResource Scan.OutputReport}" Style="{StaticResource SubsectionHeaderText}" />
           <Grid Style="{StaticResource FieldRowGridStyle}">
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" />
               <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Button Grid.Column="0"
-                    Style="{StaticResource InlineActionButtonStyle}"
-                    Margin="{StaticResource InlineElementSpacing}"
-                    Content="{DynamicResource Common.Browse}"
-                    AutomationProperties.Name="{DynamicResource Scan.OutputBrowse.AutomationName}"
-                    Command="{Binding BrowseOutputDirectoryCommand}" />
             <TextBox x:Name="OutputDirectoryTextBox"
-                     Grid.Column="1"
+                     Grid.Column="0"
                      Style="{StaticResource FieldTextBoxStyle}"
                      AutomationProperties.Name="{DynamicResource Scan.OutputDirectory.AutomationName}"
                      ToolTip="{DynamicResource Scan.OutputDirectory.ToolTip}"
                      Text="{Binding AuditOutputDirectory, UpdateSourceTrigger=PropertyChanged}" />
+            <Button Grid.Column="1"
+                    Style="{StaticResource InlineActionButtonStyle}"
+                    Margin="10,0,0,0"
+                    AutomationProperties.Name="{DynamicResource Scan.OutputBrowse.AutomationName}"
+                    Command="{Binding BrowseOutputDirectoryCommand}">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE838;" Margin="0,0,6,0" VerticalAlignment="Center" />
+                <TextBlock Text="{DynamicResource Common.Browse}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
           </Grid>
 
           <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ServiceMode}" IsChecked="{Binding UseWindowsServiceMode}" />
@@ -61,7 +65,12 @@
           <Border Style="{StaticResource NeutralInfoCardBorderStyle}" Margin="0,0,0,12">
             <TextBlock Text="{DynamicResource Main.CleanupResiduals.ToolTip}" Style="{StaticResource MicrocopyText}" Margin="0" TextWrapping="Wrap" />
           </Border>
-          <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.CleanupResiduals}" Command="{Binding CleanupResidualFilesCommand}" Margin="0" />
+          <Button Style="{StaticResource InlineActionButtonStyle}" Command="{Binding CleanupResidualFilesCommand}" Margin="0">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{DynamicResource Main.CleanupResiduals}" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
         </StackPanel>
       </Border>
 
@@ -177,18 +186,42 @@
             </StackPanel>
           </Border>
           <WrapPanel Style="{StaticResource InlineActionsPanelStyle}" Margin="0,12,0,12">
-            <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.InstallService}" Command="{Binding InstallServiceCommand}" />
-            <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.ServiceStart}" Command="{Binding StartServiceRuntimeCommand}" />
-            <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.ServiceStop}" Command="{Binding StopServiceRuntimeCommand}" />
-            <Button Style="{StaticResource InlineActionButtonStyle}" Content="{DynamicResource Main.UninstallService}" Command="{Binding UninstallServiceCommand}" />
+            <Button Style="{StaticResource InlineActionButtonStyle}" Command="{Binding InstallServiceCommand}">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE896;" Margin="0,0,6,0" VerticalAlignment="Center" />
+                <TextBlock Text="{DynamicResource Main.InstallService}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+            <Button Style="{StaticResource InlineActionButtonStyle}" Command="{Binding StartServiceRuntimeCommand}">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE768;" Margin="0,0,6,0" VerticalAlignment="Center" />
+                <TextBlock Text="{DynamicResource Main.ServiceStart}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+            <Button Style="{StaticResource InlineActionButtonStyle}" Command="{Binding StopServiceRuntimeCommand}">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE71A;" Margin="0,0,6,0" VerticalAlignment="Center" />
+                <TextBlock Text="{DynamicResource Main.ServiceStop}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+            <Button Style="{StaticResource InlineActionButtonStyle}" Command="{Binding UninstallServiceCommand}">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" Margin="0,0,6,0" VerticalAlignment="Center" />
+                <TextBlock Text="{DynamicResource Main.UninstallService}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
           </WrapPanel>
           <Button Style="{StaticResource InlineActionButtonStyle}"
-                  Content="{DynamicResource Main.RefreshService}"
                   AutomationProperties.Name="{DynamicResource Main.RefreshService.AutomationName}"
                   ToolTip="{DynamicResource Main.RefreshService.ToolTip}"
                   Command="{Binding RefreshSchedulesCommand}"
                   Width="168"
-                  Margin="0" />
+                  Margin="0">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE72C;" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{DynamicResource Main.RefreshService}" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
         </StackPanel>
       </GroupBox>
 

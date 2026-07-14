@@ -114,5 +114,24 @@ namespace NtfsAudit.App.Tests
             Assert.Equal("public", result.ShareName);
             Assert.Single(result.Permissions);
         }
+
+        [Fact]
+        public void TryGetSharePermissions_MapsWin32AccessDeniedFallback_ToAccessDeniedDiagnostic()
+        {
+            var wmiEx = new IOException("The RPC server is unavailable.");
+            var win32Ex = new System.ComponentModel.Win32Exception(5, "NetShareGetInfo failed with error code 5"); // 5 is Access Denied
+            var combinedEx = new AggregateException("WMI connection failed, and Win32 fallback failed.", wmiEx, win32Ex);
+
+            var service = new SharePermissionService(
+                null,
+                _ => Tuple.Create("nas01", "public"),
+                (server, share, options) => throw combinedEx);
+
+            var result = service.TryGetSharePermissions(@"\\nas01\public");
+
+            Assert.Null(result);
+            Assert.NotNull(service.LastDiagnostic);
+            Assert.Equal("SharePermissionsAccessDenied", service.LastDiagnostic.ErrorType);
+        }
     }
 }

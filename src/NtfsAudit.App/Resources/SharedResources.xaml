@@ -7,25 +7,25 @@
   <services:ScanRootPathKindBrushConverter x:Key="ScanRootPathKindBrushConverter" />
   <services:DfsMultiServerVisibilityConverter x:Key="DfsMultiServerVisibilityConverter" />
 
-  <Color x:Key="AppBackgroundColor">#FFF4F7FA</Color>
+  <Color x:Key="AppBackgroundColor">#FFF8FAFC</Color>
   <Color x:Key="SurfaceColor">#FFFFFFFF</Color>
-  <Color x:Key="SurfaceMutedColor">#FFF7F9FC</Color>
-  <Color x:Key="SurfaceAccentColor">#FFF1F6FB</Color>
-  <Color x:Key="BorderSoftColor">#FFC9D5E2</Color>
-  <Color x:Key="BorderStrongColor">#FFAEBECE</Color>
-  <Color x:Key="TextPrimaryColor">#FF16202A</Color>
-  <Color x:Key="TextSecondaryColor">#FF5D6B79</Color>
-  <Color x:Key="TextMutedColor">#FF7A8896</Color>
-  <Color x:Key="AccentColor">#FF1976D2</Color>
-  <Color x:Key="AccentHoverColor">#FF1565C0</Color>
-  <Color x:Key="AccentBorderColor">#FF0F4F95</Color>
-  <Color x:Key="SuccessColor">#FF2E7D32</Color>
-  <Color x:Key="WarningColor">#FFF2994A</Color>
-  <Color x:Key="DangerColor">#FFC62828</Color>
+  <Color x:Key="SurfaceMutedColor">#FFF1F5F9</Color>
+  <Color x:Key="SurfaceAccentColor">#FFE2E8F0</Color>
+  <Color x:Key="BorderSoftColor">#FFE2E8F0</Color>
+  <Color x:Key="BorderStrongColor">#FFCBD5E1</Color>
+  <Color x:Key="TextPrimaryColor">#FF0F172A</Color>
+  <Color x:Key="TextSecondaryColor">#FF475569</Color>
+  <Color x:Key="TextMutedColor">#FF64748B</Color>
+  <Color x:Key="AccentColor">#FF4F46E5</Color>
+  <Color x:Key="AccentHoverColor">#FF4338CA</Color>
+  <Color x:Key="AccentBorderColor">#FF3730A3</Color>
+  <Color x:Key="SuccessColor">#FF10B981</Color>
+  <Color x:Key="WarningColor">#FFF59E0B</Color>
+  <Color x:Key="DangerColor">#FFEF4444</Color>
   <Color x:Key="NeutralBadgeColor">#FF64748B</Color>
-  <Color x:Key="WarningSurfaceColor">#FFFFF6DD</Color>
-  <Color x:Key="WarningBorderColor">#FFF2DEAA</Color>
-  <Color x:Key="WarningTextColor">#FF7A5A00</Color>
+  <Color x:Key="WarningSurfaceColor">#FEF3C7</Color>
+  <Color x:Key="WarningBorderColor">#FCD34D</Color>
+  <Color x:Key="WarningTextColor">#92400E</Color>
 
   <SolidColorBrush x:Key="AppBackgroundBrush" Color="{StaticResource AppBackgroundColor}" />
   <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
@@ -70,6 +70,7 @@
     <Setter Property="TextElement.Foreground" Value="{StaticResource TextPrimaryBrush}" />
     <Setter Property="UseLayoutRounding" Value="True" />
     <Setter Property="SnapsToDevicePixels" Value="True" />
+    <Setter Property="FontFamily" Value="Segoe UI Variable, Segoe UI, Microsoft YaHei UI, Microsoft JhengHei UI, Yu Gothic UI" />
   </Style>
 
   <Style TargetType="FrameworkElement">
@@ -145,12 +146,26 @@
     <ControlTemplate.Triggers>
       <Trigger Property="IsMouseOver" Value="True">
         <Setter TargetName="Chrome" Property="Background" Value="{StaticResource AccentHoverBrush}" />
+        <Trigger.EnterActions>
+          <BeginStoryboard>
+            <Storyboard>
+              <DoubleAnimation Storyboard.TargetName="Chrome" Storyboard.TargetProperty="Opacity" To="0.9" Duration="0:0:0.12" />
+            </Storyboard>
+          </BeginStoryboard>
+        </Trigger.EnterActions>
+        <Trigger.ExitActions>
+          <BeginStoryboard>
+            <Storyboard>
+              <DoubleAnimation Storyboard.TargetName="Chrome" Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.12" />
+            </Storyboard>
+          </BeginStoryboard>
+        </Trigger.ExitActions>
       </Trigger>
       <Trigger Property="IsKeyboardFocused" Value="True">
-        <Setter TargetName="Chrome" Property="BorderBrush" Value="#FF0B457D" />
+        <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource AccentBorderBrush}" />
       </Trigger>
       <Trigger Property="IsPressed" Value="True">
-        <Setter TargetName="Chrome" Property="Opacity" Value="0.92" />
+        <Setter TargetName="Chrome" Property="Opacity" Value="0.8" />
       </Trigger>
       <Trigger Property="IsEnabled" Value="False">
         <Setter TargetName="Chrome" Property="Opacity" Value="1" />
@@ -175,12 +190,26 @@
       <Trigger Property="IsMouseOver" Value="True">
         <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SurfaceAccentBrush}" />
         <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+        <Trigger.EnterActions>
+          <BeginStoryboard>
+            <Storyboard>
+              <DoubleAnimation Storyboard.TargetName="Chrome" Storyboard.TargetProperty="Opacity" To="0.9" Duration="0:0:0.12" />
+            </Storyboard>
+          </BeginStoryboard>
+        </Trigger.EnterActions>
+        <Trigger.ExitActions>
+          <BeginStoryboard>
+            <Storyboard>
+              <DoubleAnimation Storyboard.TargetName="Chrome" Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.12" />
+            </Storyboard>
+          </BeginStoryboard>
+        </Trigger.ExitActions>
       </Trigger>
       <Trigger Property="IsKeyboardFocused" Value="True">
         <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
       </Trigger>
       <Trigger Property="IsPressed" Value="True">
-        <Setter TargetName="Chrome" Property="Opacity" Value="0.94" />
+        <Setter TargetName="Chrome" Property="Opacity" Value="0.8" />
       </Trigger>
       <Trigger Property="IsEnabled" Value="False">
         <Setter TargetName="Chrome" Property="Opacity" Value="1" />

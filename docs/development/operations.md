@@ -1,6 +1,6 @@
 # Operations
 
-This repository is Windows-first. All versioned operational scripts are PowerShell scripts under `scripts/`. The root `scripts\` directory now exposes only the main operator entrypoints; technical scripts are grouped under `scripts\build`, `scripts\maintenance`, `scripts\run`, `scripts\internal`, and `scripts\legacy`.
+This repository is Windows-first. All versioned operational scripts are PowerShell scripts under `scripts/`. The root `scripts\` directory now exposes only the main operator entrypoints; technical scripts are grouped under `scripts\build`, `scripts\maintenance`, `scripts\run`, and `scripts\internal`.
 
 ## Prerequisites
 
@@ -30,11 +30,8 @@ pwsh -File .\scripts\start-app.ps1
 For architecture-specific build and installer flows:
 
 ```powershell
-pwsh -File .\scripts\build-x64.ps1
-pwsh -File .\scripts\generate-installer-x64.ps1
-
-pwsh -File .\scripts\build-x86.ps1
-pwsh -File .\scripts\generate-installer-x86.ps1
+pwsh -File .\scripts\build.ps1 -Runtime win-x64 -Installer
+pwsh -File .\scripts\build.ps1 -Runtime win-x86 -Installer
 ```
 
 To prepare the shared `app` folder:
@@ -42,20 +39,13 @@ To prepare the shared `app` folder:
 ```powershell
 pwsh -File .\scripts\prepare-network-share-app.ps1
 ```
-
-The legacy bootstrap orchestrator is retained only as `scripts\legacy\setup.ps1` for compatibility and should not be used for new workflows.
-
 ## Main Script Layout
 
 - `scripts\install-dependencies.ps1`: restore dependencies.
-- `scripts\build.ps1`: canonical Release build.
-- `scripts\build-x64.ps1`: Release build for `win-x64`.
-- `scripts\build-x86.ps1`: Release build for `win-x86`.
+- `scripts\build.ps1`: compiled build. Supports parameters `-Runtime`, `-Configuration`, and `-Installer`.
 - `scripts\start-app.ps1`: start the main WPF app.
 - `scripts\prepare-network-share-app.ps1`: stage the shared app folder under `artifacts\publish`.
-- `scripts\generate-installer-x64.ps1`: build the x64 MSI.
-- `scripts\generate-installer-x86.ps1`: build the x86 MSI.
-- `scripts\clean-repo.ps1`: clean build/package/publish/temp repository outputs.
+- `scripts\clean-repo.ps1`: clean build/package/publish/temp repository outputs. Supports parameters `-OperationalData`, `-ImportExportData`, and `-ResetState`.
 
 ## Build and Package Technical Scripts
 
@@ -106,25 +96,25 @@ pwsh -File .\scripts\build\build-installer.ps1 -Configuration Release -Runtime w
 The main operator entrypoints are:
 
 ```powershell
-pwsh -File .\scripts\generate-installer-x64.ps1
-pwsh -File .\scripts\generate-installer-x86.ps1
+pwsh -File .\scripts\build.ps1 -Runtime win-x64 -Installer
+pwsh -File .\scripts\build.ps1 -Runtime win-x86 -Installer
 ```
 
 The MSI build uses local WiX binaries from `tools\wix314-binaries`. When `-Version` is omitted, `scripts\build\build-installer.ps1` resolves the version from `Directory.Build.props`. Runtime-specific MSIs are staged under `artifacts\packages\<Configuration>\<Runtime>\<Framework>\installer`.
 
 ## Service Scripts
 
-Windows Service scripts are grouped under `scripts\maintenance`:
+Windows Service management is consolidated under a single maintenance script:
 
 ```powershell
-pwsh -File .\scripts\maintenance\install-service.ps1 -Configuration Release
-pwsh -File .\scripts\maintenance\start-service.ps1
-pwsh -File .\scripts\maintenance\stop-service.ps1
-pwsh -File .\scripts\maintenance\uninstall-service.ps1
-pwsh -File .\scripts\maintenance\cleanup-service.ps1
+pwsh -File .\scripts\maintenance\manage-service.ps1 -Action Install -Configuration Release
+pwsh -File .\scripts\maintenance\manage-service.ps1 -Action Start
+pwsh -File .\scripts\maintenance\manage-service.ps1 -Action Stop
+pwsh -File .\scripts\maintenance\manage-service.ps1 -Action Uninstall
+pwsh -File .\scripts\maintenance\manage-service.ps1 -Action Cleanup
 ```
 
-These scripts can require elevation during execution.
+These actions can require elevation during execution.
 
 ## Tests and Smoke Tests
 
@@ -137,9 +127,9 @@ pwsh -File .\scripts\maintenance\run-tests.ps1 -Configuration Release
 MSI smoke tests:
 
 ```powershell
-pwsh -File .\scripts\maintenance\test-installer-install.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic -SkipBuild
-pwsh -File .\scripts\maintenance\test-installer-uninstall.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic
-pwsh -File .\scripts\maintenance\test-installer-upgrade.ps1 -Configuration Release -InstallRoot artifacts\publish\msi-smoke\upgrade
+pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Install -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic -SkipBuild
+pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Uninstall -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic
+pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Upgrade -Configuration Release -InstallRoot artifacts\publish\msi-smoke\upgrade
 ```
 
 Manual app smoke path:
@@ -174,19 +164,19 @@ pwsh -File .\scripts\clean-repo.ps1
 Clean runtime cache, logs, scan temp data, and service jobs while preserving analysis workspaces:
 
 ```powershell
-pwsh -File .\scripts\maintenance\clean-operational-data.ps1
+pwsh -File .\scripts\clean-repo.ps1 -OperationalData
 ```
 
 Clean analysis import/export data explicitly:
 
 ```powershell
-pwsh -File .\scripts\maintenance\clean-import-export-data.ps1
+pwsh -File .\scripts\clean-repo.ps1 -ImportExportData
 ```
 
 Return to a source-only local state without reverting Git changes:
 
 ```powershell
-pwsh -File .\scripts\maintenance\reset-repository-state.ps1
+pwsh -File .\scripts\clean-repo.ps1 -ResetState
 ```
 
 ## CI

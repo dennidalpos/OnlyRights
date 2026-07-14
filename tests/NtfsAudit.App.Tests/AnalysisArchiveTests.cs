@@ -562,61 +562,6 @@ namespace NtfsAudit.App.Tests
             }
         }
 
-        [Fact]
-        public void Import_MapsLegacyNfsRootPathKindToUncSmb()
-        {
-            var tempRoot = Path.Combine(Path.GetTempPath(), "NtfsAudit.Tests", Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(tempRoot);
-
-            try
-            {
-                var dataPath = Path.Combine(tempRoot, "scan.jsonl");
-                var errorPath = Path.Combine(tempRoot, "errors.jsonl");
-                var archivePath = Path.Combine(tempRoot, "legacy_nfs.ntaudit");
-
-                var line = Newtonsoft.Json.JsonConvert.SerializeObject(new ExportRecord
-                {
-                    FolderPath = @"\\server\share",
-                    PrincipalName = "Everyone",
-                    PrincipalSid = "S-1-1-0",
-                    PrincipalType = "Group",
-                    PermissionLayer = PermissionLayer.Ntfs,
-                    AllowDeny = "Allow",
-                    RightsSummary = "Read",
-                    EffectiveRightsSummary = "Read",
-                    HasExplicitPermissions = true
-                });
-                File.WriteAllText(dataPath, line + Environment.NewLine);
-                File.WriteAllText(errorPath, string.Empty);
-
-                var archive = new AnalysisArchive();
-                archive.Export(new ScanResult
-                {
-                    TempDataPath = dataPath,
-                    ErrorPath = errorPath,
-                    RootPath = @"\\server\share",
-                    RootPathKind = PathKind.UncSmb,
-                    Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase),
-                    TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase),
-                    ScanOptions = new ScanOptions { RootPath = @"\\server\share" },
-                    ScannedAtUtc = DateTime.UtcNow
-                }, @"\\server\share", archivePath);
-
-                RewriteArchiveMeta(archivePath, text => text.Replace("\"RootPathKind\":\"UncSmb\"", "\"RootPathKind\":\"Nfs\""));
-
-                var imported = archive.Import(archivePath);
-
-                Assert.Equal(PathKind.UncSmb, imported.RootPathKind);
-                Assert.Equal(PathKind.UncSmb, imported.ScanResult.RootPathKind);
-            }
-            finally
-            {
-                if (Directory.Exists(tempRoot))
-                {
-                    Directory.Delete(tempRoot, true);
-                }
-            }
-        }
 
         [Fact]
         public void Import_RebuildsPartialTreeMapFromDetails()

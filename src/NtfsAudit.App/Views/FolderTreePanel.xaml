@@ -18,8 +18,18 @@
         </Grid.RowDefinitions>
 
         <WrapPanel Grid.Row="0" Style="{StaticResource InlineActionsPanelStyle}" Margin="0,0,0,10">
-          <Button Style="{StaticResource InlineActionButtonStyle}" Margin="{StaticResource InlineElementSpacing}" Content="{DynamicResource Tree.ExpandAll}" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click" />
-          <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,0,0" Content="{DynamicResource Tree.CollapseAll}" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click" />
+          <Button Style="{StaticResource InlineActionButtonStyle}" Margin="{StaticResource InlineElementSpacing}" IsEnabled="{Binding HasScanResult}" Click="ExpandTree_Click">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE740;" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{DynamicResource Tree.ExpandAll}" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+          <Button Style="{StaticResource InlineActionButtonStyle}" Margin="0,0,0,0" IsEnabled="{Binding HasScanResult}" Click="CollapseTree_Click">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE73F;" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{DynamicResource Tree.CollapseAll}" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
         </WrapPanel>
 
         <Expander Grid.Row="1"
@@ -106,9 +116,22 @@
         </TreeView.ItemContainerStyle>
         <TreeView.ItemTemplate>
           <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-            <StackPanel Orientation="Horizontal" Margin="0,1,0,1">
-              <TextBlock Text="{Binding TypeLabel}" Margin="0,0,6,0" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" />
-              <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}" />
+            <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+              <TextBlock FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" FontSize="13">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Text" Value="&#xE8B7;" />
+                    <Setter Property="Foreground" Value="#FFEAB308" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsFileNode}" Value="True">
+                        <Setter Property="Text" Value="&#xE7C3;" />
+                        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+              <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}" VerticalAlignment="Center" />
               <Border Background="{StaticResource PermissionExplicitDenyBrush}" ToolTip="{DynamicResource Tree.DenyBadge.ToolTip}">
                 <Border.Style>
                   <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">

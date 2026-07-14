@@ -179,8 +179,20 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
+        internal static Func<string, bool> ServiceInstalledQueryHook { get; set; }
+        internal static Func<string, bool> ServiceRunningQueryHook { get; set; }
+
         private ServiceStateSnapshot QueryServiceState()
         {
+            if (ServiceInstalledQueryHook != null || ServiceRunningQueryHook != null)
+            {
+                return new ServiceStateSnapshot
+                {
+                    IsInstalled = ServiceInstalledQueryHook != null && ServiceInstalledQueryHook(ServiceName),
+                    IsRunning = ServiceRunningQueryHook != null && ServiceRunningQueryHook(ServiceName)
+                };
+            }
+
             var queryResult = ExecuteScCommand(string.Format("query {0}", ServiceName), "query", false);
             if (queryResult.ExitCode == 1060)
             {
