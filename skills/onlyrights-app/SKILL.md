@@ -32,3 +32,8 @@ This skill contains UI design guidelines and rules for developing and maintainin
 ### 4. Layout Alignment & Typography Guidelines
 - **Path Inputs Alignment**: Forms containing paths must layout the path `TextBox` left-aligned (occupying column 0 with `Width="*"`) and group any control buttons (such as `Browse` or `Add`) on the right (using `Width="Auto"`). This ensures consistent left-justification of text fields.
 - **Global Typography**: Centralized window properties like `FontFamily` should be set globally via the default `Style TargetType="Window"` in `SharedResources.xaml` rather than duplicated in local views.
+
+### 5. UI Controls & Badges Styling
+- **Active Tab Highlight**: Selected TabItems in TabControl styles use a 3px top accent color border highlight to visually distinguish the active tab.
+- **Folder Tree Badges**: Folder nodes display shortened status badges (e.g. NTFS explicit permissions, explicit denies, files presence, protected inheritance) which are mapped dynamically to centralized localization strings.
+- **Rights Legend Alignment**: The rights legend must match the exact badges and abbreviations used in the results grid to maintain visual consistency.

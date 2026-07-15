@@ -40,10 +40,10 @@
                   <TextBlock Text="{DynamicResource Main.StartAnalysis}" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>
-              <Button Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding StopCommand}" IsEnabled="{Binding CanStop}" ToolTip="{DynamicResource Main.StopAndClean.ToolTip}">
+              <Button Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding NewScanCommand}" IsEnabled="{Binding CanNewScan}" ToolTip="{DynamicResource Main.NewScan.ToolTip}">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE71A;" Margin="0,0,8,0" VerticalAlignment="Center" />
-                  <TextBlock Text="{DynamicResource Main.StopAndClean}" VerticalAlignment="Center" />
+                  <TextBlock Text="{DynamicResource Main.NewScan}" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>
               <Button Style="{StaticResource SecondaryActionButtonStyle}" Command="{Binding ImportAnalysisCommand}" IsEnabled="{Binding CanImportAnalysis}" ToolTip="{DynamicResource Main.ImportAnalysis.ToolTip}">

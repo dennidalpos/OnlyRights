@@ -537,7 +537,7 @@ namespace NtfsAudit.App.ViewModels
         }
 
         public bool CanStart { get { return !_isViewerMode && !_isScanning && !IsBusy && (ScanRoots.Count > 0 || !string.IsNullOrWhiteSpace(RootPath)); } }
-        public bool CanStop { get { return !_isViewerMode && !IsBusy && (_isScanning || IsServiceRuntimeRunning); } }
+        public bool CanNewScan { get { return !_isViewerMode && !IsBusy; } }
         public bool CanExport { get { return !_isViewerMode && !_isScanning && !IsBusy && _scanResult != null; } }
         public bool HasUnexportedData { get { return !_isViewerMode && _scanResult != null && !_hasExported; } }
 

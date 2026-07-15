@@ -469,7 +469,7 @@ namespace NtfsAudit.App.ViewModels
             OnPropertyChanged("StatusBrush");
             OnPropertyChanged("CanStart");
             OnPropertyChanged("ShouldShowStartHint");
-            OnPropertyChanged("CanStop");
+            OnPropertyChanged("CanNewScan");
             OnPropertyChanged("CanExport");
             OnPropertyChanged("CanImportAnalysis");
             OnPropertyChanged("IsBusy");
@@ -477,7 +477,7 @@ namespace NtfsAudit.App.ViewModels
             StartCommand.RaiseCanExecuteChanged();
             AddScanRootCommand.RaiseCanExecuteChanged();
             RemoveScanRootCommand.RaiseCanExecuteChanged();
-            StopCommand.RaiseCanExecuteChanged();
+            NewScanCommand.RaiseCanExecuteChanged();
             ExportCommand.RaiseCanExecuteChanged();
             ImportAnalysisCommand.RaiseCanExecuteChanged();
             InstallServiceCommand.RaiseCanExecuteChanged();

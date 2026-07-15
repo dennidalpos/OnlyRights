@@ -198,7 +198,7 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        private void StopScan()
+        private void NewScan()
         {
             if (_isViewerMode) return;
 
@@ -213,11 +213,16 @@ namespace NtfsAudit.App.ViewModels
                 StopServiceRuntimeAndClearQueue();
             }
 
-            CleanupResidualFiles(true);
+            _runtimeCleanupService.CleanupOperationalData();
+            ClearResults();
 
             if (hasRunningLocalScan)
             {
-                ProgressText = LocalizationManager.Text("Progress.StopRequested");
+                ProgressText = LocalizationManager.Text("Progress.NewScanStoppedAndCleared");
+            }
+            else
+            {
+                ProgressText = LocalizationManager.Text("Progress.NewScanCleared");
             }
         }
 
@@ -254,6 +259,7 @@ namespace NtfsAudit.App.ViewModels
                 UpdateCommands();
             }
         }
+
         private void CleanupResidualFiles()
         {
             CleanupResidualFiles(false, false);

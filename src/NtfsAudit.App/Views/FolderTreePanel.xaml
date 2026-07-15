@@ -132,6 +132,19 @@
                 </TextBlock.Style>
               </TextBlock>
               <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}" VerticalAlignment="Center" />
+              <Border Background="{StaticResource PermissionExplicitNtfsBrush}" ToolTip="{DynamicResource Tree.ExplicitNtfsBadge.ToolTip}">
+                <Border.Style>
+                  <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding HasExplicitNtfs}" Value="True">
+                        <Setter Property="Visibility" Value="Visible" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <TextBlock Text="{DynamicResource Tree.Badge.ExplicitNtfs}" Style="{StaticResource SemanticChipTextStyle}" />
+              </Border>
               <Border Background="{StaticResource PermissionExplicitDenyBrush}" ToolTip="{DynamicResource Tree.DenyBadge.ToolTip}">
                 <Border.Style>
                   <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
@@ -143,7 +156,7 @@
                     </Style.Triggers>
                   </Style>
                 </Border.Style>
-                <TextBlock Text="{DynamicResource Tree.ExplicitDeny.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
+                <TextBlock Text="{DynamicResource Tree.Badge.ExplicitDeny}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
               <Border Background="{StaticResource PermissionFileEntriesBrush}" ToolTip="{DynamicResource Tree.WithFiles.ToolTip}">
                 <Border.Style>
@@ -156,7 +169,7 @@
                     </Style.Triggers>
                   </Style>
                 </Border.Style>
-                <TextBlock Text="{DynamicResource Tree.WithFiles.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
+                <TextBlock Text="{DynamicResource Tree.Badge.WithFiles}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
               <Border Background="{StaticResource PermissionProtectedBrush}" ToolTip="{DynamicResource Tree.ProtectedBadge.ToolTip}">
                 <Border.Style>
@@ -169,7 +182,7 @@
                     </Style.Triggers>
                   </Style>
                 </Border.Style>
-                <TextBlock Text="{DynamicResource Tree.Protected.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
+                <TextBlock Text="{DynamicResource Tree.Badge.Protected}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
               <Border Background="{StaticResource PermissionDifferenceBrush}" ToolTip="{DynamicResource Tree.DiffBadge.ToolTip}">
                 <Border.Style>
@@ -182,7 +195,7 @@
                     </Style.Triggers>
                   </Style>
                 </Border.Style>
-                <TextBlock Text="{DynamicResource Tree.DiffParent.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
+                <TextBlock Text="{DynamicResource Tree.Badge.DiffParent}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
               <Border Background="{StaticResource PermissionDifferenceBrush}" ToolTip="{DynamicResource Tree.BaselineBadge.ToolTip}">
                 <Border.Style>
@@ -195,7 +208,7 @@
                     </Style.Triggers>
                   </Style>
                 </Border.Style>
-                <TextBlock Text="{DynamicResource Tree.BaselineMismatch.Badge}" Style="{StaticResource SemanticChipTextStyle}" />
+                <TextBlock Text="{DynamicResource Tree.Badge.BaselineMismatch}" Style="{StaticResource SemanticChipTextStyle}" />
               </Border>
             </StackPanel>
           </HierarchicalDataTemplate>

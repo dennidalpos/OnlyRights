@@ -45,129 +45,143 @@
         </WrapPanel>
       </StackPanel>
 
-      <StackPanel Grid.Row="1"
-                  Margin="0,4,0,6"
-                  Visibility="{Binding HasSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}">
-        <Expander IsExpanded="False"
-                  Style="{StaticResource ResultsSectionExpanderStyle}">
-          <Expander.Header>
-            <StackPanel Orientation="Horizontal">
-              <TextBlock Text="{DynamicResource Results.ProcessedFolder}" Style="{StaticResource ExpanderHeaderHintText}" />
-              <TextBlock Text="{Binding SelectedFolderName}" Style="{StaticResource ExpanderHeaderText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding SelectedFolderName}" />
+      <ScrollViewer Grid.Row="1"
+                    VerticalScrollBarVisibility="Auto"
+                    HorizontalScrollBarVisibility="Disabled"
+                    MaxHeight="280"
+                    Margin="0,4,0,6"
+                    Visibility="{Binding HasSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <StackPanel Margin="0,0,12,0">
+          <Expander IsExpanded="False"
+                    Style="{StaticResource ResultsSectionExpanderStyle}">
+            <Expander.Header>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{DynamicResource Results.ProcessedFolder}" Style="{StaticResource ExpanderHeaderHintText}" />
+                <TextBlock Text="{Binding SelectedFolderName}" Style="{StaticResource ExpanderHeaderText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding SelectedFolderName}" />
+              </StackPanel>
+            </Expander.Header>
+
+            <StackPanel Margin="0,6,0,0">
+              <TextBlock Text="{Binding SelectedFolderPath}" Style="{StaticResource MicrocopyText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding SelectedFolderPath}" Margin="0,0,0,4" />
+
+              <WrapPanel Margin="0,0,0,4">
+                <Border Style="{StaticResource CompactNeutralInfoCardBorderStyle}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{DynamicResource Results.PathKind}" Style="{StaticResource CompactInfoLabelText}" />
+                    <TextBlock Text="{Binding SelectedPathKind}" Style="{StaticResource CompactInfoValueText}" />
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CompactNeutralInfoCardBorderStyle}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{DynamicResource Results.PermissionLayers}" Style="{StaticResource CompactInfoLabelText}" />
+                    <TextBlock Text="{Binding SelectedPermissionLayers}" Style="{StaticResource CompactInfoValueText}" />
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CompactNeutralInfoCardBorderStyle}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{DynamicResource Results.Risk}" Style="{StaticResource CompactInfoLabelText}" />
+                    <TextBlock Text="{Binding SelectedRiskSummary}" Style="{StaticResource CompactInfoValueText}" />
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CompactNeutralInfoCardBorderStyle}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{DynamicResource Results.Scan}" Style="{StaticResource CompactInfoLabelText}" />
+                    <TextBlock Text="{Binding SelectedScannedAtText}" Style="{StaticResource CompactInfoValueText}" />
+                  </StackPanel>
+                </Border>
+              </WrapPanel>
+
+              <Border Style="{StaticResource NeutralInfoCardBorderStyle}"
+                      Visibility="{Binding HasSelectedAcquisitionWarnings, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel>
+                  <TextBlock Text="{DynamicResource Results.AcquisitionWarnings}" Style="{StaticResource InfoLabelText}" />
+                  <TextBlock Text="{Binding SelectedAcquisitionWarnings}" Style="{StaticResource MicrocopyText}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+              </Border>
             </StackPanel>
-          </Expander.Header>
+          </Expander>
 
-          <StackPanel Margin="0,6,0,0">
-            <TextBlock Text="{Binding SelectedFolderPath}" Style="{StaticResource MicrocopyText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding SelectedFolderPath}" Margin="0,0,0,4" />
+          <Expander Header="{DynamicResource Results.RightsLegend}"
+                    IsExpanded="False"
+                    Style="{StaticResource ResultsSectionExpanderStyle}">
+            <Border Style="{StaticResource SupportPanelBorderStyle}"
+                    Margin="0,4,0,0">
+              <WrapPanel>
+                <!-- Right badges -->
+                <Border Background="{StaticResource PermissionReadBrush}" ToolTip="{DynamicResource Badge.Read.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                  <TextBlock Text="{DynamicResource Badge.Short.Read}" Style="{StaticResource SemanticChipTextStyle}" />
+                </Border>
+                <Border Background="{StaticResource PermissionReadBrush}" ToolTip="{DynamicResource Badge.List.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                  <TextBlock Text="{DynamicResource Badge.Short.List}" Style="{StaticResource SemanticChipTextStyle}" />
+                </Border>
+                <Border Background="{StaticResource PermissionReadBrush}" ToolTip="{DynamicResource Badge.ReadAndExecute.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                  <TextBlock Text="{DynamicResource Badge.Short.ReadAndExecute}" Style="{StaticResource SemanticChipTextStyle}" />
+                </Border>
+                <Border Background="{StaticResource PermissionWriteBrush}" ToolTip="{DynamicResource Badge.Write.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                  <TextBlock Text="{DynamicResource Badge.Short.Write}" Style="{StaticResource SemanticChipTextStyle}" />
+                </Border>
+                <Border Background="{StaticResource PermissionModifyBrush}" ToolTip="{DynamicResource Badge.Modify.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                  <TextBlock Text="{DynamicResource Badge.Short.Modify}" Style="{StaticResource SemanticChipTextStyle}" />
+                </Border>
+                <Border Background="{StaticResource PermissionFullBrush}" ToolTip="{DynamicResource Badge.Full.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                  <TextBlock Text="{DynamicResource Badge.Short.Full}" Style="{StaticResource SemanticChipTextStyle}" />
+                </Border>
 
-            <WrapPanel Margin="0,0,0,4">
-              <Border Style="{StaticResource CompactNeutralInfoCardBorderStyle}">
-                <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="{DynamicResource Results.PathKind}" Style="{StaticResource CompactInfoLabelText}" />
-                  <TextBlock Text="{Binding SelectedPathKind}" Style="{StaticResource CompactInfoValueText}" />
-                </StackPanel>
-              </Border>
-              <Border Style="{StaticResource CompactNeutralInfoCardBorderStyle}">
-                <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="{DynamicResource Results.PermissionLayers}" Style="{StaticResource CompactInfoLabelText}" />
-                  <TextBlock Text="{Binding SelectedPermissionLayers}" Style="{StaticResource CompactInfoValueText}" />
-                </StackPanel>
-              </Border>
-              <Border Style="{StaticResource CompactNeutralInfoCardBorderStyle}">
-                <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="{DynamicResource Results.Risk}" Style="{StaticResource CompactInfoLabelText}" />
-                  <TextBlock Text="{Binding SelectedRiskSummary}" Style="{StaticResource CompactInfoValueText}" />
-                </StackPanel>
-              </Border>
-              <Border Style="{StaticResource CompactNeutralInfoCardBorderStyle}">
-                <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="{DynamicResource Results.Scan}" Style="{StaticResource CompactInfoLabelText}" />
-                  <TextBlock Text="{Binding SelectedScannedAtText}" Style="{StaticResource CompactInfoValueText}" />
-                </StackPanel>
-              </Border>
-            </WrapPanel>
+                <!-- State badges -->
+                <Border Background="{StaticResource AccentBrush}" ToolTip="{DynamicResource Badge.Inherited.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                  <TextBlock Text="{DynamicResource Badge.Short.Inherited}" Style="{StaticResource SemanticChipTextStyle}" />
+                </Border>
+                <Border Background="{StaticResource PermissionProtectedBrush}" ToolTip="{DynamicResource Badge.Protected.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                  <TextBlock Text="{DynamicResource Badge.Short.Protected}" Style="{StaticResource SemanticChipTextStyle}" />
+                </Border>
+                <Border Background="{StaticResource PermissionDenyBrush}" ToolTip="{DynamicResource Badge.ExplicitDeny.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
+                  <TextBlock Text="{DynamicResource Badge.Short.ExplicitDeny}" Style="{StaticResource SemanticChipTextStyle}" />
+                </Border>
+              </WrapPanel>
+            </Border>
+          </Expander>
 
-            <Border Style="{StaticResource NeutralInfoCardBorderStyle}"
-                    Visibility="{Binding HasSelectedAcquisitionWarnings, Converter={StaticResource BooleanToVisibilityConverter}}">
+          <Expander Header="{DynamicResource Results.PersistentFilters}"
+                    IsExpanded="False"
+                    Style="{StaticResource ResultsSectionExpanderStyle}"
+                    ToolTip="{DynamicResource Results.PersistentFilters.ToolTip}">
+            <Border Style="{StaticResource SupportPanelBorderStyle}"
+                    Margin="0,4,0,0">
               <StackPanel>
-                <TextBlock Text="{DynamicResource Results.AcquisitionWarnings}" Style="{StaticResource InfoLabelText}" />
-                <TextBlock Text="{Binding SelectedAcquisitionWarnings}" Style="{StaticResource MicrocopyText}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                <TextBlock Text="{DynamicResource Results.SearchAcl}" Style="{StaticResource SubsectionHeaderText}" />
+                <Grid Margin="0,0,0,8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Grid.Column="0" Text="{DynamicResource Results.AclFilter}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                  <TextBox Grid.Column="1" Style="{StaticResource FieldTextBoxStyle}" AutomationProperties.Name="{DynamicResource Results.SearchAcl}" ToolTip="{DynamicResource Results.AclFilter.ToolTip}" Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
+                </Grid>
+
+                <TextBlock Text="{DynamicResource Results.Permissions}" Style="{StaticResource SubsectionHeaderText}" />
+                <WrapPanel Margin="0,0,0,6">
+                  <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.ColorizeByRight}" IsChecked="{Binding ColorizeRights}" />
+                  <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Allow}" IsChecked="{Binding ShowAllow}" />
+                  <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Deny}" IsChecked="{Binding ShowDeny}" />
+                  <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Inherited}" IsChecked="{Binding ShowInherited}" />
+                  <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Explicit}" IsChecked="{Binding ShowExplicit}" />
+                  <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Protected}" IsChecked="{Binding ShowProtected}" />
+                  <CheckBox Margin="0,0,12,6" Content="{DynamicResource Grid.Disabled}" IsChecked="{Binding ShowDisabled}" />
+                </WrapPanel>
+
+                <TextBlock Text="{DynamicResource Scan.Identity}" Style="{StaticResource SubsectionHeaderText}" />
+                <WrapPanel>
+                  <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Everyone}" IsChecked="{Binding ShowEveryone}" />
+                  <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.AuthenticatedUsers}" IsChecked="{Binding ShowAuthenticatedUsers}" />
+                  <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.ServiceUsers}" IsChecked="{Binding ShowServiceAccounts}" />
+                  <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Admin}" IsChecked="{Binding ShowAdminAccounts}" />
+                  <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.OtherPrincipals}" IsChecked="{Binding ShowOtherPrincipals}" />
+                </WrapPanel>
               </StackPanel>
             </Border>
-          </StackPanel>
-        </Expander>
-
-        <Expander Header="{DynamicResource Results.RightsLegend}"
-                  IsExpanded="False"
-                  Style="{StaticResource ResultsSectionExpanderStyle}">
-          <Border Style="{StaticResource SupportPanelBorderStyle}"
-                  Margin="0,4,0,0">
-            <WrapPanel>
-              <Border Background="{StaticResource PermissionReadBrush}" ToolTip="{DynamicResource Badge.Read.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
-                <TextBlock Text="{DynamicResource Badge.Read.Label}" Style="{StaticResource SemanticChipTextStyle}" />
-              </Border>
-              <Border Background="{StaticResource PermissionReadBrush}" ToolTip="{DynamicResource Badge.List.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
-                <TextBlock Text="{DynamicResource Badge.List.Label}" Style="{StaticResource SemanticChipTextStyle}" />
-              </Border>
-              <Border Background="{StaticResource PermissionReadBrush}" ToolTip="{DynamicResource Badge.ReadAndExecute.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
-                <TextBlock Text="{DynamicResource Badge.ReadAndExecute.Label}" Style="{StaticResource SemanticChipTextStyle}" />
-              </Border>
-              <Border Background="{StaticResource PermissionWriteBrush}" ToolTip="{DynamicResource Badge.Write.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
-                <TextBlock Text="{DynamicResource Badge.Write.Label}" Style="{StaticResource SemanticChipTextStyle}" />
-              </Border>
-              <Border Background="{StaticResource PermissionModifyBrush}" ToolTip="{DynamicResource Badge.Modify.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
-                <TextBlock Text="{DynamicResource Badge.Modify.Label}" Style="{StaticResource SemanticChipTextStyle}" />
-              </Border>
-              <Border Background="{StaticResource PermissionFullBrush}" ToolTip="{DynamicResource Badge.Full.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
-                <TextBlock Text="{DynamicResource Badge.Full.Label}" Style="{StaticResource SemanticChipTextStyle}" />
-              </Border>
-              <Border Background="{StaticResource PermissionProtectedBrush}" ToolTip="{DynamicResource Badge.Deny.ToolTip}" Style="{StaticResource LegendChipBorderStyle}">
-                <TextBlock Text="{DynamicResource Badge.Deny.Label}" Style="{StaticResource SemanticChipTextStyle}" />
-              </Border>
-            </WrapPanel>
-          </Border>
-        </Expander>
-
-        <Expander Header="{DynamicResource Results.PersistentFilters}"
-                  IsExpanded="False"
-                  Style="{StaticResource ResultsSectionExpanderStyle}"
-                  ToolTip="{DynamicResource Results.PersistentFilters.ToolTip}">
-          <Border Style="{StaticResource SupportPanelBorderStyle}"
-                  Margin="0,4,0,0">
-            <StackPanel>
-              <TextBlock Text="{DynamicResource Results.SearchAcl}" Style="{StaticResource SubsectionHeaderText}" />
-              <Grid Margin="0,0,0,8">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="Auto" />
-                  <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{DynamicResource Results.AclFilter}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                <TextBox Grid.Column="1" Style="{StaticResource FieldTextBoxStyle}" AutomationProperties.Name="{DynamicResource Results.SearchAcl}" ToolTip="{DynamicResource Results.AclFilter.ToolTip}" Text="{Binding AclFilter, UpdateSourceTrigger=PropertyChanged}" />
-              </Grid>
-
-              <TextBlock Text="{DynamicResource Results.Permissions}" Style="{StaticResource SubsectionHeaderText}" />
-              <WrapPanel Margin="0,0,0,6">
-                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.ColorizeByRight}" IsChecked="{Binding ColorizeRights}" />
-                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Allow}" IsChecked="{Binding ShowAllow}" />
-                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Deny}" IsChecked="{Binding ShowDeny}" />
-                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Inherited}" IsChecked="{Binding ShowInherited}" />
-                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Explicit}" IsChecked="{Binding ShowExplicit}" />
-                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Protected}" IsChecked="{Binding ShowProtected}" />
-                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Grid.Disabled}" IsChecked="{Binding ShowDisabled}" />
-              </WrapPanel>
-
-              <TextBlock Text="{DynamicResource Scan.Identity}" Style="{StaticResource SubsectionHeaderText}" />
-              <WrapPanel>
-                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Everyone}" IsChecked="{Binding ShowEveryone}" />
-                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.AuthenticatedUsers}" IsChecked="{Binding ShowAuthenticatedUsers}" />
-                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.ServiceUsers}" IsChecked="{Binding ShowServiceAccounts}" />
-                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.Admin}" IsChecked="{Binding ShowAdminAccounts}" />
-                <CheckBox Margin="0,0,12,6" Content="{DynamicResource Results.OtherPrincipals}" IsChecked="{Binding ShowOtherPrincipals}" />
-              </WrapPanel>
-            </StackPanel>
-          </Border>
-        </Expander>
-      </StackPanel>
+          </Expander>
+        </StackPanel>
+      </ScrollViewer>
 
       <Grid Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Border Style="{StaticResource EmptyStateBorderStyle}"

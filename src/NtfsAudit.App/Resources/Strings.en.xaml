@@ -34,8 +34,8 @@
   <sys:String x:Key="Common.NonAdmin">Not administrator</sys:String>
   <sys:String x:Key="Main.StartAnalysis">Start analysis</sys:String>
   <sys:String x:Key="Main.StartAnalysis.ToolTip">Start scanning the selected folders.</sys:String>
-  <sys:String x:Key="Main.StopAndClean">Stop and clean residuals</sys:String>
-  <sys:String x:Key="Main.StopAndClean.ToolTip">Stop the running scan, clear the service queue, and clean residual runtime files.</sys:String>
+  <sys:String x:Key="Main.NewScan">New scan</sys:String>
+  <sys:String x:Key="Main.NewScan.ToolTip">Stop any running scan, delete temporary files, and clear the UI to prepare for a new scan.</sys:String>
   <sys:String x:Key="Main.InstallService">Install service</sys:String>
   <sys:String x:Key="Main.InstallService.ToolTip">Install the optional Windows host for background or non-interactive scans.</sys:String>
   <sys:String x:Key="Main.ServiceStart">Start service</sys:String>
@@ -457,10 +457,33 @@
   <sys:String x:Key="App.SingleInstanceInitializationError">Unable to initialize single-instance protection.&#x0a;&#x0a;Details: {0}</sys:String>
   <sys:String x:Key="App.UnexpectedError">Unexpected error. Check the log file for details.</sys:String>
   <sys:String x:Key="Tray.Open">Open</sys:String>
-  <sys:String x:Key="Tray.StopScan">Stop scan / job</sys:String>
+  <sys:String x:Key="Tray.NewScan">New scan</sys:String>
   <sys:String x:Key="Tray.CleanCache">Clean cache/residuals</sys:String>
   <sys:String x:Key="Tray.Exit">Exit</sys:String>
   <sys:String x:Key="Tray.ServiceTitle">NTFS Audit - service</sys:String>
   <sys:String x:Key="Tray.Minimized">App minimized to tray. The service continues in the background.</sys:String>
   <sys:String x:Key="Tray.ServiceActive">Service active: the app stays in the tray while the scan is running.</sys:String>
+
+  <!-- Short Tree Badges -->
+  <sys:String x:Key="Tree.Badge.ExplicitNtfs">N</sys:String>
+  <sys:String x:Key="Tree.Badge.Protected">P</sys:String>
+  <sys:String x:Key="Tree.Badge.DiffParent">DP</sys:String>
+  <sys:String x:Key="Tree.Badge.ExplicitDeny">D</sys:String>
+  <sys:String x:Key="Tree.Badge.BaselineMismatch">B</sys:String>
+  <sys:String x:Key="Tree.Badge.WithFiles">F</sys:String>
+
+  <!-- Short Rights Badges -->
+  <sys:String x:Key="Badge.Short.Full">Full</sys:String>
+  <sys:String x:Key="Badge.Short.Modify">Modify</sys:String>
+  <sys:String x:Key="Badge.Short.ReadAndExecute">R&amp;E</sys:String>
+  <sys:String x:Key="Badge.Short.Write">Write</sys:String>
+  <sys:String x:Key="Badge.Short.List">List</sys:String>
+  <sys:String x:Key="Badge.Short.Read">Read</sys:String>
+  <sys:String x:Key="Badge.Short.Inherited">I</sys:String>
+  <sys:String x:Key="Badge.Short.Protected">P</sys:String>
+  <sys:String x:Key="Badge.Short.ExplicitDeny">D</sys:String>
+
+  <!-- Progress Text -->
+  <sys:String x:Key="Progress.NewScanStoppedAndCleared">Current scan stopped, residual files cleaned, and UI cleared for a new scan.</sys:String>
+  <sys:String x:Key="Progress.NewScanCleared">Residual files cleaned and UI cleared for a new scan.</sys:String>
 </ResourceDictionary>

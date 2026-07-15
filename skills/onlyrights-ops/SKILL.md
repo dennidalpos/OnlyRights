@@ -35,6 +35,7 @@ This skill contains scripting, build, packaging, and maintenance rules for the O
   - `pwsh -File .\scripts\build.ps1 -Runtime win-x64 -Installer`
   - `pwsh -File .\scripts\build.ps1 -Runtime win-x86 -Installer`
 - Generated installers must run with `perMachine` scope and require elevation.
+- **Application Elevation**: The WPF desktop application is configured via `app.manifest` to run with `requestedExecutionLevel level="requireAdministrator"`, enforcing UAC elevation on startup to ensure adequate permissions for deep NTFS ACL scanning.
 
 ### 4. Windows Service Management
 - Managed via `manage-service.ps1` under `scripts\maintenance\`:

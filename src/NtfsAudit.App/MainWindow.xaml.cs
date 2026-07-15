@@ -53,12 +53,12 @@ namespace NtfsAudit.App
 
             var trayMenu = new WinForms.ContextMenuStrip();
             trayMenu.Items.Add(LocalizationManager.Text("Tray.Open"), null, (_, __) => RestoreFromTray());
-            trayMenu.Items.Add(LocalizationManager.Text("Tray.StopScan"), null, (_, __) =>
+            trayMenu.Items.Add(LocalizationManager.Text("Tray.NewScan"), null, (_, __) =>
             {
                 var currentViewModel = DataContext as MainViewModel;
-                if (currentViewModel != null && currentViewModel.StopCommand.CanExecute(null))
+                if (currentViewModel != null && currentViewModel.NewScanCommand.CanExecute(null))
                 {
-                    currentViewModel.StopCommand.Execute(null);
+                    currentViewModel.NewScanCommand.Execute(null);
                 }
             });
             trayMenu.Items.Add(LocalizationManager.Text("Tray.CleanCache"), null, (_, __) =>

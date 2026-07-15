@@ -591,20 +591,28 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="TabItem">
-          <Border x:Name="Chrome"
-                  Background="{StaticResource SurfaceMutedBrush}"
-                  BorderBrush="{StaticResource BorderSoftBrush}"
-                  BorderThickness="0,0,1,1"
-                  Padding="{TemplateBinding Padding}">
-            <ContentPresenter HorizontalAlignment="Center"
-                              VerticalAlignment="Center"
-                              ContentSource="Header" />
-          </Border>
+          <Grid>
+            <Border x:Name="Chrome"
+                    Background="{StaticResource SurfaceMutedBrush}"
+                    BorderBrush="{StaticResource BorderSoftBrush}"
+                    BorderThickness="0,0,1,1"
+                    Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center"
+                                 VerticalAlignment="Center"
+                                 ContentSource="Header" />
+            </Border>
+            <Border x:Name="HighlightBar"
+                    Height="3"
+                    Background="{StaticResource AccentBrush}"
+                    VerticalAlignment="Top"
+                    Visibility="Collapsed" />
+          </Grid>
           <ControlTemplate.Triggers>
             <Trigger Property="IsSelected" Value="True">
               <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SurfaceBrush}" />
-              <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
-              <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+              <Setter TargetName="Chrome" Property="BorderThickness" Value="0,0,1,0" />
+              <Setter TargetName="HighlightBar" Property="Visibility" Value="Visible" />
+              <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
               <Setter Property="FontWeight" Value="SemiBold" />
             </Trigger>
             <Trigger Property="IsMouseOver" Value="True">
@@ -888,16 +896,41 @@
             </Style.Triggers>
           </Style>
         </Border.Style>
-        <TextBlock Text="{Binding HighestRightLabel}" Style="{StaticResource CompactBadgeText}" />
+        <TextBlock>
+          <TextBlock.Style>
+            <Style TargetType="TextBlock" BasedOn="{StaticResource CompactBadgeText}">
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding HighestRightKey}" Value="Full">
+                  <Setter Property="Text" Value="{DynamicResource Badge.Short.Full}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HighestRightKey}" Value="Modify">
+                  <Setter Property="Text" Value="{DynamicResource Badge.Short.Modify}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HighestRightKey}" Value="ReadAndExecute">
+                  <Setter Property="Text" Value="{DynamicResource Badge.Short.ReadAndExecute}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HighestRightKey}" Value="Write">
+                  <Setter Property="Text" Value="{DynamicResource Badge.Short.Write}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HighestRightKey}" Value="List">
+                  <Setter Property="Text" Value="{DynamicResource Badge.Short.List}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HighestRightKey}" Value="Read">
+                  <Setter Property="Text" Value="{DynamicResource Badge.Short.Read}" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </TextBlock.Style>
+        </TextBlock>
       </Border>
       <Border Background="{StaticResource AccentBrush}" Visibility="{Binding IsInherited, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="{DynamicResource Badge.Inherited.ToolTip}" Style="{StaticResource InlineCompactBadgeBorderStyle}">
-        <TextBlock Text="I" Style="{StaticResource CompactBadgeText}" />
+        <TextBlock Text="{DynamicResource Badge.Short.Inherited}" Style="{StaticResource CompactBadgeText}" />
       </Border>
       <Border Background="{StaticResource PermissionProtectedBrush}" Visibility="{Binding IsInheritanceDisabled, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="{DynamicResource Badge.Protected.ToolTip}" Style="{StaticResource InlineCompactBadgeBorderStyle}">
-        <TextBlock Text="P" Style="{StaticResource CompactBadgeText}" />
+        <TextBlock Text="{DynamicResource Badge.Short.Protected}" Style="{StaticResource CompactBadgeText}" />
       </Border>
       <Border Background="{StaticResource PermissionDenyBrush}" Visibility="{Binding IsExplicitDeny, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="{DynamicResource Badge.ExplicitDeny.ToolTip}" Style="{StaticResource InlineCompactBadgeBorderStyle}">
-        <TextBlock Text="D" Style="{StaticResource CompactBadgeText}" />
+        <TextBlock Text="{DynamicResource Badge.Short.ExplicitDeny}" Style="{StaticResource CompactBadgeText}" />
       </Border>
     </StackPanel>
   </DataTemplate>

@@ -33,7 +33,7 @@ namespace NtfsAudit.App.Tests
                 .ToList();
 
             Assert.Contains("{Binding StartCommand}", buttonCommands);
-            Assert.Contains("{Binding StopCommand}", buttonCommands);
+            Assert.Contains("{Binding NewScanCommand}", buttonCommands);
             Assert.Contains("{Binding ImportAnalysisCommand}", buttonCommands);
             Assert.Contains("{Binding ExportCommand}", buttonCommands);
             Assert.Contains("{Binding ToggleSettingsCommand}", buttonCommands);
@@ -61,7 +61,7 @@ namespace NtfsAudit.App.Tests
                 .ToList();
 
             Assert.Contains("{DynamicResource Main.StartAnalysis}", buttonTexts);
-            Assert.Contains("{DynamicResource Main.StopAndClean}", buttonTexts);
+            Assert.Contains("{DynamicResource Main.NewScan}", buttonTexts);
             Assert.Contains("{DynamicResource Main.ImportAnalysis}", buttonTexts);
             Assert.Contains("{DynamicResource Main.ExportExcel}", buttonTexts);
             Assert.Contains("{DynamicResource Main.Settings}", buttonTexts);

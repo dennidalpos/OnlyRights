@@ -232,7 +232,7 @@ namespace NtfsAudit.App.ViewModels
             InstallServiceCommand = new RelayCommand(InstallService, () => !_isViewerMode && !IsBusy && !IsServiceInstalled);
             UninstallServiceCommand = new RelayCommand(UninstallService, () => !_isViewerMode && !IsBusy && IsServiceInstalled);
             StartCommand = new RelayCommand(StartScan, () => CanStart);
-            StopCommand = new RelayCommand(StopScan, () => CanStop);
+            NewScanCommand = new RelayCommand(NewScan, () => CanNewScan);
             ExportCommand = new RelayCommand(Export, () => CanExport);
             ImportAnalysisCommand = new RelayCommand(ImportAnalysis, () => !_isScanning && !IsBusy);
             ResetTreeFiltersCommand = new RelayCommand(ResetTreeFilters, () => HasScanResult);

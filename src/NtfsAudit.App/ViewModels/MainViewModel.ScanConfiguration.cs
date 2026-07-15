@@ -41,10 +41,10 @@ namespace NtfsAudit.App.ViewModels
                 OnPropertyChanged("IsServiceRuntimeRunning");
                 OnPropertyChanged("StatusText");
                 OnPropertyChanged("StatusBrush");
-                OnPropertyChanged("CanStop");
-                if (StopCommand != null)
+                OnPropertyChanged("CanNewScan");
+                if (NewScanCommand != null)
                 {
-                    StopCommand.RaiseCanExecuteChanged();
+                    NewScanCommand.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -142,6 +142,8 @@ namespace NtfsAudit.App.ViewModels
         public ICollectionView FilteredShareEntries { get; private set; }
         public ICollectionView FilteredEffectiveEntries { get; private set; }
 
+
+
         public RelayCommand BrowseCommand { get; private set; }
         public RelayCommand AddScanRootCommand { get; private set; }
         public RelayCommand RemoveScanRootCommand { get; private set; }
@@ -149,7 +151,7 @@ namespace NtfsAudit.App.ViewModels
         public RelayCommand InstallServiceCommand { get; private set; }
         public RelayCommand UninstallServiceCommand { get; private set; }
         public RelayCommand StartCommand { get; private set; }
-        public RelayCommand StopCommand { get; private set; }
+        public RelayCommand NewScanCommand { get; private set; }
         public RelayCommand ExportCommand { get; private set; }
         public RelayCommand ImportAnalysisCommand { get; private set; }
         public RelayCommand ResetTreeFiltersCommand { get; private set; }

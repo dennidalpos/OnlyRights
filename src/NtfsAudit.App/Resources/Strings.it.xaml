@@ -33,8 +33,8 @@
   <sys:String x:Key="Common.NonAdmin">Non amministratore</sys:String>
   <sys:String x:Key="Main.StartAnalysis">Avvia analisi</sys:String>
   <sys:String x:Key="Main.StartAnalysis.ToolTip">Avvia la scansione delle cartelle selezionate.</sys:String>
-  <sys:String x:Key="Main.StopAndClean">Ferma e pulisci residui</sys:String>
-  <sys:String x:Key="Main.StopAndClean.ToolTip">Ferma la scansione in corso, svuota la coda servizio e pulisce i file runtime residui.</sys:String>
+  <sys:String x:Key="Main.NewScan">Nuova scansione</sys:String>
+  <sys:String x:Key="Main.NewScan.ToolTip">Interrompi la scansione in corso, elimina i file temporanei e pulisci la UI per preparare una nuova scansione.</sys:String>
   <sys:String x:Key="Main.InstallService">Installa servizio</sys:String>
   <sys:String x:Key="Main.InstallService.ToolTip">Installa l'host Windows opzionale per scansioni in background o non interattive.</sys:String>
   <sys:String x:Key="Main.ServiceStart">Avvia servizio</sys:String>
@@ -456,10 +456,33 @@
   <sys:String x:Key="App.SingleInstanceInitializationError">Impossibile inizializzare il controllo istanza unica.&#xA;&#xA;Dettagli: {0}</sys:String>
   <sys:String x:Key="App.UnexpectedError">Errore imprevisto. Controlla il file di log per i dettagli.</sys:String>
   <sys:String x:Key="Tray.Open">Apri</sys:String>
-  <sys:String x:Key="Tray.StopScan">Ferma scansione / job</sys:String>
+  <sys:String x:Key="Tray.NewScan">Nuova scansione</sys:String>
   <sys:String x:Key="Tray.CleanCache">Pulisci cache/residui</sys:String>
   <sys:String x:Key="Tray.Exit">Esci</sys:String>
   <sys:String x:Key="Tray.ServiceTitle">NTFS Audit - servizio</sys:String>
   <sys:String x:Key="Tray.Minimized">App ridotta in tray. Il servizio continua in background.</sys:String>
   <sys:String x:Key="Tray.ServiceActive">Servizio attivo: l'app resta nel tray finche la scansione e in corso.</sys:String>
+
+  <!-- Short Tree Badges -->
+  <sys:String x:Key="Tree.Badge.ExplicitNtfs">N</sys:String>
+  <sys:String x:Key="Tree.Badge.Protected">P</sys:String>
+  <sys:String x:Key="Tree.Badge.DiffParent">DP</sys:String>
+  <sys:String x:Key="Tree.Badge.ExplicitDeny">D</sys:String>
+  <sys:String x:Key="Tree.Badge.BaselineMismatch">B</sys:String>
+  <sys:String x:Key="Tree.Badge.WithFiles">F</sys:String>
+
+  <!-- Short Rights Badges -->
+  <sys:String x:Key="Badge.Short.Full">Full</sys:String>
+  <sys:String x:Key="Badge.Short.Modify">Modify</sys:String>
+  <sys:String x:Key="Badge.Short.ReadAndExecute">R&amp;E</sys:String>
+  <sys:String x:Key="Badge.Short.Write">Write</sys:String>
+  <sys:String x:Key="Badge.Short.List">List</sys:String>
+  <sys:String x:Key="Badge.Short.Read">Read</sys:String>
+  <sys:String x:Key="Badge.Short.Inherited">I</sys:String>
+  <sys:String x:Key="Badge.Short.Protected">P</sys:String>
+  <sys:String x:Key="Badge.Short.ExplicitDeny">D</sys:String>
+
+  <!-- Progress Text -->
+  <sys:String x:Key="Progress.NewScanStoppedAndCleared">Scansione corrente interrotta, file residui eliminati e UI ripulita per una nuova scansione.</sys:String>
+  <sys:String x:Key="Progress.NewScanCleared">File residui eliminati e UI ripulita per una nuova scansione.</sys:String>
 </ResourceDictionary>
