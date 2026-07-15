@@ -3,13 +3,30 @@ Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot "common.ps1")
 
 function Get-MsiScriptContext {
-    param([string]$ScriptRoot)
+    param(
+        [string]$ScriptRoot,
+        [string]$AppType = "App"
+    )
 
     $context = Get-RepositoryContext -ScriptRoot $ScriptRoot
     Assert-RepositoryPrerequisites -Context $context
 
-    [pscustomobject]@{
+    if ($AppType -eq "Viewer") {
+        return [pscustomobject]@{
+            Repository = $context
+            AppType = "Viewer"
+            InstallerName = "OnlyRights-NtfsAudit-Viewer"
+            UpgradeCode = "{A9B172E7-7C62-43E0-BD6E-85C1BE234CD2}"
+            Manufacturer = "OnlyRights"
+            ProductName = "OnlyRights NtfsAudit Viewer"
+            DefaultInstallRoot = "OnlyRights\\NtfsAuditViewer"
+            IconPath = Join-Path $context.RepoRoot "src\NtfsAudit.App\Assets\OnlyRights.ico"
+        }
+    }
+
+    return [pscustomobject]@{
         Repository = $context
+        AppType = "App"
         InstallerName = "OnlyRights-NtfsAudit"
         UpgradeCode = "{7C4212A8-0B3D-420F-8D64-22E20AAE8F59}"
         Manufacturer = "OnlyRights"
@@ -127,7 +144,8 @@ function Resolve-MsiArtifactVersion {
     )
 
     $resolvedPackageRoot = Resolve-PackageRootForMsi -Context $Context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -PackageRoot $PackageRoot
-    $appExecutable = Join-Path $resolvedPackageRoot "App\NtfsAudit.App.exe"
+    $exeSubpath = if ($Context.AppType -eq "Viewer") { "Viewer\NtfsAudit.Viewer.exe" } else { "App\NtfsAudit.App.exe" }
+    $appExecutable = Join-Path $resolvedPackageRoot $exeSubpath
     return Resolve-MsiVersion -Version $Version -AppExecutablePath $appExecutable -RepositoryContext $Context.Repository
 }
 
@@ -228,6 +246,12 @@ function New-MsiSource {
             $relativePath = Get-RelativePathCompat -BasePath $PackageRoot -TargetPath $_.FullName
             $pathSegments = $relativePath -split "[\\/]"
             $topLevel = if ($pathSegments.Length -gt 0) { $pathSegments[0] } else { "" }
+            if ($Context.AppType -eq "Viewer") {
+                if ($topLevel -ne "Viewer") { return $false }
+            } else {
+                if ($topLevel -eq "Viewer") { return $false }
+                if ($topLevel -notin @("App", "Service")) { return $false }
+            }
             $topLevel -notin @("installer", "msi") -and $_.Extension -notin @(".msi", ".wixpdb", ".wixobj", ".wxs")
         } |
         Sort-Object FullName
@@ -236,7 +260,7 @@ function New-MsiSource {
     [void]$builder.AppendLine('<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">')
     [void]$builder.AppendLine(('  <Product Id="*" Name="{0}" Language="1033" Version="{1}" Manufacturer="{2}" UpgradeCode="{3}">' -f (Escape-XmlValue $Context.ProductName), $Version, (Escape-XmlValue $Context.Manufacturer), $Context.UpgradeCode))
     [void]$builder.AppendLine(('    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" InstallPrivileges="elevated" Platform="{0}" />' -f (Escape-XmlValue $Architecture)))
-    [void]$builder.AppendLine('    <MajorUpgrade DowngradeErrorMessage="A newer version of OnlyRights NtfsAudit is already installed." />')
+    [void]$builder.AppendLine('    <MajorUpgrade DowngradeErrorMessage="A newer version of OnlyRights NtfsAudit is already installed." AllowSameVersionUpgrades="yes" />')
     [void]$builder.AppendLine('    <MediaTemplate EmbedCab="yes" />')
     [void]$builder.AppendLine('    <Property Id="ARPNOMODIFY" Value="1" />')
     if ($hasProductIcon) {
@@ -311,16 +335,19 @@ function Add-MsiDirectoryContent {
         $fileId = Convert-ToSafeId -Prefix "Fil" -Value $relativePath
         $removeId = Convert-ToSafeId -Prefix "Rm" -Value $relativePath
         $isMainAppExecutable = $relativePath -eq (Join-Path "App" "NtfsAudit.App.exe")
+        $isViewerExecutable = $relativePath -eq (Join-Path "Viewer" "NtfsAudit.Viewer.exe")
         $isServiceExecutable = $relativePath -eq (Join-Path "Service" "NtfsAudit.Service.exe")
 
         [void]$Builder.AppendLine(('{0}<Component Id="{1}" Guid="{2}">' -f $indent, $componentId, (New-StableGuid -Value $relativePath)))
-        if ($isMainAppExecutable) {
+        if ($isMainAppExecutable -or $isViewerExecutable) {
             [void]$Builder.AppendLine(('{0}  <File Id="{1}" Source="{2}" Name="{3}" KeyPath="yes">' -f $indent, $fileId, (Escape-XmlValue $file.FullName), (Escape-XmlValue $file.Name)))
             $shortcutIcon = if ($HasProductIcon) { ' Icon="OnlyRightsIcon.ico"' } else { "" }
-            [void]$Builder.AppendLine(('{0}    <Shortcut Id="StartMenuShortcut" Directory="ApplicationProgramsFolder" Name="OnlyRights NtfsAudit" WorkingDirectory="INSTALLFOLDER"{1} Advertise="yes" />' -f $indent, $shortcutIcon))
-            [void]$Builder.AppendLine(('{0}    <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="OnlyRights NtfsAudit" WorkingDirectory="INSTALLFOLDER"{1} Advertise="yes" />' -f $indent, $shortcutIcon))
+            $shortcutName = if ($isViewerExecutable) { "OnlyRights NtfsAudit Viewer" } else { "OnlyRights NtfsAudit" }
+            $shortcutIdPrefix = if ($isViewerExecutable) { "Viewer" } else { "App" }
+            [void]$Builder.AppendLine(('{0}    <Shortcut Id="{1}StartMenuShortcut" Directory="ApplicationProgramsFolder" Name="{2}" WorkingDirectory="INSTALLFOLDER"{3} Advertise="yes" />' -f $indent, $shortcutIdPrefix, $shortcutName, $shortcutIcon))
+            [void]$Builder.AppendLine(('{0}    <Shortcut Id="{1}DesktopShortcut" Directory="DesktopFolder" Name="{2}" WorkingDirectory="INSTALLFOLDER"{3} Advertise="yes" />' -f $indent, $shortcutIdPrefix, $shortcutName, $shortcutIcon))
             [void]$Builder.AppendLine(('{0}  </File>' -f $indent))
-            [void]$Builder.AppendLine(('{0}  <RemoveFolder Id="RemoveApplicationProgramsFolder" Directory="ApplicationProgramsFolder" On="uninstall" />' -f $indent))
+            [void]$Builder.AppendLine(('{0}  <RemoveFolder Id="{1}RemoveApplicationProgramsFolder" Directory="ApplicationProgramsFolder" On="uninstall" />' -f $indent, $shortcutIdPrefix))
         }
         else {
             [void]$Builder.AppendLine(('{0}  <File Id="{1}" Source="{2}" Name="{3}" KeyPath="yes" />' -f $indent, $fileId, (Escape-XmlValue $file.FullName), (Escape-XmlValue $file.Name)))

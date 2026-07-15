@@ -93,4 +93,29 @@ namespace NtfsAudit.App.Services
             throw new NotSupportedException();
         }
     }
+
+    public sealed class HeightPercentageConverter : IValueConverter
+    {
+        public double Percentage { get; set; } = 0.4;
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is double height)
+            {
+                var pct = Percentage;
+                if (parameter != null && double.TryParse(parameter.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var p))
+                {
+                    pct = p;
+                }
+                var calculated = height * pct;
+                return calculated > 50.0 ? calculated : 50.0;
+            }
+            return 280.0;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+    }
 }

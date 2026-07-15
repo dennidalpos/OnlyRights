@@ -61,14 +61,14 @@
                     SelectedItem="{Binding SelectedLocale, Mode=TwoWay}"
                     DisplayMemberPath="DisplayName" />
 
-          <TextBlock Text="{DynamicResource Main.CleanupResiduals}" Style="{StaticResource SubsectionHeaderText}" />
+          <TextBlock Text="{DynamicResource Main.NewScan}" Style="{StaticResource SubsectionHeaderText}" />
           <Border Style="{StaticResource NeutralInfoCardBorderStyle}" Margin="0,0,0,12">
-            <TextBlock Text="{DynamicResource Main.CleanupResiduals.ToolTip}" Style="{StaticResource MicrocopyText}" Margin="0" TextWrapping="Wrap" />
+            <TextBlock Text="{DynamicResource Main.NewScan.ToolTip}" Style="{StaticResource MicrocopyText}" Margin="0" TextWrapping="Wrap" />
           </Border>
-          <Button Style="{StaticResource InlineActionButtonStyle}" Command="{Binding CleanupResidualFilesCommand}" Margin="0">
+          <Button Style="{StaticResource InlineActionButtonStyle}" Command="{Binding NewScanCommand}" IsEnabled="{Binding CanNewScan}" Margin="0">
             <StackPanel Orientation="Horizontal">
-              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" Margin="0,0,6,0" VerticalAlignment="Center" />
-              <TextBlock Text="{DynamicResource Main.CleanupResiduals}" VerticalAlignment="Center" />
+              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE71A;" Margin="0,0,6,0" VerticalAlignment="Center" />
+              <TextBlock Text="{DynamicResource Main.NewScan}" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
         </StackPanel>

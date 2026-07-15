@@ -6,6 +6,7 @@
   <services:ScanRootPathKindLabelConverter x:Key="ScanRootPathKindLabelConverter" />
   <services:ScanRootPathKindBrushConverter x:Key="ScanRootPathKindBrushConverter" />
   <services:DfsMultiServerVisibilityConverter x:Key="DfsMultiServerVisibilityConverter" />
+  <services:HeightPercentageConverter x:Key="HeightPercentageConverter" />
 
   <Color x:Key="AppBackgroundColor">#FFF8FAFC</Color>
   <Color x:Key="SurfaceColor">#FFFFFFFF</Color>
@@ -593,7 +594,7 @@
         <ControlTemplate TargetType="TabItem">
           <Grid>
             <Border x:Name="Chrome"
-                    Background="{StaticResource SurfaceMutedBrush}"
+                    Background="{StaticResource SurfaceAccentBrush}"
                     BorderBrush="{StaticResource BorderSoftBrush}"
                     BorderThickness="0,0,1,1"
                     Padding="{TemplateBinding Padding}">
@@ -608,15 +609,15 @@
                     Visibility="Collapsed" />
           </Grid>
           <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SurfaceMutedBrush}" />
+            </Trigger>
             <Trigger Property="IsSelected" Value="True">
               <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SurfaceBrush}" />
               <Setter TargetName="Chrome" Property="BorderThickness" Value="0,0,1,0" />
               <Setter TargetName="HighlightBar" Property="Visibility" Value="Visible" />
               <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
               <Setter Property="FontWeight" Value="SemiBold" />
-            </Trigger>
-            <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SurfaceAccentBrush}" />
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -628,7 +629,6 @@
          TargetType="TabItem"
          BasedOn="{StaticResource {x:Type TabItem}}">
     <Setter Property="FontSize" Value="13" />
-    <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Padding" Value="14,8" />
   </Style>
 
@@ -734,8 +734,6 @@
     <Setter Property="SnapsToDevicePixels" Value="True" />
     <Setter Property="OverridesDefaultStyle" Value="True" />
     <Setter Property="IsTabStop" Value="False" />
-    <Setter Property="Height" Value="52" />
-    <Setter Property="Width" Value="52" />
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Thumb">
@@ -763,7 +761,7 @@
           <RepeatButton Style="{StaticResource ScrollBarPageButtonStyle}" Command="ScrollBar.PageUpCommand" />
         </Track.DecreaseRepeatButton>
         <Track.Thumb>
-          <Thumb Style="{StaticResource MinimalScrollBarThumbStyle}" />
+          <Thumb Style="{StaticResource MinimalScrollBarThumbStyle}" Width="6" MinHeight="18" />
         </Track.Thumb>
         <Track.IncreaseRepeatButton>
           <RepeatButton Style="{StaticResource ScrollBarPageButtonStyle}" Command="ScrollBar.PageDownCommand" />
@@ -780,7 +778,7 @@
           <RepeatButton Style="{StaticResource ScrollBarPageButtonStyle}" Command="ScrollBar.PageLeftCommand" />
         </Track.DecreaseRepeatButton>
         <Track.Thumb>
-          <Thumb Style="{StaticResource MinimalScrollBarThumbStyle}" />
+          <Thumb Style="{StaticResource MinimalScrollBarThumbStyle}" Height="6" MinWidth="18" />
         </Track.Thumb>
         <Track.IncreaseRepeatButton>
           <RepeatButton Style="{StaticResource ScrollBarPageButtonStyle}" Command="ScrollBar.PageRightCommand" />

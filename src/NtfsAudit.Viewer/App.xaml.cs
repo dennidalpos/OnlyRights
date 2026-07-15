@@ -24,6 +24,26 @@ namespace NtfsAudit.Viewer
         {
             LocalizationManager.ApplyDefault();
             base.OnStartup(e);
+
+            if (!IsAdministrator())
+            {
+                if (TryRelaunchElevated(e.Args))
+                {
+                    Shutdown();
+                    return;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        LocalizationManager.Text("App.RequiresAdmin"),
+                        LocalizationManager.Text("App.ViewerTitle"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    Shutdown();
+                    return;
+                }
+            }
+
             EnsureSharedResourcesLoaded(Resources);
             var viewModel = new MainViewModel(true);
             var window = new MainWindow(viewModel)
@@ -66,6 +86,36 @@ namespace NtfsAudit.Viewer
         private static System.Uri CreateSharedResourcesUri()
         {
             return new System.Uri(SharedResourcesSource, System.UriKind.Relative);
+        }
+
+        private static bool IsAdministrator()
+        {
+            using (var identity = System.Security.Principal.WindowsIdentity.GetCurrent())
+            {
+                var principal = new System.Security.Principal.WindowsPrincipal(identity);
+                return principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+            }
+        }
+
+        private static bool TryRelaunchElevated(string[] args)
+        {
+            var processInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = System.Environment.ProcessPath ?? System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName,
+                UseShellExecute = true,
+                Verb = "runas",
+                Arguments = string.Join(" ", args)
+            };
+
+            try
+            {
+                System.Diagnostics.Process.Start(processInfo);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

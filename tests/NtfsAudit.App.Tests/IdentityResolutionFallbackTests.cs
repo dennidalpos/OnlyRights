@@ -232,6 +232,34 @@ namespace NtfsAudit.App.Tests
             Assert.Contains("JSON", resolver.LastDiagnostic, StringComparison.OrdinalIgnoreCase);
         }
 
+        [Fact]
+        public void IdentityResolver_ClassifiesWellKnownGroupsAndDomainGroupsOffline()
+        {
+            var cache = new SidNameCache();
+            var resolver = new IdentityResolver(cache, null);
+
+            var everyone = resolver.Resolve("S-1-1-0");
+            var admins = resolver.Resolve("S-1-5-32-544");
+            var domainAdmins = resolver.Resolve("S-1-5-21-100-200-300-512");
+            var system = resolver.Resolve("S-1-5-18");
+            var regularUser = resolver.Resolve("S-1-5-21-100-200-300-1001");
+
+            Assert.True(everyone.IsGroup);
+            Assert.Equal("Group", everyone.Type);
+
+            Assert.True(admins.IsGroup);
+            Assert.Equal("Group", admins.Type);
+
+            Assert.True(domainAdmins.IsGroup);
+            Assert.Equal("Group", domainAdmins.Type);
+
+            Assert.False(system.IsGroup);
+            Assert.Equal("User", system.Type);
+
+            Assert.False(regularUser.IsGroup);
+            Assert.Equal("User", regularUser.Type);
+        }
+
         private sealed class FakeAdResolver : IAdResolver
         {
             public Func<string, ResolvedPrincipal> ResolvePrincipalHandler { get; set; }

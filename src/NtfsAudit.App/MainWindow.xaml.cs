@@ -61,14 +61,6 @@ namespace NtfsAudit.App
                     currentViewModel.NewScanCommand.Execute(null);
                 }
             });
-            trayMenu.Items.Add(LocalizationManager.Text("Tray.CleanCache"), null, (_, __) =>
-            {
-                var currentViewModel = DataContext as MainViewModel;
-                if (currentViewModel != null && currentViewModel.CleanupResidualFilesCommand.CanExecute(null))
-                {
-                    currentViewModel.CleanupResidualFilesCommand.Execute(null);
-                }
-            });
             trayMenu.Items.Add(LocalizationManager.Text("Tray.Exit"), null, (_, __) =>
             {
                 _forceClose = true;

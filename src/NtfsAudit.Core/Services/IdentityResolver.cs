@@ -105,7 +105,7 @@ namespace NtfsAudit.App.Services
             {
                 Sid = sid,
                 Name = resolvedName,
-                IsGroup = isGroup,
+                IsGroup = isGroup || SidClassifier.IsGroupSid(sid),
                 IsDisabled = isDisabled,
                 IsServiceAccount = SidClassifier.IsServiceAccountSid(sid),
                 IsAdminAccount = SidClassifier.IsPrivilegedGroupSid(sid)

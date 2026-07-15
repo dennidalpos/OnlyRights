@@ -63,6 +63,13 @@ namespace NtfsAudit.App.ViewModels
             get { return !string.IsNullOrWhiteSpace(AccentText); }
         }
 
+        public bool HasExplicitNtfs { get; set; }
+        public bool HasDenyExplicit { get; set; }
+        public bool HasFileEntries { get; set; }
+        public bool IsProtected { get; set; }
+        public bool HasDiff { get; set; }
+        public bool HasBaselineMismatch { get; set; }
+
         public bool IsExpanded
         {
             get { return _isExpanded; }

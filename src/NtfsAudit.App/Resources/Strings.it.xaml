@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+  <sys:String x:Key="Locale.Name">Italiano</sys:String>
+  <sys:String x:Key="App.RequiresAdmin">Questa applicazione richiede privilegi di amministratore per essere eseguita.</sys:String>
   <sys:String x:Key="App.Title">NTFS Audit</sys:String>
   <sys:String x:Key="App.ViewerTitle">NTFS Audit Viewer</sys:String>
   <sys:String x:Key="Common.Language">Lingua</sys:String>
@@ -472,13 +474,13 @@
   <sys:String x:Key="Tree.Badge.WithFiles">F</sys:String>
 
   <!-- Short Rights Badges -->
-  <sys:String x:Key="Badge.Short.Full">Full</sys:String>
-  <sys:String x:Key="Badge.Short.Modify">Modify</sys:String>
-  <sys:String x:Key="Badge.Short.ReadAndExecute">R&amp;E</sys:String>
-  <sys:String x:Key="Badge.Short.Write">Write</sys:String>
-  <sys:String x:Key="Badge.Short.List">List</sys:String>
-  <sys:String x:Key="Badge.Short.Read">Read</sys:String>
-  <sys:String x:Key="Badge.Short.Inherited">I</sys:String>
+  <sys:String x:Key="Badge.Short.Full">Comp</sys:String>
+  <sys:String x:Key="Badge.Short.Modify">Mod</sys:String>
+  <sys:String x:Key="Badge.Short.ReadAndExecute">L&amp;E</sys:String>
+  <sys:String x:Key="Badge.Short.Write">Scr</sys:String>
+  <sys:String x:Key="Badge.Short.List">Ele</sys:String>
+  <sys:String x:Key="Badge.Short.Read">Lett</sys:String>
+  <sys:String x:Key="Badge.Short.Inherited">E</sys:String>
   <sys:String x:Key="Badge.Short.Protected">P</sys:String>
   <sys:String x:Key="Badge.Short.ExplicitDeny">D</sys:String>
 

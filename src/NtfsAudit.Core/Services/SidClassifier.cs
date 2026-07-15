@@ -80,5 +80,112 @@ namespace NtfsAudit.App.Services
             }
             return false;
         }
+
+        public static bool IsGroupSid(string sid)
+        {
+            if (string.IsNullOrWhiteSpace(sid)) return false;
+
+            if (string.Equals(sid, "S-1-1-0", StringComparison.OrdinalIgnoreCase)) return true; // Everyone
+            if (string.Equals(sid, "S-1-5-11", StringComparison.OrdinalIgnoreCase)) return true; // Authenticated Users
+            if (string.Equals(sid, "S-1-5-32-544", StringComparison.OrdinalIgnoreCase)) return true; // Administrators
+
+            if (sid.StartsWith("S-1-5-32-", StringComparison.OrdinalIgnoreCase)) return true;
+
+            if (string.Equals(sid, "S-1-5-1", StringComparison.OrdinalIgnoreCase)) return true; // Dialup
+            if (string.Equals(sid, "S-1-5-2", StringComparison.OrdinalIgnoreCase)) return true; // Network
+            if (string.Equals(sid, "S-1-5-3", StringComparison.OrdinalIgnoreCase)) return true; // Batch
+            if (string.Equals(sid, "S-1-5-4", StringComparison.OrdinalIgnoreCase)) return true; // Interactive
+            if (string.Equals(sid, "S-1-5-6", StringComparison.OrdinalIgnoreCase)) return true; // Service
+            if (string.Equals(sid, "S-1-5-7", StringComparison.OrdinalIgnoreCase)) return true; // Anonymous
+            if (string.Equals(sid, "S-1-5-9", StringComparison.OrdinalIgnoreCase)) return true; // Enterprise Domain Controllers
+            if (string.Equals(sid, "S-1-5-13", StringComparison.OrdinalIgnoreCase)) return true; // Terminal Server User
+            if (string.Equals(sid, "S-1-5-14", StringComparison.OrdinalIgnoreCase)) return true; // Remote Interactive Logon
+            if (string.Equals(sid, "S-1-5-15", StringComparison.OrdinalIgnoreCase)) return true; // This Organization
+            if (string.Equals(sid, "S-1-5-17", StringComparison.OrdinalIgnoreCase)) return true; // IIS Users
+
+            if (sid.StartsWith("S-1-5-21-", StringComparison.OrdinalIgnoreCase))
+            {
+                var lastIndex = sid.LastIndexOf('-');
+                if (lastIndex >= 0 && lastIndex < sid.Length - 1)
+                {
+                    var ridStr = sid.Substring(lastIndex + 1);
+                    if (int.TryParse(ridStr, out var rid))
+                    {
+                        switch (rid)
+                        {
+                            case 512: // Domain Admins
+                            case 513: // Domain Users
+                            case 514: // Domain Guests
+                            case 515: // Domain Computers
+                            case 516: // Domain Controllers
+                            case 517: // Cert Publishers
+                            case 518: // Schema Admins
+                            case 519: // Enterprise Admins
+                            case 520: // Group Policy Creator Owners
+                            case 553: // RAS and IAS Servers
+                                return true;
+                        }
+                    }
+                }
+            }
+
+            try
+            {
+                var sidObj = new SecurityIdentifier(sid);
+                foreach (WellKnownSidType type in Enum.GetValues(typeof(WellKnownSidType)))
+                {
+                    if (IsWellKnownGroupType(type) && sidObj.IsWellKnown(type))
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return false;
+        }
+
+        private static bool IsWellKnownGroupType(WellKnownSidType type)
+        {
+            switch (type)
+            {
+                case WellKnownSidType.BuiltinAdministratorsSid:
+                case WellKnownSidType.BuiltinUsersSid:
+                case WellKnownSidType.BuiltinGuestsSid:
+                case WellKnownSidType.BuiltinPowerUsersSid:
+                case WellKnownSidType.BuiltinAccountOperatorsSid:
+                case WellKnownSidType.BuiltinSystemOperatorsSid:
+                case WellKnownSidType.BuiltinPrintOperatorsSid:
+                case WellKnownSidType.BuiltinBackupOperatorsSid:
+                case WellKnownSidType.BuiltinReplicatorSid:
+                case WellKnownSidType.BuiltinPreWindows2000CompatibleAccessSid:
+                case WellKnownSidType.BuiltinRemoteDesktopUsersSid:
+                case WellKnownSidType.BuiltinNetworkConfigurationOperatorsSid:
+                case WellKnownSidType.BuiltinIncomingForestTrustBuildersSid:
+                case WellKnownSidType.WorldSid:
+                case WellKnownSidType.AuthenticatedUserSid:
+                case WellKnownSidType.BatchSid:
+                case WellKnownSidType.DialupSid:
+                case WellKnownSidType.InteractiveSid:
+                case WellKnownSidType.NetworkSid:
+                case WellKnownSidType.ServiceSid:
+                case WellKnownSidType.TerminalServerSid:
+                case WellKnownSidType.AccountDomainAdminsSid:
+                case WellKnownSidType.AccountDomainUsersSid:
+                case WellKnownSidType.AccountDomainGuestsSid:
+                case WellKnownSidType.AccountComputersSid:
+                case WellKnownSidType.AccountControllersSid:
+                case WellKnownSidType.AccountCertAdminsSid:
+                case WellKnownSidType.AccountSchemaAdminsSid:
+                case WellKnownSidType.AccountEnterpriseAdminsSid:
+                case WellKnownSidType.AccountPolicyAdminsSid:
+                case WellKnownSidType.AccountRasAndIasServersSid:
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 }

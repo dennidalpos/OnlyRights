@@ -2,6 +2,7 @@ artifacts/
 bin/
 obj/
 build/
+!scripts/build/
 dist/
 out/
 publish/

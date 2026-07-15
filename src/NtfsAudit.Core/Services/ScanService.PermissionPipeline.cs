@@ -75,7 +75,7 @@ namespace NtfsAudit.App.Services
                     {
                         Sid = sid,
                         Name = sid,
-                        IsGroup = false,
+                        IsGroup = SidClassifier.IsGroupSid(sid),
                         IsDisabled = false,
                         IsServiceAccount = false,
                         IsAdminAccount = false
@@ -188,7 +188,7 @@ namespace NtfsAudit.App.Services
                             AuditSummary = auditSummary,
                             PrincipalName = member.Name,
                             PrincipalSid = member.Sid,
-                            PrincipalType = "User",
+                            PrincipalType = member.IsGroup ? "Group" : "User",
                             PermissionLayer = PermissionLayer.Ntfs,
                             AllowDeny = rule.AccessControlType.ToString(),
                             RightsSummary = rightsSummary,
@@ -501,7 +501,7 @@ namespace NtfsAudit.App.Services
             {
                 Sid = sid,
                 Name = string.IsNullOrWhiteSpace(fallbackName) ? sid : fallbackName,
-                IsGroup = false,
+                IsGroup = SidClassifier.IsGroupSid(sid),
                 IsDisabled = false,
                 IsServiceAccount = false,
                 IsAdminAccount = false

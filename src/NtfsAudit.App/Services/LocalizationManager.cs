@@ -25,11 +25,7 @@ namespace NtfsAudit.App.Services
         public const string FallbackLocale = "en";
 
         private const string ResourcePrefix = "Resources/Strings.";
-        private static readonly List<LocaleOption> _supportedLocales = new List<LocaleOption>
-        {
-            new LocaleOption("en", "English"),
-            new LocaleOption("it", "Italiano")
-        };
+        private static readonly List<LocaleOption> _supportedLocales = DiscoverSupportedLocales();
 
         private static string _currentLocale = DefaultLocale;
         private static ResourceDictionary _activeResources;
@@ -233,6 +229,99 @@ namespace NtfsAudit.App.Services
             }
 
             return new ResourceDictionary();
+        }
+
+        private static List<LocaleOption> DiscoverSupportedLocales()
+        {
+            var locales = new List<LocaleOption>();
+            var codes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            try
+            {
+                var assembly = typeof(LocalizationManager).Assembly;
+                var resourceName = assembly.GetName().Name + ".g";
+                var resourceManager = new System.Resources.ResourceManager(resourceName, assembly);
+                var resourceSet = resourceManager.GetResourceSet(CultureInfo.InvariantCulture, true, true);
+                if (resourceSet != null)
+                {
+                    foreach (System.Collections.DictionaryEntry entry in resourceSet)
+                    {
+                        var key = entry.Key as string;
+                        if (key != null && key.StartsWith("resources/strings.", StringComparison.OrdinalIgnoreCase) && key.EndsWith(".baml", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var parts = key.Split('.');
+                            if (parts.Length >= 3)
+                            {
+                                var code = parts[parts.Length - 2];
+                                if (!string.IsNullOrWhiteSpace(code) && code.Length == 2)
+                                {
+                                    codes.Add(code.ToLowerInvariant());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                var current = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
+                while (current != null)
+                {
+                    var resourcesDir = Path.Combine(current.FullName, "src", "NtfsAudit.App", "Resources");
+                    if (Directory.Exists(resourcesDir))
+                    {
+                        var files = Directory.GetFiles(resourcesDir, "Strings.*.xaml");
+                        foreach (var file in files)
+                        {
+                            var name = Path.GetFileNameWithoutExtension(file);
+                            var parts = name.Split('.');
+                            if (parts.Length >= 2)
+                            {
+                                var code = parts[1];
+                                if (!string.IsNullOrWhiteSpace(code) && code.Length == 2)
+                                {
+                                    codes.Add(code.ToLowerInvariant());
+                                }
+                            }
+                        }
+                        break;
+                    }
+                    current = current.Parent;
+                }
+            }
+            catch
+            {
+            }
+
+            codes.Add("en");
+            codes.Add("it");
+
+            foreach (var code in codes.OrderBy(c => c))
+            {
+                string displayName = code == "en" ? "English" : (code == "it" ? "Italiano" : code.ToUpperInvariant());
+                try
+                {
+                    var dict = CreateDictionary(code);
+                    if (dict != null && dict.Contains("Locale.Name"))
+                    {
+                        var nameVal = dict["Locale.Name"] as string;
+                        if (!string.IsNullOrWhiteSpace(nameVal))
+                        {
+                            displayName = nameVal;
+                        }
+                    }
+                }
+                catch
+                {
+                }
+                locales.Add(new LocaleOption(code, displayName));
+            }
+
+            return locales;
         }
     }
 }

@@ -70,13 +70,29 @@ namespace NtfsAudit.App.ViewModels
                 : LocalizationManager.Text("Hierarchy.Folder");
             var accessLabel = ResolveAccessBadgeText(entry.AllowDeny);
             var subtitle = string.Format("{0} | {1}", entry.TargetPath ?? entry.FolderPath ?? string.Empty, entry.RightsSummary ?? "-");
-            return new ResultHierarchyNodeViewModel(
+            var node = new ResultHierarchyNodeViewModel(
                 entry.RightsSummary ?? LocalizationManager.Text("Hierarchy.RightsFallback"),
                 subtitle,
                 resourceLabel,
                 string.Equals(entry.ResourceType, "File", StringComparison.OrdinalIgnoreCase) ? "#FF6D4C41" : "#FF546E7A",
                 accessLabel,
                 ResolveAccessBadgeBackground(entry.AllowDeny));
+
+            if (!string.IsNullOrWhiteSpace(entry.FolderPath))
+            {
+                var folderDetail = GetFolderDetail(entry.FolderPath);
+                if (folderDetail != null)
+                {
+                    node.HasExplicitNtfs = folderDetail.HasExplicitNtfs;
+                    node.IsProtected = folderDetail.IsInheritanceDisabled;
+                    node.HasFileEntries = folderDetail.HasFileEntries;
+                    node.HasDiff = folderDetail.DiffSummary != null && (folderDetail.DiffSummary.Added.Count > 0 || folderDetail.DiffSummary.Removed.Count > 0);
+                    node.HasBaselineMismatch = folderDetail.BaselineSummary != null && (folderDetail.BaselineSummary.Added.Count > 0 || folderDetail.BaselineSummary.Removed.Count > 0);
+                    node.HasDenyExplicit = folderDetail.AllEntries != null && folderDetail.AllEntries.Any(e => !e.IsInherited && string.Equals(e.AllowDeny, "Deny", System.StringComparison.OrdinalIgnoreCase));
+                }
+            }
+
+            return node;
         }
 
         private async Task<ResultHierarchyNodeViewModel[]> LoadGroupMembersNodesAsync(string groupSid)

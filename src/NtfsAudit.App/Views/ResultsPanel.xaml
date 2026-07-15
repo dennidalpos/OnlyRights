@@ -48,7 +48,7 @@
       <ScrollViewer Grid.Row="1"
                     VerticalScrollBarVisibility="Auto"
                     HorizontalScrollBarVisibility="Disabled"
-                    MaxHeight="280"
+                    MaxHeight="{Binding Path=ActualHeight, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource HeightPercentageConverter}, ConverterParameter=0.4}"
                     Margin="0,4,0,6"
                     Visibility="{Binding HasSelectedFolder, Converter={StaticResource BooleanToVisibilityConverter}}">
         <StackPanel Margin="0,0,12,0">
@@ -215,6 +215,85 @@
                       <Border Background="{Binding AccentBackground}" Style="{StaticResource SemanticChipBorderStyle}"
                               Visibility="{Binding HasAccent, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <TextBlock Text="{Binding AccentText}" Style="{StaticResource SemanticChipTextStyle}" />
+                      </Border>
+                      <!-- Folder Tree Status Badges -->
+                      <Border Background="{StaticResource PermissionExplicitNtfsBrush}" ToolTip="{DynamicResource Tree.ExplicitNtfsBadge.ToolTip}">
+                        <Border.Style>
+                          <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding HasExplicitNtfs}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{DynamicResource Tree.Badge.ExplicitNtfs}" Style="{StaticResource SemanticChipTextStyle}" />
+                      </Border>
+                      <Border Background="{StaticResource PermissionExplicitDenyBrush}" ToolTip="{DynamicResource Tree.DenyBadge.ToolTip}">
+                        <Border.Style>
+                          <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding HasDenyExplicit}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{DynamicResource Tree.Badge.ExplicitDeny}" Style="{StaticResource SemanticChipTextStyle}" />
+                      </Border>
+                      <Border Background="{StaticResource PermissionFileEntriesBrush}" ToolTip="{DynamicResource Tree.WithFiles.ToolTip}">
+                        <Border.Style>
+                          <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding HasFileEntries}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{DynamicResource Tree.Badge.WithFiles}" Style="{StaticResource SemanticChipTextStyle}" />
+                      </Border>
+                      <Border Background="{StaticResource PermissionProtectedBrush}" ToolTip="{DynamicResource Tree.ProtectedBadge.ToolTip}">
+                        <Border.Style>
+                          <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding IsProtected}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{DynamicResource Tree.Badge.Protected}" Style="{StaticResource SemanticChipTextStyle}" />
+                      </Border>
+                      <Border Background="{StaticResource PermissionDifferenceBrush}" ToolTip="{DynamicResource Tree.DiffBadge.ToolTip}">
+                        <Border.Style>
+                          <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding HasDiff}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{DynamicResource Tree.Badge.DiffParent}" Style="{StaticResource SemanticChipTextStyle}" />
+                      </Border>
+                      <Border Background="{StaticResource PermissionDifferenceBrush}" ToolTip="{DynamicResource Tree.BaselineBadge.ToolTip}">
+                        <Border.Style>
+                          <Style TargetType="Border" BasedOn="{StaticResource TreeInlineChipBorderStyle}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding HasBaselineMismatch}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Border.Style>
+                        <TextBlock Text="{DynamicResource Tree.Badge.BaselineMismatch}" Style="{StaticResource SemanticChipTextStyle}" />
                       </Border>
                       <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
                     </StackPanel>

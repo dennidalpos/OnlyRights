@@ -220,7 +220,7 @@ namespace NtfsAudit.App.Tests
             Assert.Contains("{DynamicResource Scan.ApplyCompatibleOptions}", buttonContents);
             Assert.DoesNotContain(settingsRoot.Descendants(), element => element.Name.LocalName == "GroupBox" && (string)element.Attribute("Header") == "{DynamicResource Main.Settings}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "Border" && (string)element.Attribute("Style") == "{StaticResource PanelBorderStyle}");
-            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBlock" && (string)element.Attribute("Text") == "{DynamicResource Main.CleanupResiduals.ToolTip}");
+            Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBlock" && (string)element.Attribute("Text") == "{DynamicResource Main.NewScan.ToolTip}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBox" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Scan.OutputDirectory.AutomationName}");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBox" && (string)element.Attribute(XamlNamespace + "Name") == "OutputDirectoryTextBox");
             Assert.Contains(settingsRoot.Descendants(), element => element.Name.LocalName == "TextBox" && (string)element.Attribute("AutomationProperties.Name") == "{DynamicResource Scan.GlobalUser.AutomationName}");

@@ -30,6 +30,26 @@ namespace NtfsAudit.App
         {
             LocalizationManager.ApplyDefault();
             base.OnStartup(e);
+
+            if (!IsAdministrator())
+            {
+                if (TryRelaunchElevated(e.Args))
+                {
+                    Shutdown();
+                    return;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        LocalizationManager.Text("App.RequiresAdmin"),
+                        LocalizationManager.Text("App.Title"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    Shutdown();
+                    return;
+                }
+            }
+
             if (!EnsureSingleInstance())
             {
                 Shutdown();
@@ -111,6 +131,36 @@ namespace NtfsAudit.App
                 ? string.Format("Unhandled error [{0}] (null exception)", source)
                 : string.Format("Unhandled error [{0}]: {1}", source, exception);
             _logger.Error(message);
+        }
+
+        private static bool IsAdministrator()
+        {
+            using (var identity = System.Security.Principal.WindowsIdentity.GetCurrent())
+            {
+                var principal = new System.Security.Principal.WindowsPrincipal(identity);
+                return principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+            }
+        }
+
+        private static bool TryRelaunchElevated(string[] args)
+        {
+            var processInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = System.Environment.ProcessPath ?? System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName,
+                UseShellExecute = true,
+                Verb = "runas",
+                Arguments = string.Join(" ", args)
+            };
+
+            try
+            {
+                System.Diagnostics.Process.Start(processInfo);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
