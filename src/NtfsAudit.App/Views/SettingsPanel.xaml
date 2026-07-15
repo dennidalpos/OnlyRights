@@ -118,6 +118,7 @@
           <StackPanel Style="{StaticResource SectionStackPanelStyle}">
             <TextBlock Text="{DynamicResource Scan.Identity}" Style="{StaticResource SubsectionHeaderText}" />
             <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.ResolveIdentities}" IsChecked="{Binding ResolveIdentities}" />
+            <CheckBox Style="{StaticResource OptionCheckBoxStyle}" Content="{DynamicResource Scan.AnonymizeIdentities}" IsChecked="{Binding AnonymizeIdentities}" />
             <TextBlock Text="{DynamicResource Scan.IdentityHint}"
                        Style="{StaticResource MicrocopyText}"
                        Margin="0,0,0,10"

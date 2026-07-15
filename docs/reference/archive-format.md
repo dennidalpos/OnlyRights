@@ -13,7 +13,8 @@ Modern archives contain:
 - `analysis.sqlite`: SQLite payload used for lazy detail loading on large archives.
 - `meta.json`: archive metadata, root path, root path kind, timestamp, version, counts, and archive-safe scan options.
 
-`analysis.sqlite` is mandatory for archives exported by the current code. Import remains tolerant for older archives where compatibility rules allow JSON-only loading.
+`analysis.sqlite` is mandatory for all archives. Importing archives without the SQLite payload is not supported.
+
 
 ## Versions
 

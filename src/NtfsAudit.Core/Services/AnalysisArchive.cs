@@ -100,6 +100,7 @@ namespace NtfsAudit.App.Services
                     File.Delete(ioOutputPath);
                 }
                 File.Move(tempOutput, ioOutputPath);
+                SecurityHardeningHelper.SecureFile(normalizedOutputPath);
             }
             finally
             {

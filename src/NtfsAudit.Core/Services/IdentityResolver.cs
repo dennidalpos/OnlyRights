@@ -21,6 +21,11 @@ namespace NtfsAudit.App.Services
         private readonly SidNameCache _sidNameCache;
         private readonly IAdResolver _adResolver;
 
+        public bool AnonymizeIdentities { get; set; }
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, ResolvedPrincipal> _anonymizedCache = new System.Collections.Concurrent.ConcurrentDictionary<string, ResolvedPrincipal>(StringComparer.OrdinalIgnoreCase);
+        private int _anonymizedUserCount = 0;
+        private int _anonymizedGroupCount = 0;
+
         public IdentityResolver(SidNameCache sidNameCache, IAdResolver adResolver)
         {
             _sidNameCache = sidNameCache;
@@ -28,6 +33,82 @@ namespace NtfsAudit.App.Services
         }
 
         public ResolvedPrincipal Resolve(string sid)
+        {
+            if (AnonymizeIdentities && ShouldAnonymizeSid(sid))
+            {
+                return _anonymizedCache.GetOrAdd(sid, s => AnonymizePrincipal(s));
+            }
+
+            return ResolveCore(sid);
+        }
+
+        private bool ShouldAnonymizeSid(string sid)
+        {
+            if (string.IsNullOrWhiteSpace(sid)) return false;
+            if (string.Equals(sid, "SCAN_OPTIONS", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(sid, "S-1-0-0", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (sid.StartsWith("S-1-5-21-", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (string.Equals(sid, "S-1-1-0", StringComparison.OrdinalIgnoreCase)) return false; // Everyone
+            if (string.Equals(sid, "S-1-3-0", StringComparison.OrdinalIgnoreCase)) return false; // Creator Owner
+            if (string.Equals(sid, "S-1-3-1", StringComparison.OrdinalIgnoreCase)) return false; // Creator Group
+            if (string.Equals(sid, "S-1-5-1", StringComparison.OrdinalIgnoreCase)) return false; // Dialup
+            if (string.Equals(sid, "S-1-5-2", StringComparison.OrdinalIgnoreCase)) return false; // Network
+            if (string.Equals(sid, "S-1-5-3", StringComparison.OrdinalIgnoreCase)) return false; // Batch
+            if (string.Equals(sid, "S-1-5-4", StringComparison.OrdinalIgnoreCase)) return false; // Interactive
+            if (string.Equals(sid, "S-1-5-6", StringComparison.OrdinalIgnoreCase)) return false; // Service
+            if (string.Equals(sid, "S-1-5-7", StringComparison.OrdinalIgnoreCase)) return false; // Anonymous
+            if (string.Equals(sid, "S-1-5-9", StringComparison.OrdinalIgnoreCase)) return false; // Enterprise Domain Controllers
+            if (string.Equals(sid, "S-1-5-11", StringComparison.OrdinalIgnoreCase)) return false; // Authenticated Users
+            if (string.Equals(sid, "S-1-5-18", StringComparison.OrdinalIgnoreCase)) return false; // Local System
+            if (string.Equals(sid, "S-1-5-19", StringComparison.OrdinalIgnoreCase)) return false; // Local Service
+            if (string.Equals(sid, "S-1-5-20", StringComparison.OrdinalIgnoreCase)) return false; // Network Service
+
+            if (sid.StartsWith("S-1-5-32-", StringComparison.OrdinalIgnoreCase)) return false; // BUILTIN groups
+            if (sid.StartsWith("S-1-5-80-", StringComparison.OrdinalIgnoreCase)) return false; // Virtual service accounts
+
+            return true;
+        }
+
+        private ResolvedPrincipal AnonymizePrincipal(string sid)
+        {
+            var resolved = ResolveCore(sid);
+            if (resolved.IsGroup)
+            {
+                var idx = System.Threading.Interlocked.Increment(ref _anonymizedGroupCount);
+                return new ResolvedPrincipal
+                {
+                    Sid = "S-1-5-21-0-0-2-" + idx,
+                    Name = "Group_" + idx,
+                    IsGroup = true,
+                    IsDisabled = resolved.IsDisabled,
+                    IsServiceAccount = resolved.IsServiceAccount,
+                    IsAdminAccount = resolved.IsAdminAccount
+                };
+            }
+            else
+            {
+                var idx = System.Threading.Interlocked.Increment(ref _anonymizedUserCount);
+                return new ResolvedPrincipal
+                {
+                    Sid = "S-1-5-21-0-0-1-" + idx,
+                    Name = "User_" + idx,
+                    IsGroup = false,
+                    IsDisabled = resolved.IsDisabled,
+                    IsServiceAccount = resolved.IsServiceAccount,
+                    IsAdminAccount = resolved.IsAdminAccount
+                };
+            }
+        }
+
+        private ResolvedPrincipal ResolveCore(string sid)
         {
             if (string.IsNullOrWhiteSpace(sid))
             {

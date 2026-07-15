@@ -90,6 +90,7 @@ namespace NtfsAudit.App.ViewModels
                 IncludeFiles = EnableAdvancedAudit && IncludeFiles,
                 ReadOwnerAndSacl = EnableAdvancedAudit && ReadOwnerAndSacl,
                 CompareBaseline = EnableAdvancedAudit && CompareBaseline,
+                AnonymizeIdentities = AnonymizeIdentities,
                 OutputDirectory = AuditOutputDirectory
             };
 
@@ -118,6 +119,7 @@ namespace NtfsAudit.App.ViewModels
                     IncludeFiles = EnableAdvancedAudit && IncludeFiles,
                     ReadOwnerAndSacl = EnableAdvancedAudit && ReadOwnerAndSacl,
                     CompareBaseline = EnableAdvancedAudit && CompareBaseline,
+                    AnonymizeIdentities = AnonymizeIdentities,
                     OutputDirectory = AuditOutputDirectory
                 };
                 var job = new ServiceScanJob

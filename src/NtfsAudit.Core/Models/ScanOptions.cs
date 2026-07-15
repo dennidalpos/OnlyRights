@@ -33,6 +33,7 @@ namespace NtfsAudit.App.Models
         public bool IncludeFiles { get; set; }
         public bool ReadOwnerAndSacl { get; set; }
         public bool CompareBaseline { get; set; }
+        public bool AnonymizeIdentities { get; set; }
 
         public ScanOptions Clone()
         {
@@ -55,7 +56,8 @@ namespace NtfsAudit.App.Models
                 IncludeSharePermissions = IncludeSharePermissions,
                 IncludeFiles = IncludeFiles,
                 ReadOwnerAndSacl = ReadOwnerAndSacl,
-                CompareBaseline = CompareBaseline
+                CompareBaseline = CompareBaseline,
+                AnonymizeIdentities = AnonymizeIdentities
             };
         }
 

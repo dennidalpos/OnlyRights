@@ -72,8 +72,10 @@ namespace NtfsAudit.App.Services
             }
 
             Directory.CreateDirectory(_schedulesRoot);
+            SecurityHardeningHelper.SecureDirectory(_schedulesRoot);
             var path = GetDefinitionPath(definition.ScheduleId);
             File.WriteAllText(path, JsonConvert.SerializeObject(definition, Formatting.Indented));
+            SecurityHardeningHelper.SecureFile(path);
         }
 
         public bool DeleteDefinition(string scheduleId)
@@ -108,8 +110,11 @@ namespace NtfsAudit.App.Services
 
         public void SaveRuntimeSnapshot(ServiceScheduleRuntimeSnapshot snapshot)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(_statusPath) ?? RuntimePaths.GetCommonDataRoot());
+            var dir = Path.GetDirectoryName(_statusPath) ?? RuntimePaths.GetCommonDataRoot();
+            Directory.CreateDirectory(dir);
+            SecurityHardeningHelper.SecureDirectory(dir);
             File.WriteAllText(_statusPath, JsonConvert.SerializeObject(snapshot ?? new ServiceScheduleRuntimeSnapshot(), Formatting.Indented));
+            SecurityHardeningHelper.SecureFile(_statusPath);
         }
 
         internal bool TryLoadDefinition(string filePath, out ServiceScheduleDefinition? definition, out string? failureReason)

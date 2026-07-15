@@ -76,6 +76,7 @@ namespace NtfsAudit.App.ViewModels
         private bool _excludeAdminAccounts;
         private bool _expandGroups = true;
         private bool _usePowerShell = true;
+        private bool _anonymizeIdentities;
         private bool _enableAdvancedAudit = true;
         private bool _computeEffectiveAccess = true;
         private bool _includeSharePermissions = true;

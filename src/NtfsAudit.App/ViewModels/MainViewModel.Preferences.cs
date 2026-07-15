@@ -147,6 +147,7 @@ namespace NtfsAudit.App.ViewModels
                 ExcludeAdminAccounts = prefs.ResolveIdentities && prefs.ExcludeAdminAccounts;
                 ExpandGroups = prefs.ResolveIdentities && prefs.ExpandGroups;
                 UsePowerShell = prefs.ResolveIdentities && prefs.UsePowerShell;
+                AnonymizeIdentities = prefs.AnonymizeIdentities;
                 EnableAdvancedAudit = prefs.EnableAdvancedAudit;
                 ComputeEffectiveAccess = prefs.EnableAdvancedAudit && prefs.ComputeEffectiveAccess;
                 IncludeSharePermissions = prefs.EnableAdvancedAudit && prefs.IncludeSharePermissions;
@@ -232,6 +233,7 @@ namespace NtfsAudit.App.ViewModels
                     ExcludeAdminAccounts = ExcludeAdminAccounts,
                     ExpandGroups = ExpandGroups,
                     UsePowerShell = UsePowerShell,
+                    AnonymizeIdentities = AnonymizeIdentities,
                     EnableAdvancedAudit = EnableAdvancedAudit,
                     ComputeEffectiveAccess = ComputeEffectiveAccess,
                     IncludeSharePermissions = IncludeSharePermissions,
@@ -286,6 +288,7 @@ namespace NtfsAudit.App.ViewModels
             public bool ExcludeAdminAccounts { get; set; }
             public bool ExpandGroups { get; set; } = true;
             public bool UsePowerShell { get; set; } = true;
+            public bool AnonymizeIdentities { get; set; }
             public bool EnableAdvancedAudit { get; set; } = true;
             public bool ComputeEffectiveAccess { get; set; } = true;
             public bool IncludeSharePermissions { get; set; } = true;

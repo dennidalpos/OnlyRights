@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="OnlyRights NtfsAudit Privacy, Security and GDPR Compliance Policy.">
+  <title>Privacy & GDPR Policy — OnlyRights NtfsAudit</title>
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="en">
+
+  <!-- Header -->
+  <header>
+    <div class="container nav-container">
+      <a href="index.html" class="brand">
+        <img src="assets/onlyrights-mark.svg" alt="OnlyRights Logo">
+        <span class="brand-text">OnlyRights</span>
+      </a>
+
+      <!-- Navigation Menu -->
+      <nav>
+        <ul class="nav-menu" id="nav-menu">
+          <li>
+            <a href="index.html#features" class="nav-link">
+              <span class="lang-en">Features</span>
+              <span class="lang-it">Caratteristiche</span>
+            </a>
+          </li>
+          <li>
+            <a href="index.html#workflows" class="nav-link">
+              <span class="lang-en">Workflows</span>
+              <span class="lang-it">Flussi di Lavoro</span>
+            </a>
+          </li>
+          <li>
+            <a href="index.html#download" class="nav-link">
+              <span class="lang-en">Downloads</span>
+              <span class="lang-it">Download</span>
+            </a>
+          </li>
+          <li>
+            <a href="privacy.html" class="nav-link">
+              <span class="lang-en">Privacy & GDPR</span>
+              <span class="lang-it">Privacy e GDPR</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Controls & Toggle -->
+      <div class="nav-controls">
+        <!-- Language Switcher -->
+        <button class="btn btn-lang btn-lang-toggle" data-lang="en">EN</button>
+        <button class="btn btn-lang btn-lang-toggle" data-lang="it">IT</button>
+
+        <a href="index.html#download" class="btn btn-primary">
+          <span class="lang-en"><i class="fa-solid fa-download"></i> Get MSI</span>
+          <span class="lang-it"><i class="fa-solid fa-download"></i> Scarica MSI</span>
+        </a>
+
+        <!-- Mobile Burger Menu -->
+        <button class="menu-toggle" id="menu-toggle" aria-label="Toggle Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Privacy Page Content -->
+  <section class="privacy-page">
+    <div class="container">
+      <div class="privacy-container">
+        <h1 class="privacy-title">
+          <span class="lang-en">Privacy & GDPR Policy</span>
+          <span class="lang-it">Informativa Privacy e GDPR</span>
+        </h1>
+        <p class="privacy-meta-date">
+          <span class="lang-en">Last updated: July 15, 2026</span>
+          <span class="lang-it">Ultimo aggiornamento: 15 Luglio 2026</span>
+        </p>
+
+        <!-- Section: Data Collection -->
+        <div class="privacy-section-block">
+          <h2>
+            <span class="lang-en">1. 100% Offline & Local Isolation</span>
+            <span class="lang-it">1. Esecuzione 100% Offline e Locale</span>
+          </h2>
+          <p>
+            <span class="lang-en">OnlyRights NtfsAudit does not transmit any scanned data, folder structures, permissions, or system metadata to external web servers, cloud APIs, or third parties. The entire auditing process is compiled and run locally on your Windows environment.</span>
+            <span class="lang-it">OnlyRights NtfsAudit non trasmette alcuna struttura di cartelle, permessi, dettagli di scansione o metadati di sistema a server esterni, API cloud o terze parti. L'intero processo di audit viene compilato ed eseguito localmente sul tuo ambiente Windows.</span>
+          </p>
+          <p>
+            <span class="lang-en">There is no telemetry, tracking, or remote analytics instrumentation embedded in the software.</span>
+            <span class="lang-it">Nel software non è integrato alcun sistema di telemetria, tracciamento o analisi remota dei dati.</span>
+          </p>
+        </div>
+
+        <!-- Section: Credentials Protection -->
+        <div class="privacy-section-block">
+          <h2>
+            <span class="lang-en">2. Scan Credentials Protection</span>
+            <span class="lang-it">2. Protezione delle Credenziali di Scansione</span>
+          </h2>
+          <p>
+            <span class="lang-en">When network share scanning requires alternate credentials, they are protected using Windows Data Protection API (DPAPI) with a <strong>LocalMachine</strong> scope.</span>
+            <span class="lang-it">Quando la scansione delle condivisioni di rete richiede credenziali alternative, queste vengono protette utilizzando le API di protezione dei dati di Windows (DPAPI) con ambito <strong>LocalMachine</strong>.</span>
+          </p>
+          <ul>
+            <li>
+              <span class="lang-en"><strong>DPAPI Scope:</strong> Scans are isolated, and raw credential payloads are decrypted only when impersonating targets during the scanning execution.</span>
+              <span class="lang-it"><strong>Ambito DPAPI:</strong> Le scansioni sono isolate e le credenziali in chiaro vengono decifrate solo al momento dell'impersonamento durante l'esecuzione.</span>
+            </li>
+            <li>
+              <span class="lang-en"><strong>Zero-Credential Exports:</strong> Configured passwords, secrets, or tokens are strictly stripped out of `.ntaudit` archive metadata (meta.json), newline-delimited JSONL export files, and error logs.</span>
+              <span class="lang-it"><strong>Esportazioni Sicure:</strong> Password, segreti o token configurati vengono rigorosamente rimossi dai metadati dell'archivio `.ntaudit` (meta.json), dai file JSONL esportati e dai log degli errori.</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Section: GDPR Compliance -->
+        <div class="privacy-section-block">
+          <h2>
+            <span class="lang-en">3. GDPR & Personal Data Governance</span>
+            <span class="lang-it">3. GDPR e Gestione dei Dati Personali</span>
+          </h2>
+          <p>
+            <span class="lang-en">During NTFS scanning and Active Directory synchronization, OnlyRights NtfsAudit reads and maps Security Identifiers (SIDs) to usernames and domain group memberships. Under the General Data Protection Regulation (GDPR), these usernames and identifiers constitute personal data (identifiable network details).</span>
+            <span class="lang-it">Durante la scansione NTFS e la sincronizzazione con Active Directory, OnlyRights NtfsAudit acquisisce e mappa i Security Identifier (SID) associandoli a nomi utente e appartenenza a gruppi di dominio. Ai sensi del Regolamento Generale sulla Protezione dei Dati (GDPR), questi identificatori costituiscono dati personali.</span>
+          </p>
+          <p>
+            <span class="lang-en">Because the application suite runs completely offline, the organization executing the scans operates as the sole <strong>Data Controller</strong>. OnlyRights developers have no access to your archives, file paths, or directory reports. It is the responsibility of the Data Controller to secure all generated `.ntaudit` database archives, Excel spreadsheets, and scan logs.</span>
+            <span class="lang-it">Poiché la suite software viene eseguita interamente offline, l'organizzazione che esegue le scansioni funge da unico <strong>Titolare del Trattamento (Data Controller)</strong>. Gli sviluppatori di OnlyRights non hanno alcun accesso ai tuoi archivi, percorsi file o report di directory. È responsabilità del Titolare del Trattamento proteggere tutti gli archivi `.ntaudit` generati, i fogli Excel ed i file di log.</span>
+          </p>
+        </div>
+
+        <!-- Section: Security Audits -->
+        <div class="privacy-section-block">
+          <h2>
+            <span class="lang-en">4. Windows Service Permissions</span>
+            <span class="lang-it">4. Privilegi del Servizio di Background</span>
+          </h2>
+          <p>
+            <span class="lang-en">The optional background scanning service (`NtfsAudit.Service`) is staged under `%ProgramData%\NtfsAudit` and processes schedules created within the main desktop UI. The service executes using the configured service account identity and decrypts credentials scoped to the local machine boundary, guaranteeing safe execution outside the desktop user's interactive space.</span>
+            <span class="lang-it">Il servizio di scansione in background opzionale (`NtfsAudit.Service`) è posizionato sotto `%ProgramData%\NtfsAudit` ed esegue i compiti programmati pianificati tramite la UI desktop. Il servizio viene eseguito con l'identità dell'account di servizio configurato e decifra le credenziali associate alla macchina locale, garantendo un'esecuzione isolata.</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="brand">
+            <img src="assets/onlyrights-mark.svg" alt="OnlyRights Logo">
+            <span class="brand-text">OnlyRights</span>
+          </div>
+          <p class="footer-brand-info">
+            <span class="lang-en">A modern, secure tool for scanning and auditing NTFS filesystem DACL permissions on Windows servers and workstations.</span>
+            <span class="lang-it">Uno strumento moderno e sicuro per scansionare e verificare i permessi NTFS DACL su server e workstation Windows.</span>
+          </p>
+        </div>
+
+        <div class="footer-links-col">
+          <h4>Navigation</h4>
+          <ul class="footer-links-list">
+            <li><a href="index.html#home" class="footer-link">Home</a></li>
+            <li><a href="index.html#features" class="footer-link">
+              <span class="lang-en">Features</span>
+              <span class="lang-it">Caratteristiche</span>
+            </a></li>
+            <li><a href="index.html#workflows" class="footer-link">
+              <span class="lang-en">Workflows</span>
+              <span class="lang-it">Flussi di Lavoro</span>
+            </a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <h4>Legal & Security</h4>
+          <ul class="footer-links-list">
+            <li><a href="privacy.html" class="footer-link">Privacy & GDPR Policy</a></li>
+            <li>
+              <a href="https://github.com/dennidalpos/OnlyRights" class="footer-link" target="_blank" rel="noopener noreferrer">
+                <i class="fa-brands fa-github"></i> GitHub Repository
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-copyright">
+          &copy; 2026 OnlyRights. All rights reserved.
+        </p>
+        <div class="footer-meta-links">
+          <span style="color: var(--text-muted); font-size: 0.85rem;">
+            <span class="lang-en">Built on C# & .NET 8</span>
+            <span class="lang-it">Sviluppato in C# e .NET 8</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+</body>
+</html>

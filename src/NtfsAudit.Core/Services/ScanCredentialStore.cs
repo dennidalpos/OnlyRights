@@ -72,10 +72,12 @@ namespace NtfsAudit.App.Services
             if (!string.IsNullOrWhiteSpace(directory))
             {
                 Directory.CreateDirectory(directory);
+                SecurityHardeningHelper.SecureDirectory(directory);
             }
 
             var normalized = payload ?? new CredentialStorePayload();
             File.WriteAllText(_storePath, JsonConvert.SerializeObject(normalized, Formatting.Indented));
+            SecurityHardeningHelper.SecureFile(_storePath);
         }
 
         private static CredentialStorePayload LoadPayloadFromPath(string path)

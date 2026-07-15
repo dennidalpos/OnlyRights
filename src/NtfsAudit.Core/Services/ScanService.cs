@@ -65,8 +65,54 @@ namespace NtfsAudit.App.Services
                 () => RunCore(runtimeOptions, progress, token));
         }
 
+        private readonly Dictionary<string, string> _pathUserMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private int _pathUserCount = 0;
+
+        public string AnonymizePath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return path;
+
+            string[] patterns = { "\\Users\\", "/Users/", "\\profiles\\", "/profiles/" };
+            foreach (var pattern in patterns)
+            {
+                var idx = path.IndexOf(pattern, StringComparison.OrdinalIgnoreCase);
+                if (idx >= 0)
+                {
+                    var prefix = path.Substring(0, idx + pattern.Length);
+                    var rest = path.Substring(idx + pattern.Length);
+                    var separatorIndex = rest.IndexOfAny(new[] { '\\', '/' });
+                    var userDirName = separatorIndex >= 0 ? rest.Substring(0, separatorIndex) : rest;
+                    var suffix = separatorIndex >= 0 ? rest.Substring(separatorIndex) : string.Empty;
+
+                    if (!string.Equals(userDirName, "Public", StringComparison.OrdinalIgnoreCase) &&
+                        !string.Equals(userDirName, "Default", StringComparison.OrdinalIgnoreCase) &&
+                        !string.Equals(userDirName, "Default User", StringComparison.OrdinalIgnoreCase) &&
+                        !string.Equals(userDirName, "All Users", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string anonymizedDir;
+                        lock (_pathUserMap)
+                        {
+                            if (!_pathUserMap.TryGetValue(userDirName, out anonymizedDir))
+                            {
+                                _pathUserCount++;
+                                anonymizedDir = "User_" + _pathUserCount;
+                                _pathUserMap[userDirName] = anonymizedDir;
+                            }
+                        }
+                        return prefix + anonymizedDir + suffix;
+                    }
+                }
+            }
+            return path;
+        }
+
         private ScanResult RunCore(ScanOptions options, IProgress<ScanProgress> progress, CancellationToken token)
         {
+            if (_identityResolver != null)
+            {
+                _identityResolver.AnonymizeIdentities = options.AnonymizeIdentities;
+            }
+
             if (options.ReadOwnerAndSacl)
             {
                 TryEnableSecurityPrivilege();

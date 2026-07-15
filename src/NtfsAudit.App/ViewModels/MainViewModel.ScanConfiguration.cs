@@ -433,6 +433,17 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
+        public bool AnonymizeIdentities
+        {
+            get { return _anonymizeIdentities; }
+            set
+            {
+                _anonymizeIdentities = value;
+                OnPropertyChanged("AnonymizeIdentities");
+                PersistUiPreferencesIfAllowed();
+            }
+        }
+
         public bool IsExpandGroupsEnabled
         {
             get { return _resolveIdentities; }

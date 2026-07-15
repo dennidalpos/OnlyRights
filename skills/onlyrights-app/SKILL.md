@@ -17,12 +17,14 @@ This skill contains UI design guidelines and rules for developing and maintainin
 - **Main WPF Client (`NtfsAudit.App`)**: Houses MVVM ViewModels, Commands, Views, and Localization resources.
 - **Read-Only Viewer (`NtfsAudit.Viewer`)**: boots `NtfsAudit.App.MainWindow` and `NtfsAudit.App.ViewModels.MainViewModel` through a direct project reference.
 - **Service Isolation**: The Worker Service host (`NtfsAudit.Service`) must NOT reference the WPF application project (`NtfsAudit.App`).
+- **Anonymization Option**: The view model supports `AnonymizeIdentities` binding which is saved in `ui-preferences.json` and passed in scan execution options.
 
 ### 2. Localization (`LocalizationManager`)
 - Supported locales: English (`en`, default/fallback) and Italian (`it`).
 - UI locale preferences are stored in `ui-preferences.json`.
 - UI strings must be updated dynamically without requiring application restarts.
 - Localization files are stored as XAML Resource Dictionaries under `src/NtfsAudit.App/Resources`.
+- **Hardening Keys**: `Scan.AnonymizeIdentities` must be defined in both English and Italian dictionaries to label the GDPR checkbox.
 
 ### 3. Resource Dictionaries & Shared Views
 - Shared styles and UI resources must be loaded dynamically by merging `SharedResources.xaml`.

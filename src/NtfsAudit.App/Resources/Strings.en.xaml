@@ -126,6 +126,7 @@
   <sys:String x:Key="Scan.Options">Options</sys:String>
   <sys:String x:Key="Scan.Identity">Identity</sys:String>
   <sys:String x:Key="Scan.ResolveIdentities">Resolve identities</sys:String>
+  <sys:String x:Key="Scan.AnonymizeIdentities">Anonymize identities (GDPR compliance)</sys:String>
   <sys:String x:Key="Scan.IdentityHint">More accuracy, with possible performance cost.</sys:String>
   <sys:String x:Key="Scan.IdentityHint.ToolTip">Enable SID, group, and user resolution through the available resolvers.</sys:String>
   <sys:String x:Key="Scan.ExpandGroups">Expand nested groups</sys:String>

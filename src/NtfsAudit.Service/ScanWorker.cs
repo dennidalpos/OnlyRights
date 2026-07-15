@@ -496,7 +496,8 @@ namespace NtfsAudit.Service
                     IncludeSharePermissions = template.EnableAdvancedAudit && template.IncludeSharePermissions,
                     IncludeFiles = template.EnableAdvancedAudit && template.IncludeFiles,
                     ReadOwnerAndSacl = template.EnableAdvancedAudit && template.ReadOwnerAndSacl,
-                    CompareBaseline = template.EnableAdvancedAudit && template.CompareBaseline
+                    CompareBaseline = template.EnableAdvancedAudit && template.CompareBaseline,
+                    AnonymizeIdentities = template.AnonymizeIdentities
                 })
                 .ToList();
 

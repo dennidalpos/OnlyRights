@@ -45,7 +45,11 @@ namespace NtfsAudit.App.Services
             var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
             var isInheritanceDisabled = security.AreAccessRulesProtected;
             var hasExplicitPermissions = false;
-            var ntfsPermissions = BuildNtfsPermissions(rules, options, folderKey, targetPath);
+
+            var anonFolderKey = options.AnonymizeIdentities ? AnonymizePath(folderKey) : folderKey;
+            var anonTargetPath = options.AnonymizeIdentities ? AnonymizePath(targetPath) : targetPath;
+
+            var ntfsPermissions = BuildNtfsPermissions(rules, options, anonFolderKey, anonTargetPath);
             var effectiveAccess = options.ComputeEffectiveAccess
                 ? PermissionCalculator.BuildAccessMap(ntfsPermissions, options.IncludeInherited)
                 : new Dictionary<string, PermissionCalculator.AccessAccumulator>(StringComparer.OrdinalIgnoreCase);
@@ -65,7 +69,7 @@ namespace NtfsAudit.App.Services
                 }
                 var sid = rule.IdentityReference.Value;
                 ResolvedPrincipal resolved;
-                if (options.ResolveIdentities)
+                if (options.ResolveIdentities || options.AnonymizeIdentities)
                 {
                     resolved = _identityResolver.Resolve(sid);
                 }
@@ -116,13 +120,13 @@ namespace NtfsAudit.App.Services
                 var scope = PermissionCalculator.ResolveScope(rule.InheritanceFlags, rule.PropagationFlags);
                 var entry = new AceEntry
                 {
-                    FolderPath = folderKey,
-                    TargetPath = targetPath,
+                    FolderPath = anonFolderKey,
+                    TargetPath = anonTargetPath,
                     ResourceType = isFile ? "File" : "Folder",
                     Owner = owner,
                     AuditSummary = auditSummary,
                     PrincipalName = resolved.Name,
-                    PrincipalSid = sid,
+                    PrincipalSid = resolved.Sid,
                     PrincipalType = resolved.Type,
                     PermissionLayer = PermissionLayer.Ntfs,
                     AllowDeny = rule.AccessControlType.ToString(),
@@ -155,10 +159,14 @@ namespace NtfsAudit.App.Services
                 }
 
                 List<ResolvedPrincipal> members = null;
-                if (resolved.IsGroup && options.ExpandGroups && options.ResolveIdentities)
+                if (resolved.IsGroup && options.ExpandGroups && (options.ResolveIdentities || options.AnonymizeIdentities))
                 {
                     members = _groupExpansion.ExpandGroup(sid, token);
-                    entry.MemberNames = members.Select(m =>
+                    if (options.AnonymizeIdentities && members != null)
+                    {
+                        members = members.Select(m => _identityResolver.Resolve(m.Sid ?? m.Name)).ToList();
+                    }
+                    entry.MemberNames = members?.Select(m =>
                         string.IsNullOrWhiteSpace(m.Sid)
                             ? m.Name
                             : string.Format("{0} ({1})", m.Name, m.Sid)).ToList();
@@ -181,8 +189,8 @@ namespace NtfsAudit.App.Services
                         }
                         var memberEntry = new AceEntry
                         {
-                            FolderPath = folderKey,
-                            TargetPath = targetPath,
+                            FolderPath = anonFolderKey,
+                            TargetPath = anonTargetPath,
                             ResourceType = isFile ? "File" : "Folder",
                             Owner = owner,
                             AuditSummary = auditSummary,
@@ -239,8 +247,8 @@ namespace NtfsAudit.App.Services
                 shareAccessMap,
                 effectiveAccess,
                 options,
-                folderKey,
-                targetPath,
+                anonFolderKey,
+                anonTargetPath,
                 isFile,
                 depth,
                 dataQueue,
@@ -489,7 +497,7 @@ namespace NtfsAudit.App.Services
         private ResolvedPrincipal ResolvePrincipal(string sid, string fallbackName, ScanOptions options)
         {
             if (string.IsNullOrWhiteSpace(sid)) return null;
-            if (options.ResolveIdentities)
+            if (options.ResolveIdentities || options.AnonymizeIdentities)
             {
                 var resolved = _identityResolver.Resolve(sid);
                 if (resolved != null)

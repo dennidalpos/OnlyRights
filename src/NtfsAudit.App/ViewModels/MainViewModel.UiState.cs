@@ -447,6 +447,7 @@ namespace NtfsAudit.App.ViewModels
             ExcludeAdminAccounts = options.ResolveIdentities && options.ExcludeAdminAccounts;
             ExpandGroups = options.ResolveIdentities && options.ExpandGroups;
             UsePowerShell = options.ResolveIdentities && options.UsePowerShell;
+            AnonymizeIdentities = options.AnonymizeIdentities;
             EnableAdvancedAudit = options.EnableAdvancedAudit;
             ComputeEffectiveAccess = options.EnableAdvancedAudit && options.ComputeEffectiveAccess;
             IncludeSharePermissions = options.EnableAdvancedAudit && options.IncludeSharePermissions;

@@ -148,7 +148,7 @@ namespace NtfsAudit.App.Tests
 
             var provider = new FolderTreeProvider(treeMap, details);
 
-            var fileNode = Assert.Single(provider.GetChildren(@"C:\AuditRoot\Child").Where(node => node.IsFileNode));
+            var fileNode = Assert.Single(provider.GetChildren(@"C:\AuditRoot\Child"), node => node.IsFileNode);
 
             Assert.Equal("FILE", fileNode.TypeLabel);
             Assert.Equal(@"C:\AuditRoot\Child", fileNode.SelectionPath);

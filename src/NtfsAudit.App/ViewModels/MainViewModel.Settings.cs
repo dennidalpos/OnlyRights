@@ -505,7 +505,8 @@ namespace NtfsAudit.App.ViewModels
                 IncludeSharePermissions = EnableAdvancedAudit && IncludeSharePermissions && SupportsSharePermissionsForSelection,
                 IncludeFiles = EnableAdvancedAudit && IncludeFiles,
                 ReadOwnerAndSacl = EnableAdvancedAudit && ReadOwnerAndSacl,
-                CompareBaseline = EnableAdvancedAudit && CompareBaseline
+                CompareBaseline = EnableAdvancedAudit && CompareBaseline,
+                AnonymizeIdentities = AnonymizeIdentities
             };
         }
 
