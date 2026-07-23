@@ -18,7 +18,7 @@ Development is divided into three specialized sub-skills which must be loaded ba
    Use this skill when working on WPF UI elements, MVVM ViewModels, resources dictionaries, localization (English/Italian), and Viewer bootstrapping.
    
 3. **[onlyrights-ops](file:///d:/GITHUB/OnlyRights/skills/onlyrights-ops/SKILL.md)**: 
-   Use this skill when executing PowerShell scripts, restoring dependencies, building solution binaries, packaging WiX MSI installers, or installing the background Windows Service.
+   Use this skill when executing PowerShell scripts, restoring dependencies, building solution binaries, packaging NSIS 64-bit installers, or installing the background Windows Service.
 
 ## Documentation References
 

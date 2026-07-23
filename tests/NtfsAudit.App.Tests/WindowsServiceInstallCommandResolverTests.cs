@@ -1,3 +1,8 @@
+using NtfsAudit.App.Services;
+using NtfsAudit.Core.Logging;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Cache;
+using NtfsAudit.Core.Models;
 /*
  * OnlyRights
  * Copyright (c) 2026 Danny Perondi
@@ -11,7 +16,7 @@
  */
 using System;
 using System.IO;
-using NtfsAudit.App.Services;
+using NtfsAudit.Core.Services;
 using Xunit;
 
 namespace NtfsAudit.App.Tests
@@ -46,11 +51,65 @@ namespace NtfsAudit.App.Tests
         }
 
         [Fact]
+        public void ResolveServiceCommand_FindsServiceUnderArtifactsBuildX64Layout()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "NtfsAudit.Tests", Guid.NewGuid().ToString("N"));
+            var appBase = Path.Combine(root, "artifacts", "build", "NtfsAudit.App", "x64", "Release", "net8.0-windows", "win-x64");
+            var expected = Path.Combine(root, "artifacts", "build", "NtfsAudit.Service", "x64", "Release", "net8.0-windows", "win-x64", "NtfsAudit.Service.exe");
+
+            Directory.CreateDirectory(appBase);
+            Directory.CreateDirectory(Path.GetDirectoryName(expected));
+            File.WriteAllText(Path.Combine(root, "NtfsAudit.sln"), string.Empty);
+            File.WriteAllText(expected, string.Empty);
+
+            try
+            {
+                var resolved = WindowsServiceInstallCommandResolver.ResolveServiceCommand(appBase);
+
+                Assert.Equal(expected, resolved);
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                {
+                    Directory.Delete(root, true);
+                }
+            }
+        }
+
+        [Fact]
+        public void ResolveServiceCommand_FindsServiceUnderInstalledPcLayout()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "NtfsAudit.Tests", Guid.NewGuid().ToString("N"));
+            var installRoot = Path.Combine(root, "ProgramFiles", "OnlyRights", "NtfsAudit");
+            var appBase = Path.Combine(installRoot, "App");
+            var expected = Path.Combine(installRoot, "Service", "NtfsAudit.Service.exe");
+
+            Directory.CreateDirectory(appBase);
+            Directory.CreateDirectory(Path.GetDirectoryName(expected));
+            File.WriteAllText(expected, string.Empty);
+
+            try
+            {
+                var resolved = WindowsServiceInstallCommandResolver.ResolveServiceCommand(appBase);
+
+                Assert.Equal(expected, resolved);
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                {
+                    Directory.Delete(root, true);
+                }
+            }
+        }
+
+        [Fact]
         public void FormatBinPathForSc_QuotesExeCommand()
         {
             var formatted = WindowsServiceInstallCommandResolver.FormatBinPathForSc(@"C:\Program Files\OnlyRights\NtfsAudit.Service.exe");
 
-            Assert.Equal(@"""C:\Program Files\OnlyRights\NtfsAudit.Service.exe""", formatted);
+            Assert.Equal("\"\\\"C:\\Program Files\\OnlyRights\\NtfsAudit.Service.exe\\\"\"", formatted);
         }
 
         [Fact]

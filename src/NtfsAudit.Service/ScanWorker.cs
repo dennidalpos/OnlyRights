@@ -1,3 +1,5 @@
+using NtfsAudit.Core.Logging;
+using NtfsAudit.Core.Export;
 /*
  * OnlyRights
  * Copyright (c) 2026 Danny Perondi
@@ -17,9 +19,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
-using NtfsAudit.App.Cache;
-using NtfsAudit.App.Models;
-using NtfsAudit.App.Services;
+using NtfsAudit.Core.Cache;
+using NtfsAudit.Core.Models;
+using NtfsAudit.Core.Services;
 
 namespace NtfsAudit.Service
 {

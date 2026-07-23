@@ -6,7 +6,7 @@
     <FileVersion>$(OnlyRightsVersion)</FileVersion>
     <InformationalVersion>$(OnlyRightsVersion)</InformationalVersion>
     <RepositoryArtifactsRoot>$(MSBuildThisFileDirectory)artifacts\</RepositoryArtifactsRoot>
-    <Platforms>AnyCPU;x86;x64</Platforms>
+    <Platforms>x64;AnyCPU</Platforms>
     <ArtifactsProjectName Condition="'$(AssemblyName)' != ''">$(AssemblyName)</ArtifactsProjectName>
     <ArtifactsProjectName Condition="'$(ArtifactsProjectName)' == ''">$(MSBuildProjectName)</ArtifactsProjectName>
     <ArtifactsPlatformSegment Condition="'$(PlatformTarget)' != '' and '$(PlatformTarget)' != 'AnyCPU'">$(PlatformTarget)\</ArtifactsPlatformSegment>

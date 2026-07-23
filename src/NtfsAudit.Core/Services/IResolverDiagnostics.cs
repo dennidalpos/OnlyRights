@@ -9,7 +9,7 @@
  * commercial use, or reuse of this file is prohibited without prior
  * written permission from Danny Perondi.
  */
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     internal interface IResolverDiagnostics
     {

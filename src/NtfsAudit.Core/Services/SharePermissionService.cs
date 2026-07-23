@@ -15,9 +15,9 @@ using System.IO;
 using System.Management;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Models;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public class SharePermissionService
     {

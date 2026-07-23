@@ -19,10 +19,10 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
-using NtfsAudit.App.Export;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Models;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public partial class ScanService
     {

@@ -15,9 +15,9 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Models;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public static class PathResolver
     {

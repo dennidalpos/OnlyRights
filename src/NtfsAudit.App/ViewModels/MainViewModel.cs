@@ -1,3 +1,4 @@
+using NtfsAudit.Core.Logging;
 /*
  * OnlyRights
  * Copyright (c) 2026 Danny Perondi
@@ -27,10 +28,11 @@ using System.Windows.Threading;
 using Win32 = Microsoft.Win32;
 using Newtonsoft.Json;
 using WpfMessageBox = System.Windows.MessageBox;
-using NtfsAudit.App.Cache;
-using NtfsAudit.App.Export;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Cache;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Models;
 using NtfsAudit.App.Services;
+using NtfsAudit.Core.Services;
 
 namespace NtfsAudit.App.ViewModels
 {

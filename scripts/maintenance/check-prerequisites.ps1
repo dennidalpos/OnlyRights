@@ -71,18 +71,20 @@ $installedSdkVersions = Get-InstalledSdkVersions
 $desktopSdkAvailable = Test-WindowsDesktopSdkAvailable -SelectedSdkVersion $currentDotnetVersion
 $dotnetHostPath = (Get-Command dotnet).Source
 $scExecutablePath = Join-Path ([Environment]::GetFolderPath("System")) "sc.exe"
-$msiexecPath = Join-Path ([Environment]::GetFolderPath("System")) "msiexec.exe"
-$wixCandlePath = Join-Path $context.WixTools "candle.exe"
-$wixLightPath = Join-Path $context.WixTools "light.exe"
+$nsisFound = $false
+try {
+    $nsisPath = Resolve-NsisCompilerPath
+    $nsisFound = Test-ExecutablePath $nsisPath
+} catch {
+    $nsisFound = $false
+}
 
 $checks = @(
     (New-CheckResult -Label "SDK feature band available" -Passed $sdkInstalled -Failure ("Required SDK feature band not installed for global.json version {0}." -f $requiredSdkVersion) -Required $true),
     (New-CheckResult -Label "Selected SDK WindowsDesktop support" -Passed $desktopSdkAvailable -Failure ("Selected SDK {0} does not expose Microsoft.NET.Sdk.WindowsDesktop." -f $currentDotnetVersion) -Required $true),
     (New-CheckResult -Label "dotnet host" -Passed (Test-ExecutablePath $dotnetHostPath) -Failure ("dotnet host not found: {0}" -f $dotnetHostPath) -Required $true),
     (New-CheckResult -Label "sc.exe (Windows service management)" -Passed (Test-ExecutablePath $scExecutablePath) -Failure ("sc.exe not found: {0}" -f $scExecutablePath) -Required $false),
-    (New-CheckResult -Label "msiexec.exe (MSI install tests)" -Passed (Test-ExecutablePath $msiexecPath) -Failure ("msiexec.exe not found: {0}" -f $msiexecPath) -Required $false),
-    (New-CheckResult -Label "WiX candle.exe (MSI build)" -Passed (Test-ExecutablePath $wixCandlePath) -Failure ("WiX candle.exe not found: {0}" -f $wixCandlePath) -Required $false),
-    (New-CheckResult -Label "WiX light.exe (MSI build)" -Passed (Test-ExecutablePath $wixLightPath) -Failure ("WiX light.exe not found: {0}" -f $wixLightPath) -Required $false)
+    (New-CheckResult -Label "NSIS compiler makensis.exe (Installer build)" -Passed $nsisFound -Failure "NSIS compiler makensis.exe not found in PATH or standard Program Files locations." -Required $false)
 )
 
 $requiredChecks = @($checks | Where-Object { $_.Required })

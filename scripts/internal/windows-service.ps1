@@ -189,12 +189,21 @@ function Resolve-ServiceCommandPath {
     $packageRoot = Resolve-StagedOutputRoot -BaseRoot $repo.PackagesRoot -Configuration $Configuration -Runtime $Runtime -Framework $Framework
     $publishRoot = Resolve-StagedOutputRoot -BaseRoot $repo.PublishRoot -Configuration $Configuration -Runtime $Runtime -Framework $Framework
     $buildRoot = Join-Path $repo.BuildRoot ("NtfsAudit.Service\{0}\net8.0-windows" -f $Configuration)
+    $buildRootX64 = Join-Path $repo.BuildRoot ("NtfsAudit.Service\x64\{0}\net8.0-windows" -f $Configuration)
+    $buildRootRuntime = Join-Path $buildRoot "win-x64"
+    $buildRootX64Runtime = Join-Path $buildRootX64 "win-x64"
 
     foreach ($basePath in @(
         $packageRoot,
         $publishRoot,
         $buildRoot,
-        (Join-Path $repo.RepoRoot "src\NtfsAudit.Service\bin\$Configuration\net8.0-windows")
+        $buildRootRuntime,
+        $buildRootX64,
+        $buildRootX64Runtime,
+        (Join-Path $repo.RepoRoot "src\NtfsAudit.Service\bin\$Configuration\net8.0-windows"),
+        (Join-Path $repo.RepoRoot "src\NtfsAudit.Service\bin\$Configuration\net8.0-windows\win-x64"),
+        (Join-Path $repo.RepoRoot "src\NtfsAudit.Service\bin\x64\$Configuration\net8.0-windows"),
+        (Join-Path $repo.RepoRoot "src\NtfsAudit.Service\bin\x64\$Configuration\net8.0-windows\win-x64")
     )) {
         if ([string]::IsNullOrWhiteSpace($basePath)) {
             continue
@@ -228,7 +237,7 @@ function Format-ServiceBinPathForSc {
 
     $sanitizedCommand = $ServiceCommand.Replace('"', "")
     if ($sanitizedCommand.EndsWith(".exe", [System.StringComparison]::OrdinalIgnoreCase)) {
-        return ('"{0}"' -f $sanitizedCommand)
+        return ('"\"{0}\""' -f $sanitizedCommand)
     }
 
     $dotnetHost = (Resolve-DotnetHostPath).Replace('"', "")

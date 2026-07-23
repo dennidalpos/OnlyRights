@@ -14,9 +14,9 @@ using System.ComponentModel;
 using System.Net;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Models;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     internal static class WindowsImpersonationHelper
     {

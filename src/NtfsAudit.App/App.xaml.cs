@@ -1,3 +1,5 @@
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Models;
 /*
  * OnlyRights
  * Copyright (c) 2026 Danny Perondi
@@ -14,9 +16,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
-using NtfsAudit.App.Cache;
-using NtfsAudit.App.Logging;
+using NtfsAudit.Core.Cache;
+using NtfsAudit.Core.Logging;
 using NtfsAudit.App.Services;
+using NtfsAudit.Core.Services;
 
 namespace NtfsAudit.App
 {

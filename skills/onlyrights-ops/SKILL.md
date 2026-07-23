@@ -1,6 +1,6 @@
 ---
 name: onlyrights-ops
-description: Use this skill when building, testing, packaging, or installing the OnlyRights components, managing Windows Services, executing WiX MSI installer scripts, or running local diagnostics.
+description: Use this skill when building, testing, packaging, or installing the OnlyRights components, managing Windows Services, executing NSIS installer scripts, or running local diagnostics.
 ---
 
 # OnlyRights Operations (DevOps & Scripts) Development Skill
@@ -25,18 +25,17 @@ This skill contains scripting, build, packaging, and maintenance rules for the O
 ### 2. Main Workflows
 - **Dependency Restore**: `pwsh -ExecutionPolicy Bypass -File .\scripts\install-dependencies.ps1`
 - **Build Solution**: `pwsh -File .\scripts\build.ps1` (compiles Release by default; supports `-Runtime` and `-Installer`).
+- **Package Layout & Installer**: `pwsh -File .\scripts\package.ps1` (stages application layouts and compiles NSIS installers under `artifacts\packages`).
 - **Run Application**: `pwsh -File .\scripts\start-app.ps1`
 - **Run Tests**: `pwsh -File .\scripts\maintenance\run-tests.ps1 -Configuration Release`
 
-### 3. Packaging & WiX Installers
-- MSIs are generated using WiX 3.14 (located under `tools\wix314-binaries`).
-- MSI compilation commands are under `scripts\build\build-installer.ps1`, which compiles a pair of installers in tandem: one for the main scanner application and service, and one for the read-only audit viewer.
+### 3. Packaging & NSIS Installers
+- Executable installers (`.exe`) are generated using the NSIS compiler (`makensis.exe`).
+- Installer compilation commands are under `scripts\build\build-installer.ps1`, which compiles a pair of installers in tandem: one for the main scanner application and service, and one for the read-only audit viewer.
 - Operators use:
   - `pwsh -File .\scripts\build.ps1 -Runtime win-x64 -Installer`
-  - `pwsh -File .\scripts\build.ps1 -Runtime win-x86 -Installer`
-- Generated installers must run with `perMachine` scope and require elevation.
-- **Staging Policy**: Staging the package layout (`stage-package-layout.ps1`) is executed on every build-installer run (unless explicitly skipped using `-SkipPack`) to ensure the MSI is compiled with current binaries rather than old artifacts.
-- **Upgrades Policy**: The WiX configuration enables `AllowSameVersionUpgrades="yes"` in `<MajorUpgrade>` to ensure that successive development builds of the same version clean up the previous installation and do not create duplicate entries in Windows Installed Applications.
+- Generated installers run in 64-bit scope (`ProgramFiles64Folder`) and require UAC elevation (`RequestExecutionLevel admin`).
+- **Staging Policy**: Staging the package layout (`stage-package-layout.ps1`) is executed on every build-installer run (unless explicitly skipped using `-SkipPack`) to ensure the installer is compiled with current binaries rather than old artifacts.
 - **Application Elevation**: The WPF desktop application and the Viewer are configured to require administrative execution level, enforcing UAC elevation on startup to ensure deep scanning capabilities.
 
 ### 4. Windows Service Management
@@ -47,3 +46,4 @@ This skill contains scripting, build, packaging, and maintenance rules for the O
   - Uninstall: `manage-service.ps1 -Action Uninstall`
   - Cleanup: `manage-service.ps1 -Action Cleanup`
 - Service status files and jobs are staged under `%ProgramData%\NtfsAudit\`.
+- **sc.exe Quoting & Path Resolution**: Service creation via `sc.exe` requires `binPath=` parameters for `.exe` binaries to be formatted with escaped inner double quotes (`"\"C:\Program Files\...\""`) to ensure Windows SCM retains quotes in `ImagePath`. Service command resolution searches `x64` and `win-x64` output subdirectories across build, package, and publish roots.

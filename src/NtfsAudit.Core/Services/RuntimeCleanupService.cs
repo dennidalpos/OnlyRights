@@ -16,7 +16,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     internal sealed class RuntimeCleanupService
     {

@@ -14,7 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public static class RightsNormalizer
     {

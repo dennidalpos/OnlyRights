@@ -12,7 +12,7 @@
 using System;
 using System.Threading;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     internal static class SingleInstanceCoordinator
     {

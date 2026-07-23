@@ -14,7 +14,7 @@ using System.IO;
 
 #nullable enable
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public static class ScanExportPathBuilder
     {

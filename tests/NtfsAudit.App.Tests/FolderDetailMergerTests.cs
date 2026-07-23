@@ -1,3 +1,7 @@
+using NtfsAudit.App.Services;
+using NtfsAudit.Core.Logging;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Cache;
 /*
  * OnlyRights
  * Copyright (c) 2026 Danny Perondi
@@ -9,8 +13,8 @@
  * commercial use, or reuse of this file is prohibited without prior
  * written permission from Danny Perondi.
  */
-using NtfsAudit.App.Models;
-using NtfsAudit.App.Services;
+using NtfsAudit.Core.Models;
+using NtfsAudit.Core.Services;
 using Xunit;
 
 namespace NtfsAudit.App.Tests

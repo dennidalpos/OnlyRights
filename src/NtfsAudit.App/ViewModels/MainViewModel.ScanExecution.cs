@@ -1,3 +1,4 @@
+using NtfsAudit.Core.Logging;
 /*
  * OnlyRights
  * Copyright (c) 2026 Danny Perondi
@@ -27,10 +28,11 @@ using System.Windows.Threading;
 using Win32 = Microsoft.Win32;
 using Newtonsoft.Json;
 using WpfMessageBox = System.Windows.MessageBox;
-using NtfsAudit.App.Cache;
-using NtfsAudit.App.Export;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Cache;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Models;
 using NtfsAudit.App.Services;
+using NtfsAudit.Core.Services;
 
 namespace NtfsAudit.App.ViewModels
 {
@@ -136,7 +138,11 @@ namespace NtfsAudit.App.ViewModels
 
                 var jobFile = Path.Combine(jobsRoot, string.Format("job_{0}.json", job.JobId));
                 File.WriteAllText(jobFile, JsonConvert.SerializeObject(job, Formatting.Indented));
-                ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
+                var startResult = ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
+                if (startResult.ExitCode != 0 && startResult.ExitCode != 1056)
+                {
+                    ThrowScOperationFailed("start", startResult);
+                }
                 ProgressText = LocalizationManager.Text("Progress.ServiceJobSent");
                 RefreshServiceRuntimeStatus();
             }

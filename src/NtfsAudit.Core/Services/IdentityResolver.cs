@@ -11,10 +11,10 @@
  */
 using System;
 using System.Security.Principal;
-using NtfsAudit.App.Cache;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Cache;
+using NtfsAudit.Core.Models;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public class IdentityResolver
     {

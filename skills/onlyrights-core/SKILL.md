@@ -50,3 +50,7 @@ This skill contains technical guidelines and rules for developing and maintainin
 - The project is developed as a fresh greenfield application.
 - Do NOT implement legacy compatibility layers, backward-compatibility shims, transitional logic, historical cleanups, or support migrations from previous/older database versions, older archive versions (v1-v6), or older credential store layouts.
 - Only the standard v7 archive format and standard `%ProgramData%` credential store must be supported.
+
+### 5. Namespace Organization
+- All types within `NtfsAudit.Core` must be declared under `NtfsAudit.Core.*` namespaces (`NtfsAudit.Core.Models`, `NtfsAudit.Core.Services`, `NtfsAudit.Core.Export`, `NtfsAudit.Core.Cache`, `NtfsAudit.Core.Logging`). Do not declare `NtfsAudit.App.*` namespaces inside `NtfsAudit.Core`.
+

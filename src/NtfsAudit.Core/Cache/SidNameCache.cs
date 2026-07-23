@@ -14,7 +14,7 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 
-namespace NtfsAudit.App.Cache
+namespace NtfsAudit.Core.Cache
 {
     public class SidNameCache
     {

@@ -12,7 +12,7 @@
 using System;
 using System.IO;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     internal static class RuntimePaths
     {

@@ -49,8 +49,26 @@ function Get-RepositoryContext {
         TestResultsRoot = Join-Path $artifactsRoot "test-results"
         PackagesRoot = Join-Path $artifactsRoot "packages"
         PublishRoot = Join-Path $artifactsRoot "publish"
-        WixTools = Join-Path $repoRoot "tools\wix314-binaries"
     }
+}
+
+function Resolve-NsisCompilerPath {
+    if (Get-Command makensis -ErrorAction SilentlyContinue) {
+        return (Get-Command makensis).Source
+    }
+
+    $candidatePaths = @(
+        "C:\Program Files (x86)\NSIS\makensis.exe",
+        "C:\Program Files\NSIS\makensis.exe"
+    )
+
+    foreach ($path in $candidatePaths) {
+        if (Test-Path $path) {
+            return $path
+        }
+    }
+
+    throw "NSIS compiler (makensis.exe) was not found in PATH or standard Program Files locations."
 }
 
 function Assert-RepositoryPrerequisites {
@@ -114,8 +132,8 @@ function Assert-SupportedWindowsRuntime {
         return
     }
 
-    if ($Runtime -notin @("win-x86", "win-x64")) {
-        throw ("Unsupported runtime '{0}'. Supported Windows runtimes: win-x86, win-x64." -f $Runtime)
+    if ($Runtime -ne "win-x64") {
+        throw ("Unsupported runtime '{0}'. Only 64-bit Windows runtime 'win-x64' is supported." -f $Runtime)
     }
 }
 
@@ -126,8 +144,8 @@ function Assert-SupportedPlatformTarget {
         return
     }
 
-    if ($PlatformTarget -notin @("AnyCPU", "x86", "x64")) {
-        throw ("Unsupported platform target '{0}'. Supported platform targets: AnyCPU, x86, x64." -f $PlatformTarget)
+    if ($PlatformTarget -notin @("AnyCPU", "x64")) {
+        throw ("Unsupported platform target '{0}'. Supported platform targets: AnyCPU, x64." -f $PlatformTarget)
     }
 }
 
@@ -153,18 +171,14 @@ function Resolve-PlatformTarget {
     Assert-SupportedPlatformTarget -PlatformTarget $PlatformTarget
 
     if (-not [string]::IsNullOrWhiteSpace($PlatformTarget)) {
-        if (($Runtime -eq "win-x86" -and $PlatformTarget -eq "x64") -or ($Runtime -eq "win-x64" -and $PlatformTarget -eq "x86")) {
-            throw ("Runtime '{0}' is incompatible with platform target '{1}'." -f $Runtime, $PlatformTarget)
-        }
-
         return $PlatformTarget
     }
 
-    switch ($Runtime) {
-        "win-x86" { return "x86" }
-        "win-x64" { return "x64" }
-        default { return $null }
+    if ($Runtime -eq "win-x64") {
+        return "x64"
     }
+
+    return $null
 }
 
 function Get-PlatformTargetBuildArgument {

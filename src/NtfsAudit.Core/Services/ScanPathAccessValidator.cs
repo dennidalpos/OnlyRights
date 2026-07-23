@@ -12,9 +12,9 @@
 using System;
 using System.ComponentModel;
 using System.IO;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Models;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     internal static class ScanPathAccessValidator
     {

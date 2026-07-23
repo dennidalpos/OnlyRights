@@ -10,9 +10,9 @@
  * written permission from Danny Perondi.
  */
 using System.Collections.Generic;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Models;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public interface IAdResolver
     {

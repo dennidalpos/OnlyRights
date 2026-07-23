@@ -11,9 +11,9 @@
  */
 using System;
 using System.IO;
-using NtfsAudit.App.Services;
+using NtfsAudit.Core.Services;
 
-namespace NtfsAudit.App.Cache
+namespace NtfsAudit.Core.Cache
 {
     public class LocalCacheStore
     {

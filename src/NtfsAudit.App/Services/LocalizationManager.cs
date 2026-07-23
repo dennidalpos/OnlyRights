@@ -1,3 +1,8 @@
+using NtfsAudit.Core.Logging;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Cache;
+using NtfsAudit.Core.Models;
+using NtfsAudit.Core.Services;
 /*
  * OnlyRights
  * Copyright (c) 2026 Danny Perondi
@@ -82,6 +87,10 @@ namespace NtfsAudit.App.Services
             if (application != null)
             {
                 Apply(application.Resources, resolved.Code);
+            }
+            else
+            {
+                _activeResources = null;
             }
 
             var changed = !string.Equals(_currentLocale, resolved.Code, StringComparison.OrdinalIgnoreCase);
@@ -183,11 +192,13 @@ namespace NtfsAudit.App.Services
             for (var i = resources.MergedDictionaries.Count - 1; i >= 0; i--)
             {
                 var dictionary = resources.MergedDictionaries[i];
-                if (dictionary != null
-                    && dictionary.Source != null
-                    && dictionary.Source.OriginalString.IndexOf(ResourcePrefix, StringComparison.OrdinalIgnoreCase) >= 0)
+                if (dictionary != null)
                 {
-                    resources.MergedDictionaries.RemoveAt(i);
+                    if ((dictionary.Source != null && dictionary.Source.OriginalString.IndexOf(ResourcePrefix, StringComparison.OrdinalIgnoreCase) >= 0)
+                        || dictionary.Contains("App.Title"))
+                    {
+                        resources.MergedDictionaries.RemoveAt(i);
+                    }
                 }
             }
         }
@@ -207,25 +218,40 @@ namespace NtfsAudit.App.Services
 
         private static ResourceDictionary LoadLooseDictionary(string locale)
         {
-            try
+            var baseDirectories = new[]
             {
-                var current = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
-                while (current != null)
-                {
-                    var candidate = Path.Combine(current.FullName, "src", "NtfsAudit.App", "Resources", string.Format("Strings.{0}.xaml", locale));
-                    if (File.Exists(candidate))
-                    {
-                        using (var stream = File.OpenRead(candidate))
-                        {
-                            return (ResourceDictionary)XamlReader.Load(stream);
-                        }
-                    }
+                AppContext.BaseDirectory,
+                typeof(LocalizationManager).Assembly.Location,
+                AppDomain.CurrentDomain.BaseDirectory
+            };
 
-                    current = current.Parent;
-                }
-            }
-            catch
+            foreach (var baseDir in baseDirectories)
             {
+                if (string.IsNullOrWhiteSpace(baseDir))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    var current = new DirectoryInfo(File.Exists(baseDir) ? Path.GetDirectoryName(baseDir) : baseDir);
+                    while (current != null)
+                    {
+                        var candidate = Path.Combine(current.FullName, "src", "NtfsAudit.App", "Resources", string.Format("Strings.{0}.xaml", locale));
+                        if (File.Exists(candidate))
+                        {
+                            using (var stream = File.OpenRead(candidate))
+                            {
+                                return (ResourceDictionary)XamlReader.Load(stream);
+                            }
+                        }
+
+                        current = current.Parent;
+                    }
+                }
+                catch
+                {
+                }
             }
 
             return new ResourceDictionary();

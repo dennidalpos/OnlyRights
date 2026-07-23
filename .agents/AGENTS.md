@@ -8,7 +8,7 @@ These guidelines apply to all agents, assistants, and developers working on the 
 - **Maintain Skill Updates**: When making code modifications, you **MUST** update the corresponding custom skill files at:
   - [skills/onlyrights-core/SKILL.md](file:///d:/GITHUB/OnlyRights/skills/onlyrights-core/SKILL.md) for core/scanning/archive/credentials changes.
   - [skills/onlyrights-app/SKILL.md](file:///d:/GITHUB/OnlyRights/skills/onlyrights-app/SKILL.md) for WPF/XAML/MVVM/Viewer changes.
-  - [skills/onlyrights-ops/SKILL.md](file:///d:/GITHUB/OnlyRights/skills/onlyrights-ops/SKILL.md) for PowerShell scripts/WiX installer/service commands changes.
+  - [skills/onlyrights-ops/SKILL.md](file:///d:/GITHUB/OnlyRights/skills/onlyrights-ops/SKILL.md) for PowerShell scripts/NSIS installer/service commands changes.
   - [skills/onlyrights/SKILL.md](file:///d:/GITHUB/OnlyRights/skills/onlyrights/SKILL.md) for high-level structure alignment.
 - **Synchronized alignment**: Keep all developer skills, official docs (`docs/`), tests (`tests/`), PowerShell scripts (`scripts/`), and [PROJECT_STATUS.json](file:///d:/GITHUB/OnlyRights/PROJECT_STATUS.json) in complete sync during any code change.
 

@@ -13,10 +13,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
-using NtfsAudit.App.Export;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Models;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public partial class AnalysisArchive
     {
@@ -82,7 +82,7 @@ namespace NtfsAudit.App.Services
 
             if (meta.Version != CurrentArchiveVersion)
             {
-                throw new InvalidDataException(string.Format("Analysis archive version {0} is not supported. Only version {1} is supported.", meta.Version, CurrentArchiveVersion));
+                throw new InvalidDataException($"Analysis archive version {meta.Version} is not supported. Only version {CurrentArchiveVersion} is supported.");
             }
 
             if (!File.Exists(dataPath))
@@ -219,13 +219,7 @@ namespace NtfsAudit.App.Services
 
         private static PathKind NormalizeImportedRootPathKind(string value, string rootPath)
         {
-            if (string.Equals(value, "Unc", StringComparison.OrdinalIgnoreCase))
-            {
-                return PathKind.UncSmb;
-            }
-
-            PathKind parsed;
-            if (Enum.TryParse(value, true, out parsed) && Enum.IsDefined(typeof(PathKind), parsed))
+            if (Enum.TryParse<PathKind>(value, true, out var parsed) && Enum.IsDefined(typeof(PathKind), parsed))
             {
                 return parsed == PathKind.Unknown ? PathResolver.DetectPathKind(rootPath) : parsed;
             }

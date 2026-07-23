@@ -25,7 +25,7 @@ $resolvedPlatformTarget = Resolve-PlatformTarget -Runtime $Runtime -PlatformTarg
 $platformBuildArgs = Get-PlatformTargetBuildArgument -PlatformTarget $resolvedPlatformTarget
 
 if (($SelfContained -or $PublishSingleFile -or $PublishReadyToRun) -and -not $Runtime) {
-    throw "Runtime required for self-contained, single-file, or ReadyToRun packaging. Use -Runtime win-x64 or -Runtime win-x86."
+    throw "Runtime required for self-contained, single-file, or ReadyToRun packaging. Use -Runtime win-x64."
 }
 
 if (-not $SkipRestore) {

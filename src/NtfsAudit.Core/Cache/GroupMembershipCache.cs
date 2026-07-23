@@ -12,9 +12,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Models;
 
-namespace NtfsAudit.App.Cache
+namespace NtfsAudit.Core.Cache
 {
     public class GroupMembershipCache
     {

@@ -1,3 +1,7 @@
+using NtfsAudit.Core.Logging;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Cache;
+using NtfsAudit.Core.Models;
 /*
  * OnlyRights
  * Copyright (c) 2026 Danny Perondi
@@ -17,6 +21,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using WinForms = System.Windows.Forms;
 using NtfsAudit.App.Services;
+using NtfsAudit.Core.Services;
 using NtfsAudit.App.ViewModels;
 
 namespace NtfsAudit.App

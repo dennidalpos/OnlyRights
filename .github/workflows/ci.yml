@@ -40,17 +40,11 @@ jobs:
       - name: Stage package x64
         run: pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -Runtime win-x64
 
-      - name: Stage package x86
-        run: pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -Runtime win-x86
-
       - name: Prepare network share app
         run: pwsh -File .\scripts\prepare-network-share-app.ps1
 
-      - name: MSI Build
+      - name: NSIS Build
         run: pwsh -File .\scripts\build\build-installer.ps1 -Configuration Release -SkipPack
-
-      - name: MSI Build x86
-        run: pwsh -File .\scripts\build\build-installer.ps1 -Configuration Release -Runtime win-x86 -SkipPack
 
       - name: Service Install Smoke
         run: pwsh -File .\scripts\maintenance\manage-service.ps1 -Action Install -Configuration Release
@@ -59,14 +53,14 @@ jobs:
         if: always()
         run: pwsh -File .\scripts\maintenance\manage-service.ps1 -Action Uninstall
 
-      - name: MSI Install Smoke
-        run: pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Install -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic -SkipBuild
+      - name: Installer Install Smoke
+        run: pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Install -Configuration Release -InstallRoot artifacts\publish\installer-smoke\basic -SkipBuild
 
-      - name: MSI Uninstall Smoke
-        run: pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Uninstall -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic
+      - name: Installer Uninstall Smoke
+        run: pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Uninstall -Configuration Release -InstallRoot artifacts\publish\installer-smoke\basic
 
-      - name: MSI Upgrade Smoke
-        run: pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Upgrade -Configuration Release -InstallRoot artifacts\publish\msi-smoke\upgrade
+      - name: Installer Upgrade Smoke
+        run: pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Upgrade -Configuration Release -InstallRoot artifacts\publish\installer-smoke\upgrade
 
       - name: Clean (final)
         if: always()

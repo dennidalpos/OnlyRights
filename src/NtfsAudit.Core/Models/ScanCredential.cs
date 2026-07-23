@@ -13,7 +13,7 @@ using Newtonsoft.Json;
 
 #nullable enable
 
-namespace NtfsAudit.App.Models
+namespace NtfsAudit.Core.Models
 {
     public class ScanCredential
     {

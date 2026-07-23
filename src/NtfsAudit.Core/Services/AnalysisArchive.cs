@@ -13,9 +13,9 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using Newtonsoft.Json;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Models;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public partial class AnalysisArchive
     {
@@ -62,7 +62,7 @@ namespace NtfsAudit.App.Services
 
             CleanupAnalysisWorkspace(AnalysisExportsDir, AnalysisExportRetention);
             var exportWorkspace = GetAnalysisWorkspace(AnalysisExportsDir);
-            var tempOutput = Path.Combine(exportWorkspace, string.Format("archive_{0}.tmp", Guid.NewGuid().ToString("N")));
+            var tempOutput = Path.Combine(exportWorkspace, $"archive_{Guid.NewGuid():N}.tmp");
             var sqlitePath = EnsureSqlitePayload(result, exportWorkspace);
             if (File.Exists(tempOutput))
             {
@@ -121,7 +121,7 @@ namespace NtfsAudit.App.Services
             if (string.IsNullOrWhiteSpace(archiveName)) archiveName = "import";
             foreach (var invalid in Path.GetInvalidFileNameChars()) archiveName = archiveName.Replace(invalid, '_');
             CleanupAnalysisWorkspace(AnalysisImportsDir, AnalysisImportRetention);
-            var tempFolderName = string.Format("{0}_{1}_{2}", archiveName, DateTime.Now.ToString("yyyy_MM_dd_HH_mm"), Guid.NewGuid().ToString("N"));
+            var tempFolderName = $"{archiveName}_{DateTime.Now:yyyy_MM_dd_HH_mm}_{Guid.NewGuid():N}";
             var tempDir = Path.Combine(GetAnalysisWorkspace(AnalysisImportsDir), tempFolderName);
             Directory.CreateDirectory(tempDir);
             var importSucceeded = false;

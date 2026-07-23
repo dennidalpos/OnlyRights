@@ -27,7 +27,7 @@ Not implemented:
 
 ## Projects
 
-- `src/NtfsAudit.Core`: shared scan, archive, credential, cache, export, logging, identity, permission, and path-resolution logic.
+- `src/NtfsAudit.Core`: shared scan, archive, credential, cache, export, logging, identity, permission, and path-resolution logic (declared cleanly under `NtfsAudit.Core.*` namespaces).
 - `src/NtfsAudit.App`: WPF application containing the main UI, view models, localization, dialogs, and the shared WPF surface currently reused by the viewer package.
 - `src/NtfsAudit.Service`: Windows Worker Service host for background scan jobs using `NtfsAudit.Core`.
 - `src/NtfsAudit.Viewer`: WPF read-only viewer for `.ntaudit` archives that currently boots `NtfsAudit.App.MainWindow` and `NtfsAudit.App.ViewModels.MainViewModel` through a direct project reference.
@@ -78,7 +78,7 @@ Generated repository outputs are centralized under `artifacts/`:
 - `artifacts/test-results`: test output.
 - `artifacts/packages`: package staging created by `scripts/build/stage-package-layout.ps1`.
 - `artifacts/publish`: local publish output copied from package staging.
-- `artifacts/logs`: MSI smoke-test logs.
+- `artifacts/logs`: Installer smoke-test logs.
 
 Runtime data outside the repository uses Windows user or machine data locations. Archive temporary workspaces use `%TEMP%\NtfsAudit\imports` and `%TEMP%\NtfsAudit\exports`.
 

@@ -1,3 +1,4 @@
+using NtfsAudit.Core.Logging;
 /*
  * OnlyRights
  * Copyright (c) 2026 Danny Perondi
@@ -27,10 +28,11 @@ using System.Windows.Threading;
 using Win32 = Microsoft.Win32;
 using Newtonsoft.Json;
 using WpfMessageBox = System.Windows.MessageBox;
-using NtfsAudit.App.Cache;
-using NtfsAudit.App.Export;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Cache;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Models;
 using NtfsAudit.App.Services;
+using NtfsAudit.Core.Services;
 
 namespace NtfsAudit.App.ViewModels
 {
@@ -67,7 +69,11 @@ namespace NtfsAudit.App.ViewModels
                 }
 
                 ExecuteScCommand(string.Format("description {0} \"{1}\"", ServiceName, LocalizationManager.Text("Service.Description")), "description");
-                ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
+                var startResult = ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
+                if (startResult.ExitCode != 0 && startResult.ExitCode != 1056)
+                {
+                    ThrowScOperationFailed("start", startResult);
+                }
                 ProgressText = LocalizationManager.Text("Service.InstalledBadge");
                 RefreshServiceRuntimeStatus();
                 WpfMessageBox.Show(LocalizationManager.Text("Service.InstalledBadge"), LocalizationManager.Text("Dialog.ServiceInstall"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
@@ -213,12 +219,6 @@ namespace NtfsAudit.App.ViewModels
             var scPath = ResolveScExecutablePath();
             if (runAsAdmin)
             {
-                var elevated = RunScCommandElevatedWithPowerShell(scPath, arguments);
-                if (elevated != null)
-                {
-                    return elevated;
-                }
-
                 return RunScCommandElevatedDirect(scPath, arguments);
             }
 
@@ -256,55 +256,6 @@ namespace NtfsAudit.App.ViewModels
             }
         }
 
-        private static ScCommandResult RunScCommandElevatedWithPowerShell(string scPath, string arguments)
-        {
-            var powerShellPath = ResolvePowerShellExecutablePath();
-            if (string.IsNullOrWhiteSpace(powerShellPath))
-            {
-                return null;
-            }
-
-            var escapedScPath = EscapePowerShellSingleQuoted(scPath);
-            var escapedArguments = EscapePowerShellSingleQuoted(arguments);
-            var psArguments = string.Format(
-                "-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"& {{ $p = Start-Process -FilePath '{0}' -ArgumentList '{1}' -Verb RunAs -Wait -PassThru; exit $p.ExitCode }}\"",
-                escapedScPath,
-                escapedArguments);
-
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = powerShellPath,
-                Arguments = psArguments,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            };
-
-            try
-            {
-                using (var process = Process.Start(startInfo))
-                {
-                    if (process == null)
-                    {
-                        return new ScCommandResult { ExitCode = -1, Error = LocalizationManager.Text("Service.PowerShellElevationError") };
-                    }
-
-                    process.WaitForExit();
-                    return new ScCommandResult
-                    {
-                        ExitCode = process.ExitCode,
-                        Output = process.StandardOutput.ReadToEnd(),
-                        Error = process.StandardError.ReadToEnd()
-                    };
-                }
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
         private static ScCommandResult RunScCommandElevatedDirect(string scPath, string arguments)
         {
             var startInfo = new ProcessStartInfo
@@ -338,12 +289,6 @@ namespace NtfsAudit.App.ViewModels
             {
                 return new ScCommandResult { ExitCode = -1, Error = ex.Message };
             }
-        }
-
-        private static string EscapePowerShellSingleQuoted(string value)
-        {
-            if (string.IsNullOrEmpty(value)) return string.Empty;
-            return value.Replace("'", "''");
         }
 
         private static string ResolveScExecutablePath()
@@ -419,7 +364,11 @@ namespace NtfsAudit.App.ViewModels
         {
             try
             {
-                ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
+                var startResult = ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
+                if (startResult.ExitCode != 0 && startResult.ExitCode != 1056)
+                {
+                    ThrowScOperationFailed("start", startResult);
+                }
                 RefreshServiceRuntimeStatus();
                 ProgressText = LocalizationManager.Text("Service.StartedNoDetails");
             }

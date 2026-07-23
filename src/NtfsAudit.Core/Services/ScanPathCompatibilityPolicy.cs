@@ -12,9 +12,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Models;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public static class ScanPathCompatibilityPolicy
     {
@@ -67,9 +67,7 @@ namespace NtfsAudit.App.Services
 
         public static string BuildUnsupportedRootMessage(string rootPath)
         {
-            return string.Format(
-                "Unsupported path or provider in Windows: {0}",
-                string.IsNullOrWhiteSpace(rootPath) ? "(empty)" : rootPath);
+            return $"Unsupported path or provider in Windows: {(string.IsNullOrWhiteSpace(rootPath) ? "(empty)" : rootPath)}";
         }
 
         public static bool LooksLikeUnsupportedRoot(string rootPath)

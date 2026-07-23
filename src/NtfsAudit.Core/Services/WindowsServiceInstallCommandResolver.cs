@@ -14,7 +14,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     internal static class WindowsServiceInstallCommandResolver
     {
@@ -48,23 +48,45 @@ namespace NtfsAudit.App.Services
 
             foreach (var configuration in new[] { "Release", "Debug" })
             {
-                foreach (var basePath in new[]
+                foreach (var platform in new[] { "x64", "" })
                 {
-                    Path.Combine(repoRoot, "artifacts", "packages", configuration, "net8.0-windows"),
-                    Path.Combine(repoRoot, "artifacts", "publish", configuration, "net8.0-windows"),
-                    Path.Combine(repoRoot, "artifacts", "build", "NtfsAudit.Service", configuration, "net8.0-windows"),
-                    Path.Combine(repoRoot, "src", "NtfsAudit.Service", "bin", configuration, "net8.0-windows")
-                })
-                {
-                    foreach (var relativePath in new[]
+                    foreach (var runtime in new[] { "win-x64", "" })
                     {
-                        Path.Combine("Service", "NtfsAudit.Service.exe"),
-                        Path.Combine("Service", "NtfsAudit.Service.dll"),
-                        "NtfsAudit.Service.exe",
-                        "NtfsAudit.Service.dll"
-                    })
-                    {
-                        yield return Path.Combine(basePath, relativePath);
+                        var platformSubDir = string.IsNullOrWhiteSpace(platform) ? string.Empty : platform;
+                        var runtimeSubDir = string.IsNullOrWhiteSpace(runtime) ? string.Empty : runtime;
+
+                        foreach (var basePath in new[]
+                        {
+                            Path.Combine(repoRoot, "artifacts", "packages", configuration, "net8.0-windows"),
+                            Path.Combine(repoRoot, "artifacts", "packages", configuration, runtimeSubDir, "net8.0-windows"),
+                            Path.Combine(repoRoot, "artifacts", "publish", configuration, "net8.0-windows"),
+                            Path.Combine(repoRoot, "artifacts", "publish", configuration, runtimeSubDir, "net8.0-windows"),
+                            Path.Combine(repoRoot, "artifacts", "build", "NtfsAudit.Service", configuration, "net8.0-windows"),
+                            Path.Combine(repoRoot, "artifacts", "build", "NtfsAudit.Service", configuration, "net8.0-windows", runtimeSubDir),
+                            Path.Combine(repoRoot, "artifacts", "build", "NtfsAudit.Service", platformSubDir, configuration, "net8.0-windows"),
+                            Path.Combine(repoRoot, "artifacts", "build", "NtfsAudit.Service", platformSubDir, configuration, "net8.0-windows", runtimeSubDir),
+                            Path.Combine(repoRoot, "src", "NtfsAudit.Service", "bin", configuration, "net8.0-windows"),
+                            Path.Combine(repoRoot, "src", "NtfsAudit.Service", "bin", configuration, "net8.0-windows", runtimeSubDir),
+                            Path.Combine(repoRoot, "src", "NtfsAudit.Service", "bin", platformSubDir, configuration, "net8.0-windows"),
+                            Path.Combine(repoRoot, "src", "NtfsAudit.Service", "bin", platformSubDir, configuration, "net8.0-windows", runtimeSubDir)
+                        })
+                        {
+                            if (string.IsNullOrWhiteSpace(basePath))
+                            {
+                                continue;
+                            }
+
+                            foreach (var relativePath in new[]
+                            {
+                                Path.Combine("Service", "NtfsAudit.Service.exe"),
+                                Path.Combine("Service", "NtfsAudit.Service.dll"),
+                                "NtfsAudit.Service.exe",
+                                "NtfsAudit.Service.dll"
+                            })
+                            {
+                                yield return Path.Combine(basePath, relativePath);
+                            }
+                        }
                     }
                 }
             }
@@ -80,7 +102,7 @@ namespace NtfsAudit.App.Services
             var sanitizedCommand = serviceCommand.Replace("\"", string.Empty);
             if (sanitizedCommand.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
             {
-                return string.Format("\"{0}\"", sanitizedCommand);
+                return string.Format("\"\\\"{0}\\\"\"", sanitizedCommand);
             }
 
             var dotnetHost = (dotnetHostResolver == null ? ResolveDotnetHostPath() : dotnetHostResolver()) ?? "dotnet.exe";
@@ -106,17 +128,38 @@ namespace NtfsAudit.App.Services
 
         private static IEnumerable<string> EnumerateAppAdjacentCandidates(string appBaseDirectory)
         {
-            foreach (var relativePath in new[]
+            var searchDirs = new List<string>();
+            if (!string.IsNullOrWhiteSpace(appBaseDirectory))
             {
-                "NtfsAudit.Service.exe",
-                Path.Combine("NtfsAudit.Service", "NtfsAudit.Service.exe"),
-                Path.Combine("Service", "NtfsAudit.Service.exe"),
-                "NtfsAudit.Service.dll",
-                Path.Combine("NtfsAudit.Service", "NtfsAudit.Service.dll"),
-                Path.Combine("Service", "NtfsAudit.Service.dll")
-            })
+                var fullPath = Path.GetFullPath(appBaseDirectory);
+                searchDirs.Add(fullPath);
+
+                var parent = Directory.GetParent(fullPath);
+                if (parent != null)
+                {
+                    searchDirs.Add(parent.FullName);
+                    var grandParent = parent.Parent;
+                    if (grandParent != null)
+                    {
+                        searchDirs.Add(grandParent.FullName);
+                    }
+                }
+            }
+
+            foreach (var searchDir in searchDirs)
             {
-                yield return Path.Combine(appBaseDirectory, relativePath);
+                foreach (var relativePath in new[]
+                {
+                    "NtfsAudit.Service.exe",
+                    Path.Combine("Service", "NtfsAudit.Service.exe"),
+                    Path.Combine("NtfsAudit.Service", "NtfsAudit.Service.exe"),
+                    "NtfsAudit.Service.dll",
+                    Path.Combine("Service", "NtfsAudit.Service.dll"),
+                    Path.Combine("NtfsAudit.Service", "NtfsAudit.Service.dll")
+                })
+                {
+                    yield return Path.Combine(searchDir, relativePath);
+                }
             }
         }
 

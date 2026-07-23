@@ -1,3 +1,8 @@
+using NtfsAudit.App.Services;
+using NtfsAudit.Core.Logging;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Cache;
+using NtfsAudit.Core.Models;
 /*
  * OnlyRights
  * Copyright (c) 2026 Danny Perondi
@@ -9,7 +14,7 @@
  * commercial use, or reuse of this file is prohibited without prior
  * written permission from Danny Perondi.
  */
-using NtfsAudit.App.Services;
+using NtfsAudit.Core.Services;
 using Xunit;
 using System;
 using System.Collections.Generic;
@@ -57,7 +62,7 @@ namespace NtfsAudit.App.Tests
         {
             var kind = PathResolver.DetectPathKind("//server/share/folder");
 
-            Assert.True(kind == Models.PathKind.UncSmb || kind == Models.PathKind.Dfs);
+            Assert.True(kind == PathKind.UncSmb || kind == PathKind.Dfs);
         }
 
         [Fact]
@@ -65,7 +70,7 @@ namespace NtfsAudit.App.Tests
         {
             var kind = PathResolver.DetectPathKind(@"\\10.20.30.40\share\folder");
 
-            Assert.Equal(Models.PathKind.UncSmb, kind);
+            Assert.Equal(PathKind.UncSmb, kind);
         }
 
         [Fact]
@@ -76,7 +81,7 @@ namespace NtfsAudit.App.Tests
 
             try
             {
-                Assert.Equal(Models.PathKind.Dfs, PathResolver.DetectPathKind(dfsPath));
+                Assert.Equal(PathKind.Dfs, PathResolver.DetectPathKind(dfsPath));
             }
             finally
             {
@@ -89,7 +94,7 @@ namespace NtfsAudit.App.Tests
         {
             var kind = PathResolver.DetectPathKind("nfs://server/export/share");
 
-            Assert.Equal(Models.PathKind.Unsupported, kind);
+            Assert.Equal(PathKind.Unsupported, kind);
         }
 
         [Fact]
@@ -97,14 +102,14 @@ namespace NtfsAudit.App.Tests
         {
             var kind = PathResolver.DetectPathKind(@"\\wsl$\Ubuntu\mnt\data");
 
-            Assert.Equal(Models.PathKind.WslUnc, kind);
+            Assert.Equal(PathKind.WslUnc, kind);
         }
 
         [Fact]
         public void DetectPathKind_DoesNotUseNfsNameHeuristics()
         {
-            Assert.Equal(Models.PathKind.UncSmb, PathResolver.DetectPathKind(@"\\nfs01\share"));
-            Assert.Equal(Models.PathKind.UncSmb, PathResolver.DetectPathKind(@"\\server\share\nfs\folder"));
+            Assert.Equal(PathKind.UncSmb, PathResolver.DetectPathKind(@"\\nfs01\share"));
+            Assert.Equal(PathKind.UncSmb, PathResolver.DetectPathKind(@"\\server\share\nfs\folder"));
         }
 
         [Fact]
@@ -116,7 +121,7 @@ namespace NtfsAudit.App.Tests
 
             try
             {
-                Assert.Equal(Models.PathKind.UncSmb, PathResolver.DetectPathKind(dfsPath));
+                Assert.Equal(PathKind.UncSmb, PathResolver.DetectPathKind(dfsPath));
             }
             finally
             {
@@ -129,7 +134,7 @@ namespace NtfsAudit.App.Tests
         [InlineData("~/share")]
         public void DetectPathKind_ReturnsUnsupported_ForNonWindowsRoots(string path)
         {
-            Assert.Equal(Models.PathKind.Unsupported, PathResolver.DetectPathKind(path));
+            Assert.Equal(PathKind.Unsupported, PathResolver.DetectPathKind(path));
         }
 
         private static string BuildUniqueDfsPath()

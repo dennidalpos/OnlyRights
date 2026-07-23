@@ -2,7 +2,7 @@ Set-StrictMode -Version Latest
 
 . (Join-Path $PSScriptRoot "common.ps1")
 
-function Get-MsiScriptContext {
+function Get-NsisScriptContext {
     param(
         [string]$ScriptRoot,
         [string]$AppType = "App"
@@ -16,10 +16,9 @@ function Get-MsiScriptContext {
             Repository = $context
             AppType = "Viewer"
             InstallerName = "OnlyRights-NtfsAudit-Viewer"
-            UpgradeCode = "{A9B172E7-7C62-43E0-BD6E-85C1BE234CD2}"
             Manufacturer = "OnlyRights"
             ProductName = "OnlyRights NtfsAudit Viewer"
-            DefaultInstallRoot = "OnlyRights\\NtfsAuditViewer"
+            DefaultInstallSubDir = "OnlyRights\NtfsAuditViewer"
             IconPath = Join-Path $context.RepoRoot "src\NtfsAudit.App\Assets\OnlyRights.ico"
         }
     }
@@ -28,32 +27,40 @@ function Get-MsiScriptContext {
         Repository = $context
         AppType = "App"
         InstallerName = "OnlyRights-NtfsAudit"
-        UpgradeCode = "{7C4212A8-0B3D-420F-8D64-22E20AAE8F59}"
         Manufacturer = "OnlyRights"
         ProductName = "OnlyRights NtfsAudit"
-        DefaultInstallRoot = "OnlyRights\\NtfsAudit"
+        DefaultInstallSubDir = "OnlyRights\NtfsAudit"
         IconPath = Join-Path $context.RepoRoot "src\NtfsAudit.App\Assets\OnlyRights.ico"
     }
 }
 
-function Resolve-MsiArchitecture {
+function Get-MsiScriptContext {
+    param(
+        [string]$ScriptRoot,
+        [string]$AppType = "App"
+    )
+    return Get-NsisScriptContext -ScriptRoot $ScriptRoot -AppType $AppType
+}
+
+function Resolve-NsisArchitecture {
     param([string]$Runtime)
 
-    if ([string]::IsNullOrWhiteSpace($Runtime)) {
+    if ([string]::IsNullOrWhiteSpace($Runtime) -or $Runtime.ToLowerInvariant() -eq "win-x64") {
         return "x64"
     }
 
-    switch ($Runtime.ToLowerInvariant()) {
-        "win-x86" { return "x86" }
-        "win-x64" { return "x64" }
-        default { throw ("Unsupported MSI runtime '{0}'. Supported runtimes: win-x86, win-x64." -f $Runtime) }
-    }
+    throw ("Unsupported runtime '{0}'. Only 'win-x64' is supported." -f $Runtime)
 }
 
-function Resolve-MsiInstallRoot {
+function Resolve-MsiArchitecture {
+    param([string]$Runtime)
+    return Resolve-NsisArchitecture -Runtime $Runtime
+}
+
+function Resolve-NsisInstallRoot {
     param(
         $Context,
-        [string]$Runtime,
+        [string]$Runtime = "win-x64",
         [string]$InstallRoot
     )
 
@@ -61,31 +68,20 @@ function Resolve-MsiInstallRoot {
         return (Resolve-RepositoryRelativePath -RepoRoot $Context.Repository.RepoRoot -Path $InstallRoot)
     }
 
-    $architecture = Resolve-MsiArchitecture -Runtime $Runtime
-    if ($architecture -eq "x86") {
-        $programFilesRoot = if (${env:ProgramFiles(x86)}) { ${env:ProgramFiles(x86)} } else { [Environment]::GetFolderPath("ProgramFiles") }
-    }
-    else {
-        $programFilesRoot = if ($env:ProgramW6432) { $env:ProgramW6432 } else { [Environment]::GetFolderPath("ProgramFiles") }
-    }
-
-    return (Join-Path $programFilesRoot $Context.DefaultInstallRoot)
+    $programFilesRoot = if ($env:ProgramW6432) { $env:ProgramW6432 } else { [Environment]::GetFolderPath("ProgramFiles") }
+    return (Join-Path $programFilesRoot $Context.DefaultInstallSubDir)
 }
 
-function Format-MsiPropertyArgument {
+function Resolve-MsiInstallRoot {
     param(
-        [string]$Name,
-        [string]$Value
+        $Context,
+        [string]$Runtime = "win-x64",
+        [string]$InstallRoot
     )
-
-    if ([string]::IsNullOrWhiteSpace($Name)) {
-        throw "MSI property name is required."
-    }
-
-    return ('{0}="{1}"' -f $Name, ($Value -replace '"', '""'))
+    return Resolve-NsisInstallRoot -Context $Context -Runtime $Runtime -InstallRoot $InstallRoot
 }
 
-function Normalize-MsiVersion {
+function Normalize-InstallerVersion {
     param([string]$Version)
 
     $parts = ($Version -split "[^0-9]") | Where-Object { $_ -ne "" }
@@ -96,7 +92,12 @@ function Normalize-MsiVersion {
     return ("{0}.{1}.{2}" -f [int]$parts[0], [int]$parts[1], [int]$parts[2])
 }
 
-function Resolve-MsiVersion {
+function Normalize-MsiVersion {
+    param([string]$Version)
+    return Normalize-InstallerVersion -Version $Version
+}
+
+function Resolve-InstallerVersion {
     param(
         [string]$Version,
         [string]$AppExecutablePath,
@@ -104,13 +105,13 @@ function Resolve-MsiVersion {
     )
 
     if (-not [string]::IsNullOrWhiteSpace($Version)) {
-        return (Normalize-MsiVersion -Version $Version)
+        return (Normalize-InstallerVersion -Version $Version)
     }
 
     if ($null -ne $RepositoryContext) {
         $repositoryVersion = Resolve-RepositoryVersion -Context $RepositoryContext
         if (-not [string]::IsNullOrWhiteSpace($repositoryVersion)) {
-            return (Normalize-MsiVersion -Version $repositoryVersion)
+            return (Normalize-InstallerVersion -Version $repositoryVersion)
         }
     }
 
@@ -118,7 +119,7 @@ function Resolve-MsiVersion {
         try {
             $assemblyVersion = [System.Reflection.AssemblyName]::GetAssemblyName($AppExecutablePath).Version
             if ($null -ne $assemblyVersion) {
-                return (Normalize-MsiVersion -Version $assemblyVersion.ToString())
+                return (Normalize-InstallerVersion -Version $assemblyVersion.ToString())
             }
         }
         catch {
@@ -126,11 +127,27 @@ function Resolve-MsiVersion {
 
         $fileVersion = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($AppExecutablePath).FileVersion
         if (-not [string]::IsNullOrWhiteSpace($fileVersion)) {
-            return (Normalize-MsiVersion -Version $fileVersion)
+            return (Normalize-InstallerVersion -Version $fileVersion)
         }
     }
 
     return "1.0.0"
+}
+
+function Resolve-NsisArtifactVersion {
+    param(
+        $Context,
+        [string]$Configuration = "Release",
+        [string]$Framework = "net8.0-windows",
+        [string]$Runtime = "win-x64",
+        [string]$Version,
+        [string]$PackageRoot
+    )
+
+    $resolvedPackageRoot = Resolve-PackageRootForInstaller -Context $Context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -PackageRoot $PackageRoot
+    $exeSubpath = if ($Context.AppType -eq "Viewer") { "Viewer\NtfsAudit.Viewer.exe" } else { "App\NtfsAudit.App.exe" }
+    $appExecutable = Join-Path $resolvedPackageRoot $exeSubpath
+    return Resolve-InstallerVersion -Version $Version -AppExecutablePath $appExecutable -RepositoryContext $Context.Repository
 }
 
 function Resolve-MsiArtifactVersion {
@@ -138,23 +155,19 @@ function Resolve-MsiArtifactVersion {
         $Context,
         [string]$Configuration = "Release",
         [string]$Framework = "net8.0-windows",
-        [string]$Runtime,
+        [string]$Runtime = "win-x64",
         [string]$Version,
         [string]$PackageRoot
     )
-
-    $resolvedPackageRoot = Resolve-PackageRootForMsi -Context $Context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -PackageRoot $PackageRoot
-    $exeSubpath = if ($Context.AppType -eq "Viewer") { "Viewer\NtfsAudit.Viewer.exe" } else { "App\NtfsAudit.App.exe" }
-    $appExecutable = Join-Path $resolvedPackageRoot $exeSubpath
-    return Resolve-MsiVersion -Version $Version -AppExecutablePath $appExecutable -RepositoryContext $Context.Repository
+    return Resolve-NsisArtifactVersion -Context $Context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -Version $Version -PackageRoot $PackageRoot
 }
 
-function Resolve-PackageRootForMsi {
+function Resolve-PackageRootForInstaller {
     param(
         $Context,
         [string]$Configuration = "Release",
         [string]$Framework = "net8.0-windows",
-        [string]$Runtime,
+        [string]$Runtime = "win-x64",
         [string]$PackageRoot
     )
 
@@ -165,12 +178,23 @@ function Resolve-PackageRootForMsi {
     return (Resolve-StagedOutputRoot -BaseRoot $Context.Repository.PackagesRoot -Configuration $Configuration -Runtime $Runtime -Framework $Framework)
 }
 
-function Resolve-MsiOutputRoot {
+function Resolve-PackageRootForMsi {
     param(
         $Context,
         [string]$Configuration = "Release",
         [string]$Framework = "net8.0-windows",
-        [string]$Runtime,
+        [string]$Runtime = "win-x64",
+        [string]$PackageRoot
+    )
+    return Resolve-PackageRootForInstaller -Context $Context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -PackageRoot $PackageRoot
+}
+
+function Resolve-InstallerOutputRoot {
+    param(
+        $Context,
+        [string]$Configuration = "Release",
+        [string]$Framework = "net8.0-windows",
+        [string]$Runtime = "win-x64",
         [string]$OutputRoot
     )
 
@@ -181,191 +205,122 @@ function Resolve-MsiOutputRoot {
     return (Join-Path (Resolve-StagedOutputRoot -BaseRoot $Context.Repository.PackagesRoot -Configuration $Configuration -Runtime $Runtime -Framework $Framework) "installer")
 }
 
-function New-StableGuid {
-    param([string]$Value)
-
-    $md5 = [System.Security.Cryptography.MD5]::Create()
-    try {
-        $bytes = [System.Text.Encoding]::UTF8.GetBytes($Value)
-        $hash = $md5.ComputeHash($bytes)
-        return (New-Object System.Guid @(,$hash)).ToString().ToUpperInvariant()
-    }
-    finally {
-        $md5.Dispose()
-    }
-}
-
-function Convert-ToSafeId {
+function Resolve-MsiOutputRoot {
     param(
-        [string]$Prefix,
-        [string]$Value
+        $Context,
+        [string]$Configuration = "Release",
+        [string]$Framework = "net8.0-windows",
+        [string]$Runtime = "win-x64",
+        [string]$OutputRoot
     )
-
-    return ("{0}_{1}" -f $Prefix, (New-StableGuid -Value $Value).Replace("-", ""))
+    return Resolve-InstallerOutputRoot -Context $Context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -OutputRoot $OutputRoot
 }
 
-function Escape-XmlValue {
-    param([string]$Value)
-
-    return [System.Security.SecurityElement]::Escape($Value)
-}
-
-function Get-RelativePathCompat {
-    param(
-        [string]$BasePath,
-        [string]$TargetPath
-    )
-
-    $baseFullPath = [System.IO.Path]::GetFullPath($BasePath)
-    $targetFullPath = [System.IO.Path]::GetFullPath($TargetPath)
-    if (-not $baseFullPath.EndsWith([System.IO.Path]::DirectorySeparatorChar.ToString(), [System.StringComparison]::Ordinal)) {
-        $baseFullPath += [System.IO.Path]::DirectorySeparatorChar
-    }
-
-    $baseUri = New-Object System.Uri($baseFullPath)
-    $targetUri = New-Object System.Uri($targetFullPath)
-    $relativeUri = $baseUri.MakeRelativeUri($targetUri)
-    $relativePath = [System.Uri]::UnescapeDataString($relativeUri.ToString())
-    return $relativePath.Replace('/', [System.IO.Path]::DirectorySeparatorChar)
-}
-
-function New-MsiSource {
+function New-NsisSource {
     param(
         $Context,
         [string]$PackageRoot,
         [string]$Version,
-        [string]$Architecture = "x64",
-        [string]$SourcePath
+        [string]$OutInstallerPath,
+        [string]$NsiPath
     )
 
     $builder = New-Object System.Text.StringBuilder
-    $componentIds = New-Object System.Collections.Generic.List[string]
-    $hasProductIcon = Test-Path $Context.IconPath
-    $files = Get-ChildItem -Path $PackageRoot -File -Recurse |
-        Where-Object {
-            $relativePath = Get-RelativePathCompat -BasePath $PackageRoot -TargetPath $_.FullName
-            $pathSegments = $relativePath -split "[\\/]"
-            $topLevel = if ($pathSegments.Length -gt 0) { $pathSegments[0] } else { "" }
-            if ($Context.AppType -eq "Viewer") {
-                if ($topLevel -ne "Viewer") { return $false }
-            } else {
-                if ($topLevel -eq "Viewer") { return $false }
-                if ($topLevel -notin @("App", "Service")) { return $false }
-            }
-            $topLevel -notin @("installer", "msi") -and $_.Extension -notin @(".msi", ".wixpdb", ".wixobj", ".wxs")
-        } |
-        Sort-Object FullName
+    $appType = $Context.AppType
+    $productName = $Context.ProductName
+    $manufacturer = $Context.Manufacturer
+    $defaultSubDir = $Context.DefaultInstallSubDir
+    $iconPath = $Context.IconPath
+    $hasIcon = Test-Path $iconPath
 
-    [void]$builder.AppendLine('<?xml version="1.0" encoding="UTF-8"?>')
-    [void]$builder.AppendLine('<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">')
-    [void]$builder.AppendLine(('  <Product Id="*" Name="{0}" Language="1033" Version="{1}" Manufacturer="{2}" UpgradeCode="{3}">' -f (Escape-XmlValue $Context.ProductName), $Version, (Escape-XmlValue $Context.Manufacturer), $Context.UpgradeCode))
-    [void]$builder.AppendLine(('    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" InstallPrivileges="elevated" Platform="{0}" />' -f (Escape-XmlValue $Architecture)))
-    [void]$builder.AppendLine('    <MajorUpgrade DowngradeErrorMessage="A newer version of OnlyRights NtfsAudit is already installed." AllowSameVersionUpgrades="yes" />')
-    [void]$builder.AppendLine('    <MediaTemplate EmbedCab="yes" />')
-    [void]$builder.AppendLine('    <Property Id="ARPNOMODIFY" Value="1" />')
-    if ($hasProductIcon) {
-        [void]$builder.AppendLine(('    <Icon Id="OnlyRightsIcon.ico" SourceFile="{0}" />' -f (Escape-XmlValue $Context.IconPath)))
-        [void]$builder.AppendLine('    <Property Id="ARPPRODUCTICON" Value="OnlyRightsIcon.ico" />')
-    }
-    [void]$builder.AppendLine('    <Directory Id="TARGETDIR" Name="SourceDir">')
-    [void]$builder.AppendLine('      <Directory Id="ProgramMenuFolder">')
-    [void]$builder.AppendLine('        <Directory Id="ApplicationProgramsFolder" Name="OnlyRights" />')
-    [void]$builder.AppendLine('      </Directory>')
-    [void]$builder.AppendLine('      <Directory Id="DesktopFolder" />')
-    $programFilesFolderId = if ($Architecture -eq "x64") { "ProgramFiles64Folder" } else { "ProgramFilesFolder" }
-    [void]$builder.AppendLine(('      <Directory Id="{0}">' -f $programFilesFolderId))
-    [void]$builder.AppendLine('        <Directory Id="CompanyFolder" Name="OnlyRights">')
-    [void]$builder.AppendLine('          <Directory Id="INSTALLFOLDER" Name="NtfsAudit">')
+    [void]$builder.AppendLine('!include "MUI2.nsh"')
+    [void]$builder.AppendLine('Unicode true')
+    [void]$builder.AppendLine('RequestExecutionLevel admin')
+    [void]$builder.AppendLine(('OutFile "{0}"' -f ($OutInstallerPath -replace '\\', '\\\\')))
+    [void]$builder.AppendLine(('InstallDir "$PROGRAMFILES64\{0}"' -f $defaultSubDir))
+    [void]$builder.AppendLine(('InstallDirRegKey HKLM "Software\{0}" "InstallDir"' -f $Context.InstallerName))
+    [void]$builder.AppendLine(('Name "{0}"' -f $productName))
+    [void]$builder.AppendLine(('BrandingText "{0}"' -f $manufacturer))
+    [void]$builder.AppendLine('')
 
-    Add-MsiDirectoryContent -Builder $builder -RootPath $PackageRoot -CurrentPath $PackageRoot -DirectoryId "INSTALLFOLDER" -IndentLevel 5 -ComponentIds $componentIds -Files $files -HasProductIcon:$hasProductIcon
-
-    [void]$builder.AppendLine('          </Directory>')
-    [void]$builder.AppendLine('        </Directory>')
-    [void]$builder.AppendLine('      </Directory>')
-    [void]$builder.AppendLine('    </Directory>')
-    [void]$builder.AppendLine('    <Feature Id="MainFeature" Title="OnlyRights NtfsAudit" Level="1">')
-    foreach ($componentId in ($componentIds | Sort-Object)) {
-        [void]$builder.AppendLine(('      <ComponentRef Id="{0}" />' -f $componentId))
-    }
-    [void]$builder.AppendLine('    </Feature>')
-    [void]$builder.AppendLine('  </Product>')
-    [void]$builder.AppendLine('</Wix>')
-
-    [System.IO.File]::WriteAllText($SourcePath, $builder.ToString(), [System.Text.UTF8Encoding]::new($false))
-}
-
-function Invoke-Msiexec {
-    param([string[]]$Arguments)
-
-    $process = Start-Process -FilePath "msiexec.exe" -ArgumentList $Arguments -Wait -PassThru -NoNewWindow
-    return $process.ExitCode
-}
-
-function Add-MsiDirectoryContent {
-    param(
-        [System.Text.StringBuilder]$Builder,
-        [string]$RootPath,
-        [string]$CurrentPath,
-        [string]$DirectoryId,
-        [int]$IndentLevel,
-        [System.Collections.Generic.List[string]]$ComponentIds,
-        [object[]]$Files,
-        [bool]$HasProductIcon
-    )
-
-    $indent = ('  ' * $IndentLevel)
-    $resolvedFiles = foreach ($entry in @($Files)) {
-        if ($entry -is [System.Array]) {
-            foreach ($nestedEntry in $entry) {
-                if ($nestedEntry -is [System.IO.FileInfo]) {
-                    $nestedEntry
-                }
-            }
-            continue
-        }
-
-        if ($entry -is [System.IO.FileInfo]) {
-            $entry
-        }
+    if ($hasIcon) {
+        [void]$builder.AppendLine(('!define MUI_ICON "{0}"' -f ($iconPath -replace '\\', '\\\\')))
+        [void]$builder.AppendLine(('!define MUI_UNICON "{0}"' -f ($iconPath -replace '\\', '\\\\')))
     }
 
-    foreach ($file in ($resolvedFiles | Where-Object { [System.IO.Path]::GetDirectoryName($_.FullName) -eq $CurrentPath } | Sort-Object Name)) {
-        $relativePath = Get-RelativePathCompat -BasePath $RootPath -TargetPath $file.FullName
-        $componentId = Convert-ToSafeId -Prefix "Cmp" -Value $relativePath
-        $fileId = Convert-ToSafeId -Prefix "Fil" -Value $relativePath
-        $removeId = Convert-ToSafeId -Prefix "Rm" -Value $relativePath
-        $isMainAppExecutable = $relativePath -eq (Join-Path "App" "NtfsAudit.App.exe")
-        $isViewerExecutable = $relativePath -eq (Join-Path "Viewer" "NtfsAudit.Viewer.exe")
-        $isServiceExecutable = $relativePath -eq (Join-Path "Service" "NtfsAudit.Service.exe")
+    [void]$builder.AppendLine('!define MUI_ABORTWARNING')
+    [void]$builder.AppendLine('!insertmacro MUI_PAGE_WELCOME')
+    [void]$builder.AppendLine('!insertmacro MUI_PAGE_DIRECTORY')
+    [void]$builder.AppendLine('!insertmacro MUI_PAGE_INSTFILES')
+    [void]$builder.AppendLine('!insertmacro MUI_PAGE_FINISH')
+    [void]$builder.AppendLine('')
+    [void]$builder.AppendLine('!insertmacro MUI_UNPAGE_CONFIRM')
+    [void]$builder.AppendLine('!insertmacro MUI_UNPAGE_INSTFILES')
+    [void]$builder.AppendLine('')
+    [void]$builder.AppendLine('!insertmacro MUI_LANGUAGE "English"')
+    [void]$builder.AppendLine('')
 
-        [void]$Builder.AppendLine(('{0}<Component Id="{1}" Guid="{2}">' -f $indent, $componentId, (New-StableGuid -Value $relativePath)))
-        if ($isMainAppExecutable -or $isViewerExecutable) {
-            [void]$Builder.AppendLine(('{0}  <File Id="{1}" Source="{2}" Name="{3}" KeyPath="yes">' -f $indent, $fileId, (Escape-XmlValue $file.FullName), (Escape-XmlValue $file.Name)))
-            $shortcutIcon = if ($HasProductIcon) { ' Icon="OnlyRightsIcon.ico"' } else { "" }
-            $shortcutName = if ($isViewerExecutable) { "OnlyRights NtfsAudit Viewer" } else { "OnlyRights NtfsAudit" }
-            $shortcutIdPrefix = if ($isViewerExecutable) { "Viewer" } else { "App" }
-            [void]$Builder.AppendLine(('{0}    <Shortcut Id="{1}StartMenuShortcut" Directory="ApplicationProgramsFolder" Name="{2}" WorkingDirectory="INSTALLFOLDER"{3} Advertise="yes" />' -f $indent, $shortcutIdPrefix, $shortcutName, $shortcutIcon))
-            [void]$Builder.AppendLine(('{0}    <Shortcut Id="{1}DesktopShortcut" Directory="DesktopFolder" Name="{2}" WorkingDirectory="INSTALLFOLDER"{3} Advertise="yes" />' -f $indent, $shortcutIdPrefix, $shortcutName, $shortcutIcon))
-            [void]$Builder.AppendLine(('{0}  </File>' -f $indent))
-            [void]$Builder.AppendLine(('{0}  <RemoveFolder Id="{1}RemoveApplicationProgramsFolder" Directory="ApplicationProgramsFolder" On="uninstall" />' -f $indent, $shortcutIdPrefix))
-        }
-        else {
-            [void]$Builder.AppendLine(('{0}  <File Id="{1}" Source="{2}" Name="{3}" KeyPath="yes" />' -f $indent, $fileId, (Escape-XmlValue $file.FullName), (Escape-XmlValue $file.Name)))
-        }
-        if ($isServiceExecutable) {
-            [void]$Builder.AppendLine(('{0}  <ServiceInstall Id="NtfsAuditWorkerInstall" Name="NtfsAuditWorker" DisplayName="OnlyRights NtfsAudit Worker" Description="Background scheduler and scan worker for OnlyRights NtfsAudit." Start="auto" Type="ownProcess" ErrorControl="normal" Vital="yes" Account="LocalSystem" />' -f $indent))
-            [void]$Builder.AppendLine(('{0}  <ServiceControl Id="NtfsAuditWorkerControl" Name="NtfsAuditWorker" Start="install" Stop="both" Remove="uninstall" Wait="yes" />' -f $indent))
-        }
-        [void]$Builder.AppendLine(('{0}  <RemoveFolder Id="{1}" Directory="{2}" On="uninstall" />' -f $indent, $removeId, $DirectoryId))
-        [void]$Builder.AppendLine(('{0}</Component>' -f $indent))
-        $ComponentIds.Add($componentId) | Out-Null
+    # Section Install
+    [void]$builder.AppendLine('Section "MainSection" SEC01')
+    [void]$builder.AppendLine('    SetOutPath "$INSTDIR"')
+
+    $shortcutIconPath = if ($hasIcon) { $iconPath -replace '\\', '\\\\' } else { if ($appType -eq "Viewer") { '`$INSTDIR\Viewer\NtfsAudit.Viewer.exe' } else { '`$INSTDIR\App\NtfsAudit.App.exe' } }
+
+    if ($appType -eq "App") {
+        [void]$builder.AppendLine("    ExecWait 'sc.exe stop NtfsAuditWorker'")
+        [void]$builder.AppendLine(('    SetOutPath "$INSTDIR\App"'))
+        [void]$builder.AppendLine(('    File /r "{0}\App\*.*"' -f ($PackageRoot -replace '\\', '\\\\')))
+        [void]$builder.AppendLine(('    SetOutPath "$INSTDIR\Service"'))
+        [void]$builder.AppendLine(('    File /r "{0}\Service\*.*"' -f ($PackageRoot -replace '\\', '\\\\')))
+        [void]$builder.AppendLine('')
+        [void]$builder.AppendLine("    ExecWait 'sc.exe create NtfsAuditWorker binPath= `"`"\`"`$INSTDIR\Service\NtfsAudit.Service.exe\`"`"`" start= auto DisplayName= `"OnlyRights NtfsAudit Worker`"'")
+        [void]$builder.AppendLine("    ExecWait 'sc.exe start NtfsAuditWorker'")
+        [void]$builder.AppendLine('')
+        [void]$builder.AppendLine('    CreateDirectory "$SMPROGRAMS\OnlyRights"')
+        [void]$builder.AppendLine(('    CreateShortcut "$SMPROGRAMS\OnlyRights\OnlyRights NtfsAudit.lnk" "$INSTDIR\App\NtfsAudit.App.exe" "" "{0}" 0' -f $shortcutIconPath))
+        [void]$builder.AppendLine(('    CreateShortcut "$DESKTOP\OnlyRights NtfsAudit.lnk" "$INSTDIR\App\NtfsAudit.App.exe" "" "{0}" 0' -f $shortcutIconPath))
+    }
+    else {
+        [void]$builder.AppendLine(('    SetOutPath "$INSTDIR\Viewer"'))
+        [void]$builder.AppendLine(('    File /r "{0}\Viewer\*.*"' -f ($PackageRoot -replace '\\', '\\\\')))
+        [void]$builder.AppendLine('')
+        [void]$builder.AppendLine('    CreateDirectory "$SMPROGRAMS\OnlyRights"')
+        [void]$builder.AppendLine(('    CreateShortcut "$SMPROGRAMS\OnlyRights\OnlyRights NtfsAudit Viewer.lnk" "$INSTDIR\Viewer\NtfsAudit.Viewer.exe" "" "{0}" 0' -f $shortcutIconPath))
+        [void]$builder.AppendLine(('    CreateShortcut "$DESKTOP\OnlyRights NtfsAudit Viewer.lnk" "$INSTDIR\Viewer\NtfsAudit.Viewer.exe" "" "{0}" 0' -f $shortcutIconPath))
     }
 
-    foreach ($directory in (Get-ChildItem -Path $CurrentPath -Directory | Where-Object { $_.Name -notin @("installer", "msi") } | Sort-Object Name)) {
-        $relativeDirectory = Get-RelativePathCompat -BasePath $RootPath -TargetPath $directory.FullName
-        $childDirectoryId = Convert-ToSafeId -Prefix "Dir" -Value $relativeDirectory
-        [void]$Builder.AppendLine(('{0}<Directory Id="{1}" Name="{2}">' -f $indent, $childDirectoryId, (Escape-XmlValue $directory.Name)))
-        Add-MsiDirectoryContent -Builder $Builder -RootPath $RootPath -CurrentPath $directory.FullName -DirectoryId $childDirectoryId -IndentLevel ($IndentLevel + 1) -ComponentIds $ComponentIds -Files $Files -HasProductIcon:$HasProductIcon
-        [void]$Builder.AppendLine(('{0}</Directory>' -f $indent))
+    [void]$builder.AppendLine('')
+    [void]$builder.AppendLine('    WriteUninstaller "$INSTDIR\Uninstall.exe"')
+    [void]$builder.AppendLine('')
+    [void]$builder.AppendLine(('    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\{0}" "DisplayName" "{1}"' -f $Context.InstallerName, $productName))
+    [void]$builder.AppendLine(('    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\{0}" "Publisher" "{1}"' -f $Context.InstallerName, $manufacturer))
+    [void]$builder.AppendLine(('    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\{0}" "DisplayVersion" "{1}"' -f $Context.InstallerName, $Version))
+    [void]$builder.AppendLine(('    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\{0}" "UninstallString" ''"$INSTDIR\Uninstall.exe"''' -f $Context.InstallerName))
+    [void]$builder.AppendLine(('    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\{0}" "InstallLocation" "$INSTDIR"' -f $Context.InstallerName))
+    $appExeReg = if ($appType -eq "Viewer") { '`$INSTDIR\Viewer\NtfsAudit.Viewer.exe' } else { '`$INSTDIR\App\NtfsAudit.App.exe' }
+    [void]$builder.AppendLine(('    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\{0}" "DisplayIcon" "{1}"' -f $Context.InstallerName, $appExeReg))
+    [void]$builder.AppendLine(('    WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\{0}" "NoModify" 1' -f $Context.InstallerName))
+    [void]$builder.AppendLine(('    WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\{0}" "NoRepair" 1' -f $Context.InstallerName))
+    [void]$builder.AppendLine('SectionEnd')
+    [void]$builder.AppendLine('')
+
+    # Section Uninstall
+    [void]$builder.AppendLine('Section "Uninstall"')
+    if ($appType -eq "App") {
+        [void]$builder.AppendLine("    ExecWait 'sc.exe stop NtfsAuditWorker'")
+        [void]$builder.AppendLine("    ExecWait 'sc.exe delete NtfsAuditWorker'")
+        [void]$builder.AppendLine('    Delete "$SMPROGRAMS\OnlyRights\OnlyRights NtfsAudit.lnk"')
+        [void]$builder.AppendLine('    Delete "$DESKTOP\OnlyRights NtfsAudit.lnk"')
     }
+    else {
+        [void]$builder.AppendLine('    Delete "$SMPROGRAMS\OnlyRights\OnlyRights NtfsAudit Viewer.lnk"')
+        [void]$builder.AppendLine('    Delete "$DESKTOP\OnlyRights NtfsAudit Viewer.lnk"')
+    }
+    [void]$builder.AppendLine('    RMDir "$SMPROGRAMS\OnlyRights"')
+    [void]$builder.AppendLine('    RMDir /r "$INSTDIR"')
+    [void]$builder.AppendLine(('    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\{0}"' -f $Context.InstallerName))
+    [void]$builder.AppendLine(('    DeleteRegKey HKLM "Software\{0}"' -f $Context.InstallerName))
+    [void]$builder.AppendLine('SectionEnd')
+
+    [System.IO.File]::WriteAllText($NsiPath, $builder.ToString(), [System.Text.UTF8Encoding]::new($false))
 }

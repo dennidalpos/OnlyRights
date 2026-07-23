@@ -13,11 +13,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Models;
 
 #nullable enable
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public static class ScanResultTreeMapBuilder
     {

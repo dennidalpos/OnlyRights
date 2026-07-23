@@ -14,10 +14,10 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.Data.Sqlite;
 using Newtonsoft.Json;
-using NtfsAudit.App.Export;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Models;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public class AnalysisSqliteStore
     {

@@ -1,3 +1,5 @@
+using NtfsAudit.Core.Logging;
+using NtfsAudit.Core.Cache;
 /*
  * OnlyRights
  * Copyright (c) 2026 Danny Perondi
@@ -13,9 +15,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using NtfsAudit.App.Export;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Models;
 using NtfsAudit.App.Services;
+using NtfsAudit.Core.Services;
 
 namespace NtfsAudit.App.ViewModels
 {

@@ -12,7 +12,7 @@
 using System;
 using System.Security.Principal;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public static class SidClassifier
     {

@@ -1,3 +1,7 @@
+using NtfsAudit.App.Services;
+using NtfsAudit.Core.Logging;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Cache;
 /*
  * OnlyRights
  * Copyright (c) 2026 Danny Perondi
@@ -14,8 +18,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Windows;
-using NtfsAudit.App.Models;
-using NtfsAudit.App.Services;
+using NtfsAudit.Core.Models;
+using NtfsAudit.Core.Services;
 using NtfsAudit.App.ViewModels;
 using Xunit;
 
@@ -23,6 +27,10 @@ namespace NtfsAudit.App.Tests
 {
     public class MainViewModelDisplayStateTests
     {
+        public MainViewModelDisplayStateTests()
+        {
+            LocalizationManager.ApplyDefault();
+        }
         [Fact]
         public void InitialDisplayState_ShowsEmptyScanAndStartHint()
         {
@@ -181,7 +189,7 @@ namespace NtfsAudit.App.Tests
             viewModel.ScanRoots.Add(@"C:\Data");
 
             typeof(MainViewModel)
-                .GetField("_isServiceInstalled", BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetProperty("IsServiceInstalled", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
                 .SetValue(viewModel, true);
 
             viewModel.ScheduleName = "Nightly";
@@ -189,7 +197,7 @@ namespace NtfsAudit.App.Tests
 
             Assert.True(viewModel.CanSaveSchedule);
             Assert.Equal("09:30", viewModel.ScheduleTimeText);
-            Assert.Contains("ready", viewModel.ScheduleEditorFeedbackText, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains(LocalizationManager.Text("Settings.ScheduleReadyHint"), viewModel.ScheduleEditorFeedbackText, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
@@ -225,7 +233,7 @@ namespace NtfsAudit.App.Tests
                 Assert.True(viewModel.NewScheduleCommand.CanExecute(null));
                 Assert.True(viewModel.SaveScheduleCommand.CanExecute(null));
                 Assert.False(viewModel.DeleteScheduleCommand.CanExecute(null));
-                Assert.Contains("ready", viewModel.ScheduleEditorFeedbackText, StringComparison.OrdinalIgnoreCase);
+                Assert.Contains(LocalizationManager.Text("Settings.ScheduleReadyHint"), viewModel.ScheduleEditorFeedbackText, StringComparison.OrdinalIgnoreCase);
             }
             finally
             {
@@ -306,8 +314,8 @@ namespace NtfsAudit.App.Tests
             viewModel.SelectFolder(@"C:\AuditRoot");
 
             Assert.True(viewModel.SelectedInheritanceDisabled);
-            Assert.Equal("Inheritance disabled", viewModel.SelectedInheritanceSummary);
-            Assert.Equal("High: 1, Medium: 0, Low: 0", viewModel.SelectedRiskSummary);
+            Assert.Equal(LocalizationManager.Text("Results.InheritanceDisabled"), viewModel.SelectedInheritanceSummary);
+            Assert.Equal(LocalizationManager.Format("Results.RiskSummaryFormat", 1, 0, 0), viewModel.SelectedRiskSummary);
         }
 
         private static void ClearScanInputs(MainViewModel viewModel)

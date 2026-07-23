@@ -12,7 +12,7 @@
 using System;
 using System.IO;
 
-namespace NtfsAudit.App.Logging
+namespace NtfsAudit.Core.Logging
 {
     public class Logger
     {

@@ -12,9 +12,9 @@
 using System;
 using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Models;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public class DirectoryServicesResolver : IAdResolver
     {

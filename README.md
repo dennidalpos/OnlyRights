@@ -55,13 +55,13 @@ Run the read-only viewer:
 pwsh -File .\scripts\run\start-viewer.ps1
 ```
 
-Build, test, packaging, MSI, service, and CI-facing commands are documented in [scripts/README.md](scripts/README.md) and in the technical operations documentation.
+Build, test, packaging, NSIS installer, service, and CI-facing commands are documented in [scripts/README.md](scripts/README.md) and in the technical operations documentation.
 
 ## Current Status
 
-- The current workspace verification pass executed `pwsh -File .\scripts\clean-repo.ps1`, `pwsh -File .\scripts\install-dependencies.ps1`, `pwsh -File .\scripts\maintenance\check-prerequisites.ps1`, `pwsh -File .\scripts\build.ps1`, `pwsh -File .\scripts\build.ps1 -Runtime win-x64 -Installer`, `pwsh -File .\scripts\build.ps1 -Runtime win-x86 -Installer`, and `pwsh -File .\scripts\prepare-network-share-app.ps1` successfully on July 15, 2026.
-- `pwsh -File .\scripts\maintenance\run-tests.ps1 -Configuration Release` completed successfully in this workspace on July 15, 2026.
-- `dotnet test .\tests\NtfsAudit.App.Tests\NtfsAudit.App.Tests.csproj -c Release --no-restore --filter MsiPackagingScriptTests` passed 4 script-layout tests in this workspace on July 15, 2026.
+- The current workspace verification pass executed `pwsh -File .\scripts\clean-repo.ps1`, `pwsh -File .\scripts\install-dependencies.ps1`, `pwsh -File .\scripts\maintenance\check-prerequisites.ps1`, `pwsh -File .\scripts\build.ps1`, `pwsh -File .\scripts\build.ps1 -Runtime win-x64 -Installer`, and `pwsh -File .\scripts\prepare-network-share-app.ps1` successfully on July 23, 2026.
+- `pwsh -File .\scripts\maintenance\run-tests.ps1 -Configuration Release` completed successfully in this workspace on July 23, 2026 (167 tests passed, 0 failed).
+- `dotnet test .\tests\NtfsAudit.App.Tests\NtfsAudit.App.Tests.csproj -c Release --no-restore --filter MsiPackagingScriptTests` passed 3 NSIS script-layout tests in this workspace on July 23, 2026.
 - Repository-aligned residual work is tracked in [PROJECT_STATUS.json](PROJECT_STATUS.json) when real open tasks remain.
 
 ## Technical Documentation

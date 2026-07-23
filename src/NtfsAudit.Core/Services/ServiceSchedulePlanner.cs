@@ -10,11 +10,11 @@
  * written permission from Danny Perondi.
  */
 using System;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Models;
 
 #nullable enable
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public sealed class ServiceSchedulePlanner
     {

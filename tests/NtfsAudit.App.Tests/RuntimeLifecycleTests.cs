@@ -1,3 +1,7 @@
+using NtfsAudit.App.Services;
+using NtfsAudit.Core.Logging;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Cache;
 /*
  * OnlyRights
  * Copyright (c) 2026 Danny Perondi
@@ -15,8 +19,8 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows;
-using NtfsAudit.App.Models;
-using NtfsAudit.App.Services;
+using NtfsAudit.Core.Models;
+using NtfsAudit.Core.Services;
 using Newtonsoft.Json;
 using NtfsAudit.Service;
 using Xunit;

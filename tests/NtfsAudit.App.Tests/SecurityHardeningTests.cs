@@ -1,3 +1,6 @@
+using NtfsAudit.App.Services;
+using NtfsAudit.Core.Logging;
+using NtfsAudit.Core.Export;
 /*
  * OnlyRights
  * Copyright (c) 2026 Danny Perondi
@@ -14,9 +17,9 @@ using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Principal;
-using NtfsAudit.App.Cache;
-using NtfsAudit.App.Models;
-using NtfsAudit.App.Services;
+using NtfsAudit.Core.Cache;
+using NtfsAudit.Core.Models;
+using NtfsAudit.Core.Services;
 using Xunit;
 
 namespace NtfsAudit.App.Tests

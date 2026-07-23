@@ -1,3 +1,8 @@
+using NtfsAudit.Core.Logging;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Cache;
+using NtfsAudit.Core.Models;
+using NtfsAudit.Core.Services;
 namespace NtfsAudit.App.Services
 {
     public sealed class SelectionOption<T>

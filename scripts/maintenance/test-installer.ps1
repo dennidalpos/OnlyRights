@@ -3,10 +3,10 @@ param(
     [ValidateSet("Install", "Uninstall", "Upgrade")]
     [string]$Action,
 
-    [string]$MsiPath,
+    [string]$InstallerPath,
     [string]$Configuration = "Release",
     [string]$Framework = "net8.0-windows",
-    [string]$Runtime,
+    [string]$Runtime = "win-x64",
     [string]$Version,
     [string]$InstallRoot,
     [switch]$SkipBuild,
@@ -22,38 +22,38 @@ Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot "..\internal\installer.ps1")
 . (Join-Path $PSScriptRoot "..\internal\windows-service.ps1")
 
-$context = Get-MsiScriptContext -ScriptRoot $PSScriptRoot
+$context = Get-NsisScriptContext -ScriptRoot $PSScriptRoot
 
 switch ($Action) {
     "Install" {
-        $resolvedMsiPath = if ($MsiPath) {
-            Resolve-RepositoryRelativePath -RepoRoot $context.Repository.RepoRoot -Path $MsiPath
+        $resolvedInstallerPath = if ($InstallerPath) {
+            Resolve-RepositoryRelativePath -RepoRoot $context.Repository.RepoRoot -Path $InstallerPath
         }
         else {
-            $outputRoot = Resolve-MsiOutputRoot -Context $context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -OutputRoot $null
-            $versionValue = Resolve-MsiArtifactVersion -Context $context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -Version $Version
-            $architecture = Resolve-MsiArchitecture -Runtime $Runtime
-            Join-Path $outputRoot ("{0}-{1}-{2}.msi" -f $context.InstallerName, $versionValue, $architecture)
+            $outputRoot = Resolve-InstallerOutputRoot -Context $context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -OutputRoot $null
+            $versionValue = Resolve-NsisArtifactVersion -Context $context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -Version $Version
+            $architecture = Resolve-NsisArchitecture -Runtime $Runtime
+            Join-Path $outputRoot ("{0}-{1}-{2}.exe" -f $context.InstallerName, $versionValue, $architecture)
         }
 
-        if (-not $SkipBuild -and -not (Test-Path $resolvedMsiPath)) {
+        if (-not $SkipBuild -and -not (Test-Path $resolvedInstallerPath)) {
             & (Join-Path $PSScriptRoot "..\build\build-installer.ps1") -Configuration $Configuration -Framework $Framework -Runtime $Runtime -Version $Version
         }
 
-        if (-not (Test-Path $resolvedMsiPath)) {
-            throw ("MSI not found: {0}" -f $resolvedMsiPath)
+        if (-not (Test-Path $resolvedInstallerPath)) {
+            throw ("NSIS Installer not found: {0}" -f $resolvedInstallerPath)
         }
 
-        $resolvedInstallRoot = Resolve-MsiInstallRoot -Context $context -Runtime $Runtime -InstallRoot $InstallRoot
+        $resolvedInstallRoot = Resolve-NsisInstallRoot -Context $context -Runtime $Runtime -InstallRoot $InstallRoot
 
-        $logRoot = Join-Path $context.Repository.ArtifactsRoot "logs"
-        Ensure-Directory -Path $logRoot
-        $logPath = Join-Path $logRoot "msi-install.log"
+        $installArgs = @("/S")
+        if ($InstallRoot) {
+            $installArgs += ("/D={0}" -f $resolvedInstallRoot)
+        }
 
-        $installFolderArgument = Format-MsiPropertyArgument -Name "INSTALLFOLDER" -Value $resolvedInstallRoot
-        $exitCode = Invoke-Msiexec -Arguments @("/i", $resolvedMsiPath, "/qn", "/norestart", $installFolderArgument, "/l*v", $logPath)
-        if ($exitCode -ne 0) {
-            throw ("MSI install failed with exit code {0}. See {1}." -f $exitCode, $logPath)
+        $process = Start-Process -FilePath $resolvedInstallerPath -ArgumentList $installArgs -Wait -PassThru -NoNewWindow
+        if ($process.ExitCode -ne 0) {
+            throw ("NSIS install failed with exit code {0}." -f $process.ExitCode)
         }
 
         $appExe = Join-Path (Join-Path $resolvedInstallRoot "App") "NtfsAudit.App.exe"
@@ -61,73 +61,50 @@ switch ($Action) {
             throw ("Installed app executable not found: {0}" -f $appExe)
         }
 
-        Write-Host "[NtfsAudit] MSI install test completed." -ForegroundColor Cyan
-        Write-Host ("  MSI: {0}" -f $resolvedMsiPath)
+        Write-Host "[NtfsAudit] NSIS install test completed." -ForegroundColor Cyan
+        Write-Host ("  Installer: {0}" -f $resolvedInstallerPath)
         Write-Host ("  Install root: {0}" -f $resolvedInstallRoot)
-        Write-Host ("  Log: {0}" -f $logPath)
     }
 
     "Uninstall" {
-        $resolvedMsiPath = if ($MsiPath) {
-            Resolve-RepositoryRelativePath -RepoRoot $context.Repository.RepoRoot -Path $MsiPath
-        }
-        else {
-            $outputRoot = Resolve-MsiOutputRoot -Context $context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -OutputRoot $null
-            $versionValue = Resolve-MsiArtifactVersion -Context $context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -Version $Version
-            $architecture = Resolve-MsiArchitecture -Runtime $Runtime
-            Join-Path $outputRoot ("{0}-{1}-{2}.msi" -f $context.InstallerName, $versionValue, $architecture)
-        }
+        $resolvedInstallRoot = Resolve-NsisInstallRoot -Context $context -Runtime $Runtime -InstallRoot $InstallRoot
+        $uninstaller = Join-Path $resolvedInstallRoot "Uninstall.exe"
 
-        if (-not (Test-Path $resolvedMsiPath)) {
-            throw ("MSI not found: {0}" -f $resolvedMsiPath)
-        }
-
-        $resolvedInstallRoot = Resolve-MsiInstallRoot -Context $context -Runtime $Runtime -InstallRoot $InstallRoot
-
-        $logRoot = Join-Path $context.Repository.ArtifactsRoot "logs"
-        Ensure-Directory -Path $logRoot
-        $logPath = Join-Path $logRoot "msi-uninstall.log"
-
-        $exitCode = Invoke-Msiexec -Arguments @("/x", $resolvedMsiPath, "/qn", "/norestart", "/l*v", $logPath)
-        if ($exitCode -ne 0) {
-            throw ("MSI uninstall failed with exit code {0}. See {1}." -f $exitCode, $logPath)
+        if (Test-Path $uninstaller) {
+            $process = Start-Process -FilePath $uninstaller -ArgumentList "/S" -Wait -PassThru -NoNewWindow
+            if ($process.ExitCode -ne 0) {
+                throw ("NSIS uninstall failed with exit code {0}." -f $process.ExitCode)
+            }
         }
 
         $serviceContext = Get-ServiceScriptContext -ScriptRoot $PSScriptRoot
         $serviceState = Get-ServiceState -ServiceName $serviceContext.ServiceName
         if ($serviceState.IsInstalled) {
-            throw ("MSI uninstall left service '{0}' installed." -f $serviceContext.ServiceName)
+            throw ("NSIS uninstall left service '{0}' installed." -f $serviceContext.ServiceName)
         }
 
         if (Test-Path $resolvedInstallRoot) {
-            throw ("MSI uninstall left install root on disk: {0}" -f $resolvedInstallRoot)
+            throw ("NSIS uninstall left install root on disk: {0}" -f $resolvedInstallRoot)
         }
 
-        Write-Host "[NtfsAudit] MSI uninstall test completed." -ForegroundColor Cyan
-        Write-Host ("  MSI: {0}" -f $resolvedMsiPath)
+        Write-Host "[NtfsAudit] NSIS uninstall test completed." -ForegroundColor Cyan
         Write-Host ("  Install root: {0}" -f $resolvedInstallRoot)
-        Write-Host ("  Log: {0}" -f $logPath)
     }
 
     "Upgrade" {
         & (Join-Path $PSScriptRoot "..\build\build-installer.ps1") -Configuration $Configuration -Framework $Framework -Runtime $Runtime -Version $BaseVersion
         & (Join-Path $PSScriptRoot "..\build\build-installer.ps1") -Configuration $Configuration -Framework $Framework -Runtime $Runtime -Version $UpgradeVersion
-        
+
         $myPath = $MyInvocation.MyCommand.Path
         & $myPath -Action Install -Configuration $Configuration -Framework $Framework -Runtime $Runtime -Version $BaseVersion -InstallRoot $InstallRoot -SkipBuild
 
-        $resolvedInstallRoot = Resolve-MsiInstallRoot -Context $context -Runtime $Runtime -InstallRoot $InstallRoot
+        $resolvedInstallRoot = Resolve-NsisInstallRoot -Context $context -Runtime $Runtime -InstallRoot $InstallRoot
+        $upgradeArchitecture = Resolve-NsisArchitecture -Runtime $Runtime
+        $upgradeInstallerPath = Join-Path (Resolve-InstallerOutputRoot -Context $context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -OutputRoot $null) ("{0}-{1}-{2}.exe" -f $context.InstallerName, (Normalize-InstallerVersion -Version $UpgradeVersion), $upgradeArchitecture)
 
-        $upgradeArchitecture = Resolve-MsiArchitecture -Runtime $Runtime
-        $upgradeMsiPath = Join-Path (Resolve-MsiOutputRoot -Context $context -Configuration $Configuration -Framework $Framework -Runtime $Runtime -OutputRoot $null) ("{0}-{1}-{2}.msi" -f $context.InstallerName, (Normalize-MsiVersion -Version $UpgradeVersion), $upgradeArchitecture)
-        $logRoot = Join-Path $context.Repository.ArtifactsRoot "logs"
-        Ensure-Directory -Path $logRoot
-        $logPath = Join-Path $logRoot "msi-upgrade.log"
-
-        $installFolderArgument = Format-MsiPropertyArgument -Name "INSTALLFOLDER" -Value $resolvedInstallRoot
-        $exitCode = Invoke-Msiexec -Arguments @("/i", $upgradeMsiPath, "/qn", "/norestart", $installFolderArgument, "/l*v", $logPath)
-        if ($exitCode -ne 0) {
-            throw ("MSI upgrade failed with exit code {0}. See {1}." -f $exitCode, $logPath)
+        $process = Start-Process -FilePath $upgradeInstallerPath -ArgumentList "/S" -Wait -PassThru -NoNewWindow
+        if ($process.ExitCode -ne 0) {
+            throw ("NSIS upgrade failed with exit code {0}." -f $process.ExitCode)
         }
 
         $appExe = Join-Path (Join-Path $resolvedInstallRoot "App") "NtfsAudit.App.exe"
@@ -137,9 +114,9 @@ switch ($Action) {
 
         & $myPath -Action Uninstall -Configuration $Configuration -Framework $Framework -Runtime $Runtime -Version $UpgradeVersion -InstallRoot $InstallRoot
 
-        Write-Host "[NtfsAudit] MSI upgrade test completed." -ForegroundColor Cyan
-        Write-Host ("  Base version: {0}" -f (Normalize-MsiVersion -Version $BaseVersion))
-        Write-Host ("  Upgrade version: {0}" -f (Normalize-MsiVersion -Version $UpgradeVersion))
+        Write-Host "[NtfsAudit] NSIS upgrade test completed." -ForegroundColor Cyan
+        Write-Host ("  Base version: {0}" -f (Normalize-InstallerVersion -Version $BaseVersion))
+        Write-Host ("  Upgrade version: {0}" -f (Normalize-InstallerVersion -Version $UpgradeVersion))
         Write-Host ("  Install root: {0}" -f $resolvedInstallRoot)
     }
 }

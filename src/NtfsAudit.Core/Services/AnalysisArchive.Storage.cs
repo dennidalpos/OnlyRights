@@ -13,9 +13,9 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using Newtonsoft.Json;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Models;
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public partial class AnalysisArchive
     {

@@ -14,11 +14,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using NtfsAudit.App.Models;
+using NtfsAudit.Core.Models;
 
 #nullable enable
 
-namespace NtfsAudit.App.Services
+namespace NtfsAudit.Core.Services
 {
     public sealed class ScanBatchExecutionService
     {

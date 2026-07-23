@@ -14,7 +14,7 @@ using System.Collections.Generic;
 
 #nullable enable
 
-namespace NtfsAudit.App.Models
+namespace NtfsAudit.Core.Models
 {
     public class ServiceScanJob
     {

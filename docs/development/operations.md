@@ -13,8 +13,7 @@ Required:
 Optional capabilities checked by `scripts\maintenance\check-prerequisites.ps1`:
 
 - `sc.exe` for Windows Service management.
-- `msiexec.exe` for MSI smoke tests.
-- WiX `candle.exe` and `light.exe` under `tools/wix314-binaries`.
+- NSIS compiler `makensis.exe` for 64-bit NSIS setup creation.
 
 ## Recommended Operator Flow
 
@@ -27,11 +26,10 @@ pwsh -File .\scripts\build.ps1
 pwsh -File .\scripts\start-app.ps1
 ```
 
-For architecture-specific build and installer flows:
+For 64-bit build and NSIS installer generation:
 
 ```powershell
 pwsh -File .\scripts\build.ps1 -Runtime win-x64 -Installer
-pwsh -File .\scripts\build.ps1 -Runtime win-x86 -Installer
 ```
 
 To prepare the shared `app` folder:
@@ -42,7 +40,8 @@ pwsh -File .\scripts\prepare-network-share-app.ps1
 ## Main Script Layout
 
 - `scripts\install-dependencies.ps1`: restore dependencies.
-- `scripts\build.ps1`: compiled build. Supports parameters `-Runtime`, `-Configuration`, and `-Installer`.
+- `scripts\build.ps1`: compiled build. Supports parameters `-Runtime win-x64`, `-Configuration`, and `-Installer`.
+- `scripts\package.ps1`: dedicated package staging and installer build. Supports parameters `-Runtime win-x64`, `-Configuration`, `-Version`, `-SelfContained`, `-PublishSingleFile`, `-PublishReadyToRun`, `-SkipViewer`, `-SkipService`, `-SkipInstaller`.
 - `scripts\start-app.ps1`: start the main WPF app.
 - `scripts\prepare-network-share-app.ps1`: stage the shared app folder under `artifacts\publish`.
 - `scripts\clean-repo.ps1`: clean build/package/publish/temp repository outputs. Supports parameters `-OperationalData`, `-ImportExportData`, and `-ResetState`.
@@ -55,12 +54,11 @@ Canonical Release build remains:
 pwsh -File .\scripts\build.ps1
 ```
 
-Technical package staging commands are:
+Dedicated package staging entrypoint:
 
 ```powershell
-pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release
-pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -Runtime win-x64
-pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -Runtime win-x86
+pwsh -File .\scripts\package.ps1
+pwsh -File .\scripts\package.ps1 -Configuration Release -Runtime win-x64
 ```
 
 Current package behavior:
@@ -73,34 +71,31 @@ Self-contained package staging remains available as a technical command:
 
 ```powershell
 pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -Runtime win-x64 -SelfContained -PublishSingleFile
-pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -Runtime win-x86 -SelfContained -PublishSingleFile
 ```
 
 ## Installer Build
 
-The repository produces MSI installers through WiX. Generated MSIs are built with:
+The repository produces 64-bit NSIS executable setup installers (`.exe`). Generated setup installers are built with:
 
-- installation scope `perMachine`;
-- elevated install privileges;
+- 64-bit installation path (`ProgramFiles64Folder`);
+- elevated admin install privileges;
 - Start Menu shortcut;
 - Desktop shortcut.
 
-Technical MSI build commands:
+Technical NSIS installer build commands:
 
 ```powershell
 pwsh -File .\scripts\build\build-installer.ps1 -Configuration Release
 pwsh -File .\scripts\build\build-installer.ps1 -Configuration Release -Runtime win-x64
-pwsh -File .\scripts\build\build-installer.ps1 -Configuration Release -Runtime win-x86
 ```
 
-The main operator entrypoints are:
+The main operator entrypoint is:
 
 ```powershell
 pwsh -File .\scripts\build.ps1 -Runtime win-x64 -Installer
-pwsh -File .\scripts\build.ps1 -Runtime win-x86 -Installer
 ```
 
-The MSI build uses local WiX binaries from `tools\wix314-binaries`. When `-Version` is omitted, `scripts\build\build-installer.ps1` resolves the version from `Directory.Build.props`. Runtime-specific MSIs are staged under `artifacts\packages\<Configuration>\<Runtime>\<Framework>\installer`.
+The installer build uses `makensis.exe`. When `-Version` is omitted, `scripts\build\build-installer.ps1` resolves the version from `Directory.Build.props`. Runtime-specific installers are staged under `artifacts\packages\<Configuration>\<Runtime>\<Framework>\installer`.
 
 ## Service Scripts
 
@@ -124,12 +119,12 @@ Run automated tests:
 pwsh -File .\scripts\maintenance\run-tests.ps1 -Configuration Release
 ```
 
-MSI smoke tests:
+Installer smoke tests:
 
 ```powershell
-pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Install -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic -SkipBuild
-pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Uninstall -Configuration Release -InstallRoot artifacts\publish\msi-smoke\basic
-pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Upgrade -Configuration Release -InstallRoot artifacts\publish\msi-smoke\upgrade
+pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Install -Configuration Release -InstallRoot artifacts\publish\installer-smoke\basic -SkipBuild
+pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Uninstall -Configuration Release -InstallRoot artifacts\publish\installer-smoke\basic
+pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Upgrade -Configuration Release -InstallRoot artifacts\publish\installer-smoke\upgrade
 ```
 
 Manual app smoke path:

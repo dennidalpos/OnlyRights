@@ -11,7 +11,7 @@
  */
 using System;
 
-namespace NtfsAudit.App.Logging
+namespace NtfsAudit.Core.Logging
 {
     public class LogEntry
     {

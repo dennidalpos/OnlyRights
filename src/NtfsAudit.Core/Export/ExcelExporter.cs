@@ -17,10 +17,10 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Newtonsoft.Json;
-using NtfsAudit.App.Models;
-using NtfsAudit.App.Services;
+using NtfsAudit.Core.Models;
+using NtfsAudit.Core.Services;
 
-namespace NtfsAudit.App.Export
+namespace NtfsAudit.Core.Export
 {
     public class ExcelExporter
     {
