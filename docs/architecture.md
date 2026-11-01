@@ -82,7 +82,7 @@ Generated repository outputs are centralized under `artifacts/`:
 
 Runtime data outside the repository uses Windows user or machine data locations. Archive temporary workspaces use `%TEMP%\NtfsAudit\imports` and `%TEMP%\NtfsAudit\exports`.
 
-Repository-alignment residuals are tracked in [PROJECT_STATUS.json](../PROJECT_STATUS.json) when they remain open, and described operationally in [operations](development/operations.md).
+Repository-alignment residuals are tracked in 02-areas/products/OnlyRights/tracker.json (nel dossier SecondBrain) (SecondBrain: `02-areas/products/OnlyRights/tracker.json`) when they remain open, and described operationally in [operations](development/operations.md).
 
 ## Contract References
 

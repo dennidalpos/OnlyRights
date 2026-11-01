@@ -202,7 +202,7 @@ The repository currently provides build, test, package staging, shared app-folde
 
 ## Maintenance
 
-- Keep behavior, tests, scripts, CI, documentation, and `PROJECT_STATUS.json` aligned in the same change.
-- Keep `PROJECT_STATUS.json` limited to real open residual work.
+- Keep behavior, tests, scripts, CI, documentation, and `02-areas/products/OnlyRights/tracker.json (nel dossier SecondBrain)` aligned in the same change.
+- Keep `02-areas/products/OnlyRights/tracker.json (nel dossier SecondBrain)` limited to real open residual work.
 - Check `.gitignore` when adding generated outputs, logs, caches, temporary files, or machine-specific files.
 - Monitor source files at or above 800 lines; evaluate files at or above 1500 lines for split/refactor work.
