@@ -59,10 +59,8 @@ Build, test, packaging, NSIS installer, service, and CI-facing commands are docu
 
 ## Current Status
 
-- The current workspace verification pass executed `pwsh -File .\scripts\clean-repo.ps1`, `pwsh -File .\scripts\install-dependencies.ps1`, `pwsh -File .\scripts\maintenance\check-prerequisites.ps1`, `pwsh -File .\scripts\build.ps1`, `pwsh -File .\scripts\build.ps1 -Runtime win-x64 -Installer`, and `pwsh -File .\scripts\prepare-network-share-app.ps1` successfully on July 23, 2026.
-- `pwsh -File .\scripts\maintenance\run-tests.ps1 -Configuration Release` completed successfully in this workspace on July 23, 2026 (167 tests passed, 0 failed).
-- `dotnet test .\tests\NtfsAudit.App.Tests\NtfsAudit.App.Tests.csproj -c Release --no-restore --filter MsiPackagingScriptTests` passed 3 NSIS script-layout tests in this workspace on July 23, 2026.
-- Repository-aligned residual work is tracked in 02-areas/products/OnlyRights/tracker.json (nel dossier SecondBrain) (SecondBrain: `02-areas/products/OnlyRights/tracker.json`) when real open tasks remain.
+- Build, test and packaging scripts are in [scripts/README.md](scripts/README.md). The last recorded run (July 23, 2026) built the solution and NSIS installer and passed 167 tests with 0 failures; it applies to that revision only.
+- The repository contains a CI workflow (`.github/workflows/ci.yml`), but GitHub Actions are disabled for this repository: build and test locally with the scripts above.
 
 ## Technical Documentation
 
