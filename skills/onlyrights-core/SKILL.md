@@ -9,9 +9,9 @@ This skill contains technical guidelines and rules for developing and maintainin
 
 ## Documentation References
 
-- **Architecture Details**: Deep-dive on architecture, layers, and components in [architecture.md](file:///d:/GITHUB/OnlyRights/docs/architecture.md).
-- **Archive Format Specification**: Structure, versions, and SQLite lazy-loading rules for `.ntaudit` in [archive-format.md](file:///d:/GITHUB/OnlyRights/docs/reference/archive-format.md).
-- **Credential Policy Reference**: DPAPI scopes, impersonation, and isolation guarantees in [credentials.md](file:///d:/GITHUB/OnlyRights/docs/reference/credentials.md).
+- **Architecture Details**: Deep-dive on architecture, layers, and components in [architecture.md](../../docs/architecture.md).
+- **Archive Format Specification**: Structure, versions, and SQLite lazy-loading rules for `.ntaudit` in [archive-format.md](../../docs/reference/archive-format.md).
+- **Credential Policy Reference**: DPAPI scopes, impersonation, and isolation guarantees in [credentials.md](../../docs/reference/credentials.md).
 
 ## Critical Guidelines
 

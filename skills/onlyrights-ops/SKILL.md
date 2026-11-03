@@ -9,7 +9,7 @@ This skill contains scripting, build, packaging, and maintenance rules for the O
 
 ## Documentation References
 
-- **Operations & Commands**: Comprehensive script definitions, parameters, testing boundaries, and service commands in [operations.md](file:///d:/GITHUB/OnlyRights/docs/development/operations.md).
+- **Operations & Commands**: Comprehensive script definitions, parameters, testing boundaries, and service commands in [operations.md](../../docs/development/operations.md).
 
 ## Critical Guidelines
 

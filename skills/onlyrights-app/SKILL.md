@@ -9,7 +9,7 @@ This skill contains UI design guidelines and rules for developing and maintainin
 
 ## Documentation References
 
-- **Architecture Details**: Layout and interactions of the WPF Application, Viewer, and Resource Dictionaries in [architecture.md](file:///d:/GITHUB/OnlyRights/docs/architecture.md).
+- **Architecture Details**: Layout and interactions of the WPF Application, Viewer, and Resource Dictionaries in [architecture.md](../../docs/architecture.md).
 
 ## Critical Guidelines
 
