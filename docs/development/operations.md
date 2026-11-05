@@ -77,7 +77,7 @@ pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -Runt
 
 The repository produces 64-bit NSIS executable setup installers (`.exe`). Generated setup installers are built with:
 
-- 64-bit installation path (`ProgramFiles64Folder`);
+- 64-bit installation path (`64-bit Program Files destination`);
 - elevated admin install privileges;
 - Start Menu shortcut;
 - Desktop shortcut.
@@ -148,9 +148,9 @@ Locale smoke path:
 4. Confirm toolbar, root input, tree, status, and dialog text update without restart.
 5. Restart the app and confirm the selected locale is persisted.
 
-## Cleanup
+## Explicit cleanup
 
-Clean repository outputs:
+The following commands delete generated or application data. Review the concrete scope, references and recovery first; they are not required for routine documentation work. Run only when that deletion scope is explicitly intended. To clean repository outputs:
 
 ```powershell
 pwsh -File .\scripts\clean-repo.ps1
@@ -187,18 +187,18 @@ CI runs:
 5. Release tests;
 6. default and runtime-specific package staging;
 7. shared app folder preparation;
-8. MSI build;
+8. NSIS EXE build;
 9. Windows Service install/uninstall smoke;
-10. MSI install, uninstall, and upgrade smoke;
+10. NSIS installer install, uninstall, and upgrade smoke;
 11. final cleanup.
 
 For exact commands, inspect `.github\workflows\ci.yml`; it remains the source of truth for CI sequencing.
 
 ## Release Boundaries
 
-Build, tests, package staging, shared app folder preparation, MSI generation, service smoke, MSI smoke, deploy, signing, and release are separate phases.
+Build, tests, package staging, shared app folder preparation, NSIS installer generation, service smoke, installer smoke, deploy, signing, and release are separate phases.
 
-The repository currently provides build, test, package staging, shared app-folder preparation, service smoke, and MSI smoke scripts. It does not provide an evidenced external deploy, signing, or release-publishing command. A build or MSI output must not be treated as a signed release.
+The repository currently provides build, test, package staging, shared app-folder preparation, service smoke, and installer smoke scripts. It does not provide an evidenced external deploy, signing, or release-publishing command. A build or installer output must not be treated as a signed release.
 
 ## Maintenance
 

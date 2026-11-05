@@ -1,36 +1,50 @@
 # Scripts
 
-Questa cartella contiene solo entrypoint operativi principali nella root `scripts\` e script tecnici organizzati in sottocartelle.
+[Italian reference](README.it.md)
 
-## Script principali
+The root scripts directory exposes operator entrypoints. Technical helpers are grouped under build/, maintenance/, run/ and internal/.
 
-| Script | Cosa fa | Quando usarlo | Admin |
-|---|---|---|---|
-| `install-dependencies.ps1` | Esegue `dotnet restore` sulla soluzione. | Primo setup locale o dopo modifiche alle dipendenze. | No |
-| `build.ps1` | Compila la soluzione in `Release`. Supporta parametri `-Runtime` (win-x64), `-Configuration` (Release, Debug) e lo switch `-Installer` per generare l'installer NSIS 64-bit in una sola volta. | Build standard del repository e packaging installer. | No per la generazione, Sì in fase installazione |
-| `package.ps1` | Esegue lo staging del layout di pacchetto (`App`, `Viewer`, `Service`) sotto `artifacts\packages` e genera gli installer NSIS 64-bit (`OnlyRights-NtfsAudit-1.0.0-x64.exe` e `OnlyRights-NtfsAudit-Viewer-1.0.0-x64.exe`). | Staging e compilazione completa degli installer distribuibili. | No per la generazione, Sì in fase installazione |
-| `start-app.ps1` | Avvia `NtfsAudit.App`. | Esecuzione locale dell'app principale. | No |
-| `prepare-network-share-app.ps1` | Prepara la cartella applicativa condivisibile sotto `artifacts\publish`. | Quando serve una cartella `app` distribuibile in rete. | No |
-| `clean-repo.ps1` | Pulisce output build/package/publish e cartelle temporanee del repository. Supporta i parametri `-OperationalData`, `-ImportExportData` e `-ResetState` per cleanup mirati. | Prima di una build pulita o a fine verifica locale. | No |
+## Main entrypoints
 
-## Ordine consigliato
+| Script | Purpose |
+|---|---|
+| install-dependencies.ps1 | Restore solution packages |
+| build.ps1 | Build Release; accepts Configuration, Runtime win-x64 and Installer |
+| package.ps1 | Stage App/Viewer/Service under artifacts/packages and compile NSIS installers |
+| start-app.ps1 | Start the main WPF application |
+| prepare-network-share-app.ps1 | Stage the shared application folder under artifacts/publish |
+| clean-repo.ps1 | Explicit deletion of selected generated/runtime/import-export state |
 
-1. `install-dependencies.ps1`
-2. `maintenance\check-prerequisites.ps1`
-3. `build.ps1` (opzionalmente con `-Runtime win-x64` e `-Installer`)
-4. `start-app.ps1` per uso locale
-5. `prepare-network-share-app.ps1` se serve la cartella condivisibile
+Use the .NET 8 SDK selected by global.json and Windows desktop build support. A newer major SDK alone does not satisfy that pinned SDK resolution. Installer compilation also needs makensis.exe; installation and service operations can require elevation.
 
-## Sottocartelle
+## Development flow
 
-- `build\`: script tecnici per staging package e build installer NSIS.
-- `maintenance\`: test, diagnostica, cleanup e test installer/service.
-- `run\`: avvio componenti secondari non esposti nella root.
-- `internal\`: funzioni e script di supporto condivisi; non sono entrypoint operativi.
+~~~powershell
+pwsh -NoProfile -File scripts/install-dependencies.ps1
+pwsh -NoProfile -File scripts/maintenance/check-prerequisites.ps1
+pwsh -NoProfile -File scripts/build.ps1
+pwsh -NoProfile -File scripts/maintenance/run-tests.ps1 -Configuration Release
+~~~
 
-## Note operative
+Run start-app.ps1 only for an intended interactive smoke check. Build and package defaults write repository-local artifacts and project bin/obj. Managed verification must use an isolated source copy or separately verified output redirection inside the central runtime; changing TEMP alone does not redirect all outputs.
 
-- Gli installer NSIS prodotti dal repository sono configurati per architettura 64-bit (`ProgramFiles64Folder`), privilegio elevato e collegamenti desktop/menu Start.
-- Lo script di service management `maintenance\manage-service.ps1` e lo script di installer test `maintenance\test-installer.ps1` richiedono un parametro `-Action` per specificare l'azione da eseguire.
-- Gli script in `maintenance\` possono richiedere elevazione amministrativa in fase di esecuzione.
-- La build dell'installer richiede il compilatore NSIS `makensis.exe`.
+For an intended x64 installer build:
+
+~~~powershell
+pwsh -NoProfile -File scripts/build.ps1 -Runtime win-x64 -Installer
+~~~
+
+The generated packages are NSIS EXE installers, not MSI. The source supports the main app and read-only viewer distributions. Inspect the current package script for names/version and output layout rather than assuming a previously generated installer is current or signed.
+
+## Technical directories
+
+- build/: package layout and NSIS compilation.
+- maintenance/: prerequisites, automated tests and explicit installer/service smoke operations.
+- run/: secondary-component launchers.
+- internal/: shared helpers, not independent operator workflows.
+
+manage-service.ps1 and test-installer.ps1 require an explicit Action. Their install, start, stop, uninstall, cleanup and upgrade paths change machine state; they are not part of a read-only audit. Use a disposable host for installer/service qualification.
+
+clean-repo.ps1 has OperationalData, ImportExportData and ResetState modes. Review the concrete deletion scope, references and recovery before invoking it. No cleanup is necessary merely to update a guide.
+
+See [operations](../docs/development/operations.md), [architecture](../docs/architecture.md), [archive format](../docs/reference/archive-format.md), [credentials](../docs/reference/credentials.md).

@@ -35,6 +35,8 @@ Requirements:
 - .NET SDK 8 compatible with [global.json](global.json)
 - `Microsoft.NET.Sdk.WindowsDesktop` support in the selected SDK
 
+SDK selection follows global.json; a newer major SDK alone does not satisfy the .NET 8 requirement. Build and fixture results do not qualify real SMB/domain, installer or service environments.
+
 Initial setup from the repository root:
 
 ```powershell
