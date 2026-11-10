@@ -1,0 +1,642 @@
+using NtfsAudit.Core.Logging;
+/*
+ * OnlyRights
+ * Copyright (c) 2026 Danny Perondi
+ * All rights reserved.
+ *
+ * Proprietary and confidential.
+ * Viewing is permitted only for reference, evaluation, or internal review.
+ * Unauthorized copying, modification, distribution, sublicensing,
+ * commercial use, or reuse of this file is prohibited without prior
+ * written permission from Danny Perondi.
+ */
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Data;
+using System.Windows.Forms;
+using WinForms = System.Windows.Forms;
+using System.Windows.Threading;
+using Win32 = Microsoft.Win32;
+using Newtonsoft.Json;
+using WpfMessageBox = System.Windows.MessageBox;
+using NtfsAudit.Core.Cache;
+using NtfsAudit.Core.Export;
+using NtfsAudit.Core.Models;
+using NtfsAudit.App.Services;
+using NtfsAudit.Core.Services;
+
+namespace NtfsAudit.App.ViewModels
+{
+    public partial class MainViewModel
+    {
+        private void StartScan()
+        {
+            if (_isViewerMode) return;
+            var roots = ScanRoots.Count > 0
+                ? ScanRoots.Select(GetEffectiveScanRoot).ToList()
+                : new List<string> { string.IsNullOrWhiteSpace(SelectedDfsTarget) ? RootPath : SelectedDfsTarget };
+            roots = roots
+                .Select(path => string.IsNullOrWhiteSpace(path) ? string.Empty : PathResolver.FromExtendedPath(path).Trim())
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (!TryValidateScanInputs(roots, out var validationMessage))
+            {
+                ProgressText = validationMessage;
+                WpfMessageBox.Show(validationMessage, LocalizationManager.Text("Dialog.ScanValidation"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(validationMessage))
+            {
+                ProgressText = validationMessage;
+            }
+
+            if (UseWindowsServiceMode)
+            {
+                EnqueueServiceScan(roots);
+                return;
+            }
+
+            _isScanning = true;
+            CurrentPathText = string.Empty;
+            ElapsedText = "00:00:00";
+            StartElapsedTimer();
+            UpdateCommands();
+            ClearResults();
+
+            _cts = new CancellationTokenSource();
+            var optionsTemplate = new ScanOptions
+            {
+                MaxDepth = ScanAllDepths ? int.MaxValue : MaxDepth,
+                ScanAllDepths = ScanAllDepths,
+                IncludeInherited = IncludeInherited,
+                ResolveIdentities = ResolveIdentities,
+                ExcludeServiceAccounts = ResolveIdentities && ExcludeServiceAccounts,
+                ExcludeAdminAccounts = ResolveIdentities && ExcludeAdminAccounts,
+                ExpandGroups = ResolveIdentities && ExpandGroups,
+                UsePowerShell = ResolveIdentities && UsePowerShell,
+                EnableAdvancedAudit = EnableAdvancedAudit,
+                ComputeEffectiveAccess = EnableAdvancedAudit && ComputeEffectiveAccess,
+                IncludeSharePermissions = EnableAdvancedAudit && IncludeSharePermissions && SupportsSharePermissionsForSelection,
+                IncludeFiles = EnableAdvancedAudit && IncludeFiles,
+                ReadOwnerAndSacl = EnableAdvancedAudit && ReadOwnerAndSacl,
+                CompareBaseline = EnableAdvancedAudit && CompareBaseline,
+                AnonymizeIdentities = AnonymizeIdentities,
+                OutputDirectory = AuditOutputDirectory
+            };
+
+            Task.Run(() => ExecuteBatchScan(roots, optionsTemplate, _cts.Token));
+        }
+
+        private void EnqueueServiceScan(List<string> roots)
+        {
+            try
+            {
+                var jobsRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "NtfsAudit", "jobs");
+                Directory.CreateDirectory(jobsRoot);
+                var optionsTemplate = new ScanOptions
+                {
+                    MaxDepth = ScanAllDepths ? int.MaxValue : MaxDepth,
+                    ScanAllDepths = ScanAllDepths,
+                    IncludeInherited = IncludeInherited,
+                    ResolveIdentities = ResolveIdentities,
+                    ExcludeServiceAccounts = ResolveIdentities && ExcludeServiceAccounts,
+                    ExcludeAdminAccounts = ResolveIdentities && ExcludeAdminAccounts,
+                    ExpandGroups = ResolveIdentities && ExpandGroups,
+                    UsePowerShell = ResolveIdentities && UsePowerShell,
+                    EnableAdvancedAudit = EnableAdvancedAudit,
+                    ComputeEffectiveAccess = EnableAdvancedAudit && ComputeEffectiveAccess,
+                    IncludeSharePermissions = EnableAdvancedAudit && IncludeSharePermissions && SupportsSharePermissionsForSelection,
+                    IncludeFiles = EnableAdvancedAudit && IncludeFiles,
+                    ReadOwnerAndSacl = EnableAdvancedAudit && ReadOwnerAndSacl,
+                    CompareBaseline = EnableAdvancedAudit && CompareBaseline,
+                    AnonymizeIdentities = AnonymizeIdentities,
+                    OutputDirectory = AuditOutputDirectory
+                };
+                var job = new ServiceScanJob
+                {
+                    JobId = Guid.NewGuid().ToString("N"),
+                    CreatedAtUtc = DateTime.UtcNow,
+                    ScanOptions = roots.Select(root => BuildOptionsForRoot(optionsTemplate, root, true)).ToList()
+                };
+
+                if (!TryEnsureServiceInstalledForScan())
+                {
+                    return;
+                }
+
+                var jobFile = Path.Combine(jobsRoot, string.Format("job_{0}.json", job.JobId));
+                File.WriteAllText(jobFile, JsonConvert.SerializeObject(job, Formatting.Indented));
+                var startResult = ExecuteScCommand(string.Format("start {0}", ServiceName), "start", false);
+                if (startResult.ExitCode != 0 && startResult.ExitCode != 1056)
+                {
+                    ThrowScOperationFailed("start", startResult);
+                }
+                ProgressText = LocalizationManager.Text("Progress.ServiceJobSent");
+                RefreshServiceRuntimeStatus();
+            }
+            catch (Exception ex)
+            {
+                ProgressText = LocalizationManager.Format("Progress.ServiceJobSendError", ex.Message);
+                WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.WindowsService"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private void ExecuteBatchScan(List<string> roots, ScanOptions optionsTemplate, CancellationToken token)
+        {
+            ScanResult aggregateResult = null;
+            try
+            {
+                aggregateResult = _scanBatchExecutionService.Execute(
+                    roots,
+                    optionsTemplate,
+                    (template, root) => BuildOptionsForRoot(template, root, false),
+                    ExecuteScan,
+                    token);
+            }
+            catch (OperationCanceledException)
+            {
+                RunOnUi(() =>
+                {
+                    ProgressText = LocalizationManager.Text("Progress.ScanCancelled");
+                    CurrentPathText = string.Empty;
+                });
+            }
+            catch (Exception ex)
+            {
+                RunOnUi(() =>
+                {
+                    ProgressText = LocalizationManager.Format("Progress.ScanError", ex.Message);
+                    CurrentPathText = string.Empty;
+                });
+            }
+            finally
+            {
+                RunOnUi(() =>
+                {
+                    if (aggregateResult != null && aggregateResult.Details != null && aggregateResult.Details.Count > 0)
+                    {
+                        _scanResult = aggregateResult;
+                        _hasExported = false;
+                        _fullTreeMap = null;
+                        LoadTree(_scanResult);
+                        var rootToSelect = ResolveTreeRoot(_scanResult.TreeMap, _scanResult.RootPath);
+                        if (!string.IsNullOrWhiteSpace(rootToSelect))
+                        {
+                            RootPath = rootToSelect;
+                            SelectFolder(rootToSelect);
+                        }
+                    }
+
+                    _isScanning = false;
+                    StopElapsedTimer();
+                    UpdateCommands();
+                });
+            }
+        }
+
+        private void NewScan()
+        {
+            if (_isViewerMode) return;
+
+            var hasRunningLocalScan = _cts != null;
+            if (hasRunningLocalScan)
+            {
+                _cts.Cancel();
+            }
+
+            if (IsServiceRuntimeRunning)
+            {
+                StopServiceRuntimeAndClearQueue();
+            }
+
+            _runtimeCleanupService.CleanupOperationalData();
+            ClearResults();
+
+            if (hasRunningLocalScan)
+            {
+                ProgressText = LocalizationManager.Text("Progress.NewScanStoppedAndCleared");
+            }
+            else
+            {
+                ProgressText = LocalizationManager.Text("Progress.NewScanCleared");
+            }
+        }
+
+        private void StopServiceRuntimeAndClearQueue()
+        {
+            try
+            {
+                TerminateServiceProcesses();
+
+                var stopResult = ExecuteScCommand(string.Format("stop {0}", ServiceName), "stop", false);
+                if (stopResult.ExitCode != 0 && stopResult.ExitCode != 1060 && stopResult.ExitCode != 1062)
+                {
+                    ThrowScOperationFailed("stop", stopResult);
+                }
+
+                var jobsRoot = RuntimePaths.GetJobsRoot();
+                if (Directory.Exists(jobsRoot))
+                {
+                    foreach (var file in Directory.GetFiles(jobsRoot, "job_*.json"))
+                    {
+                        RuntimeCleanupService.TryDeleteFile(file);
+                    }
+                }
+
+                ProgressText = LocalizationManager.Text("Progress.ServiceStoppedAndQueueCleared");
+            }
+            catch (Exception ex)
+            {
+                ProgressText = LocalizationManager.Format("Progress.ServiceStopError", ex.Message);
+            }
+            finally
+            {
+                RefreshServiceRuntimeStatus();
+                UpdateCommands();
+            }
+        }
+
+        private void CleanupResidualFiles()
+        {
+            CleanupResidualFiles(false, false);
+        }
+
+        private void CleanupResidualFiles(bool triggeredByStop)
+        {
+            CleanupResidualFiles(triggeredByStop, false);
+        }
+
+        private void CleanupResidualFiles(bool triggeredByStop, bool triggeredByServiceUninstall)
+        {
+            var cleanupResult = _runtimeCleanupService.CleanupOperationalData();
+            var removedEntries = cleanupResult.RemovedEntries;
+            var diagnosticsCount = cleanupResult.Diagnostics == null ? 0 : cleanupResult.Diagnostics.Count;
+            var diagnosticsSuffix = diagnosticsCount > 0
+                ? string.Format(" Alcuni elementi non sono stati rimossi ({0}).", diagnosticsCount)
+                : string.Empty;
+
+            if (triggeredByServiceUninstall)
+            {
+                ProgressText = removedEntries > 0
+                    ? LocalizationManager.Format("Progress.ServiceUninstallResidualsRemoved", removedEntries, diagnosticsSuffix)
+                    : LocalizationManager.Text("Progress.ServiceUninstallNoResiduals") + diagnosticsSuffix;
+                return;
+            }
+
+            if (triggeredByStop)
+            {
+                ProgressText = removedEntries > 0
+                    ? LocalizationManager.Format("Progress.StopResidualsRemoved", removedEntries, diagnosticsSuffix)
+                    : LocalizationManager.Text("Progress.StopNoResiduals") + diagnosticsSuffix;
+                return;
+            }
+
+            try
+            {
+                OpenFolder(cleanupResult.TempRootPath);
+            }
+            catch
+            {
+            }
+
+            ProgressText = removedEntries > 0
+                ? LocalizationManager.Format("Progress.CleanupRemoved", removedEntries, diagnosticsSuffix)
+                : LocalizationManager.Text("Progress.CleanupNone") + diagnosticsSuffix;
+        }
+
+        private static void OpenFolder(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
+            {
+                return;
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = path,
+                    UseShellExecute = true
+                });
+            }
+            catch
+            {
+            }
+        }
+        private async void Export()
+        {
+            if (_isViewerMode) return;
+            if (_scanResult == null) return;
+            if (!TryEnsureScanDataAvailableForExport(LocalizationManager.Text("Dialog.ExportUnavailable"))) return;
+            var dialog = new Win32.SaveFileDialog
+            {
+                Filter = LocalizationManager.Text("FileDialog.ExcelSaveFilter"),
+                FileName = BuildExportFileName(RootPath, "xlsx"),
+                InitialDirectory = ResolveInitialDirectory(_lastExportDirectory, RootPath)
+            };
+            if (dialog.ShowDialog() != true) return;
+            var outputPath = dialog.FileName;
+            try
+            {
+                SetBusy(true);
+                var result = await Task.Run(() => _excelExporter.Export(_scanResult.TempDataPath, _scanResult.ErrorPath, outputPath));
+                EnsureExportOutput(outputPath);
+                _hasExported = true;
+                UpdateLastDirectory(ref _lastExportDirectory, outputPath);
+                ProgressText = LocalizationManager.Format("Progress.ExcelCompleted", outputPath);
+                var warningMessage = BuildExcelWarningMessage(result);
+                if (!string.IsNullOrWhiteSpace(warningMessage))
+                {
+                    WpfMessageBox.Show(
+                        LocalizationManager.Format("Dialog.ExportWarningPrefix", warningMessage),
+                        LocalizationManager.Text("Dialog.ExportWarnings"),
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                ProgressText = LocalizationManager.Format("Progress.ExportError", ex.Message);
+                WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.ExportError"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            finally
+            {
+                SetBusy(false);
+            }
+        }
+        private async void ImportAnalysis()
+        {
+            if (IsBusy) return;
+            var dialog = new Win32.OpenFileDialog
+            {
+                Filter = LocalizationManager.Text("FileDialog.ImportArchiveFilter"),
+                InitialDirectory = ResolveInitialDirectory(_lastImportDirectory, RootPath)
+            };
+            if (dialog.ShowDialog() != true) return;
+            await ImportAnalysisFromPathAsync(dialog.FileName);
+        }
+
+        public async Task ImportAnalysisFromPathAsync(string archivePath)
+        {
+            if (IsBusy || string.IsNullOrWhiteSpace(archivePath))
+            {
+                return;
+            }
+
+            try
+            {
+                SetBusy(true);
+                var imported = await Task.Run(() => _analysisArchive.Import(archivePath));
+                var importedResult = imported.ScanResult;
+                if (importedResult == null)
+                {
+                    ProgressText = LocalizationManager.Text("Progress.ImportInvalid");
+                    return;
+                }
+                if (importedResult.Details == null)
+                {
+                    importedResult.Details = new Dictionary<string, FolderDetail>(StringComparer.OrdinalIgnoreCase);
+                }
+                if (importedResult.TreeMap == null)
+                {
+                    importedResult.TreeMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                }
+
+                ApplyDiffs(importedResult);
+                if (!ValidateImportedResult(importedResult, out var validationMessage))
+                {
+                    var confirm = WpfMessageBox.Show(
+                        LocalizationManager.Format("Dialog.ProceedAnyway", validationMessage),
+                        LocalizationManager.Text("Dialog.Import"),
+                        System.Windows.MessageBoxButton.YesNo,
+                        System.Windows.MessageBoxImage.Warning);
+                    if (confirm != System.Windows.MessageBoxResult.Yes)
+                    {
+                        ProgressText = LocalizationManager.Text("Progress.ImportCancelled");
+                        return;
+                    }
+                }
+                _scanResult = importedResult;
+                _hasExported = false;
+                ApplyImportedOptions(imported.ScanOptions);
+                if (!string.IsNullOrWhiteSpace(imported.RootPath))
+                {
+                    RootPath = imported.RootPath;
+                }
+                ClearResults();
+                LoadTree(_scanResult);
+                LoadErrors(_scanResult.ErrorPath);
+                var root = _fullTreeMap == null || _fullTreeMap.Count == 0
+                    ? RootPath
+                    : ResolveTreeRoot(_fullTreeMap, _scanResult.RootPath);
+
+                if (string.IsNullOrWhiteSpace(root) && _scanResult.TreeMap != null && _scanResult.TreeMap.Count > 0)
+                {
+                    root = ResolveTreeRoot(_scanResult.TreeMap, _scanResult.RootPath);
+                }
+
+                if (!string.IsNullOrWhiteSpace(root))
+                {
+                    RootPath = root;
+                    SelectFolder(root);
+                }
+                UpdateLastDirectory(ref _lastImportDirectory, archivePath);
+                ProgressText = LocalizationManager.Format("Progress.Imported", _scanResult.Details == null ? 0 : _scanResult.Details.Count, ErrorCount);
+                UpdateCommands();
+            }
+            catch (Exception ex)
+            {
+                ProgressText = LocalizationManager.Format("Progress.ImportError", ex.Message);
+                WpfMessageBox.Show(ProgressText, LocalizationManager.Text("Dialog.ImportError"), System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            finally
+            {
+                SetBusy(false);
+            }
+        }
+
+        private bool TryEnsureScanDataAvailableForExport(string messageTitle)
+        {
+            if (_scanResult == null)
+            {
+                return false;
+            }
+
+            var ioTempDataPath = PathResolver.ToExtendedPath(_scanResult.TempDataPath);
+            if (string.IsNullOrWhiteSpace(_scanResult.TempDataPath) || !File.Exists(ioTempDataPath))
+            {
+                ProgressText = LocalizationManager.Text("Progress.ExportDataMissing");
+                WpfMessageBox.Show(ProgressText, messageTitle, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return false;
+            }
+
+            return true;
+        }
+
+        private async Task RunExportActionAsync(Action exportAction, string errorLabel, string outputPath = null)
+        {
+            try
+            {
+                SetBusy(true);
+                await Task.Run(exportAction);
+                EnsureExportOutput(outputPath);
+                _hasExported = true;
+                UpdateLastDirectory(ref _lastExportDirectory, outputPath);
+            }
+            catch (Exception ex)
+            {
+                ProgressText = string.Format("{0}: {1}", errorLabel, ex.Message);
+                WpfMessageBox.Show(ProgressText, errorLabel, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            finally
+            {
+                SetBusy(false);
+            }
+        }
+
+        private string BuildExcelWarningMessage(ExcelExportResult result)
+        {
+            if (result == null)
+            {
+                return null;
+            }
+
+            if (result.WasSplit)
+            {
+                return string.Format(
+                    LocalizationManager.Text("Dialog.ExcelWarningDatasetSplit"),
+                    result.UserSheetCount,
+                    result.GroupSheetCount);
+            }
+
+            return null;
+        }
+
+        private void EnsureExportOutput(string outputPath)
+        {
+            if (string.IsNullOrWhiteSpace(outputPath)) return;
+            var ioPath = PathResolver.ToExtendedPath(outputPath);
+            if (!File.Exists(ioPath))
+            {
+                throw new IOException(LocalizationManager.Text("Dialog.ExportOutputMissing"));
+            }
+            var info = new FileInfo(ioPath);
+            if (info.Length == 0)
+            {
+                throw new IOException(LocalizationManager.Text("Dialog.ExportOutputEmpty"));
+            }
+        }
+
+        private ScanResult ExecuteScan(ScanOptions options, CancellationToken token)
+        {
+            try
+            {
+                var runtimeOptions = options.Clone();
+                if (runtimeOptions.Credential != null)
+                {
+                    runtimeOptions.Credential = ScanCredentialProtector.ResolveForRuntime(runtimeOptions.Credential);
+                }
+
+                var adResolver = CreateResolver(runtimeOptions.UsePowerShell, runtimeOptions.Credential);
+                var identityResolver = new IdentityResolver(_sidNameCache, adResolver);
+                var groupExpansion = new GroupExpansionService(adResolver, _groupMembershipCache);
+                var scanService = new ScanService(identityResolver, groupExpansion, new SharePermissionService(runtimeOptions.Credential));
+
+                var progress = new Progress<ScanProgress>(scanProgress =>
+                {
+                    RunOnUi(() => UpdateProgress(scanProgress));
+                });
+                var result = scanService.Run(runtimeOptions, progress, token);
+
+                RunOnUi(() =>
+                {
+                    ApplyDiffs(result);
+                    _scanResult = result;
+                    _hasExported = false;
+                    SaveCache();
+                    LoadTree(result);
+                    LoadErrors(result.ErrorPath);
+                    ErrorCount = Errors.Count;
+                    SelectFolder(runtimeOptions.RootPath);
+                });
+
+                return result;
+            }
+            catch (OperationCanceledException)
+            {
+                RunOnUi(() =>
+                {
+                    ProgressText = LocalizationManager.Text("Progress.ScanCancelled");
+                    CurrentPathText = string.Empty;
+                });
+                throw;
+            }
+            catch (Exception ex)
+            {
+                RunOnUi(() =>
+                {
+                    ProgressText = LocalizationManager.Format("Progress.ScanError", ex.Message);
+                    CurrentPathText = string.Empty;
+                });
+                return null;
+            }
+        }
+
+        private IAdResolver CreateResolver(bool usePowerShell, ScanCredential credential)
+        {
+            if (usePowerShell)
+            {
+                var path = FindPowerShell();
+                var psResolver = new PowerShellAdResolver(path, credential);
+                var dsResolver = new DirectoryServicesResolver(credential);
+                if (psResolver.IsAvailable) return new CompositeAdResolver(psResolver, dsResolver);
+                if (!string.IsNullOrWhiteSpace(psResolver.AvailabilityDiagnostic))
+                {
+                    Debug.WriteLine(string.Format(
+                        "[MainViewModel] PowerShell AD resolver unavailable, fallback to DirectoryServices: {0}",
+                        psResolver.AvailabilityDiagnostic));
+                }
+                return dsResolver;
+            }
+
+            return new DirectoryServicesResolver(credential);
+        }
+
+        private string FindPowerShell()
+        {
+            var system = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            var candidate = Path.Combine(system, "WindowsPowerShell", "v1.0", "powershell.exe");
+            if (File.Exists(candidate)) return candidate;
+            var windir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+            if (!string.IsNullOrWhiteSpace(windir))
+            {
+                return Path.Combine(windir, "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
+            }
+
+            return "powershell.exe";
+        }
+
+        private static bool IsProcessElevated()
+        {
+            using (var identity = WindowsIdentity.GetCurrent())
+            {
+                if (identity == null) return false;
+                var principal = new WindowsPrincipal(identity);
+                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+            }
+        }
+
+    }
+}

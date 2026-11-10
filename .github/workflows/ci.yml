@@ -1,0 +1,67 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - "codex/**"
+  pull_request:
+
+jobs:
+  build-test-pack-publish:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Clean (initial)
+        run: pwsh -File .\scripts\clean-repo.ps1
+
+      - name: Install dependencies
+        run: pwsh -File .\scripts\install-dependencies.ps1
+
+      - name: Check prerequisites
+        run: pwsh -File .\scripts\maintenance\check-prerequisites.ps1
+
+      - name: Build
+        run: pwsh -File .\scripts\build.ps1
+
+      - name: Test
+        run: pwsh -File .\scripts\maintenance\run-tests.ps1 -Configuration Release -SkipRestore -SkipBuild
+
+      - name: Stage package
+        run: pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -SkipRestore -SkipBuild
+
+      - name: Stage package x64
+        run: pwsh -File .\scripts\build\stage-package-layout.ps1 -Configuration Release -Runtime win-x64
+
+      - name: Prepare network share app
+        run: pwsh -File .\scripts\prepare-network-share-app.ps1
+
+      - name: NSIS Build
+        run: pwsh -File .\scripts\build\build-installer.ps1 -Configuration Release -SkipPack
+
+      - name: Service Install Smoke
+        run: pwsh -File .\scripts\maintenance\manage-service.ps1 -Action Install -Configuration Release
+
+      - name: Service Uninstall Smoke
+        if: always()
+        run: pwsh -File .\scripts\maintenance\manage-service.ps1 -Action Uninstall
+
+      - name: Installer Install Smoke
+        run: pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Install -Configuration Release -InstallRoot artifacts\publish\installer-smoke\basic -SkipBuild
+
+      - name: Installer Uninstall Smoke
+        run: pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Uninstall -Configuration Release -InstallRoot artifacts\publish\installer-smoke\basic
+
+      - name: Installer Upgrade Smoke
+        run: pwsh -File .\scripts\maintenance\test-installer.ps1 -Action Upgrade -Configuration Release -InstallRoot artifacts\publish\installer-smoke\upgrade
+
+      - name: Clean (final)
+        if: always()
+        run: pwsh -File .\scripts\clean-repo.ps1

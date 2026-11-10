@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="OnlyRights NtfsAudit - Modern Windows NTFS ACL Scanning, SID resolution, and security auditing suite.">
+  <title>OnlyRights NtfsAudit — Windows NTFS ACL Auditing Suite</title>
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="en">
+
+  <!-- Header -->
+  <header>
+    <div class="container nav-container">
+      <a href="index.html" class="brand">
+        <img src="assets/onlyrights-mark.svg" alt="OnlyRights Logo">
+        <span class="brand-text">OnlyRights</span>
+      </a>
+
+      <!-- Navigation Menu -->
+      <nav>
+        <ul class="nav-menu" id="nav-menu">
+          <li>
+            <a href="#features" class="nav-link">
+              <span class="lang-en">Features</span>
+              <span class="lang-it">Caratteristiche</span>
+            </a>
+          </li>
+          <li>
+            <a href="#workflows" class="nav-link">
+              <span class="lang-en">Workflows</span>
+              <span class="lang-it">Flussi di Lavoro</span>
+            </a>
+          </li>
+          <li>
+            <a href="#download" class="nav-link">
+              <span class="lang-en">Downloads</span>
+              <span class="lang-it">Download</span>
+            </a>
+          </li>
+          <li>
+            <a href="privacy.html" class="nav-link">
+              <span class="lang-en">Privacy & GDPR</span>
+              <span class="lang-it">Privacy e GDPR</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Controls & Toggle -->
+      <div class="nav-controls">
+        <!-- Language Switcher -->
+        <button class="btn btn-lang btn-lang-toggle" data-lang="en">EN</button>
+        <button class="btn btn-lang btn-lang-toggle" data-lang="it">IT</button>
+
+        <a href="#download" class="btn btn-primary">
+          <span class="lang-en"><i class="fa-solid fa-download"></i> Get MSI</span>
+          <span class="lang-it"><i class="fa-solid fa-download"></i> Scarica MSI</span>
+        </a>
+
+        <!-- Mobile Burger Menu -->
+        <button class="menu-toggle" id="menu-toggle" aria-label="Toggle Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" id="home">
+    <div class="container hero-layout">
+      <div class="hero-text">
+        <div class="hero-badge">
+          <i></i>
+          <span class="lang-en">Windows-First Security Auditing</span>
+          <span class="lang-it">Audit di Sicurezza Windows-First</span>
+        </div>
+        <h1 class="hero-title">
+          <span class="lang-en">Secure and fast <span>NTFS ACL</span> scanning.</span>
+          <span class="lang-it">Scansione <span>NTFS ACL</span> veloce e sicura.</span>
+        </h1>
+        <p class="hero-desc">
+          <span class="lang-en">NtfsAudit is a high-performance C# suite designed to scan, analyze, and baseline filesystem permissions across local paths, UNC shares, and DFS namespaces with zero external server dependencies.</span>
+          <span class="lang-it">NtfsAudit è una suite C# ad alte prestazioni progettata per scansionare, analizzare e confrontare i permessi del filesystem su percorsi locali, condivisioni UNC e namespace DFS senza dipendenze esterne.</span>
+        </p>
+        <div class="hero-actions">
+          <a href="#download" class="btn btn-primary">
+            <span class="lang-en">Download Installer</span>
+            <span class="lang-it">Scarica Installer</span>
+          </a>
+          <a href="#workflows" class="btn btn-secondary">
+            <span class="lang-en">Explore Workflows</span>
+            <span class="lang-it">Esplora Flussi</span>
+          </a>
+        </div>
+        <div class="hero-meta">
+          <div class="meta-item">
+            <span class="meta-val">100%</span>
+            <span class="meta-lbl">
+              <span class="lang-en">Offline & Local</span>
+              <span class="lang-it">Offline e Locale</span>
+            </span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-val">DPAPI</span>
+            <span class="meta-lbl">
+              <span class="lang-en">Credential Guard</span>
+              <span class="lang-it">Protezione Credenziali</span>
+            </span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-val">SQLite v7</span>
+            <span class="meta-lbl">
+              <span class="lang-en">Lazy-Loaded Archive</span>
+              <span class="lang-it">Archivio SQLite v7</span>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-mockup-wrapper">
+          <img src="assets/dashboard_preview.jpg" class="hero-mockup" alt="OnlyRights NtfsAudit Interface Dashboard Preview">
+          <div class="glass-card-overlay">
+            <i class="fa-solid fa-shield-halved"></i>
+            <div>
+              <h4 style="font-size: 0.9rem; margin-bottom: 2px;">
+                <span class="lang-en">Zero Leak Policy</span>
+                <span class="lang-it">Politica Anti-Leak</span>
+              </h4>
+              <p style="font-size: 0.75rem; color: var(--text-muted);">
+                <span class="lang-en">Credentials never written to archives or report logs.</span>
+                <span class="lang-it">Le credenziali non sono mai scritte negli archivi o nei log.</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section" id="features">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">
+          <span class="lang-en">Capabilities</span>
+          <span class="lang-it">Funzionalità</span>
+        </span>
+        <h2 class="section-title">
+          <span class="lang-en">Built for Enterprise Windows Audits</span>
+          <span class="lang-it">Progettato per Audit Windows Enterprise</span>
+        </h2>
+        <p class="section-subtitle">
+          <span class="lang-en">From deep nested DACL parsing to Active Directory principal resolution, NtfsAudit provides safety and clarity.</span>
+          <span class="lang-it">Dall'analisi ricorsiva delle DACL alla risoluzione dei principal in Active Directory, NtfsAudit offre sicurezza e chiarezza.</span>
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fa-solid fa-folder-tree"></i>
+          </div>
+          <h3>
+            <span class="lang-en">DACL & Share Parsing</span>
+            <span class="lang-it">Analisi DACL e Share</span>
+          </h3>
+          <p>
+            <span class="lang-en">Recursively reads NTFS security descriptor Access Control Entries. Supports local, SMB, DFS namespace paths, and NAS devices.</span>
+            <span class="lang-it">Legge ricorsivamente le Access Control Entry (ACE) NTFS. Supporta percorsi locali, SMB, namespace DFS e dispositivi NAS.</span>
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fa-solid fa-key"></i>
+          </div>
+          <h3>
+            <span class="lang-en">DPAPI Credential Storage</span>
+            <span class="lang-it">Sicurezza DPAPI</span>
+          </h3>
+          <p>
+            <span class="lang-en">Protects target credentials using Windows Data Protection API (DPAPI) with machine-scope isolation to prevent credential theft.</span>
+            <span class="lang-it">Protegge le credenziali di scansione tramite Windows DPAPI con isolamento a livello di macchina, impedendo la sottrazione di dati sensibili.</span>
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fa-solid fa-database"></i>
+          </div>
+          <h3>
+            <span class="lang-en">SQLite Lazy Loading</span>
+            <span class="lang-it">Lazy Loading SQLite</span>
+          </h3>
+          <p>
+            <span class="lang-en">Uses Version 7 `.ntaudit` ZIP archive structure containing a SQLite database to enable fast, low-memory lazy loading of 5000+ folders.</span>
+            <span class="lang-it">Sfrutta il formato archivio `.ntaudit` (v7) contenente un database SQLite per caricare in modo ultra-veloce e a basso consumo RAM oltre 5000 cartelle.</span>
+          </p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fa-solid fa-file-excel"></i>
+          </div>
+          <h3>
+            <span class="lang-en">Excel Exporter</span>
+            <span class="lang-it">Esportatore Excel</span>
+          </h3>
+          <p>
+            <span class="lang-en">Generates clean Excel worksheets (`.xlsx`) and newline-delimited JSONL files detailing effective permissions and baseline differences.</span>
+            <span class="lang-it">Genera fogli Excel ordinati (`.xlsx`) e record JSONL con i dettagli sui permessi effettivi calcolati e le differenze con la baseline.</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Workflows Gallery -->
+  <section class="gallery-section" id="workflows">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">
+          <span class="lang-en">How it Works</span>
+          <span class="lang-it">Come Funziona</span>
+        </span>
+        <h2 class="section-title">
+          <span class="lang-en">Core Audit Workflows</span>
+          <span class="lang-it">I Flussi Principali dell'Audit</span>
+        </h2>
+        <p class="section-subtitle">
+          <span class="lang-en">Explore the primary operations of OnlyRights NtfsAudit from scan configuration to reporting.</span>
+          <span class="lang-it">Esplora i passaggi chiave di OnlyRights NtfsAudit, dalla configurazione iniziale alla reportistica finale.</span>
+        </p>
+      </div>
+
+      <div class="gallery-wrapper">
+        <!-- Sidebar Navigation -->
+        <div class="gallery-tabs">
+          <button class="gallery-tab active" data-target="workflow-scan">
+            <span class="lang-en">1. Scan & Path Policy</span>
+            <span class="lang-it">1. Scansione e Path Policy</span>
+          </button>
+          <button class="gallery-tab" data-target="workflow-ad">
+            <span class="lang-en">2. AD & SID Mapping</span>
+            <span class="lang-it">2. Mappatura AD e SID</span>
+          </button>
+          <button class="gallery-tab" data-target="workflow-archive">
+            <span class="lang-en">3. SQLite Lazy-Load</span>
+            <span class="lang-it">3. Archivio SQLite v7</span>
+          </button>
+          <button class="gallery-tab" data-target="workflow-service">
+            <span class="lang-en">4. Background Service</span>
+            <span class="lang-it">4. Servizio in Background</span>
+          </button>
+        </div>
+
+        <!-- Content Area -->
+        <div class="gallery-content">
+          <!-- Pane 1: Scan -->
+          <div class="gallery-content-pane active" id="workflow-scan">
+            <div class="gallery-img-box">
+              <img src="assets/workflow_illustration.jpg" alt="Workflow Illustration of NTFS ACL scanning">
+            </div>
+            <div class="gallery-text-box">
+              <h3 class="gallery-pane-title">
+                <span class="lang-en">Path Resolution & Share Audit</span>
+                <span class="lang-it">Risoluzione Percorsi e Condivisioni</span>
+              </h3>
+              <p class="gallery-pane-desc">
+                <span class="lang-en">NtfsAudit supports multiple storage endpoints. When scanning UNC network shares, it dynamically parses permissions using SMB providers, falling back gracefully to NetShareGetInfo on non-Windows NAS environments.</span>
+                <span class="lang-it">NtfsAudit supporta molteplici endpoint. Durante la scansione di share di rete UNC, analizza i permessi tramite i provider SMB, eseguendo un fallback sicuro su NetShareGetInfo in caso di NAS non Windows.</span>
+              </p>
+              <ul class="gallery-bullets">
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>
+                    <span class="lang-en">Process identity used for local paths, bypassing configured credentials for safety.</span>
+                    <span class="lang-it">Identità di processo usata per i percorsi locali, evitando l'uso di credenziali non necessarie.</span>
+                  </span>
+                </li>
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>
+                    <span class="lang-en">Dynamic DFS Namespace target path resolution.</span>
+                    <span class="lang-it">Risoluzione dinamica dei target nei namespace DFS.</span>
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Pane 2: AD Mapping -->
+          <div class="gallery-content-pane" id="workflow-ad">
+            <div class="gallery-img-box">
+              <img src="assets/dashboard_preview.jpg" alt="Active Directory Mapping dashboard preview">
+            </div>
+            <div class="gallery-text-box">
+              <h3 class="gallery-pane-title">
+                <span class="lang-en">SID Resolution & Risk Metrics</span>
+                <span class="lang-it">Risoluzione dei SID e Calcolo dei Rischi</span>
+              </h3>
+              <p class="gallery-pane-desc">
+                <span class="lang-en">The scanner resolves Security Identifiers (SIDs) into readable Active Directory domain/group names and maps permissions to risk markers.</span>
+                <span class="lang-it">Lo scanner traduce gli ID di sicurezza (SID) in nomi leggibili di domini/gruppi di Active Directory, associando i permessi a indicatori di rischio.</span>
+              </p>
+              <ul class="gallery-bullets">
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>
+                    <span class="lang-en">Highlights explicit denies and blocked inheritance flags.</span>
+                    <span class="lang-it">Evidenzia i permessi negati esplicitamente (explicit deny) e l'ereditarietà bloccata.</span>
+                  </span>
+                </li>
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>
+                    <span class="lang-en">Identifies active group memberships to compute effective rights.</span>
+                    <span class="lang-it">Identifica le appartenenze ai gruppi per calcolare i diritti effettivi.</span>
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Pane 3: SQLite Archive -->
+          <div class="gallery-content-pane" id="workflow-archive">
+            <div class="gallery-img-box">
+              <img src="assets/viewer_preview.jpg" alt="NtfsAudit Viewer showing archive format page">
+            </div>
+            <div class="gallery-text-box">
+              <h3 class="gallery-pane-title">
+                <span class="lang-en">Secure SQLite Archive (v7)</span>
+                <span class="lang-it">Archivio SQLite v7 Cifrato</span>
+              </h3>
+              <p class="gallery-pane-desc">
+                <span class="lang-en">Scanned directories and permissions are written directly to a structured `.ntaudit` archive file. Large scans (5000+ folders) leverage lazy loading from a SQLite DB embedded within the archive.</span>
+                <span class="lang-it">Le cartelle e i permessi scansionati vengono scritti in un file di archivio compresso `.ntaudit`. Le scansioni massive (oltre 5000 cartelle) utilizzano il caricamento differito (lazy load) dal database SQLite.</span>
+              </p>
+              <ul class="gallery-bullets">
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>
+                    <span class="lang-en">Metadata contains no passwords or DPAPI tokens.</span>
+                    <span class="lang-it">I metadati non contengono password o token DPAPI.</span>
+                  </span>
+                </li>
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>
+                    <span class="lang-en">WPF Viewer reads archives without extracting them entirely to disk.</span>
+                    <span class="lang-it">Il Viewer WPF legge gli archivi senza doverli estrarre interamente su disco.</span>
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Pane 4: Service -->
+          <div class="gallery-content-pane" id="workflow-service">
+            <div class="gallery-img-box">
+              <img src="assets/workflow_illustration.jpg" alt="Worker Service flow illustration">
+            </div>
+            <div class="gallery-text-box">
+              <h3 class="gallery-pane-title">
+                <span class="lang-en">Windows Worker Service</span>
+                <span class="lang-it">Servizio di Background Windows</span>
+              </h3>
+              <p class="gallery-pane-desc">
+                <span class="lang-en">Run scheduled security scans in the background using the dedicated Windows service (`NtfsAudit.Service`). Jobs and schedule definitions are protected via DPAPI under `%ProgramData%`.</span>
+                <span class="lang-it">Esegui scansioni di sicurezza pianificate in background tramite il servizio Windows dedicato (`NtfsAudit.Service`). I job e le pianificazioni sono protetti tramite DPAPI in `%ProgramData%`.</span>
+              </p>
+              <ul class="gallery-bullets">
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>
+                    <span class="lang-en">LocalMachine DPAPI scope allows service-account decryption.</span>
+                    <span class="lang-it">La cifratura DPAPI LocalMachine consente la decifratura da parte dell'account di servizio.</span>
+                  </span>
+                </li>
+                <li>
+                  <i class="fa-solid fa-check"></i>
+                  <span>
+                    <span class="lang-en">Completely isolated from the interactive desktop user session.</span>
+                    <span class="lang-it">Completamente isolato dalla sessione utente desktop interattiva.</span>
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Downloads Section -->
+  <section class="download-section" id="download">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">
+          <span class="lang-en">Get Started</span>
+          <span class="lang-it">Inizia Ora</span>
+        </span>
+        <h2 class="section-title">
+          <span class="lang-en">Download Installers</span>
+          <span class="lang-it">Scarica gli Installer</span>
+        </h2>
+        <p class="section-subtitle">
+          <span class="lang-en">Deploy the full scanning suite or distribute the read-only viewer to security operators.</span>
+          <span class="lang-it">Installa la suite di scansione completa o distribuisci il visualizzatore read-only agli operatori di sicurezza.</span>
+        </p>
+      </div>
+
+      <div class="download-grid">
+        <!-- Pack 1: Main App -->
+        <div class="download-card">
+          <div class="download-icon">
+            <i class="fa-solid fa-laptop-code"></i>
+          </div>
+          <h3>NtfsAudit Client & Service</h3>
+          <span class="download-badge">v1.0.0 — x64 MSI</span>
+          <p>
+            <span class="lang-en">Includes the WPF scanning application, the settings panel for service scan schedules, and the background Windows Worker Service. Requires administrator elevation for deep NTFS DACL inspection.</span>
+            <span class="lang-it">Include l'applicazione WPF di scansione, il pannello delle impostazioni per la pianificazione dei job e il servizio di background Windows. Richiede privilegi di amministratore.</span>
+          </p>
+          <a href="build/OnlyRights-NtfsAudit-1.0.0-x64.msi" class="btn btn-primary" download>
+            <span class="lang-en"><i class="fa-solid fa-download"></i> Download Client MSI</span>
+            <span class="lang-it"><i class="fa-solid fa-download"></i> Scarica MSI Client</span>
+          </a>
+          <div class="download-info">
+            <span><i class="fa-solid fa-cube"></i> ~5.7 MB</span>
+            <span><i class="fa-solid fa-desktop"></i> Win 10/11 x64</span>
+          </div>
+        </div>
+
+        <!-- Pack 2: Viewer -->
+        <div class="download-card">
+          <div class="download-icon">
+            <i class="fa-solid fa-eye"></i>
+          </div>
+          <h3>NtfsAudit Viewer</h3>
+          <span class="download-badge">v1.0.0 — x64 MSI</span>
+          <p>
+            <span class="lang-en">Read-only auditing client that loads and parses `.ntaudit` SQLite archives. It requires no service install or credentials store, making it perfect for off-site security analysis.</span>
+            <span class="lang-it">Client di sola lettura che carica e visualizza gli archivi `.ntaudit` con database SQLite. Non richiede servizi aggiuntivi ed è ideale per l'analisi dei permessi offline.</span>
+          </p>
+          <a href="build/OnlyRights-NtfsAudit-Viewer-1.0.0-x64.msi" class="btn btn-secondary" download>
+            <span class="lang-en"><i class="fa-solid fa-download"></i> Download Viewer MSI</span>
+            <span class="lang-it"><i class="fa-solid fa-download"></i> Scarica MSI Viewer</span>
+          </a>
+          <div class="download-info">
+            <span><i class="fa-solid fa-cube"></i> ~4.6 MB</span>
+            <span><i class="fa-solid fa-desktop"></i> Win 10/11 x64</span>
+          </div>
+        </div>
+
+        <!-- Quick build code box -->
+        <div class="download-quick-install">
+          <div class="install-header">
+            <span class="install-title">
+              <i class="fa-solid fa-terminal"></i>
+              <span class="lang-en">Compile from Source (PowerShell)</span>
+              <span class="lang-it">Compila da Sorgente (PowerShell)</span>
+            </span>
+            <button class="btn-copy" id="btn-copy">
+              <span class="lang-en">Copy</span>
+              <span class="lang-it">Copia</span>
+            </button>
+          </div>
+          <div class="code-container">
+            <pre><code id="copy-code">pwsh -File .\scripts\build.ps1 -Runtime win-x64 -Installer</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="brand">
+            <img src="assets/onlyrights-mark.svg" alt="OnlyRights Logo">
+            <span class="brand-text">OnlyRights</span>
+          </div>
+          <p class="footer-brand-info">
+            <span class="lang-en">A modern, secure tool for scanning and auditing NTFS filesystem DACL permissions on Windows servers and workstations.</span>
+            <span class="lang-it">Uno strumento moderno e sicuro per scansionare e verificare i permessi NTFS DACL su server e workstation Windows.</span>
+          </p>
+        </div>
+
+        <div class="footer-links-col">
+          <h4>Navigation</h4>
+          <ul class="footer-links-list">
+            <li><a href="#home" class="footer-link">Home</a></li>
+            <li><a href="#features" class="footer-link">
+              <span class="lang-en">Features</span>
+              <span class="lang-it">Caratteristiche</span>
+            </a></li>
+            <li><a href="#workflows" class="footer-link">
+              <span class="lang-en">Workflows</span>
+              <span class="lang-it">Flussi di Lavoro</span>
+            </a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <h4>Legal & Security</h4>
+          <ul class="footer-links-list">
+            <li><a href="privacy.html" class="footer-link">Privacy & GDPR Policy</a></li>
+            <li>
+              <a href="https://github.com/dennidalpos/OnlyRights" class="footer-link" target="_blank" rel="noopener noreferrer">
+                <i class="fa-brands fa-github"></i> GitHub Repository
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-copyright">
+          &copy; 2026 OnlyRights. All rights reserved.
+        </p>
+        <div class="footer-meta-links">
+          <span style="color: var(--text-muted); font-size: 0.85rem;">
+            <span class="lang-en">Built on C# & .NET 8</span>
+            <span class="lang-it">Sviluppato in C# e .NET 8</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <OnlyRightsVersion>1.0.0</OnlyRightsVersion>
+    <Version>$(OnlyRightsVersion)</Version>
+    <AssemblyVersion>$(OnlyRightsVersion)</AssemblyVersion>
+    <FileVersion>$(OnlyRightsVersion)</FileVersion>
+    <InformationalVersion>$(OnlyRightsVersion)</InformationalVersion>
+    <RepositoryArtifactsRoot>$(MSBuildThisFileDirectory)artifacts\</RepositoryArtifactsRoot>
+    <Platforms>x64;AnyCPU</Platforms>
+    <ArtifactsProjectName Condition="'$(AssemblyName)' != ''">$(AssemblyName)</ArtifactsProjectName>
+    <ArtifactsProjectName Condition="'$(ArtifactsProjectName)' == ''">$(MSBuildProjectName)</ArtifactsProjectName>
+    <ArtifactsPlatformSegment Condition="'$(PlatformTarget)' != '' and '$(PlatformTarget)' != 'AnyCPU'">$(PlatformTarget)\</ArtifactsPlatformSegment>
+    <BaseOutputPath>$(RepositoryArtifactsRoot)build\$(ArtifactsProjectName)\$(ArtifactsPlatformSegment)</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(RepositoryArtifactsRoot)build\obj\$(ArtifactsProjectName)\$(ArtifactsPlatformSegment)</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+    <VSTestResultsDirectory>$(RepositoryArtifactsRoot)test-results\</VSTestResultsDirectory>
+  </PropertyGroup>
+</Project>
